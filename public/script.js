@@ -15,6 +15,7 @@ function initSettings() {
     const panel = document.getElementById('settings-panel');
     const saveBtn = document.getElementById('save-settings-btn');
     const themeSelect = document.getElementById('theme-select');
+    const langSelect = document.getElementById('language-select');
 
     btn.addEventListener('click', () => {
         panel.classList.toggle('hidden');
@@ -34,7 +35,8 @@ function initSettings() {
                 houseNo: '',
                 cityGAID: 0,
                 streetGAID: 0,
-                theme: newTheme
+                theme: newTheme,
+                language: 'system'
             };
         } else {
             currentSettings.theme = newTheme;
@@ -52,6 +54,41 @@ function initSettings() {
             console.error('Failed to auto-save theme:', error);
         }
     });
+
+    langSelect.addEventListener('change', async (e) => {
+        const newLang = e.target.value;
+        initLanguage(newLang); // comes from i18n.js
+        applyTranslations();   // translates immediately
+
+        if (!currentSettings) {
+            currentSettings = {
+                cityName: '',
+                streetName: '',
+                houseNo: '',
+                cityGAID: 0,
+                streetGAID: 0,
+                theme: 'system',
+                language: newLang
+            };
+        } else {
+            currentSettings.language = newLang;
+        }
+
+        try {
+            await window.__TAURI__.core.invoke('save_settings', {
+                settings: currentSettings
+            });
+            // Re-render outages so dates format correctly
+            if (document.getElementById('outages-container').innerHTML !== '' &&
+                !document.getElementById('outages-container').querySelector('.no-outages, .error, .loading')) {
+                // Ideally we shouldn't re-fetch unless needed, but easiest is to re-render what we have,
+                // or just trigger fetchOutages again:
+                fetchOutages();
+            }
+        } catch (error) {
+            console.error('Failed to auto-save lang:', error);
+        }
+    });
 }
 
 async function loadSettingsAndFetch() {
@@ -59,6 +96,16 @@ async function loadSettingsAndFetch() {
         const settings = await window.__TAURI__.core.invoke('load_settings');
         if (settings) {
             currentSettings = settings; // Store globally
+
+            // Set language first so translations are correct
+            if (settings.language && document.getElementById('language-select')) {
+                document.getElementById('language-select').value = settings.language;
+                initLanguage(settings.language);
+            } else {
+                initLanguage('system');
+            }
+            applyTranslations();
+
             document.getElementById('city-input').value = settings.cityName;
             document.getElementById('street-input').value = settings.streetName;
             document.getElementById('house-input').value = settings.houseNo;
@@ -68,10 +115,12 @@ async function loadSettingsAndFetch() {
             applyTheme(settings.theme || 'system');
             fetchOutages();
         } else {
+            initLanguage('system');
+            applyTranslations();
             // No settings yet — show setup prompt
             const container = document.getElementById('outages-container');
-            container.innerHTML = '<div class="no-outages">Tap ⚙️ to configure your location.</div>';
-            document.getElementById('last-updated').textContent = 'Not configured';
+            container.innerHTML = `<div class="no-outages">${typeof t !== 'undefined' ? t('setup_prompt') : 'Tap ⚙️ to configure your location.'}</div>`;
+            document.getElementById('last-updated').textContent = typeof t !== 'undefined' ? t('not_configured') : 'Not configured';
             document.getElementById('settings-panel').classList.remove('hidden');
 
             // Apply default system theme but don't save yet
@@ -87,10 +136,11 @@ async function saveSettings() {
     const streetName = document.getElementById('street-input').value.trim();
     const houseNo = document.getElementById('house-input').value.trim();
     const theme = document.getElementById('theme-select').value;
+    const language = document.getElementById('language-select').value;
     const status = document.getElementById('settings-status');
 
     if (!cityName || !streetName || !houseNo) {
-        status.textContent = '⚠️ All fields are required.';
+        status.textContent = typeof t !== 'undefined' ? t('err_fields_required') : '⚠️ All fields are required.';
         status.className = 'settings-status error';
         return;
     }
@@ -100,21 +150,21 @@ async function saveSettings() {
 
     try {
         // Step 1: Lookup city
-        status.textContent = '🔍 Looking up city...';
+        status.textContent = typeof t !== 'undefined' ? t('msg_looking_city') : '🔍 Looking up city...';
         status.className = 'settings-status';
         const cities = await window.__TAURI__.core.invoke('lookup_city', { cityName });
 
         const city = cities.find(c => c.Name === cityName);
         if (!city) {
             const available = cities.map(c => c.Name).join(', ');
-            status.textContent = `❌ City not found. Did you mean: ${available || 'none'}?`;
+            status.textContent = (typeof t !== 'undefined' ? t('err_city_not_found') : `❌ City not found. Did you mean: `) + `${available || 'none'}`;
             status.className = 'settings-status error';
             saveBtn.disabled = false;
             return;
         }
 
         // Step 2: Lookup street
-        status.textContent = '🔍 Looking up street...';
+        status.textContent = typeof t !== 'undefined' ? t('msg_looking_street') : '🔍 Looking up street...';
         const streets = await window.__TAURI__.core.invoke('lookup_street', {
             streetName,
             cityGaid: city.GAID
@@ -123,14 +173,14 @@ async function saveSettings() {
         const street = streets.find(s => s.Name === streetName);
         if (!street) {
             const available = streets.map(s => s.Name).join(', ');
-            status.textContent = `❌ Street not found. Did you mean: ${available || 'none'}?`;
+            status.textContent = (typeof t !== 'undefined' ? t('err_street_not_found') : `❌ Street not found. Did you mean: `) + `${available || 'none'}`;
             status.className = 'settings-status error';
             saveBtn.disabled = false;
             return;
         }
 
         // Step 3: Save settings
-        status.textContent = '💾 Saving...';
+        status.textContent = typeof t !== 'undefined' ? t('msg_saving') : '💾 Saving...';
 
         const newSettings = {
             cityName,
@@ -138,7 +188,8 @@ async function saveSettings() {
             houseNo,
             cityGAID: city.GAID,
             streetGAID: street.GAID,
-            theme
+            theme,
+            language
         };
 
         await window.__TAURI__.core.invoke('save_settings', {
@@ -149,8 +200,10 @@ async function saveSettings() {
         currentSettings = newSettings;
 
         applyTheme(theme);
+        initLanguage(language);
+        applyTranslations();
 
-        status.textContent = `✅ Saved! City=${city.GAID}, Street=${street.GAID}`;
+        status.textContent = `${typeof t !== 'undefined' ? t('msg_saved') : '✅ Saved!'} ${city.GAID}, ${typeof t !== 'undefined' ? t('settings_street') + '=' : 'Street='}${street.GAID}`;
         status.className = 'settings-status success';
 
         // Collapse settings and refresh outages
@@ -223,10 +276,10 @@ function initPullToRefresh() {
         if (indicator.classList.contains('visible')) {
             indicator.classList.remove('visible');
             indicator.classList.add('refreshing');
-            indicator.textContent = '↻ Refreshing...';
+            indicator.textContent = typeof t !== 'undefined' ? t('refresh_loading') : '↻ Refreshing...';
             fetchOutages().finally(() => {
                 indicator.classList.remove('refreshing');
-                indicator.textContent = '↻ Release to refresh';
+                indicator.textContent = typeof t !== 'undefined' ? t('refresh_pull') : '↻ Release to refresh';
             });
         }
     });
@@ -243,11 +296,11 @@ async function fetchOutages() {
         if (data.debug_query) {
             console.log('Fetch Outages Query:', data.debug_query);
         }
-        lastUpdated.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+        lastUpdated.textContent = `${typeof t !== 'undefined' ? t('last_updated') : 'Last updated'}: ${new Date().toLocaleTimeString(typeof getLocaleString !== 'undefined' ? getLocaleString() : 'pl-PL')}`;
         renderOutages(data, container, currentSettings);
     } catch (error) {
         console.error('Error fetching data:', error);
-        container.innerHTML = `<div class="error">Failed to load outage data. Error: ${error}</div>`;
+        container.innerHTML = `<div class="error">${typeof t !== 'undefined' ? t('err_load_failed') : 'Failed to load outage data. Error: '}${error}</div>`;
     }
 }
 
@@ -309,24 +362,28 @@ function renderOutages(data, container, settings) {
 
     // Local outages section
     if (localOutages.length > 0) {
-        container.innerHTML += `<div class="section-label">Your location (${localOutages.length})</div>`;
+        const lblYourLoc = typeof t !== 'undefined' ? t('lbl_your_location') : 'Your location';
+        container.innerHTML += `<div class="section-label">${lblYourLoc} (${localOutages.length})</div>`;
         container.innerHTML += renderCards(localOutages);
     } else {
-        container.innerHTML += `<div class="no-outages">No planned outages for your location.</div>`;
+        const msgNoLoc = typeof t !== 'undefined' ? t('msg_no_outages_local') : 'No planned outages for your location.';
+        container.innerHTML += `<div class="no-outages">${msgNoLoc}</div>`;
     }
 
     // All outages section
     const otherOutages = allOutages.filter(item => !localSet.has(item));
     if (otherOutages.length > 0) {
-        container.innerHTML += `<div class="section-label other">Other outages (${otherOutages.length})</div>`;
+        const lblOther = typeof t !== 'undefined' ? t('lbl_other_outages') : 'Other outages';
+        container.innerHTML += `<div class="section-label other">${lblOther} (${otherOutages.length})</div>`;
         container.innerHTML += renderCards(otherOutages);
     }
 }
 
 function renderCards(outages) {
+    const plannedLbl = typeof t !== 'undefined' ? t('lbl_planned_outage') : 'Planned Outage';
     return outages.map(item => `
         <div class="card">
-            <span class="outage-type">Planned Outage</span>
+            <span class="outage-type">${plannedLbl}</span>
             <div class="outage-time">
                 ${formatDate(item.StartDate)} – ${formatDate(item.EndDate)}
             </div>
@@ -339,7 +396,8 @@ function renderCards(outages) {
 function formatDate(dateString) {
     if (!dateString) return '';
     const date = new Date(dateString);
-    return date.toLocaleString('pl-PL', {
+    const localeStr = typeof getLocaleString !== 'undefined' ? getLocaleString() : 'pl-PL';
+    return date.toLocaleString(localeStr, {
         weekday: 'short',
         day: 'numeric',
         month: 'short',

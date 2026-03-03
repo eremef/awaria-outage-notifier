@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Tauron Outages</title>
+    <title data-i18n="title">Tauron Outages</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -12,44 +12,54 @@
     <div class="container">
         <button id="settings-btn" class="settings-btn" title="Settings">⚙️</button>
         <header>
-            <h1>Tauron Outages</h1>
-            <p id="last-updated">Checking for updates...</p>
+            <h1 data-i18n="title">Tauron Outages</h1>
+            <p id="last-updated" data-i18n="checking_updates">Checking for updates...</p>
         </header>
 
         <div id="settings-panel" class="settings-panel hidden">
-            <div class="settings-title">Appearance</div>
+            <div class="settings-title" data-i18n="settings_appearance">Appearance</div>
             <div class="settings-field">
-                <label for="theme-select">Theme</label>
+                <label for="theme-select" data-i18n="settings_theme">Theme</label>
                 <select id="theme-select">
-                    <option value="system">System Default</option>
-                    <option value="light">Light</option>
-                    <option value="dark">Dark</option>
+                    <option value="system" data-i18n="theme_system">System Default</option>
+                    <option value="light" data-i18n="theme_light">Light</option>
+                    <option value="dark" data-i18n="theme_dark">Dark</option>
+                </select>
+            </div>
+            
+            <div class="settings-field">
+                <label for="language-select" data-i18n="settings_language">Language</label>
+                <select id="language-select">
+                    <option value="system" data-i18n="lang_system">System Default</option>
+                    <option value="en" data-i18n="lang_en">English</option>
+                    <option value="pl" data-i18n="lang_pl">Polski</option>
                 </select>
             </div>
 
-            <div class="settings-title">Location Settings</div>
+            <div class="settings-title" data-i18n="settings_location">Location Settings</div>
             <div class="settings-field">
-                <label for="city-input">City</label>
-                <input type="text" id="city-input" placeholder="e.g. Wrocław">
+                <label for="city-input" data-i18n="settings_city">City</label>
+                <input type="text" id="city-input" data-i18n="settings_city_placeholder" placeholder="e.g. Wrocław">
             </div>
             <div class="settings-field">
-                <label for="street-input">Street</label>
-                <input type="text" id="street-input" placeholder="e.g. Kuźnicza">
+                <label for="street-input" data-i18n="settings_street">Street</label>
+                <input type="text" id="street-input" data-i18n="settings_street_placeholder" placeholder="e.g. Kuźnicza">
             </div>
             <div class="settings-field">
-                <label for="house-input">House No</label>
-                <input type="text" id="house-input" placeholder="e.g. 25">
+                <label for="house-input" data-i18n="settings_house">House No</label>
+                <input type="text" id="house-input" data-i18n="settings_house_placeholder" placeholder="e.g. 25">
             </div>
             <div id="settings-status" class="settings-status"></div>
-            <button id="save-settings-btn" class="save-btn">Save & Lookup</button>
+            <button id="save-settings-btn" class="save-btn" data-i18n="settings_save">Save & Lookup</button>
         </div>
 
-        <div id="pull-indicator" class="pull-indicator">↻ Release to refresh</div>
+        <div id="pull-indicator" class="pull-indicator" data-i18n="refresh_pull">↻ Release to refresh</div>
 
         <main id="outages-container">
-            <div class="loading">Loading outage data...</div>
+            <div class="loading" data-i18n="loading_data">Loading outage data...</div>
         </main>
     </div>
+    <script src="i18n.js"></script>
     <script src="script.js"></script>
 </body>
 

@@ -36,6 +36,8 @@ pub struct Settings {
     pub streetGAID: u64,
     #[serde(default)]
     pub theme: Option<String>,
+    #[serde(default)]
+    pub language: Option<String>,
 }
 
 pub fn get_cities_query(city_name: &str, cache_bust: &str) -> Vec<(&'static str, String)> {
@@ -99,6 +101,7 @@ mod tests {
             cityGAID: 123,
             streetGAID: 456,
             theme: Some("dark".to_string()),
+            language: Some("pl".to_string()),
         };
         let json = serde_json::to_string(&settings).unwrap();
         let deserialized: Settings = serde_json::from_str(&json).unwrap();
@@ -143,6 +146,7 @@ mod tests {
             cityGAID: 111,
             streetGAID: 222,
             theme: Some("light".to_string()),
+            language: Some("en".to_string()),
         };
 
         // Save

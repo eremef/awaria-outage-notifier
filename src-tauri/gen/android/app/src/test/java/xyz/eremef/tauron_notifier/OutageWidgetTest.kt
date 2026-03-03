@@ -22,7 +22,8 @@ class OutageWidgetTest {
                 "streetGAID": 456,
                 "houseNo": "10A",
                 "streetName": "Rozbrat",
-                "theme": "dark"
+                "theme": "dark",
+                "language": "pl"
             }
         """.trimIndent()
 
@@ -32,6 +33,7 @@ class OutageWidgetTest {
         assertEquals("10A", settings?.houseNo)
         assertEquals("Rozbrat", settings?.streetName)
         assertEquals("dark", settings?.theme)
+        assertEquals("pl", settings?.language)
     }
 
     @Test

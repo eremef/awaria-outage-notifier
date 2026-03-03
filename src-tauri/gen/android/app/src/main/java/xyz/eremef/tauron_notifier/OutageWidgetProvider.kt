@@ -30,7 +30,8 @@ data class WidgetSettings(
     val streetGAID: Long,
     val houseNo: String,
     val streetName: String,
-    val theme: String
+    val theme: String,
+    val language: String
 )
 
 class OutageWidgetProvider : AppWidgetProvider() {
@@ -141,7 +142,8 @@ class OutageWidgetProvider : AppWidgetProvider() {
                 streetGAID = json.getLong("streetGAID"),
                 houseNo = json.getString("houseNo"),
                 streetName = json.getString("streetName"),
-                theme = json.optString("theme", "system")
+                theme = json.optString("theme", "system"),
+                language = json.optString("language", "system")
             )
         } catch (e: Exception) {
             null
@@ -175,6 +177,23 @@ class OutageWidgetProvider : AppWidgetProvider() {
         }
     }
 
+    private fun getTranslation(key: String, lang: String): String {
+        val isPl = if (lang == "pl") {
+            true
+        } else if (lang == "en") {
+            false
+        } else {
+            val systemLang = Locale.getDefault().language
+            systemLang.startsWith("pl")
+        }
+        return when (key) {
+            "outages" -> if (isPl) "wyłączeń" else "outages"
+            "setup" -> if (isPl) "Skonfiguruj" else "Setup needed"
+            "updating" -> if (isPl) "Aktualizacja..." else "Updating..."
+            else -> key
+        }
+    }
+
     internal fun updateWidget(
         context: Context,
         appWidgetManager: AppWidgetManager,
@@ -199,16 +218,19 @@ class OutageWidgetProvider : AppWidgetProvider() {
         val dark = isDarkMode(context, settings?.theme ?: "system")
         applyTheme(views, dark)
 
+        val language = settings?.language ?: "system"
+        views.setTextViewText(R.id.widget_label, getTranslation("outages", language))
+
         if (settings == null) {
             views.setTextViewText(R.id.widget_count, "?")
-            views.setTextViewText(R.id.widget_updated, "Setup needed")
+            views.setTextViewText(R.id.widget_updated, getTranslation("setup", language))
             appWidgetManager.updateAppWidget(appWidgetId, views)
             return
         }
 
         // Show loading state
         views.setTextViewText(R.id.widget_count, "…")
-        views.setTextViewText(R.id.widget_updated, "Updating...")
+        views.setTextViewText(R.id.widget_updated, getTranslation("updating", language))
         appWidgetManager.updateAppWidget(appWidgetId, views)
 
         // Fetch data
