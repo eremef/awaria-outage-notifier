@@ -22,7 +22,7 @@ A desktop (Tauri) and Android app to check for planned power outages in your are
   - "Tap to refresh" functionality.
   - Reads settings shared with the main app.
 - **Smart Filtering**: Displays outages relevant to your specific address while still showing other outages in the area.
-- Language setting (Polish and English)
+- **Language setting**: Choice between Polish and English
 
 ## Prerequisites
 
