@@ -1,12 +1,17 @@
 # Tauron Outages Notifier
 
+
 <p align="center">
   <img width="802" height="632" alt="image" src="https://github.com/user-attachments/assets/537753c4-411d-4b76-9f5a-4709f00b56cf" />
 </p>
 
 A desktop (Tauri) and Android app to check for planned power outages in your area using the Tauron API.
 
-# Android app
+## Downloads
+
+https://eremef.xyz/tauron-notifier
+
+## Android app
 
 <p align="center">
  <img width="300" alt="Image" src="https://github.com/user-attachments/assets/7e9cefe4-16b4-498c-bfaf-cb998cf22a40" />
@@ -15,12 +20,14 @@ A desktop (Tauri) and Android app to check for planned power outages in your are
 ## Features
 
 - **Desktop & Android Support**: Built with Tauri v2.
-- **Dynamic Configuration**: Set your City, Street, and House Number directly in the app.
+- **Dynamic Configuration**: Set your City, Street, and House Number in the app.
 - **Android Widget**:
   - Shows outage count for your specific street.
   - "Tap to refresh" functionality.
   - Reads settings shared with the main app.
 - **Smart Filtering**: Displays outages relevant to your specific address while still showing other outages in the area.
+- **Language setting**: Choice between Polish and English
+- **Themes setting**: Choice between light and dark theme
 
 ## Prerequisites
 
