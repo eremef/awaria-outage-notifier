@@ -153,6 +153,28 @@
     --water-color: #268bd2;  /* Solarized Blue */
 }
 
+[data-theme="latte"] {
+    /* Catppuccin Latte */
+    --primary-color: #1e66f5; /* Blue */
+    --background-color: #eff1f5; 
+    --card-background: #e6e9ef; 
+    --text-color: #4c4f69; 
+    --secondary-text: #6c6f85; 
+    --shadow: 0 4px 6px rgba(0,0,0,0.05);
+    --input-border: #ccd0da;
+    --input-focus: #1e66f5;
+    --error-bg: #d20f3922;
+    --error-text: #d20f39;
+    --error-border: #d20f3944;
+    --success-bg: #40a02b22;
+    --success-text: #40a02b;
+    --success-border: #40a02b44;
+    --message-border: #ccd0da;
+    --label-border: #ccd0da;
+    --tauron-color: #fe640b; /* Peach */
+    --water-color: #04a5e5;  /* Sky */
+}
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: var(--background-color);
@@ -447,17 +469,45 @@ h1 {
 }
 
 .section-label {
-    font-weight: 600;
-    font-size: 0.95rem;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     color: var(--primary-color);
-    margin: 0.75rem 0 0.5rem;
-    padding-bottom: 0.25rem;
-    border-bottom: 2px solid var(--primary-color);
+    margin: 2rem 0 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-label::after {
+    content: "";
+    flex: 1;
+    height: 2px;
+    background: var(--label-border);
+    border-radius: 2px;
 }
 
 .section-label.other {
     color: var(--secondary-text);
-    border-bottom-color: var(--label-border);
+}
+
+.other-divider {
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    margin: 3rem 0 2rem;
+}
+
+.other-divider span {
+    background: var(--label-border);
+    color: var(--secondary-text);
+    padding: 0.4rem 1rem;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
 }
 
 .outage-message {

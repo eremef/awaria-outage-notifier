@@ -469,7 +469,7 @@ function renderAlerts(alerts, container, settings) {
     // ── Other Alerts Divider ──
     if (otherTauron.length > 0 || otherWater.length > 0) {
         const lblDivider = typeof t !== 'undefined' ? t('lbl_other_alerts_divider') : 'Other alerts';
-        container.innerHTML += `<div class="section-label">${lblDivider}</div>`;
+        container.innerHTML += `<div class="other-divider"><span>${lblDivider}</span></div>`;
     }
 
     // ── Other Tauron section ──

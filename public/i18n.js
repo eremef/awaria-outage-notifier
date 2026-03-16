@@ -3,7 +3,7 @@
 
 const translations = {
     en: {
-        "title": "Outage Alerts",
+        "title": "AWARIA",
         "settings_appearance": "Appearance",
         "settings_theme": "Theme",
         "theme_system": "System Default",
@@ -14,6 +14,7 @@ const translations = {
         "theme_nord": "Nord (Arctic Dark)",
         "theme_dracula": "Dracula (Vampire)",
         "theme_sepia": "Sepia (Warm Light)",
+        "theme_latte": "Latte (Pastel Light)",
         "settings_location": "Location Settings",
         "settings_language": "Language",
         "lang_system": "System Default",
@@ -67,6 +68,7 @@ const translations = {
         "theme_nord": "Nord (Arktyczny Ciemny)",
         "theme_dracula": "Dracula (Ciemny)",
         "theme_sepia": "Sepia (Ciepły Jasny)",
+        "theme_latte": "Latte (Pastelowy Jasny)",
         "settings_location": "Ustawienia lokalizacji",
         "settings_language": "Język",
         "lang_system": "Domyślny systemowy",
