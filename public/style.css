@@ -402,37 +402,6 @@ h1 {
     color: var(--water-color);
 }
 
-.section-label {
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: var(--secondary-text);
-    margin: 1.5rem 0 0.75rem;
-    letter-spacing: 0.1em;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.section-label.other {
-    background: var(--card-background);
-    color: var(--primary-color);
-    padding: 0.75rem 1rem;
-    border-radius: 100px;
-    margin-top: 2rem;
-    border: 1px solid var(--message-border);
-    font-size: 0.8rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-}
-
-.section-label.source-tauron {
-    color: var(--tauron-color);
-}
-
-.section-label.source-water {
-    color: var(--water-color);
-    border-bottom-color: var(--water-color);
-}
 
 .outage-time {
     font-size: 0.8rem;
