@@ -1,8 +1,7 @@
 # AWARIA - Aplikacja Wygodnego Alarmowanie o Remontach i Infrastrukturalnych Awariach
 
 <p align="center">
-  <img width="842" height="672" alt="image" src="https://github.com/user-attachments/assets/eb73cb38-e146-4d16-a93d-af7c2662549c" />
-   <img width="842" height="672" alt="image" src="https://github.com/user-attachments/assets/ee991800-8960-4388-84e6-df3148b038ca" />
+  <img height="600" alt="image" src="https://github.com/user-attachments/assets/eb73cb38-e146-4d16-a93d-af7c2662549c" />
 </p>
 
 A modern desktop (Tauri) and Android application providing real-time alerts for planned and emergency outages. **AWARIA** aggregates data from multiple utility providers into a centralized, beautiful interface.
@@ -18,6 +17,10 @@ https://eremef.xyz/awaria
 - *More sources coming soon...*
 
 ## Android app
+
+<p align="center">
+  <img height="600" alt="image" src="https://github.com/user-attachments/assets/ee991800-8960-4388-84e6-df3148b038ca" />
+</p>
 
 ## Features
 
