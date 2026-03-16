@@ -48,16 +48,16 @@ jobs:
         
       - name: Rename Artifacts
         run: |
-          mv src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk tauron-notifier-android-${{ github.ref_name }}.apk
-          mv src-tauri/gen/android/app/build/outputs/bundle/universalRelease/app-universal-release.aab tauron-notifier-android-${{ github.ref_name }}.aab || true
+          mv src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk awaria-android-${{ github.ref_name }}.apk
+          mv src-tauri/gen/android/app/build/outputs/bundle/universalRelease/app-universal-release.aab awaria-android-${{ github.ref_name }}.aab || true
           
       - name: Upload APK
         uses: softprops/action-gh-release@v2.4.2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            tauron-notifier-android-${{ github.ref_name }}.apk
-            tauron-notifier-android-${{ github.ref_name }}.aab
+            awaria-android-${{ github.ref_name }}.apk
+            awaria-android-${{ github.ref_name }}.aab
 
   release-ios:
     runs-on: macos-latest
@@ -118,13 +118,13 @@ jobs:
           echo "Found app at $APP_PATH"
           mkdir Payload
           cp -r "$APP_PATH" Payload/
-          zip -r tauron-notifier-ios-${{ github.ref_name }}-unsigned.ipa Payload
+          zip -r awaria-ios-${{ github.ref_name }}-unsigned.ipa Payload
 
       - name: Upload IPA
         uses: softprops/action-gh-release@v2.4.2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: tauron-notifier-ios-${{ github.ref_name }}-unsigned.ipa
+          files: awaria-ios-${{ github.ref_name }}-unsigned.ipa
 
   release-desktop:
     permissions:
@@ -202,20 +202,20 @@ jobs:
 
           # Linux
           if [[ "${{ matrix.platform }}" == "ubuntu-latest" || "${{ matrix.platform }}" == "ubuntu-24.04-arm" ]]; then
-            safe_move "*.deb" "tauron-notifier-linux-${{ github.ref_name }}-${ARCH_NAME}.deb"
-            safe_move "*.AppImage" "tauron-notifier-linux-${{ github.ref_name }}-${ARCH_NAME}.AppImage"
+            safe_move "*.deb" "awaria-linux-${{ github.ref_name }}-${ARCH_NAME}.deb"
+            safe_move "*.AppImage" "awaria-linux-${{ github.ref_name }}-${ARCH_NAME}.AppImage"
           fi
 
           # Windows
           if [[ "${{ matrix.platform }}" == "windows-latest" ]]; then
-            safe_move "*.msi" "tauron-notifier-windows-${{ github.ref_name }}-${ARCH_NAME}.msi"
-            safe_move "*.exe" "tauron-notifier-windows-${{ github.ref_name }}-${ARCH_NAME}.exe"
+            safe_move "*.msi" "awaria-windows-${{ github.ref_name }}-${ARCH_NAME}.msi"
+            safe_move "*.exe" "awaria-windows-${{ github.ref_name }}-${ARCH_NAME}.exe"
           fi
 
           # macOS
           if [[ "${{ matrix.platform }}" == "macos-latest" ]]; then
-            safe_move "*.dmg" "tauron-notifier-macos-${{ github.ref_name }}-${ARCH_NAME}.dmg"
-            safe_move "*.app.tar.gz" "tauron-notifier-macos-${{ github.ref_name }}-${ARCH_NAME}.app.tar.gz" # If using updater
+            safe_move "*.dmg" "awaria-macos-${{ github.ref_name }}-${ARCH_NAME}.dmg"
+            safe_move "*.app.tar.gz" "awaria-macos-${{ github.ref_name }}-${ARCH_NAME}.app.tar.gz" # If using updater
           fi
 
           echo "Artifacts prepared:"

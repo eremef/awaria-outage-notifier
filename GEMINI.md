@@ -1,10 +1,10 @@
-# Tauron Notifier Project Context
+# Awaria Project Context
 
 ## Project Overview
 
-**Name**: Tauron Notifier
+**Name**: Awaria
 **Description**: A cross-platform desktop and mobile application built with Tauri to notify users about Tauron power outages.
-**Identifier**: `xyz.eremef.tauron-notifier`
+**Identifier**: `xyz.eremef.awaria`
 
 ## Architecture
 
