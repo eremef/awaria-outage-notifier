@@ -38,7 +38,7 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > src-tauri/gen/android/release.jks
-          echo "storeFile=../release.jks" > src-tauri/gen/android/keystore.properties
+          echo "storeFile=release.jks" > src-tauri/gen/android/keystore.properties
           echo "keyAlias=$ANDROID_KEY_ALIAS" >> src-tauri/gen/android/keystore.properties
           echo "storePassword=$ANDROID_KEYSTORE_PASSWORD" >> src-tauri/gen/android/keystore.properties
           echo "keyPassword=$ANDROID_KEY_PASSWORD" >> src-tauri/gen/android/keystore.properties
