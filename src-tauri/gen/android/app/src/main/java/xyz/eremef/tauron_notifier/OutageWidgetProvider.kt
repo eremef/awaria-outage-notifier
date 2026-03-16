@@ -188,6 +188,7 @@ class OutageWidgetProvider : AppWidgetProvider() {
         }
         return when (key) {
             "outages" -> if (isPl) "wyłączeń" else "outages"
+            "alerts" -> if (isPl) "alertów" else "alerts"
             "setup" -> if (isPl) "Skonfiguruj" else "Setup needed"
             "updating" -> if (isPl) "Aktualizacja..." else "Updating..."
             else -> key
@@ -219,7 +220,7 @@ class OutageWidgetProvider : AppWidgetProvider() {
         applyTheme(views, dark)
 
         val language = settings?.language ?: "system"
-        views.setTextViewText(R.id.widget_label, getTranslation("outages", language))
+        views.setTextViewText(R.id.widget_label, getTranslation("alerts", language))
 
         if (settings == null) {
             views.setTextViewText(R.id.widget_count, "?")
@@ -235,7 +236,7 @@ class OutageWidgetProvider : AppWidgetProvider() {
 
         // Fetch data
         try {
-            val count = fetchFilteredOutageCount(settings)
+            val count = fetchCombinedAlertCount(settings)
             val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
             val updatedAt = timeFormat.format(Date())
 
@@ -249,7 +250,27 @@ class OutageWidgetProvider : AppWidgetProvider() {
         appWidgetManager.updateAppWidget(appWidgetId, views)
     }
 
-    private fun fetchFilteredOutageCount(settings: WidgetSettings): Int {
+    private fun fetchCombinedAlertCount(settings: WidgetSettings): Int {
+        var totalCount = 0
+        
+        // 1. Fetch Tauron
+        try {
+            totalCount += fetchTauronAlertCount(settings)
+        } catch (e: Exception) {
+            // Log or ignore for total count if one source fails
+        }
+        
+        // 2. Fetch MPWiK
+        try {
+            totalCount += fetchMpwikAlertCount(settings)
+        } catch (e: Exception) {
+            // Log or ignore
+        }
+        
+        return totalCount
+    }
+
+    private fun fetchTauronAlertCount(settings: WidgetSettings): Int {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
         dateFormat.timeZone = TimeZone.getTimeZone("UTC")
         val now = dateFormat.format(Date())
@@ -271,13 +292,85 @@ class OutageWidgetProvider : AppWidgetProvider() {
         val responseCode = conn.responseCode
         if (responseCode !in 200..299) {
             conn.disconnect()
-            throw Exception("HTTP error: $responseCode")
+            throw Exception("Tauron HTTP error: $responseCode")
         }
 
         val response = conn.inputStream.bufferedReader().readText()
         conn.disconnect()
 
         return parseOutageItems(response, settings.streetName)
+    }
+
+    private fun fetchMpwikAlertCount(settings: WidgetSettings): Int {
+        val url = URL("https://www.mpwik.wroc.pl/wp-admin/admin-ajax.php")
+        val conn = url.openConnection() as HttpURLConnection
+        conn.requestMethod = "POST"
+        conn.doOutput = true
+        conn.setRequestProperty("content-type", "application/x-www-form-urlencoded; charset=UTF-8")
+        conn.setRequestProperty("accept", "application/json")
+        conn.setRequestProperty("x-requested-with", "XMLHttpRequest")
+        conn.setRequestProperty("origin", "https://www.mpwik.wroc.pl")
+        conn.setRequestProperty("referer", "https://www.mpwik.wroc.pl/")
+        conn.connectTimeout = 10000
+        conn.readTimeout = 10000
+
+        val postData = "action=all"
+        conn.outputStream.write(postData.toByteArray(Charsets.UTF_8))
+
+        val responseCode = conn.responseCode
+        if (responseCode !in 200..299) {
+            conn.disconnect()
+            throw Exception("MPWiK HTTP error: $responseCode")
+        }
+
+        val response = conn.inputStream.bufferedReader().readText()
+        conn.disconnect()
+
+        return parseMpwikItems(response, settings.streetName)
+    }
+
+    internal fun parseMpwikItems(jsonString: String, streetName: String): Int {
+        val json = JSONObject(jsonString)
+        val items = json.optJSONArray("failures") ?: return 0
+        
+        val normalizeRegex = Regex("(?i)^(ul\\.|al\\.|pl\\.|os\\.|rondo)\\s*")
+        val fullStreet = normalizeRegex.replace(streetName, "").trim()
+        if (fullStreet.isEmpty()) return 0
+        
+        val significantWords = fullStreet.split(Regex("\\s+")).filter { it.length >= 3 }
+        
+        var count = 0
+        val now = Date()
+        val mpwikFormat = SimpleDateFormat("dd-MM-yyyy HH:mm", Locale.getDefault())
+
+        for (i in 0 until items.length()) {
+            val item = items.getJSONObject(i)
+            val endDateStr = item.optString("date_end", "")
+            if (endDateStr.isNotEmpty()) {
+                try {
+                    val end = mpwikFormat.parse(endDateStr)
+                    if (end != null && end.before(now)) {
+                        continue
+                    }
+                } catch (e: Exception) {}
+            }
+            
+            val content = item.optString("content", "")
+            if (content.contains(streetName)) {
+                count++
+                continue
+            }
+            
+            val anyMatch = significantWords.any { word ->
+                val escapedWord = java.util.regex.Pattern.quote(word)
+                val regex = Regex("\\b$escapedWord\\b")
+                regex.containsMatchIn(content)
+            }
+            if (anyMatch) {
+                count++
+            }
+        }
+        return count
     }
 
     internal fun parseOutageItems(jsonString: String, streetName: String): Int {

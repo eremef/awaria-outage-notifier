@@ -1,41 +1,156 @@
 :root {
-    /* Light Theme (Default) */
-    --primary-color: #d9006c;
-    --background-color: #f4f4f9;
+    /* Modern "Friendly" Light Theme */
+    --primary-color: #6366f1; /* Indigo 500 */
+    --background-color: #f8fafc; /* Slate 50 */
     --card-background: #ffffff;
-    --text-color: #333333;
-    --secondary-text: #666666;
-    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    --input-border: #dddddd;
-    --input-focus: #d9006c;
-    --error-bg: #fff5f5;
-    --error-text: #c53030;
-    --error-border: #fed7d7;
-    --success-bg: #e6fffa;
-    --success-text: #047481;
-    --success-border: #b2f5ea;
-    --message-border: #eeeeee;
-    --label-border: #dddddd;
+    --text-color: #1e293b; /* Slate 800 */
+    --secondary-text: #64748b; /* Slate 500 */
+    --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --input-border: #e2e8f0; /* Slate 200 */
+    --input-focus: #818cf8;
+    --error-bg: #fef2f2;
+    --error-text: #ef4444;
+    --error-border: #fecaca;
+    --success-bg: #ecfdf5;
+    --success-text: #10b981;
+    --success-border: #a7f3d0;
+    --message-border: #f1f5f9;
+    --label-border: #e2e8f0;
+    --tauron-color: #f43f5e; /* Rose 500 */
+    --water-color: #0ea5e9;  /* Sky 500 */
 }
 
 [data-theme="dark"] {
-    /* Dark Theme */
-    --primary-color: #ff4da6;
-    --background-color: #121212;
-    --card-background: #1e1e1e;
-    --text-color: #e0e0e0;
-    --secondary-text: #a0a0a0;
-    --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    --input-border: #444444;
-    --input-focus: #ff4da6;
-    --error-bg: #4a1515;
-    --error-text: #fc8181;
-    --error-border: #63171b;
-    --success-bg: #113639;
-    --success-text: #4fd1c5;
-    --success-border: #184e52;
-    --message-border: #333333;
-    --label-border: #444444;
+    /* Premium Deep Dark Theme */
+    --primary-color: #818cf8; /* Indigo 400 */
+    --background-color: #0f172a; /* Slate 900 */
+    --card-background: #1e293b; /* Slate 800 */
+    --text-color: #f1f5f9; /* Slate 100 */
+    --secondary-text: #94a3b8; /* Slate 400 */
+    --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+    --input-border: #334155; /* Slate 700 */
+    --input-focus: #818cf8;
+    --error-bg: #450a0a;
+    --error-text: #fca5a5;
+    --error-border: #7f1d1d;
+    --success-bg: #064e3b;
+    --success-text: #6ee7b7;
+    --success-border: #065f46;
+    --message-border: #334155;
+    --label-border: #334155;
+    --tauron-color: #fb7185; /* Rose 400 */
+    --water-color: #38bdf8;  /* Sky 400 */
+}
+
+[data-theme="emerald"] {
+    /* Fresh Nature Theme */
+    --primary-color: #10b981; /* Emerald 500 */
+    --background-color: #f0fdf4; /* Green 50 */
+    --card-background: #ffffff;
+    --text-color: #064e3b; /* Green 900 */
+    --secondary-text: #166534; /* Green 800 */
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    --input-border: #dcfce7;
+    --input-focus: #10b981;
+    --error-bg: #fef2f2;
+    --error-text: #dc2626;
+    --error-border: #fecaca;
+    --success-bg: #ecfdf5;
+    --success-text: #059669;
+    --success-border: #d1fae5;
+    --message-border: #ecfdf5;
+    --label-border: #dcfce7;
+    --tauron-color: #f59e0b; /* Amber for Contrast */
+    --water-color: #3b82f6;  /* Blue */
+}
+
+[data-theme="ocean"] {
+    /* Deep Aqua Theme */
+    --primary-color: #06b6d4; /* Cyan 500 */
+    --background-color: #083344; /* Cyan 950 */
+    --card-background: #0e7490; /* Cyan 700 mixed darker */
+    --card-background: #155e75;
+    --text-color: #ecfeff; /* Cyan 50 */
+    --secondary-text: #a5f3fc; /* Cyan 200 */
+    --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    --input-border: #164e63;
+    --input-focus: #22d3ee;
+    --error-bg: #7f1d1d;
+    --error-text: #fecaca;
+    --error-border: #991b1b;
+    --success-bg: #064e3b;
+    --success-text: #6ee7b7;
+    --success-border: #065f46;
+    --message-border: #164e63;
+    --label-border: #164e63;
+    --tauron-color: #f43f5e;
+    --water-color: #38bdf8;
+}
+
+[data-theme="nord"] {
+    /* Nordic Frost Theme */
+    --primary-color: #88c0d0; /* Nord 8 */
+    --background-color: #2e3440; /* Nord 0 */
+    --card-background: #3b4252; /* Nord 1 */
+    --text-color: #eceff4; /* Nord 6 */
+    --secondary-text: #d8dee9; /* Nord 4 */
+    --shadow: 0 8px 16px rgba(0,0,0,0.4);
+    --input-border: #4c566a; /* Nord 3 */
+    --input-focus: #81a1c1; /* Nord 9 */
+    --error-bg: #bf616a; /* Nord 11 */
+    --error-text: #eceff4;
+    --error-border: #2e3440;
+    --success-bg: #a3be8c; /* Nord 14 */
+    --success-text: #2e3440;
+    --success-border: #2e3440;
+    --message-border: #434c5e; /* Nord 2 */
+    --label-border: #4c566a;
+    --tauron-color: #ebcb8b; /* Nord 13 */
+    --water-color: #81a1c1;  /* Nord 9 */
+}
+
+[data-theme="dracula"] {
+    /* Classic Dracula Theme */
+    --primary-color: #bd93f9; /* Purple */
+    --background-color: #282a36; 
+    --card-background: #44475a; 
+    --text-color: #f8f8f2; 
+    --secondary-text: #6272a4; 
+    --shadow: 0 10px 20px rgba(0,0,0,0.5);
+    --input-border: #6272a4;
+    --input-focus: #ff79c6; /* Pink focus */
+    --error-bg: #ff5555;
+    --error-text: #f8f8f2;
+    --error-border: #282a36;
+    --success-bg: #50fa7b;
+    --success-text: #282a36;
+    --success-border: #282a36;
+    --message-border: #44475a;
+    --label-border: #6272a4;
+    --tauron-color: #ffb86c; /* Orange */
+    --water-color: #8be9fd;  /* Cyan */
+}
+
+[data-theme="sepia"] {
+    /* Warm Paper Theme */
+    --primary-color: #b58900; /* Solarized Yellow */
+    --background-color: #fdf6e3; 
+    --card-background: #eee8d5; 
+    --text-color: #586e75; 
+    --secondary-text: #93a1a1; 
+    --shadow: 0 4px 10px rgba(0,0,0,0.05);
+    --input-border: #d3368222; /* Pink-ish tint */
+    --input-focus: #b58900;
+    --error-bg: #dc322f22;
+    --error-text: #dc322f;
+    --error-border: #dc322f44;
+    --success-bg: #85990022;
+    --success-text: #859900;
+    --success-border: #85990044;
+    --message-border: #d3368211;
+    --label-border: #d3368222;
+    --tauron-color: #cb4b16; /* Solarized Orange */
+    --water-color: #268bd2;  /* Solarized Blue */
 }
 
 body {
@@ -138,6 +253,26 @@ h1 {
     letter-spacing: 0.05em;
 }
 
+.settings-field-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.settings-field-row input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+}
+
+.settings-field-row label {
+    margin: 0;
+    text-transform: none;
+    font-size: 0.9rem;
+    color: var(--text-color);
+}
+
+
 .settings-field input,
 .settings-field select {
     width: 100%;
@@ -160,25 +295,33 @@ h1 {
 
 .save-btn {
     width: 100%;
-    padding: 0.7rem;
+    padding: 0.8rem;
     background: var(--primary-color);
     color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: 12px;
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
-    transition: opacity 0.2s;
-    margin-top: 0.5rem;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-top: 0.75rem;
+    box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.2);
 }
 
 .save-btn:hover {
-    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+}
+
+.save-btn:active {
+    transform: translateY(0);
 }
 
 .save-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
 .settings-status {
@@ -199,22 +342,74 @@ h1 {
 
 .card {
     background-color: var(--card-background);
-    border-radius: 8px;
-    padding: 0.75rem;
-    margin-bottom: 0.75rem;
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
     box-shadow: var(--shadow);
-    transition: transform 0.2s, background-color 0.3s ease;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease;
+    border: 1px solid var(--message-border);
 }
 
 .card:hover {
-    transform: translateY(-2px);
+    transform: translateY(-3px);
 }
 
 .outage-type {
-    font-weight: bold;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     color: var(--primary-color);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
     display: block;
+}
+
+.card.source-tauron {
+    border-top: 4px solid var(--tauron-color);
+}
+
+.card.source-water {
+    border-top: 4px solid var(--water-color);
+}
+
+.card.source-tauron .outage-type {
+    color: var(--tauron-color);
+}
+
+.card.source-water .outage-type {
+    color: var(--water-color);
+}
+
+.section-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--secondary-text);
+    margin: 1.5rem 0 0.75rem;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.section-label.other {
+    background: var(--card-background);
+    color: var(--primary-color);
+    padding: 0.75rem 1rem;
+    border-radius: 100px;
+    margin-top: 2rem;
+    border: 1px solid var(--message-border);
+    font-size: 0.8rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.section-label.source-tauron {
+    color: var(--tauron-color);
+}
+
+.section-label.source-water {
+    color: var(--water-color);
+    border-bottom-color: var(--water-color);
 }
 
 .outage-time {
@@ -308,3 +503,40 @@ h1 {
         transform: rotate(360deg);
     }
 }
+
+/* ── Collapsible Sections ── */
+
+.collapsible {
+    margin-top: 1rem;
+}
+
+.collapsible .section-label,
+.collapsible-trigger {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    margin-top: 0;
+    user-select: none;
+}
+
+.collapsible .toggle-icon {
+    font-size: 0.8rem;
+    transition: transform 0.3s ease;
+    display: inline-block;
+}
+
+.collapsible.collapsed .toggle-icon {
+    transform: rotate(-90deg);
+}
+
+.collapsible-content {
+    max-height: 5000px; /* Large enough */
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, opacity 0.3s ease;
+}
+
+.collapsible.collapsed .collapsible-content {
+    max-height: 0;
+    opacity: 0;
+}

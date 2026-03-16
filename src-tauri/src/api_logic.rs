@@ -1,6 +1,86 @@
 use serde::{Deserialize, Serialize};
 
 pub const BASE_URL: &str = "https://www.tauron-dystrybucja.pl/waapi";
+pub const MPWIK_URL: &str = "https://www.mpwik.wroc.pl/wp-admin/admin-ajax.php";
+
+// ── Alert source abstraction ──────────────────────────────
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum AlertSource {
+    Tauron,
+    Water,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+#[allow(non_snake_case)]
+pub struct UnifiedAlert {
+    pub source: AlertSource,
+    pub startDate: Option<String>,
+    pub endDate: Option<String>,
+    pub message: Option<String>,
+    pub description: Option<String>,
+}
+
+// ── MPWiK (water) types ───────────────────────────────────
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct MpwikFailureItem {
+    pub content: Option<String>,
+    pub date_start: Option<String>,
+    pub date_end: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct MpwikResponse {
+    pub failures: Option<Vec<MpwikFailureItem>>,
+}
+
+/// Parse MPWiK date format "DD-MM-YYYY HH:mm" into ISO "YYYY-MM-DDTHH:mm:00".
+pub fn parse_mpwik_date(date_str: &str) -> Option<String> {
+    let parts: Vec<&str> = date_str.splitn(2, ' ').collect();
+    if parts.len() != 2 {
+        return None;
+    }
+    let date_parts: Vec<&str> = parts[0].split('-').collect();
+    if date_parts.len() != 3 {
+        return None;
+    }
+    Some(format!(
+        "{}-{}-{}T{}:00",
+        date_parts[2], date_parts[1], date_parts[0], parts[1]
+    ))
+}
+
+impl MpwikFailureItem {
+    pub fn to_unified(&self) -> UnifiedAlert {
+        UnifiedAlert {
+            source: AlertSource::Water,
+            startDate: self
+                .date_start
+                .as_deref()
+                .and_then(parse_mpwik_date),
+            endDate: self
+                .date_end
+                .as_deref()
+                .and_then(parse_mpwik_date),
+            message: self.content.clone(),
+            description: None,
+        }
+    }
+}
+
+impl OutageItem {
+    pub fn to_unified(&self) -> UnifiedAlert {
+        UnifiedAlert {
+            source: AlertSource::Tauron,
+            startDate: self.StartDate.clone(),
+            endDate: self.EndDate.clone(),
+            message: self.Message.clone(),
+            description: self.Description.clone(),
+        }
+    }
+}
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 #[allow(non_snake_case)]
@@ -38,6 +118,8 @@ pub struct Settings {
     pub theme: Option<String>,
     #[serde(default)]
     pub language: Option<String>,
+    #[serde(default)]
+    pub enabledSources: Option<Vec<String>>,
 }
 
 pub fn get_cities_query(city_name: &str, cache_bust: &str) -> Vec<(&'static str, String)> {
@@ -84,7 +166,10 @@ pub fn load_settings_from_path(path: &std::path::Path) -> Result<Option<Settings
         return Ok(None);
     }
     let data = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
-    let settings: Settings = serde_json::from_str(&data).map_err(|e| e.to_string())?;
+    if data.trim().is_empty() {
+        return Ok(None);
+    }
+    let settings: Settings = serde_json::from_str(&data).map_err(|e| format!("Settings parse error (might be empty/corrupt): {}", e))?;
     Ok(Some(settings))
 }
 
@@ -239,4 +324,44 @@ mod tests {
         assert_eq!(items[0].GAID, Some(101));
         assert!(items[0].Message.is_none());
     }
+
+    #[test]
+    fn test_parse_mpwik_date() {
+        let date = "12-03-2026 08:30";
+        let parsed = parse_mpwik_date(date);
+        assert_eq!(parsed, Some("2026-03-12T08:30:00".to_string()));
+
+        let invalid = "invalid date";
+        assert_eq!(parse_mpwik_date(invalid), None);
+    }
+
+    #[test]
+    fn test_mpwik_to_unified() {
+        let item = MpwikFailureItem {
+            content: Some("Test water outage".to_string()),
+            date_start: Some("12-03-2026 08:30".to_string()),
+            date_end: Some("12-03-2026 16:00".to_string()),
+        };
+        let unified = item.to_unified();
+        assert_eq!(unified.source, AlertSource::Water);
+        assert_eq!(unified.message, Some("Test water outage".to_string()));
+        assert_eq!(unified.startDate, Some("2026-03-12T08:30:00".to_string()));
+        assert_eq!(unified.endDate, Some("2026-03-12T16:00:00".to_string()));
+    }
+
+    #[test]
+    fn test_tauron_to_unified() {
+        let item = OutageItem {
+            GAID: Some(123),
+            Message: Some("Test power outage".to_string()),
+            StartDate: Some("2026-03-12T08:30:00".to_string()),
+            EndDate: Some("2026-03-12T16:00:00".to_string()),
+            Description: Some("Testing".to_string()),
+        };
+        let unified = item.to_unified();
+        assert_eq!(unified.source, AlertSource::Tauron);
+        assert_eq!(unified.message, Some("Test power outage".to_string()));
+        assert_eq!(unified.description, Some("Testing".to_string()));
+    }
 }
+

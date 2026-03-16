@@ -9,6 +9,8 @@ if (typeof document !== 'undefined') {
 // ── Settings ──────────────────────────────────────────────
 
 let currentSettings = null;
+let lastAlerts = [];
+let lastFetchDate = null;
 
 function initSettings() {
     const btn = document.getElementById('settings-btn');
@@ -36,29 +38,23 @@ function initSettings() {
                 cityGAID: 0,
                 streetGAID: 0,
                 theme: newTheme,
-                language: 'system'
+                language: 'system',
+                enabledSources: ['tauron', 'water']
             };
         } else {
             currentSettings.theme = newTheme;
         }
 
-        // Auto-save
-        // We only save if we have a valid structure.
-        // Even if location is empty, we save the preference.
-        try {
-            await window.__TAURI__.core.invoke('save_settings', {
-                settings: currentSettings
-            });
-            console.log('Theme saved:', newTheme);
-        } catch (error) {
-            console.error('Failed to auto-save theme:', error);
-        }
+        await autoSaveSettings();
+        const container = document.getElementById('outages-container');
+        renderAlerts(lastAlerts || [], container, currentSettings);
+        updateLastUpdated();
     });
 
     langSelect.addEventListener('change', async (e) => {
         const newLang = e.target.value;
-        initLanguage(newLang); // comes from i18n.js
-        applyTranslations();   // translates immediately
+        initLanguage(newLang);
+        applyTranslations();
 
         if (!currentSettings) {
             currentSettings = {
@@ -68,27 +64,54 @@ function initSettings() {
                 cityGAID: 0,
                 streetGAID: 0,
                 theme: 'system',
-                language: newLang
+                language: newLang,
+                enabledSources: ['tauron', 'water']
             };
         } else {
             currentSettings.language = newLang;
         }
 
-        try {
-            await window.__TAURI__.core.invoke('save_settings', {
-                settings: currentSettings
-            });
-            // Re-render outages so dates format correctly
-            if (document.getElementById('outages-container').innerHTML !== '' &&
-                !document.getElementById('outages-container').querySelector('.no-outages, .error, .loading')) {
-                // Ideally we shouldn't re-fetch unless needed, but easiest is to re-render what we have,
-                // or just trigger fetchOutages again:
-                fetchOutages();
-            }
-        } catch (error) {
-            console.error('Failed to auto-save lang:', error);
-        }
+        await autoSaveSettings();
+        
+        // Re-render instantly from cache
+        const container = document.getElementById('outages-container');
+        renderAlerts(lastAlerts || [], container, currentSettings);
+        updateLastUpdated();
     });
+
+    // Location Toggle
+    const locTrigger = document.querySelector('#location-settings-collapsible .collapsible-trigger');
+    locTrigger.addEventListener('click', () => {
+        document.getElementById('location-settings-collapsible').classList.toggle('collapsed');
+    });
+
+    ['source-tauron-check', 'source-water-check'].forEach(id => {
+        const checkbox = document.getElementById(id);
+        checkbox.addEventListener('change', () => {
+            if (!currentSettings) return;
+            const enabledSources = [];
+            if (document.getElementById('source-tauron-check').checked) enabledSources.push('tauron');
+            if (document.getElementById('source-water-check').checked) enabledSources.push('water');
+            currentSettings.enabledSources = enabledSources;
+            autoSaveSettings().then(() => {
+                const container = document.getElementById('outages-container');
+                renderAlerts(lastAlerts || [], container, currentSettings);
+                updateLastUpdated();
+            });
+        });
+    });
+
+}
+
+async function autoSaveSettings() {
+    if (!currentSettings) return;
+    try {
+        return await window.__TAURI__.core.invoke('save_settings', {
+            settings: currentSettings
+        });
+    } catch (error) {
+        console.error('Failed to auto-save settings:', error);
+    }
 }
 
 async function loadSettingsAndFetch() {
@@ -113,6 +136,17 @@ async function loadSettingsAndFetch() {
                 document.getElementById('theme-select').value = settings.theme;
             }
             applyTheme(settings.theme || 'system');
+            
+            // Set alert sources
+            const sources = settings.enabledSources || ['tauron', 'water'];
+            document.getElementById('source-tauron-check').checked = sources.includes('tauron');
+            document.getElementById('source-water-check').checked = sources.includes('water');
+
+            // Collapse location if it looks valid
+            if (settings.cityName && settings.cityGAID && settings.streetGAID) {
+                document.getElementById('location-settings-collapsible').classList.add('collapsed');
+            }
+
             fetchOutages();
         } else {
             initLanguage('system');
@@ -189,8 +223,11 @@ async function saveSettings() {
             cityGAID: city.GAID,
             streetGAID: street.GAID,
             theme,
-            language
+            language,
+            enabledSources: []
         };
+        if (document.getElementById('source-tauron-check').checked) newSettings.enabledSources.push('tauron');
+        if (document.getElementById('source-water-check').checked) newSettings.enabledSources.push('water');
 
         await window.__TAURI__.core.invoke('save_settings', {
             settings: newSettings
@@ -206,7 +243,10 @@ async function saveSettings() {
         status.textContent = `${typeof t !== 'undefined' ? t('msg_saved') : '✅ Saved!'} ${city.GAID}, ${typeof t !== 'undefined' ? t('settings_street') + '=' : 'Street='}${street.GAID}`;
         status.className = 'settings-status success';
 
-        // Collapse settings and refresh outages
+        // Collapse location section
+        document.getElementById('location-settings-collapsible').classList.add('collapsed');
+
+        // Collapse entire settings panel and refresh outages
         setTimeout(() => {
             document.getElementById('settings-panel').classList.add('hidden');
             status.textContent = '';
@@ -223,17 +263,11 @@ async function saveSettings() {
 
 function applyTheme(theme) {
     const root = document.documentElement;
-    if (theme === 'dark') {
-        root.setAttribute('data-theme', 'dark');
-    } else if (theme === 'light') {
-        root.setAttribute('data-theme', 'light');
+    if (!theme || theme === 'system') {
+        const sysTheme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        root.setAttribute('data-theme', sysTheme);
     } else {
-        // System default
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            root.setAttribute('data-theme', 'dark');
-        } else {
-            root.setAttribute('data-theme', 'light');
-        }
+        root.setAttribute('data-theme', theme);
     }
 }
 
@@ -285,53 +319,56 @@ function initPullToRefresh() {
     });
 }
 
-// ── Outages ───────────────────────────────────────────────
+// ── Alerts ─────────────────────────────────────────────────
 
 async function fetchOutages() {
     const container = document.getElementById('outages-container');
-    const lastUpdated = document.getElementById('last-updated');
-
     try {
-        const data = await window.__TAURI__.core.invoke('fetch_outages');
-        if (data.debug_query) {
-            console.log('Fetch Outages Query:', data.debug_query);
-        }
-        lastUpdated.textContent = `${typeof t !== 'undefined' ? t('last_updated') : 'Last updated'}: ${new Date().toLocaleTimeString(typeof getLocaleString !== 'undefined' ? getLocaleString() : 'pl-PL')}`;
-        renderOutages(data, container, currentSettings);
+        const alerts = await window.__TAURI__.core.invoke('fetch_all_alerts');
+        lastAlerts = alerts; // Cache for instant re-rendering
+        updateLastUpdated(new Date());
+        renderAlerts(alerts, container, currentSettings);
     } catch (error) {
         console.error('Error fetching data:', error);
-        container.innerHTML = `<div class="error">${typeof t !== 'undefined' ? t('err_load_failed') : 'Failed to load outage data. Error: '}${error}</div>`;
+        container.innerHTML = `<div class="error">${typeof t !== 'undefined' ? t('err_load_failed') : 'Failed to load alert data. Error: '}${error}</div>`;
     }
 }
 
-function filterOutages(allOutages, streetName, settings) {
-    if (!allOutages) return [];
+function updateLastUpdated(date) {
+    if (date) lastFetchDate = date;
+    const el = document.getElementById('last-updated');
+    if (!el) return;
+    
+    if (!lastFetchDate) {
+        el.textContent = typeof t !== 'undefined' ? t('checking_updates') : 'Checking for updates...';
+        return;
+    }
+    
+    // We remove data-i18n so applyTranslations doesn't overwrite our manual timestamp
+    el.removeAttribute('data-i18n');
+    
+    const localeStr = typeof getLocaleString !== 'undefined' ? getLocaleString() : 'pl-PL';
+    const label = typeof t !== 'undefined' ? t('last_updated') : 'Last updated';
+    el.textContent = `${label}: ${lastFetchDate.toLocaleTimeString(localeStr)}`;
+}
 
-    // Normalize street name: remove "ul.", "al.", etc. and split into words
+function filterAlerts(alerts, streetName) {
+    if (!alerts || !streetName) return [];
+
     const normalize = (name) => name.replace(/^(ul\.|al\.|pl\.|os\.|rondo)\s*/i, '').trim();
     const fullStreet = normalize(streetName);
 
     if (!fullStreet) return [];
 
-    // Significant words are those with length >= 3
     const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const significantWords = fullStreet.split(/\s+/).filter(word => word.length >= 3);
 
-    return allOutages.filter(item => {
-        // 1. Check GAID match if available
-        if (settings && settings.streetGAID && item.GAID === settings.streetGAID) {
-            return true;
-        }
+    return alerts.filter(item => {
+        if (!item.message) return false;
+        const message = item.message;
 
-        if (!item.Message || !streetName) return false;
-
-        const message = item.Message;
-
-        // 2. Check full street name (original behavior)
         if (message.includes(streetName)) return true;
 
-        // 3. Check significant words with word boundaries
-        // This prevents "Main" from matching "Maintenance"
         return significantWords.some(word => {
             const regex = new RegExp(`\\b${escapeRegExp(word)}\\b`);
             return regex.test(message);
@@ -339,56 +376,155 @@ function filterOutages(allOutages, streetName, settings) {
     });
 }
 
-function renderOutages(data, container, settings) {
-    const rawOutages = data.OutageItems || [];
+// Legacy wrapper — used by old filterOutages tests
+function filterOutages(allOutages, streetName, settings) {
+    if (!allOutages) return [];
+
+    const normalize = (name) => name.replace(/^(ul\.|al\.|pl\.|os\.|rondo)\s*/i, '').trim();
+    const fullStreet = normalize(streetName);
+
+    if (!fullStreet) return [];
+
+    const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const significantWords = fullStreet.split(/\s+/).filter(word => word.length >= 3);
+
+    return allOutages.filter(item => {
+        if (settings && settings.streetGAID && item.GAID === settings.streetGAID) {
+            return true;
+        }
+
+        if (!item.Message && !item.message) return false;
+        if (!streetName) return false;
+
+        const message = item.Message || item.message || '';
+
+        if (message.includes(streetName)) return true;
+
+        return significantWords.some(word => {
+            const regex = new RegExp(`\\b${escapeRegExp(word)}\\b`);
+            return regex.test(message);
+        });
+    });
+}
+
+function renderAlerts(alerts, container, settings) {
     const now = new Date();
 
-    // Global Filter: remove finished outages
-    const allOutages = rawOutages.filter(item => {
-        if (!item.EndDate) return true;
-        const end = new Date(item.EndDate);
+    // Filter by enabled sources and finished status
+    const enabledSources = (settings && settings.enabledSources) ? settings.enabledSources : ['tauron', 'water'];
+    const activeAlerts = alerts.filter(item => {
+        // Source filter
+        if (!enabledSources.includes(item.source)) return false;
+
+        // Date filter
+        if (!item.endDate) return true;
+        const end = new Date(item.endDate);
         return isNaN(end.getTime()) || end > now;
     });
 
-    let streetName = '';
-    if (settings && settings.streetName) {
-        streetName = settings.streetName;
-    }
+    // Group by source
+    const tauronAlerts = activeAlerts.filter(a => a.source === 'tauron');
+    const waterAlerts = activeAlerts.filter(a => a.source === 'water');
 
-    const localOutages = filterOutages(allOutages, streetName, settings);
-    const localSet = new Set(localOutages);
+    // For Tauron, split into local vs other
+    const streetName = (settings && settings.streetName) ? settings.streetName : '';
+
+    const localTauron = streetName
+        ? tauronAlerts.filter(a => {
+            // Check by content matching
+            if (a.message && a.message.includes(streetName)) return true;
+            const normalize = (name) => name.replace(/^(ul\.|al\.|pl\.|os\.|rondo)\s*/i, '').trim();
+            const fullStreet = normalize(streetName);
+            const significantWords = fullStreet.split(/\s+/).filter(w => w.length >= 3);
+            const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            return significantWords.some(word => {
+                const regex = new RegExp(`\\b${escapeRegExp(word)}\\b`);
+                return a.message && regex.test(a.message);
+            });
+        })
+        : [];
+    const localTauronSet = new Set(localTauron);
+    const otherTauron = tauronAlerts.filter(a => !localTauronSet.has(a));
+
+    // For water, search by street name in content
+    const localWater = streetName ? filterAlerts(waterAlerts, streetName) : [];
+    const localWaterSet = new Set(localWater);
+    const otherWater = waterAlerts.filter(a => !localWaterSet.has(a));
 
     container.innerHTML = '';
 
-    // Local outages section
-    if (localOutages.length > 0) {
+    const hasLocalAlerts = localTauron.length > 0 || localWater.length > 0;
+
+    // ── Your Location section ──
+    if (hasLocalAlerts) {
         const lblYourLoc = typeof t !== 'undefined' ? t('lbl_your_location') : 'Your location';
-        container.innerHTML += `<div class="section-label">${lblYourLoc} (${localOutages.length})</div>`;
-        container.innerHTML += renderCards(localOutages);
+        container.innerHTML += `<div class="section-label">${lblYourLoc} (${localTauron.length + localWater.length})</div>`;
+        container.innerHTML += renderCards(localTauron, 'tauron');
+        container.innerHTML += renderCards(localWater, 'water');
     } else {
         const msgNoLoc = typeof t !== 'undefined' ? t('msg_no_outages_local') : 'No planned outages for your location.';
         container.innerHTML += `<div class="no-outages">${msgNoLoc}</div>`;
     }
 
-    // All outages section
-    const otherOutages = allOutages.filter(item => !localSet.has(item));
-    if (otherOutages.length > 0) {
-        const lblOther = typeof t !== 'undefined' ? t('lbl_other_outages') : 'Other outages';
-        container.innerHTML += `<div class="section-label other">${lblOther} (${otherOutages.length})</div>`;
-        container.innerHTML += renderCards(otherOutages);
+    // ── Other Alerts Divider ──
+    if (otherTauron.length > 0 || otherWater.length > 0) {
+        const lblDivider = typeof t !== 'undefined' ? t('lbl_other_alerts_divider') : 'Other alerts';
+        container.innerHTML += `<div class="section-label">${lblDivider}</div>`;
+    }
+
+    // ── Other Tauron section ──
+    if (otherTauron.length > 0) {
+        const lblSection = typeof t !== 'undefined' ? t('lbl_section_tauron') : 'Power (Tauron)';
+        container.innerHTML += `
+            <div class="collapsible source-tauron collapsed">
+                <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
+                    <span>${lblSection} (${otherTauron.length})</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="collapsible-content">
+                    ${renderCards(otherTauron, 'tauron')}
+                </div>
+            </div>
+        `;
+    }
+
+    // ── Other Water section ──
+    if (otherWater.length > 0) {
+        const lblSection = typeof t !== 'undefined' ? t('lbl_section_water') : 'Water (MPWiK)';
+        container.innerHTML += `
+            <div class="collapsible source-water collapsed">
+                <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
+                    <span>${lblSection} (${otherWater.length})</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="collapsible-content">
+                    ${renderCards(otherWater, 'water')}
+                </div>
+            </div>
+        `;
+    }
+
+
+    // If nothing at all
+    if (activeAlerts.length === 0) {
+        const msgNone = typeof t !== 'undefined' ? t('msg_no_alerts') : 'No active alerts.';
+        container.innerHTML = `<div class="no-outages">${msgNone}</div>`;
     }
 }
 
-function renderCards(outages) {
-    const plannedLbl = typeof t !== 'undefined' ? t('lbl_planned_outage') : 'Planned Outage';
-    return outages.map(item => `
-        <div class="card">
-            <span class="outage-type">${plannedLbl}</span>
+function renderCards(alerts, source) {
+    const sourceLabel = source === 'water'
+        ? (typeof t !== 'undefined' ? t('source_water') : '💧 Water Outage')
+        : (typeof t !== 'undefined' ? t('source_tauron') : '⚡ Power Outage');
+
+    return alerts.map(item => `
+        <div class="card source-${source}">
+            <span class="outage-type">${sourceLabel}</span>
             <div class="outage-time">
-                ${formatDate(item.StartDate)} – ${formatDate(item.EndDate)}
+                ${formatDate(item.startDate)} – ${formatDate(item.endDate)}
             </div>
-            ${item.Description ? `<div class="outage-reason">${item.Description}</div>` : ''}
-            ${item.Message ? `<div class="outage-message">${item.Message}</div>` : ''}
+            ${item.description ? `<div class="outage-reason">${item.description}</div>` : ''}
+            ${item.message ? `<div class="outage-message">${item.message}</div>` : ''}
         </div>
     `).join('');
 }
@@ -410,6 +546,8 @@ function formatDate(dateString) {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         filterOutages,
+        filterAlerts,
         formatDate
     };
 }
+

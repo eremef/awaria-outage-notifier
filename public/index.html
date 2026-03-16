@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title data-i18n="title">Tauron Outages</title>
+    <title data-i18n="title">Outage Alerts</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -12,7 +12,7 @@
     <div class="container">
         <button id="settings-btn" class="settings-btn" title="Settings">⚙️</button>
         <header>
-            <h1 data-i18n="title">Tauron Outages</h1>
+            <h1 data-i18n="title">Outage Alerts</h1>
             <p id="last-updated" data-i18n="checking_updates">Checking for updates...</p>
         </header>
 
@@ -24,6 +24,11 @@
                     <option value="system" data-i18n="theme_system">System Default</option>
                     <option value="light" data-i18n="theme_light">Light</option>
                     <option value="dark" data-i18n="theme_dark">Dark</option>
+                    <option value="emerald" data-i18n="theme_emerald">Emerald (Light)</option>
+                    <option value="ocean" data-i18n="theme_ocean">Ocean (Dark)</option>
+                    <option value="nord" data-i18n="theme_nord">Nord (Arctic)</option>
+                    <option value="dracula" data-i18n="theme_dracula">Dracula (Vampire)</option>
+                    <option value="sepia" data-i18n="theme_sepia">Sepia (Warm Light)</option>
                 </select>
             </div>
             
@@ -36,27 +41,44 @@
                 </select>
             </div>
 
-            <div class="settings-title" data-i18n="settings_location">Location Settings</div>
-            <div class="settings-field">
-                <label for="city-input" data-i18n="settings_city">City</label>
-                <input type="text" id="city-input" data-i18n="settings_city_placeholder" placeholder="e.g. Wrocław">
+            <div class="settings-title" data-i18n="settings_sources">Alert Sources</div>
+            <div class="settings-field-row">
+                <input type="checkbox" id="source-tauron-check" checked>
+                <label for="source-tauron-check" data-i18n="source_tauron_short">Power (Tauron)</label>
             </div>
-            <div class="settings-field">
-                <label for="street-input" data-i18n="settings_street">Street</label>
-                <input type="text" id="street-input" data-i18n="settings_street_placeholder" placeholder="e.g. Kuźnicza">
+            <div class="settings-field-row">
+                <input type="checkbox" id="source-water-check" checked>
+                <label for="source-water-check" data-i18n="source_water_short">Water (MPWiK)</label>
             </div>
-            <div class="settings-field">
-                <label for="house-input" data-i18n="settings_house">House No</label>
-                <input type="text" id="house-input" data-i18n="settings_house_placeholder" placeholder="e.g. 25">
+
+            <div id="location-settings-collapsible" class="collapsible">
+                <div class="settings-title collapsible-trigger" data-i18n="settings_location">
+                    <span>Location Settings</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="collapsible-content">
+                    <div class="settings-field">
+                        <label for="city-input" data-i18n="settings_city">City</label>
+                        <input type="text" id="city-input" data-i18n="settings_city_placeholder" placeholder="e.g. Wrocław">
+                    </div>
+                    <div class="settings-field">
+                        <label for="street-input" data-i18n="settings_street">Street</label>
+                        <input type="text" id="street-input" data-i18n="settings_street_placeholder" placeholder="e.g. Kuźnicza">
+                    </div>
+                    <div class="settings-field">
+                        <label for="house-input" data-i18n="settings_house">House No</label>
+                        <input type="text" id="house-input" data-i18n="settings_house_placeholder" placeholder="e.g. 25">
+                    </div>
+                    <div id="settings-status" class="settings-status"></div>
+                    <button id="save-settings-btn" class="save-btn" data-i18n="settings_save">Save & Lookup</button>
+                </div>
             </div>
-            <div id="settings-status" class="settings-status"></div>
-            <button id="save-settings-btn" class="save-btn" data-i18n="settings_save">Save & Lookup</button>
         </div>
 
         <div id="pull-indicator" class="pull-indicator" data-i18n="refresh_pull">↻ Release to refresh</div>
 
         <main id="outages-container">
-            <div class="loading" data-i18n="loading_data">Loading outage data...</div>
+            <div class="loading" data-i18n="loading_data">Loading alert data...</div>
         </main>
     </div>
     <script src="i18n.js"></script>

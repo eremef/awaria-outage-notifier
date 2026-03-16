@@ -1,33 +1,41 @@
-# Tauron Outages Notifier
-
+# AWARIA (Outage Notifier)
 
 <p align="center">
-  <img width="802" height="632" alt="image" src="https://github.com/user-attachments/assets/537753c4-411d-4b76-9f5a-4709f00b56cf" />
+  <img width="802" height="632" alt="AWARIA Preview" src="https://github.com/user-attachments/assets/537753c4-411d-4b76-9f5a-4709f00b56cf" />
 </p>
 
-A desktop (Tauri) and Android app to check for planned power outages in your area using the Tauron API.
+A modern desktop (Tauri) and Android application providing real-time alerts for planned and emergency outages. **AWARIA** aggregates data from multiple utility providers into a centralized, beautiful interface.
 
 ## Downloads
 
-https://eremef.xyz/tauron-notifier
+https://eremef.xyz/awaria
+
+## Supported Sources
+
+- **⚡ Power (Tauron)**: Planned maintenance and emergency power outages.
+- **💧 Water (MPWiK)**: Water failures and maintenance work (currently Wrocław area).
+- *More sources coming soon...*
 
 ## Android app
 
 <p align="center">
- <img width="300" alt="Image" src="https://github.com/user-attachments/assets/7e9cefe4-16b4-498c-bfaf-cb998cf22a40" />
+ <img width="300" alt="Android Widget" src="https://github.com/user-attachments/assets/7e9cefe4-16b4-498c-bfaf-cb998cf22a40" />
 </p>
 
 ## Features
 
-- **Desktop & Android Support**: Built with Tauri v2.
-- **Dynamic Configuration**: Set your City, Street, and House Number in the app.
+- **Multi-Source Logic**: Aggregates alerts from different utility providers (Power, Water, etc.).
+- **Source Selection**: Customize which types of outages you want to see in the settings.
+- **Smart Address Matching**: Highlights alerts affecting your specific address while keeping you informed about the surrounding area.
+- **Premium Design**:
+  - **Modern Interface**: Indigo-based "friendly" UI with vibrant source indicators (Rose/Sky).
+  - **Collapsible categories**: Organized view of "Your Location" vs "Other Outages".
+  - **Responsive Dark/Light mode**: Native transition support.
 - **Android Widget**:
-  - Shows outage count for your specific street.
-  - "Tap to refresh" functionality.
-  - Reads settings shared with the main app.
-- **Smart Filtering**: Displays outages relevant to your specific address while still showing other outages in the area.
-- **Language setting**: Choice between Polish and English
-- **Themes setting**: Choice between light and dark theme
+  - Aggregated outage count for your specific street.
+  - One-tap refresh.
+  - Shared configuration with the main app.
+- **Privacy First**: No cloud accounts. Your location and settings stay on your device.
 
 ## Prerequisites
 
@@ -83,22 +91,21 @@ npm run android:build
 The APK will be located at:
 `src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk`
 
-> **Note**: You may need to sign the APK or configure signing keys in `build.gradle.kts` for a release version.
-
 ## Architecture
 
-- **Frontend**: Vanilla HTML/JS/CSS in `public/`.
-- **Backend (Rust)**: `src-tauri/src/lib.rs` handles API requests (`fetch_outages`, `lookup_city`, `lookup_street`) and file persistence.
-- **Android Widget**: `src-tauri/gen/android/app/src/main/java/xyz/eremef/tauron_notifier/OutageWidgetProvider.kt` implements the home screen widget using native Android APIs and reads the shared `settings.json`.
+- **Frontend**: Vanilla HTML/JS/CSS in `public/`. Indigo design system with custom HSL tokens.
+- **Backend (Rust)**: `src-tauri/src/lib.rs` orchestrates asynchronous fetching from multiple APIs and converts them to a `UnifiedAlert` format.
+- **Android Widget**: Native implementation in `OutageWidgetProvider.kt` that sums alerts from all enabled providers.
 
 ## Settings
 
 Settings are stored in `settings.json` in the app's data directory:
 
-- **Desktop**: `%APPDATA%\xyz.eremef.tauron_notifier\` (Windows)
-- **Android**: `/data/user/0/xyz.eremef.tauron_notifier/files/`
+- **Desktop**: `%APPDATA%\xyz.eremef.awaria\` (Windows)
+- **Android**: `/data/user/0/xyz.eremef.awaria/files/`
 
 ## Troubleshooting
 
-- **Widget shows "?"**: The settings haven't been configured yet. Open the main app, go to Settings, and save your location.
-- **API Errors**: The Tauron API might be down or blocking requests. The app uses a hardcoded `Referer` header to mimic a browser.
+- **Widget shows "?"**: The settings haven't been configured yet. Open the main app and set your location.
+- **EOF Errors**: Most likely a temporary race condition during settings sync. The app includes resilient logic to retry or fall back to defaults.
+- **Missing Alerts**: Check if you have the specific outage category enabled in the settings.

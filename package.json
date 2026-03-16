@@ -1,7 +1,7 @@
 {
-  "name": "tauron-notifier",
+  "name": "awaria",
   "version": "1.0.9-beta",
-  "description": "Tauron outage notifier — Tauri desktop & Android app",
+  "description": "Outage notifier — Tauri desktop & Android app",
   "scripts": {
     "tauri": "tauri",
     "build": "tauri build",

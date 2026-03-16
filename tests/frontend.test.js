@@ -1,9 +1,9 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect } from 'vitest';
-const { filterOutages, formatDate } = require('../public/script.js');
+const { filterOutages, filterAlerts, formatDate } = require('../public/script.js');
 
 describe('Frontend Logic', () => {
-    describe('filterOutages', () => {
+    describe('filterOutages (legacy)', () => {
         const mockOutages = [
             { Message: 'Planned outage at Henryka Probusa 12, Wrocław', GAID: 100 },
             { Message: 'Awaria na Probusa 5', GAID: 101 },
@@ -29,7 +29,6 @@ describe('Frontend Logic', () => {
         });
 
         it('finds outages by GAID even if text does not match', () => {
-            // "Rozbrat" search should find "Wrocław Probusa.." if GAID matches
             const filtered = filterOutages(mockOutages, 'Rozbrat', { streetGAID: 105 });
             expect(filtered.some(o => o.Message === 'Wrocław Probusa..')).toBe(true);
         });
@@ -45,13 +44,45 @@ describe('Frontend Logic', () => {
         });
     });
 
+    describe('filterAlerts (unified)', () => {
+        const mockAlerts = [
+            { source: 'water', message: 'Prace na sieci wodociągowej na ulicy Gajowicka', startDate: '2026-03-12T08:30:00', endDate: '2026-04-30T00:00:00' },
+            { source: 'water', message: 'Awaria sieci wodociągowej ul. Kuźnicza 12', startDate: '2026-03-17T08:00:00', endDate: '2026-03-17T16:00:00' },
+            { source: 'water', message: 'Remont na Legnicka 10', startDate: '2026-03-16T06:00:00', endDate: '2026-03-16T18:00:00' },
+        ];
+
+        it('finds water alerts matching the street name', () => {
+            const filtered = filterAlerts(mockAlerts, 'Gajowicka');
+            expect(filtered).toHaveLength(1);
+            expect(filtered[0].message).toContain('Gajowicka');
+        });
+
+        it('finds alerts matching significant words', () => {
+            const filtered = filterAlerts(mockAlerts, 'Kuźnicza');
+            expect(filtered).toHaveLength(1);
+            expect(filtered[0].message).toContain('Kuźnicza');
+        });
+
+        it('returns empty array when no match', () => {
+            const filtered = filterAlerts(mockAlerts, 'Rozbrat');
+            expect(filtered).toHaveLength(0);
+        });
+
+        it('returns empty array for empty street name', () => {
+            const filtered = filterAlerts(mockAlerts, '');
+            expect(filtered).toHaveLength(0);
+        });
+
+        it('returns empty array for null alerts', () => {
+            const filtered = filterAlerts(null, 'Gajowicka');
+            expect(filtered).toHaveLength(0);
+        });
+    });
+
     describe('formatDate', () => {
         it('formats a date string correctly in pl-PL locale', () => {
-            // "2024-02-12T10:30:00"
             const dateStr = '2024-02-12T10:30:00';
             const formatted = formatDate(dateStr);
-            // Expected format depends on exact system locale, but should contain these components
-            // In pl-PL: "pn., 12 lut, 10:30" or similar
             expect(formatted).toMatch(/12/);
             expect(formatted).toMatch(/10:30/);
         });
@@ -62,3 +93,4 @@ describe('Frontend Logic', () => {
         });
     });
 });
+

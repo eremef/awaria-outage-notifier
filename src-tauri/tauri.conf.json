@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "tauron-notifier",
-      "version": "1.0.9",
-  "identifier": "xyz.eremef.tauron-notifier",
+  "productName": "awaria",
+  "version": "1.0.9",
+  "identifier": "xyz.eremef.awaria",
   "build": {
     "frontendDist": "../public"
   },
@@ -10,7 +10,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "Tauron Notifier",
+        "title": "AWARIA",
         "width": 800,
         "height": 600,
         "resizable": true,

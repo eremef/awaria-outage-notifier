@@ -121,4 +121,30 @@ class OutageWidgetTest {
         val count = provider.parseOutageItems(json, "Rozbrat")
         assertEquals(2, count) // Future and No Date should be counted
     }
+
+    @Test
+    fun testParseMpwikItems() {
+        val now = java.util.Date()
+        val format = java.text.SimpleDateFormat("dd-MM-yyyy HH:mm", java.util.Locale.getDefault())
+        
+        val pastDate = format.format(java.util.Date(now.time - 3600000))
+        val futureDate = format.format(java.util.Date(now.time + 3600000))
+
+        val json = """
+            {
+                "failures": [
+                    { "content": "Water outage at Gajowicka", "date_end": "${futureDate}" },
+                    { "content": "Maintenance at Kuźnicza", "date_end": "${futureDate}" },
+                    { "content": "Old work at Gajowicka", "date_end": "${pastDate}" }
+                ]
+            }
+        """.trimIndent()
+
+        val count = provider.parseMpwikItems(json, "Gajowicka")
+        assertEquals(1, count)
+        
+        val count2 = provider.parseMpwikItems(json, "Kuźnicza")
+        assertEquals(1, count2)
+    }
 }
+
