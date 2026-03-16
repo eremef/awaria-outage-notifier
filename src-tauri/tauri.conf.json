@@ -1,6 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "awaria",
+  "productName": "Awaria",
   "version": "1.0.10",
   "identifier": "xyz.eremef.awaria",
   "build": {
@@ -10,7 +10,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "AWARIA",
+        "title": "Awaria",
         "width": 800,
         "height": 600,
         "resizable": true,
