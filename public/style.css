@@ -132,25 +132,25 @@
 }
 
 [data-theme="sepia"] {
-    /* Warm Paper Theme */
-    --primary-color: #b58900; /* Solarized Yellow */
-    --background-color: #fdf6e3; 
-    --card-background: #eee8d5; 
-    --text-color: #586e75; 
-    --secondary-text: #93a1a1; 
-    --shadow: 0 4px 10px rgba(0,0,0,0.05);
-    --input-border: #d3368222; /* Pink-ish tint */
-    --input-focus: #b58900;
-    --error-bg: #dc322f22;
-    --error-text: #dc322f;
-    --error-border: #dc322f44;
-    --success-bg: #85990022;
-    --success-text: #859900;
-    --success-border: #85990044;
-    --message-border: #d3368211;
-    --label-border: #d3368222;
-    --tauron-color: #cb4b16; /* Solarized Orange */
-    --water-color: #268bd2;  /* Solarized Blue */
+    /* Authentic Antique Sepia */
+    --primary-color: #704214; /* Deep Umber */
+    --background-color: #f4ecd8; /* Antique Parchment */
+    --card-background: #fdf9f0; 
+    --text-color: #433422; /* Dark Walnut */
+    --secondary-text: #70665b; /* Dusty Earth */
+    --shadow: 0 4px 12px rgba(67, 52, 34, 0.08);
+    --input-border: #e0d5ba;
+    --input-focus: #704214;
+    --error-bg: #f8edeb;
+    --error-text: #bc4749;
+    --error-border: #e8d7d5;
+    --success-bg: #f0f4f0;
+    --success-text: #6a994e;
+    --success-border: #d8e5d8;
+    --message-border: #e0d5ba;
+    --label-border: #d6ccb2;
+    --tauron-color: #8b4513; /* Saddle Brown */
+    --water-color: #556b2f;  /* Dark Olive */
 }
 
 [data-theme="latte"] {
