@@ -14,9 +14,6 @@ build
 .cxx
 local.properties
 key.properties
-keystore.properties
-tauron-release.keystore
-
 
 /.tauri
 /tauri.settings.gradle

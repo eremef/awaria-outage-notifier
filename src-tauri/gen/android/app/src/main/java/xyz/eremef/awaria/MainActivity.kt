@@ -1,4 +1,4 @@
-package xyz.eremef.tauron_notifier
+package xyz.eremef.awaria
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge

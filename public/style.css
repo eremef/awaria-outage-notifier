@@ -154,25 +154,29 @@
 }
 
 [data-theme="latte"] {
-    /* Catppuccin Latte */
-    --primary-color: #1e66f5; /* Blue */
-    --background-color: #eff1f5; 
-    --card-background: #e6e9ef; 
-    --text-color: #4c4f69; 
-    --secondary-text: #6c6f85; 
-    --shadow: 0 4px 6px rgba(0,0,0,0.05);
-    --input-border: #ccd0da;
-    --input-focus: #1e66f5;
-    --error-bg: #d20f3922;
-    --error-text: #d20f39;
-    --error-border: #d20f3944;
-    --success-bg: #40a02b22;
-    --success-text: #40a02b;
-    --success-border: #40a02b44;
-    --message-border: #ccd0da;
-    --label-border: #ccd0da;
-    --tauron-color: #fe640b; /* Peach */
-    --water-color: #04a5e5;  /* Sky */
+    /* Legit Cafe Latte Theme */
+    --primary-color: #967259; /* Espresso Brown */
+    --background-color: #fdfaf6; /* Steamed Milk */
+    --card-background: #ffffff;
+    --text-color: #3c2f2f; /* Dark Roast */
+    --secondary-text: #705d56;
+    --shadow: 0 4px 12px rgba(150, 114, 89, 0.08);
+    --input-border: #f1e4d8; /* Light Creama */
+    --input-focus: #967259;
+    --error-bg: #f8edeb;
+    --error-text: #bc4749;
+    --error-border: #e8d7d5;
+    --success-bg: #f0f4f0;
+    --success-text: #6a994e;
+    --success-border: #d8e5d8;
+    --message-border: #f1e4d8;
+    --label-border: #ede0d4;
+    --tauron-color: #bc6c25; /* Golden Caramel */
+    --water-color: #588157;  /* Muted Sage */
+}
+
+* {
+    box-sizing: border-box;
 }
 
 body {
@@ -243,7 +247,7 @@ h1 {
 
 .settings-panel {
     background: var(--card-background);
-    border-radius: 8px;
+    border-radius: 12px;
     padding: 1.25rem;
     margin-bottom: 1.5rem;
     box-shadow: var(--shadow);
@@ -255,14 +259,18 @@ h1 {
 }
 
 .settings-title {
-    font-weight: 600;
-    font-size: 1rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     color: var(--primary-color);
     margin-bottom: 1rem;
+    border-bottom: 1px solid var(--message-border);
+    padding-bottom: 0.5rem;
 }
 
 .settings-field {
-    margin-bottom: 0.75rem;
+    margin-bottom: 1rem;
 }
 
 .settings-field label {
@@ -270,9 +278,7 @@ h1 {
     font-size: 0.8rem;
     font-weight: 600;
     color: var(--secondary-text);
-    margin-bottom: 0.25rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    margin-bottom: 0.4rem;
 }
 
 .settings-field-row {
@@ -283,8 +289,9 @@ h1 {
 }
 
 .settings-field-row input[type="checkbox"] {
-    width: auto;
-    margin: 0;
+    width: 1.2rem;
+    height: 1.2rem;
+    cursor: pointer;
 }
 
 .settings-field-row label {
@@ -297,14 +304,16 @@ h1 {
 
 .settings-field input,
 .settings-field select {
+    appearance: none;
+    -webkit-appearance: none;
     width: 100%;
-    padding: 0.6rem 0.75rem;
+    padding: 0.8rem;
     border: 1px solid var(--input-border);
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 0.95rem;
     font-family: inherit;
     box-sizing: border-box;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s;
     background-color: var(--card-background);
     color: var(--text-color);
 }
@@ -313,26 +322,27 @@ h1 {
 .settings-field select:focus {
     outline: none;
     border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
 .save-btn {
     width: 100%;
-    padding: 0.8rem;
+    padding: 1rem;
     background: var(--primary-color);
     color: white;
     border: none;
     border-radius: 12px;
-    font-size: 0.95rem;
-    font-weight: 600;
+    font-size: 1rem;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    margin-top: 0.75rem;
-    box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.2);
+    margin-top: 1rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .save-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
 }
 
 .save-btn:active {
@@ -348,8 +358,9 @@ h1 {
 
 .settings-status {
     font-size: 0.85rem;
-    padding: 0.4rem 0;
+    padding: 0.5rem 0;
     min-height: 1.2em;
+    font-weight: 500;
 }
 
 .settings-status.error {
@@ -368,12 +379,15 @@ h1 {
     padding: 1.25rem;
     margin-bottom: 1rem;
     box-shadow: var(--shadow);
-    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s, background-color 0.3s ease;
     border: 1px solid var(--message-border);
+    position: relative;
+    overflow: hidden;
 }
 
 .card:hover {
     transform: translateY(-3px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 .outage-type {
@@ -404,22 +418,26 @@ h1 {
 
 
 .outage-time {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
+    font-weight: 600;
     margin-bottom: 0.5rem;
     color: var(--text-color);
 }
 
 .outage-reason {
     color: var(--secondary-text);
+    font-size: 0.9rem;
+    line-height: 1.5;
 }
 
 .no-outages {
     text-align: center;
-    padding: 1rem;
+    padding: 1.5rem;
     background-color: var(--success-bg);
     color: var(--success-text);
-    border-radius: 8px;
+    border-radius: 12px;
     border: 1px solid var(--success-border);
+    margin: 1rem 0;
 }
 
 .error {
@@ -427,15 +445,18 @@ h1 {
     padding: 2rem;
     background-color: var(--error-bg);
     color: var(--error-text);
-    border-radius: 8px;
+    border-radius: 12px;
     border: 1px solid var(--error-border);
 }
 
 .loading {
     text-align: center;
     color: var(--secondary-text);
-    padding: 2rem;
+    padding: 3rem;
+    font-weight: 500;
 }
+
+/* ── Section Dividers ──────────────────────── */
 
 .section-label {
     font-weight: 700;
@@ -452,39 +473,61 @@ h1 {
 .section-label::after {
     content: "";
     flex: 1;
-    height: 2px;
+    height: 1px;
     background: var(--label-border);
+    opacity: 0.6;
     border-radius: 2px;
 }
 
 .section-label.other {
-    color: var(--secondary-text);
+    background: var(--card-background);
+    color: var(--primary-color);
+    padding: 0.75rem 1.25rem;
+    border-radius: 100px;
+    margin-top: 2.5rem;
+    border: 1px solid var(--message-border);
+    font-size: 0.8rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.section-label.other::after {
+    display: none;
+}
+
+.collapsible.source-tauron .section-label.other {
+    color: var(--tauron-color);
+}
+
+.collapsible.source-water .section-label.other {
+    color: var(--water-color);
 }
 
 .other-divider {
     text-align: center;
     display: flex;
     justify-content: center;
-    margin: 3rem 0 2rem;
+    margin: 4rem 0 2rem;
 }
 
 .other-divider span {
     background: var(--label-border);
     color: var(--secondary-text);
-    padding: 0.4rem 1rem;
+    padding: 0.5rem 1.25rem;
     border-radius: 100px;
-    font-size: 0.75rem;
-    font-weight: 700;
+    font-size: 0.7rem;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.15em;
 }
 
 .outage-message {
-    margin-top: 0.5rem;
+    margin-top: 0.75rem;
     font-size: 0.95rem;
     color: var(--text-color);
     border-top: 1px solid var(--message-border);
-    padding-top: 0.25rem;
+    padding-top: 0.5rem;
+    line-height: 1.4;
 }
 
 /* ── Pull to Refresh ───────────────────────── */
@@ -529,19 +572,19 @@ h1 {
     margin-top: 1rem;
 }
 
-.collapsible .section-label,
+.collapsible .section-label.other,
 .collapsible-trigger {
     display: flex;
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
-    margin-top: 0;
+    margin-top: 1rem;
     user-select: none;
 }
 
 .collapsible .toggle-icon {
     font-size: 0.8rem;
-    transition: transform 0.3s ease;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: inline-block;
 }
 
@@ -552,7 +595,7 @@ h1 {
 .collapsible-content {
     max-height: 5000px; /* Large enough */
     overflow: hidden;
-    transition: max-height 0.3s ease-out, opacity 0.3s ease;
+    transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
 }
 
 .collapsible.collapsed .collapsible-content {

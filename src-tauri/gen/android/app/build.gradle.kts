@@ -13,31 +13,16 @@ val tauriProperties = Properties().apply {
     }
 }
 
-val keystoreProperties = Properties().apply {
-    val propFile = rootProject.file("keystore.properties")
-    if (propFile.exists()) {
-        propFile.inputStream().use { load(it) }
-    }
-}
-
 android {
     compileSdk = 36
-    namespace = "xyz.eremef.tauron_notifier"
+    namespace = "xyz.eremef.awaria"
     defaultConfig {
         manifestPlaceholders["usesCleartextTraffic"] = "false"
-        applicationId = "xyz.eremef.tauron_notifier"
+        applicationId = "xyz.eremef.awaria"
         minSdk = 24
         targetSdk = 36
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
-    }
-    signingConfigs {
-        create("release") {
-            storeFile = file(keystoreProperties.getProperty("storeFile", ""))
-            storePassword = keystoreProperties.getProperty("storePassword", "")
-            keyAlias = keystoreProperties.getProperty("keyAlias", "")
-            keyPassword = keystoreProperties.getProperty("keyPassword", "")
-        }
     }
     buildTypes {
         getByName("debug") {
@@ -52,7 +37,6 @@ android {
             }
         }
         getByName("release") {
-            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             proguardFiles(
                 *fileTree(".") { include("**/*.pro") }
@@ -76,13 +60,9 @@ rust {
 dependencies {
     implementation("androidx.webkit:webkit:1.14.0")
     implementation("androidx.appcompat:appcompat:1.7.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("androidx.activity:activity-ktx:1.10.1")
-    implementation("androidx.work:work-runtime-ktx:2.10.0")
     implementation("com.google.android.material:material:1.12.0")
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.json:json:20240303")
-    testImplementation("org.robolectric:robolectric:4.14.1")
     androidTestImplementation("androidx.test.ext:junit:1.1.4")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.0")
 }
