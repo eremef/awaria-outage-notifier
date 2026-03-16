@@ -98,7 +98,7 @@ jobs:
 
           if [ -d "$XCARCHIVE_PATH" ]; then
              echo "Found xcarchive at $XCARCHIVE_PATH"
-             APP_PATH="$XCARCHIVE_PATH/Products/Applications/tauron-notifier.app"
+             APP_PATH=$(find "$XCARCHIVE_PATH/Products/Applications" -name "*.app" | head -n 1)
           else
              echo "xcarchive not found, checking for .app directly..."
              # Fallback to direct app path (standard derived data or build output)
