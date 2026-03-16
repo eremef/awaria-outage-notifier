@@ -1,7 +1,8 @@
-# AWARIA (Outage Notifier)
+# AWARIA - Aplikacja Wygodnego Alarmowanie o Remontach i Infrastrukturalnych Awariach
 
 <p align="center">
-  <img width="802" height="632" alt="AWARIA Preview" src="https://github.com/user-attachments/assets/537753c4-411d-4b76-9f5a-4709f00b56cf" />
+  <img width="842" height="672" alt="image" src="https://github.com/user-attachments/assets/eb73cb38-e146-4d16-a93d-af7c2662549c" />
+   <img width="842" height="672" alt="image" src="https://github.com/user-attachments/assets/ee991800-8960-4388-84e6-df3148b038ca" />
 </p>
 
 A modern desktop (Tauri) and Android application providing real-time alerts for planned and emergency outages. **AWARIA** aggregates data from multiple utility providers into a centralized, beautiful interface.
@@ -17,10 +18,6 @@ https://eremef.xyz/awaria
 - *More sources coming soon...*
 
 ## Android app
-
-<p align="center">
- <img width="300" alt="Android Widget" src="https://github.com/user-attachments/assets/7e9cefe4-16b4-498c-bfaf-cb998cf22a40" />
-</p>
 
 ## Features
 
