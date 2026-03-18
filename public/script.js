@@ -2,6 +2,7 @@ if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {
         initSettings();
         initPullToRefresh();
+        initRefreshButton();
         loadSettingsAndFetch();
     });
 }
@@ -285,6 +286,18 @@ if (window.matchMedia) {
 }
 
 // ── Pull to Refresh ───────────────────────────────────────
+
+function initRefreshButton() {
+    const refreshBtn = document.getElementById('refresh-btn');
+    if (!refreshBtn) return;
+
+    refreshBtn.addEventListener('click', async () => {
+        if (refreshBtn.classList.contains('spinning')) return;
+        refreshBtn.classList.add('spinning');
+        await fetchOutages();
+        refreshBtn.classList.remove('spinning');
+    });
+}
 
 function initPullToRefresh() {
     const indicator = document.getElementById('pull-indicator');

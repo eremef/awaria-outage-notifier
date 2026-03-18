@@ -1,7 +1,5 @@
 package xyz.eremef.awaria
 
-import xyz.eremef.awaria.R
-
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
@@ -10,12 +8,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
-import android.widget.RemoteViews
-import android.util.SizeF
 import android.os.Build
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import android.util.SizeF
+import android.widget.RemoteViews
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
@@ -23,19 +21,19 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
-import org.json.JSONObject
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
-import androidx.work.ExistingPeriodicWorkPolicy
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.json.JSONObject
 
 data class WidgetSettings(
-    val cityGAID: Long,
-    val streetGAID: Long,
-    val houseNo: String,
-    val streetName: String,
-    val theme: String,
-    val language: String
+        val cityGAID: Long,
+        val streetGAID: Long,
+        val houseNo: String,
+        val streetName: String,
+        val theme: String,
+        val language: String
 )
 
 abstract class BaseWidgetProvider : AppWidgetProvider() {
@@ -60,8 +58,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     abstract val iconResId: Int
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == refreshAction ||
-            intent.action == Intent.ACTION_BOOT_COMPLETED) {
+        if (intent.action == refreshAction || intent.action == Intent.ACTION_BOOT_COMPLETED) {
             val mgr = AppWidgetManager.getInstance(context)
             val ids = mgr.getAppWidgetIds(ComponentName(context, this::class.java))
             onUpdate(context, mgr, ids)
@@ -70,9 +67,9 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     }
 
     override fun onUpdate(
-        context: Context,
-        appWidgetManager: AppWidgetManager,
-        appWidgetIds: IntArray
+            context: Context,
+            appWidgetManager: AppWidgetManager,
+            appWidgetIds: IntArray
     ) {
         scheduleWork(context)
         val pendingResult = goAsync()
@@ -88,10 +85,10 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     }
 
     override fun onAppWidgetOptionsChanged(
-        context: Context,
-        appWidgetManager: AppWidgetManager,
-        appWidgetId: Int,
-        newOptions: android.os.Bundle
+            context: Context,
+            appWidgetManager: AppWidgetManager,
+            appWidgetId: Int,
+            newOptions: android.os.Bundle
     ) {
         super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
         val pendingResult = goAsync()
@@ -111,19 +108,15 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
     override fun onDisabled(context: Context) {
         super.onDisabled(context)
-        // Only cancel if no other widgets are active? 
+        // Only cancel if no other widgets are active?
         // For simplicity, we keep it running as long as any widget might need it.
         // Actually, WorkManager with periodic work is fine to leave or we can be smart.
     }
 
     private fun scheduleWork(context: Context) {
-        val request = PeriodicWorkRequestBuilder<WidgetUpdateWorker>(1, TimeUnit.HOURS)
-            .build()
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-            WORK_NAME,
-            ExistingPeriodicWorkPolicy.KEEP,
-            request
-        )
+        val request = PeriodicWorkRequestBuilder<WidgetUpdateWorker>(1, TimeUnit.HOURS).build()
+        WorkManager.getInstance(context)
+                .enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, request)
     }
 
     private fun findSettingsFile(context: Context): File? {
@@ -144,12 +137,12 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         return try {
             val json = JSONObject(settingsFile.readText())
             WidgetSettings(
-                cityGAID = json.getLong("cityGAID"),
-                streetGAID = json.getLong("streetGAID"),
-                houseNo = json.getString("houseNo"),
-                streetName = json.getString("streetName"),
-                theme = json.optString("theme", "system"),
-                language = json.optString("language", "system")
+                    cityGAID = json.getLong("cityGAID"),
+                    streetGAID = json.getLong("streetGAID"),
+                    houseNo = json.getString("houseNo"),
+                    streetName = json.getString("streetName"),
+                    theme = json.optString("theme", "system"),
+                    language = json.optString("language", "system")
             )
         } catch (e: Exception) {
             null
@@ -161,8 +154,8 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             "dark" -> true
             "light" -> false
             else -> {
-                val nightMode = context.resources.configuration.uiMode and
-                        Configuration.UI_MODE_NIGHT_MASK
+                val nightMode =
+                        context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
                 nightMode == Configuration.UI_MODE_NIGHT_YES
             }
         }
@@ -170,7 +163,11 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
     private fun applyTheme(views: RemoteViews, dark: Boolean) {
         if (dark) {
-            views.setInt(R.id.widget_root, "setBackgroundResource", R.drawable.widget_background_dark)
+            views.setInt(
+                    R.id.widget_root,
+                    "setBackgroundResource",
+                    R.drawable.widget_background_dark
+            )
             views.setTextColor(R.id.widget_count, Color.parseColor(darkPrimary))
             views.setTextColor(R.id.widget_label, Color.parseColor(DARK_LABEL))
             views.setTextColor(R.id.widget_updated, Color.parseColor(DARK_UPDATED))
@@ -186,7 +183,9 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     }
 
     private fun getTranslation(key: String, lang: String): String {
-        val isPl = if (lang == "pl") true else if (lang == "en") false else Locale.getDefault().language.startsWith("pl")
+        val isPl =
+                if (lang == "pl") true
+                else if (lang == "en") false else Locale.getDefault().language.startsWith("pl")
         return when (key) {
             "outages" -> if (isPl) "wyłączeń" else "outages"
             "alerts" -> if (isPl) "alertów" else "alerts"
@@ -199,33 +198,62 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     abstract suspend fun fetchCount(settings: WidgetSettings): Int
 
     internal suspend fun updateWidget(
-        context: Context,
-        appWidgetManager: AppWidgetManager,
-        appWidgetId: Int
+            context: Context,
+            appWidgetManager: AppWidgetManager,
+            appWidgetId: Int
     ) {
         val settings = loadSettings(context)
         val language = settings?.language ?: "system"
         val dark = isDarkMode(context, settings?.theme ?: "system")
 
-        val count = try {
-            if (settings != null) fetchCount(settings).toString() else "?"
-        } catch (e: Exception) { "!" }
+        val count =
+                try {
+                    if (settings != null) fetchCount(settings).toString() else "?"
+                } catch (e: Exception) {
+                    "!"
+                }
 
-        val updatedAt = if (count != "?" && count != "!") {
-            val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-            timeFormat.format(Date())
-        } else if (settings == null) {
-            getTranslation("setup", language)
-        } else {
-            "Error"
-        }
+        val updatedAt =
+                if (count != "?" && count != "!") {
+                    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+                    timeFormat.format(Date())
+                } else if (settings == null) {
+                    getTranslation("setup", language)
+                } else {
+                    "Error"
+                }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val viewMapping = mapOf(
-                SizeF(40f, 40f) to createRemoteViews(context, R.layout.widget_outage_small, count, updatedAt, language, dark),
-                SizeF(100f, 100f) to createRemoteViews(context, R.layout.widget_outage, count, updatedAt, language, dark),
-                SizeF(200f, 200f) to createRemoteViews(context, R.layout.widget_outage_large, count, updatedAt, language, dark)
-            )
+            val viewMapping =
+                    mapOf(
+                            SizeF(40f, 40f) to
+                                    createRemoteViews(
+                                            context,
+                                            R.layout.widget_outage_small,
+                                            count,
+                                            updatedAt,
+                                            language,
+                                            dark
+                                    ),
+                            SizeF(100f, 100f) to
+                                    createRemoteViews(
+                                            context,
+                                            R.layout.widget_outage,
+                                            count,
+                                            updatedAt,
+                                            language,
+                                            dark
+                                    ),
+                            SizeF(200f, 200f) to
+                                    createRemoteViews(
+                                            context,
+                                            R.layout.widget_outage_large,
+                                            count,
+                                            updatedAt,
+                                            language,
+                                            dark
+                                    )
+                    )
             val views = RemoteViews(viewMapping)
             appWidgetManager.updateAppWidget(appWidgetId, views)
         } else {
@@ -233,44 +261,73 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             val options = appWidgetManager.getAppWidgetOptions(appWidgetId)
             val minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
             val minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT)
-            
-            val layoutId = if (minWidth < 100 || minHeight < 100) {
-                R.layout.widget_outage_small
-            } else if (minWidth < 200 || minHeight < 200) {
-                R.layout.widget_outage
-            } else {
-                R.layout.widget_outage_large
-            }
-            
+
+            val layoutId =
+                    if (minWidth < 100 || minHeight < 100) {
+                        R.layout.widget_outage_small
+                    } else if (minWidth < 200 || minHeight < 200) {
+                        R.layout.widget_outage
+                    } else {
+                        R.layout.widget_outage_large
+                    }
+
             val views = createRemoteViews(context, layoutId, count, updatedAt, language, dark)
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
     }
 
     private fun createRemoteViews(
-        context: Context,
-        layoutId: Int,
-        count: String,
-        updatedAt: String,
-        language: String,
-        dark: Boolean
+            context: Context,
+            layoutId: Int,
+            count: String,
+            updatedAt: String,
+            language: String,
+            dark: Boolean
     ): RemoteViews {
         val views = RemoteViews(context.packageName, layoutId)
-        
-        val refreshIntent = Intent(context, this::class.java).apply {
-            action = refreshAction
-        }
-        val refreshPending = PendingIntent.getBroadcast(
-            context, 0, refreshIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        views.setOnClickPendingIntent(R.id.widget_root, refreshPending)
-        
+
+        val refreshIntent = Intent(context, this::class.java).apply { action = refreshAction }
+        val refreshPending =
+                PendingIntent.getBroadcast(
+                        context,
+                        0,
+                        refreshIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+
+        val clickPending =
+                if (count == "0") {
+                    refreshPending
+                } else {
+                    val launchIntent =
+                            context.packageManager.getLaunchIntentForPackage(context.packageName)
+                                    ?.apply {
+                                        flags =
+                                                Intent.FLAG_ACTIVITY_NEW_TASK or
+                                                        Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                    }
+                    if (launchIntent != null) {
+                        val activityPending =
+                                PendingIntent.getActivity(
+                                        context,
+                                        0,
+                                        launchIntent,
+                                        PendingIntent.FLAG_UPDATE_CURRENT or
+                                                PendingIntent.FLAG_IMMUTABLE
+                                )
+                        refreshPending.send()
+                        activityPending
+                    } else {
+                        refreshPending
+                    }
+                }
+        views.setOnClickPendingIntent(R.id.widget_root, clickPending)
+
         applyTheme(views, dark)
         views.setTextViewText(R.id.widget_label, getTranslation("alerts", language))
         views.setTextViewText(R.id.widget_count, count)
         views.setTextViewText(R.id.widget_updated, updatedAt)
-        
+
         return views
     }
 
@@ -279,10 +336,11 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         dateFormat.timeZone = TimeZone.getTimeZone("UTC")
         val now = dateFormat.format(Date())
         val baseUrl = "https://www.tauron-dystrybucja.pl/waapi/outages/address"
-        val params = "cityGAID=${settings.cityGAID}&streetGAID=${settings.streetGAID}" +
-                "&houseNo=${settings.houseNo}" +
-                "&fromDate=$now&getLightingSupport=false" +
-                "&getServicedSwitchingoff=true&_=${System.currentTimeMillis()}"
+        val params =
+                "cityGAID=${settings.cityGAID}&streetGAID=${settings.streetGAID}" +
+                        "&houseNo=${settings.houseNo}" +
+                        "&fromDate=$now&getLightingSupport=false" +
+                        "&getServicedSwitchingoff=true&_=${System.currentTimeMillis()}"
 
         val url = URL("$baseUrl?$params")
         val conn = url.openConnection() as HttpURLConnection
@@ -336,9 +394,15 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     protected fun fetchFortumAlertCount(settings: WidgetSettings): Int {
         val cityGuid = "d06e8606-f1d7-eb11-bacb-000d3aa9626e"
         val regionId = "3"
-        
-        val plannedUrl = URL("https://formularz.fortum.pl/api/v1/switchoffs?cityGuid=$cityGuid&regionId=$regionId&current=false")
-        val currentUrl = URL("https://formularz.fortum.pl/api/v1/switchoffs?cityGuid=$cityGuid&regionId=$regionId&current=true")
+
+        val plannedUrl =
+                URL(
+                        "https://formularz.fortum.pl/api/v1/switchoffs?cityGuid=$cityGuid&regionId=$regionId&current=false"
+                )
+        val currentUrl =
+                URL(
+                        "https://formularz.fortum.pl/api/v1/switchoffs?cityGuid=$cityGuid&regionId=$regionId&current=true"
+                )
 
         val plannedResponse = fetchJson(plannedUrl)
         val currentResponse = fetchJson(currentUrl)
@@ -378,13 +442,13 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         val now = Date()
         val seenIds = mutableSetOf<String>()
         val isoFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
-        
+
         for (i in 0 until items.length()) {
             val item = items.getJSONObject(i)
             val switchOffId = item.optString("switchOffId", "")
             if (switchOffId in seenIds) continue
             seenIds.add(switchOffId)
-            
+
             val endDateStr = item.optString("endDate", "")
             if (endDateStr.isNotEmpty()) {
                 try {
@@ -392,16 +456,18 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                     if (end != null && end.before(now)) continue
                 } catch (e: Exception) {}
             }
-            
+
             val message = item.optString("message", "")
             if (message.contains(streetName)) {
-                count++; continue
+                count++
+                continue
             }
-            val anyMatch = significantWords.any { word ->
-                val escapedWord = java.util.regex.Pattern.quote(word)
-                val regex = Regex("\\b$escapedWord\\b")
-                regex.containsMatchIn(message)
-            }
+            val anyMatch =
+                    significantWords.any { word ->
+                        val escapedWord = java.util.regex.Pattern.quote(word)
+                        val regex = Regex("\\b$escapedWord\\b")
+                        regex.containsMatchIn(message)
+                    }
             if (anyMatch) count++
         }
         return count
@@ -428,13 +494,15 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             }
             val content = item.optString("content", "")
             if (content.contains(streetName)) {
-                count++; continue
+                count++
+                continue
             }
-            val anyMatch = significantWords.any { word ->
-                val escapedWord = java.util.regex.Pattern.quote(word)
-                val regex = Regex("\\b$escapedWord\\b")
-                regex.containsMatchIn(content)
-            }
+            val anyMatch =
+                    significantWords.any { word ->
+                        val escapedWord = java.util.regex.Pattern.quote(word)
+                        val regex = Regex("\\b$escapedWord\\b")
+                        regex.containsMatchIn(content)
+                    }
             if (anyMatch) count++
         }
         return count
@@ -449,11 +517,14 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         val significantWords = fullStreet.split(Regex("\\s+")).filter { it.length >= 3 }
         var count = 0
         val now = Date()
-        val formats = listOf(
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") },
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.US),
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
-        )
+        val formats =
+                listOf(
+                        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
+                            timeZone = TimeZone.getTimeZone("UTC")
+                        },
+                        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.US),
+                        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+                )
         for (i in 0 until items.length()) {
             val item = items.getJSONObject(i)
             val endDateStr = item.optString("EndDate", "")
@@ -469,13 +540,15 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             }
             val message = item.optString("Message", "")
             if (message.contains(streetName)) {
-                count++; continue
+                count++
+                continue
             }
-            val anyMatch = significantWords.any { word ->
-                val escapedWord = java.util.regex.Pattern.quote(word)
-                val regex = Regex("\\b$escapedWord\\b")
-                regex.containsMatchIn(message)
-            }
+            val anyMatch =
+                    significantWords.any { word ->
+                        val escapedWord = java.util.regex.Pattern.quote(word)
+                        val regex = Regex("\\b$escapedWord\\b")
+                        regex.containsMatchIn(message)
+                    }
             if (anyMatch) count++
         }
         return count

@@ -10,10 +10,15 @@
 
 <body>
     <div class="container">
-        <button id="settings-btn" class="settings-btn" title="Settings">⚙️</button>
+        <button id="settings-btn" class="settings-btn" title="Settings"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
         <header>
             <h1 data-i18n="title">Outage Alerts</h1>
-            <p id="last-updated" data-i18n="checking_updates">Checking for updates...</p>
+            <p class="last-updated-row">
+                <span id="last-updated" data-i18n="checking_updates">Checking for updates...</span>
+                <button id="refresh-btn" class="refresh-btn" title="Refresh">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>
+                </button>
+            </p>
         </header>
 
         <div id="settings-panel" class="settings-panel hidden">
@@ -24,6 +29,8 @@
                     <option value="system" data-i18n="theme_system">System Default</option>
                     <option value="light" data-i18n="theme_light">Light</option>
                     <option value="dark" data-i18n="theme_dark">Dark</option>
+                    <option value="monochrome-light" data-i18n="theme_monochrome_light">Monochrome (Light)</option>
+                    <option value="monochrome-dark" data-i18n="theme_monochrome_dark">Monochrome (Dark)</option>
                     <option value="emerald" data-i18n="theme_emerald">Emerald (Light)</option>
                     <option value="ocean" data-i18n="theme_ocean">Ocean (Dark)</option>
                     <option value="nord" data-i18n="theme_nord">Nord (Arctic)</option>
@@ -43,17 +50,23 @@
             </div>
 
             <div class="settings-title" data-i18n="settings_sources">Alert Sources</div>
-            <div class="settings-field-row">
-                <input type="checkbox" id="source-tauron-check" checked>
-                <label for="source-tauron-check" data-i18n="source_tauron_short">Power (Tauron)</label>
+            <div class="settings-field-group">
+                <div class="settings-group-label" data-i18n="source_power">Power</div>
+                <div class="settings-field-row indent">
+                    <input type="checkbox" id="source-tauron-check" checked>
+                    <label for="source-tauron-check" data-i18n="source_tauron_name">Tauron</label>
+                </div>
+                <div class="settings-field-row indent">
+                    <input type="checkbox" id="source-fortum-check" checked>
+                    <label for="source-fortum-check" data-i18n="source_fortum_name">Fortum</label>
+                </div>
             </div>
-            <div class="settings-field-row">
-                <input type="checkbox" id="source-water-check" checked>
-                <label for="source-water-check" data-i18n="source_water_short">Water (MPWiK)</label>
-            </div>
-            <div class="settings-field-row">
-                <input type="checkbox" id="source-fortum-check" checked>
-                <label for="source-fortum-check" data-i18n="source_fortum_short">Power (Fortum)</label>
+            <div class="settings-field-group">
+                <div class="settings-group-label" data-i18n="source_water_name">Water</div>
+                <div class="settings-field-row indent">
+                    <input type="checkbox" id="source-water-check" checked>
+                    <label for="source-water-check" data-i18n="source_water_short">MPWiK</label>
+                </div>
             </div>
 
             <div id="location-settings-collapsible" class="collapsible">
