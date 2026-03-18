@@ -576,6 +576,10 @@ h1 {
     color: var(--water-color);
 }
 
+.collapsible.source-fortum .section-label.other {
+    color: var(--fortum-color);
+}
+
 .other-divider {
     text-align: center;
     display: flex;
