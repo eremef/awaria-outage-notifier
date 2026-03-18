@@ -3,7 +3,7 @@
 [English](README.md) | [Polski](README.pl.md)
 
 <p align="center">
-  <img height="600" alt="image" src="https://github.com/user-attachments/assets/5c13103e-8c9d-4067-b994-55e32fb21de2" />
+   <img height="600" alt="image" src="https://github.com/user-attachments/assets/108932b2-0fe0-4a19-8769-61d4962835ac" />
 </p>
 
 A modern desktop (Tauri) and Android application providing real-time alerts for planned and emergency outages. **AWARIA** aggregates data from multiple utility providers into a centralized interface.
@@ -21,7 +21,7 @@ https://eremef.xyz/awaria
 ## Android app
 
 <p align="center">
-  <img height="600" alt="image" src="https://github.com/user-attachments/assets/a301305f-2b63-4c2d-b8fb-ce83b47d7bca" />
+  <img height="600" alt="image" src="https://github.com/user-attachments/assets/2760977f-67a5-465d-9e59-0629b0b958b5" />
 </p>
 
 ## Features
