@@ -1,6 +1,6 @@
 :root {
     /* Modern "Friendly" Light Theme */
-    --primary-color: #6366f1;
+    --primary-color: #0a0a0a;
     /* Indigo 500 */
     --background-color: #f8fafc;
     /* Slate 50 */
@@ -21,40 +21,41 @@
     --success-border: #a7f3d0;
     --message-border: #f1f5f9;
     --label-border: #e2e8f0;
-    --tauron-color: #f43f5e;
+    --tauron-color: #f39923;
     /* Rose 500 */
     --water-color: #0ea5e9;
     /* Sky 500 */
 }
 
 [data-theme="dark"] {
-    /* Premium Deep Dark Theme */
-    --primary-color: #818cf8;
-    /* Indigo 400 */
-    --background-color: #0f172a;
-    /* Slate 900 */
-    --card-background: #1e293b;
-    /* Slate 800 */
-    --text-color: #f1f5f9;
-    /* Slate 100 */
-    --secondary-text: #94a3b8;
-    /* Slate 400 */
-    --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
-    --input-border: #334155;
-    /* Slate 700 */
-    --input-focus: #818cf8;
-    --error-bg: #450a0a;
-    --error-text: #fca5a5;
-    --error-border: #7f1d1d;
-    --success-bg: #064e3b;
-    --success-text: #6ee7b7;
-    --success-border: #065f46;
-    --message-border: #334155;
-    --label-border: #334155;
-    --tauron-color: #fb7185;
-    /* Rose 400 */
-    --water-color: #38bdf8;
-    /* Sky 400 */
+    /* Monochrome Dark Theme */
+    --primary-color: #a0a0a0;
+    /* Neutral Gray */
+    --background-color: #0a0a0a;
+    /* Near Black */
+    --card-background: #1a1a1a;
+    /* Dark Gray */
+    --text-color: #e8e8e8;
+    /* Off White */
+    --secondary-text: #888888;
+    /* Medium Gray */
+    --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+    --input-border: #2a2a2a;
+    /* Dark Border */
+    --input-focus: #c0c0c0;
+    /* Light Gray Focus */
+    --error-bg: #1a0a0a;
+    --error-text: #d0a0a0;
+    --error-border: #3a2020;
+    --success-bg: #0a1a0a;
+    --success-text: #a0c0a0;
+    --success-border: #1a3020;
+    --message-border: #252525;
+    --label-border: #2a2a2a;
+    --tauron-color: #da9f68;
+    /* Gray */
+    --water-color: #18a8e0;
+    /* Gray */
 }
 
 [data-theme="emerald"] {
@@ -294,7 +295,7 @@ h1 {
 }
 
 [data-theme="dark"] .settings-btn {
-    filter: invert(1);
+    filter: invert(0.6);
 }
 
 .settings-btn:hover {

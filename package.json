@@ -16,7 +16,7 @@
     "test:android": "cd src-tauri/gen/android && gradlew.bat :app:testUniversalDebugUnitTest"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.10.0",
+    "@tauri-apps/cli": "^2.10.1",
     "jsdom": "^28.0.0",
     "vitest": "^4.0.18"
   }

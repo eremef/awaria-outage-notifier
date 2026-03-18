@@ -181,8 +181,8 @@ mod tests {
     fn test_settings_serialization() {
         let settings = Settings {
             cityName: "Wrocław".to_string(),
-            streetName: "Rozbrat".to_string(),
-            houseNo: "1".to_string(),
+            streetName: "Kuźnicza".to_string(),
+            houseNo: "25".to_string(),
             cityGAID: 123,
             streetGAID: 456,
             theme: Some("dark".to_string()),

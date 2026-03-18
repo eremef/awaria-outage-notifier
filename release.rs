@@ -20,6 +20,13 @@ fn main() {
 
     run_command("npm", &["install"], ".");
     run_command("cargo", &["update"], "src-tauri");
+    run_command("git", &["add", "."], ".");
+    run_command("git", &["commit", "-m", &("release: v".to_string()+new_version)], ".");
+    run_command("git", &["push", "origin", "HEAD"], ".");
+    run_command("git", &["tag", "-d", &("v".to_string()+new_version)], ".");
+    run_command("git", &["push", "origin", "--delete", &("v".to_string()+new_version)], ".");
+    run_command("git", &["tag", &("v".to_string()+new_version)], ".");
+    run_command("git", &["push", "origin", &("v".to_string()+new_version)], ".");
 
     println!("Updated version to {}", new_version);
 }

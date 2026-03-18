@@ -22,8 +22,8 @@ tauri-build = { version = "2.5.4", features = [] }
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
-tauri = { version = "2.10.0", features = [] }
-tauri-plugin-log = "2"
-reqwest = { version = "0.11", default-features = false, features = ["json", "blocking", "rustls-tls"] }
+tauri = { version = "2.10.3", features = [] }
+tauri-plugin-log = "2.6.0"
+reqwest = { version = "0.11", default-features = false, features = ["json", "blocking", "native-tls"] }
 chrono = "0.4.43"
 tokio = { version = "1.49.0", features = ["full"] }
