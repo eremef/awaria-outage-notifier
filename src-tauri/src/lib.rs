@@ -5,7 +5,7 @@ use tauri::AppHandle;
 use tauri::Manager;
 use chrono::{Utc, SecondsFormat};
 use api_logic::{
-    GeoItem, Settings, UnifiedAlert, BASE_URL, MPWIK_URL, FORTUM_URL, FORTUM_CITY_GUID, FORTUM_REGION_ID,
+    GeoItem, Settings, AddressEntry, UnifiedAlert, BASE_URL, MPWIK_URL, FORTUM_URL, FORTUM_CITY_GUID, FORTUM_REGION_ID,
     get_cities_query, get_streets_query, get_outages_query,
     save_settings_to_path, load_settings_from_path
 };
@@ -83,19 +83,111 @@ async fn load_settings(app: AppHandle) -> Result<Option<Settings>, String> {
 }
 
 #[command]
-async fn fetch_outages(app: AppHandle) -> Result<api_logic::OutageResponse, String> {
+async fn add_address(app: AppHandle, address: AddressEntry) -> Result<Settings, String> {
     let path = settings_path(&app)?;
+    let mut settings = load_settings_from_path(&path)?
+        .unwrap_or_else(|| Settings::default());
+    
+    if settings.addresses.len() >= 5 {
+        return Err("Maximum of 5 addresses allowed".to_string());
+    }
+    
+    settings.addresses.push(address);
+    if settings.primary_address_index.is_none() {
+        settings.primary_address_index = Some(0);
+    }
+    
+    save_settings_to_path(&path, &settings)?;
+    Ok(settings)
+}
+
+#[command]
+async fn remove_address(app: AppHandle, index: usize) -> Result<Settings, String> {
+    let path = settings_path(&app)?;
+    let mut settings = load_settings_from_path(&path)?
+        .unwrap_or_else(|| Settings::default());
+    
+    if index >= settings.addresses.len() {
+        return Err("Invalid address index".to_string());
+    }
+    
+    settings.addresses.remove(index);
+    
+    if let Some(ref mut primary) = settings.primary_address_index {
+        if *primary >= settings.addresses.len() {
+            *primary = settings.addresses.len().saturating_sub(1);
+        }
+        if settings.addresses.is_empty() {
+            *primary = 0;
+        }
+    }
+    if settings.addresses.is_empty() {
+        settings.primary_address_index = None;
+    }
+    
+    save_settings_to_path(&path, &settings)?;
+    Ok(settings)
+}
+
+#[command]
+async fn set_primary_address(app: AppHandle, index: usize) -> Result<Settings, String> {
+    let path = settings_path(&app)?;
+    let mut settings = load_settings_from_path(&path)?
+        .unwrap_or_else(|| Settings::default());
+    
+    if index >= settings.addresses.len() {
+        return Err("Invalid address index".to_string());
+    }
+    
+    settings.primary_address_index = Some(index);
+    save_settings_to_path(&path, &settings)?;
+    Ok(settings)
+}
+
+#[command]
+async fn update_address(app: AppHandle, index: usize, address: AddressEntry) -> Result<Settings, String> {
+    let path = settings_path(&app)?;
+    let mut settings = load_settings_from_path(&path)?
+        .unwrap_or_else(|| Settings::default());
+    
+    if index >= settings.addresses.len() {
+        return Err("Invalid address index".to_string());
+    }
+    
+    settings.addresses[index] = address;
+    save_settings_to_path(&path, &settings)?;
+    Ok(settings)
+}
+
+#[command]
+async fn fetch_outages_for_address(index: usize) -> Result<api_logic::OutageResponse, String> {
+    let path = settings_path_from_app()?;
     let settings = load_settings_from_path(&path)?
         .ok_or_else(|| "No settings configured. Please set up your location first.".to_string())?;
 
+    let address = settings.addresses.get(index)
+        .ok_or_else(|| "Invalid address index".to_string())?;
+
+    fetch_outages_for_addr(address).await
+}
+
+fn settings_path_from_app() -> Result<PathBuf, String> {
+    let data_dir = dirs::data_dir()
+        .ok_or("Could not determine data directory")?
+        .join("xyz.eremef.awaria");
+    std::fs::create_dir_all(&data_dir).map_err(|e| e.to_string())?;
+    Ok(data_dir.join("settings.json"))
+}
+
+async fn fetch_outages_for_addr(address: &AddressEntry) -> Result<api_logic::OutageResponse, String> {
     let now = Utc::now();
     let from_date = now.to_rfc3339_opts(SecondsFormat::Millis, true);
     let cache_bust = now.timestamp_millis().to_string();
     
     let query = get_outages_query(
-        settings.cityGAID,
-        settings.streetGAID,
-        &settings.houseNo,
+        address.city_gaid,
+        address.street_gaid,
+        &address.house_no,
         &from_date,
         &cache_bust
     );
@@ -202,11 +294,26 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
     let mut all_alerts: Vec<UnifiedAlert> = Vec::new();
     let mut errors: Vec<String> = Vec::new();
 
-    // Fetch Tauron alerts (requires settings)
+    // Fetch Tauron alerts for each address
     if let Some(ref s) = settings {
-        match fetch_outages_internal(s).await {
-            Ok(tauron_alerts) => all_alerts.extend(tauron_alerts),
-            Err(e) => errors.push(format!("Tauron: {}", e)),
+        for (idx, addr) in s.addresses.iter().enumerate() {
+            match fetch_outages_for_addr(addr).await {
+                Ok(response) => {
+                    let alerts: Vec<UnifiedAlert> = response
+                        .OutageItems
+                        .unwrap_or_default()
+                        .iter()
+                        .map(|item| {
+                            let mut alert = item.to_unified();
+                            alert.address_index = Some(idx);
+                            alert.is_local = Some(item.matches_street(&addr.street_name));
+                            alert
+                        })
+                        .collect();
+                    all_alerts.extend(alerts);
+                }
+                Err(e) => errors.push(format!("Tauron[{}]: {}", idx, e)),
+            }
         }
     }
 
@@ -229,50 +336,6 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
     Ok(all_alerts)
 }
 
-/// Internal helper: fetch Tauron outages and convert to UnifiedAlert vec.
-async fn fetch_outages_internal(settings: &Settings) -> Result<Vec<UnifiedAlert>, String> {
-    let now = Utc::now();
-    let from_date = now.to_rfc3339_opts(SecondsFormat::Millis, true);
-    let cache_bust = now.timestamp_millis().to_string();
-
-    let query = get_outages_query(
-        settings.cityGAID,
-        settings.streetGAID,
-        &settings.houseNo,
-        &from_date,
-        &cache_bust,
-    );
-
-    let client = build_client()?;
-    let res = client
-        .get(&format!("{}/outages/address", BASE_URL))
-        .query(&query)
-        .header("accept", "application/json")
-        .header("x-requested-with", "XMLHttpRequest")
-        .header("Referer", "https://www.tauron-dystrybucja.pl/wylaczenia")
-        .send()
-        .await
-        .map_err(|e| e.to_string())?;
-
-    if !res.status().is_success() {
-        return Err(format!("HTTP error! status: {}", res.status()));
-    }
-
-    let data = res
-        .json::<api_logic::OutageResponse>()
-        .await
-        .map_err(|e| e.to_string())?;
-
-    let alerts: Vec<UnifiedAlert> = data
-        .OutageItems
-        .unwrap_or_default()
-        .iter()
-        .map(|item| item.to_unified())
-        .collect();
-
-    Ok(alerts)
-}
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
@@ -287,14 +350,18 @@ pub fn run() {
       Ok(())
     })
     .invoke_handler(tauri::generate_handler![
-        fetch_outages,
+        fetch_outages_for_address,
         fetch_all_alerts,
         fetch_water_alerts,
         fetch_fortum_alerts,
         lookup_city,
         lookup_street,
         save_settings,
-        load_settings
+        load_settings,
+        add_address,
+        remove_address,
+        set_primary_address,
+        update_address
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

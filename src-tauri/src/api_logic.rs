@@ -17,13 +17,16 @@ pub enum AlertSource {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
-#[allow(non_snake_case)]
 pub struct UnifiedAlert {
     pub source: AlertSource,
     pub startDate: Option<String>,
     pub endDate: Option<String>,
     pub message: Option<String>,
     pub description: Option<String>,
+    #[serde(default, rename = "addressIndex")]
+    pub address_index: Option<usize>,
+    #[serde(default, rename = "isLocal")]
+    pub is_local: Option<bool>,
 }
 
 // ── MPWiK (water) types ───────────────────────────────────
@@ -81,6 +84,8 @@ impl MpwikFailureItem {
             endDate: self.date_end.as_deref().and_then(parse_mpwik_date),
             message: self.content.clone(),
             description: None,
+            address_index: None,
+            is_local: None,
         }
     }
 }
@@ -93,6 +98,8 @@ impl FortumPoint {
             endDate: self.end_date.clone(),
             message: self.message.clone(),
             description: None,
+            address_index: None,
+            is_local: None,
         }
     }
 }
@@ -105,7 +112,39 @@ impl OutageItem {
             endDate: self.EndDate.clone(),
             message: self.Message.clone(),
             description: self.Description.clone(),
+            address_index: None,
+            is_local: None,
         }
+    }
+
+    pub fn matches_street(&self, street_name: &str) -> bool {
+        let Some(message) = &self.Message else {
+            return false;
+        };
+
+        if message.contains(street_name) {
+            return true;
+        }
+
+        let normalized = street_name
+            .trim_start_matches("ul.")
+            .trim_start_matches("al.")
+            .trim_start_matches("pl.")
+            .trim_start_matches("os.")
+            .trim_start_matches("rondo ")
+            .trim();
+
+        let significant_words: Vec<&str> = normalized
+            .split_whitespace()
+            .filter(|w: &&str| w.len() >= 3)
+            .collect();
+
+        significant_words.iter().any(|word| {
+            let regex = format!(r"(?i)\b{}\b", regex::escape(word));
+            regex::Regex::new(&regex)
+                .map(|r| r.is_match(message))
+                .unwrap_or(false)
+        })
     }
 }
 
@@ -134,20 +173,85 @@ pub struct OutageResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
-#[allow(non_snake_case)]
+pub struct AddressEntry {
+    pub name: String,
+    #[serde(rename = "cityName")]
+    pub city_name: String,
+    #[serde(rename = "streetName")]
+    pub street_name: String,
+    #[serde(rename = "houseNo")]
+    pub house_no: String,
+    #[serde(rename = "cityGAID")]
+    pub city_gaid: u64,
+    #[serde(rename = "streetGAID")]
+    pub street_gaid: u64,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct Settings {
-    pub cityName: String,
-    pub streetName: String,
-    pub houseNo: String,
-    pub cityGAID: u64,
-    pub streetGAID: u64,
+    #[serde(default)]
+    pub addresses: Vec<AddressEntry>,
+    #[serde(default, rename = "primaryAddressIndex")]
+    pub primary_address_index: Option<usize>,
     #[serde(default)]
     pub theme: Option<String>,
     #[serde(default)]
     pub language: Option<String>,
-    #[serde(default)]
-    pub enabledSources: Option<Vec<String>>,
+    #[serde(default, rename = "enabledSources")]
+    pub enabled_sources: Option<Vec<String>>,
+    #[serde(default, skip_deserializing, rename = "cityName")]
+    pub city_name: String,
+    #[serde(default, skip_deserializing, rename = "streetName")]
+    pub street_name: String,
+    #[serde(default, skip_deserializing, rename = "houseNo")]
+    pub house_no: String,
+    #[serde(default, skip_deserializing, rename = "cityGAID")]
+    pub city_gaid: u64,
+    #[serde(default, skip_deserializing, rename = "streetGAID")]
+    pub street_gaid: u64,
 }
+
+impl Default for Settings {
+    fn default() -> Self {
+        Settings {
+            addresses: Vec::new(),
+            primary_address_index: None,
+            theme: None,
+            language: None,
+            enabled_sources: Some(vec![
+                "tauron".to_string(),
+                "water".to_string(),
+                "fortum".to_string(),
+            ]),
+            city_name: String::new(),
+            street_name: String::new(),
+            house_no: String::new(),
+            city_gaid: 0,
+            street_gaid: 0,
+        }
+    }
+}
+
+// impl Settings {
+//     pub fn migrate_legacy(&mut self) {
+//         if self.addresses.is_empty() && (self.city_gaid > 0 || !self.city_name.is_empty()) {
+//             self.addresses.push(AddressEntry {
+//                 name: "Address 1".to_string(),
+//                 city_name: self.city_name.clone(),
+//                 street_name: self.street_name.clone(),
+//                 house_no: self.house_no.clone(),
+//                 city_gaid: self.city_gaid,
+//                 street_gaid: self.street_gaid,
+//             });
+//             self.primary_address_index = Some(0);
+//         }
+//         self.city_name = String::new();
+//         self.street_name = String::new();
+//         self.house_no = String::new();
+//         self.city_gaid = 0;
+//         self.street_gaid = 0;
+//     }
+// }
 
 pub fn get_cities_query(city_name: &str, cache_bust: &str) -> Vec<(&'static str, String)> {
     vec![
@@ -212,13 +316,14 @@ mod tests {
     #[test]
     fn test_settings_serialization() {
         let settings = Settings {
-            cityName: "Wrocław".to_string(),
-            streetName: "Kuźnicza".to_string(),
-            houseNo: "25".to_string(),
-            cityGAID: 123,
-            streetGAID: 456,
+            city_name: "Wrocław".to_string(),
+            street_name: "Kuźnicza".to_string(),
+            house_no: "25".to_string(),
+            city_gaid: 123,
+            street_gaid: 456,
             theme: Some("dark".to_string()),
             language: Some("pl".to_string()),
+            ..Default::default()
         };
         let json = serde_json::to_string(&settings).unwrap();
         let deserialized: Settings = serde_json::from_str(&json).unwrap();
@@ -257,13 +362,14 @@ mod tests {
         let test_path = temp_dir.join("test_settings.json");
 
         let settings = Settings {
-            cityName: "TestCity".to_string(),
-            streetName: "TestStreet".to_string(),
-            houseNo: "10".to_string(),
-            cityGAID: 111,
-            streetGAID: 222,
+            city_name: "TestCity".to_string(),
+            street_name: "TestStreet".to_string(),
+            house_no: "10".to_string(),
+            city_gaid: 111,
+            street_gaid: 222,
             theme: Some("light".to_string()),
             language: Some("en".to_string()),
+            ..Default::default()
         };
 
         // Save
@@ -315,7 +421,7 @@ mod tests {
             load_settings_from_path(&test_path).expect("Should handle missing optional fields");
         assert!(loaded.is_some());
         let s = loaded.unwrap();
-        assert_eq!(s.cityName, "Legacy");
+        assert_eq!(s.city_name, "Legacy");
         assert_eq!(s.theme, None); // Should default to None
 
         std::fs::remove_file(test_path).ok();

@@ -10,7 +10,7 @@ class FortumWidgetProvider : BaseWidgetProvider() {
     override val darkPrimary: String = "#00C86B"
     override val iconResId: Int = R.drawable.ic_electricity
 
-    override suspend fun fetchCount(settings: WidgetSettings): Int {
-        return fetchFortumAlertCount(settings)
+    override suspend fun fetchCount(settingsList: List<WidgetSettings>): Int {
+        return fetchFortumAlertCount(settingsList)
     }
 }

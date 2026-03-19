@@ -10,15 +10,31 @@
 
 <body>
     <div class="container">
-        <button id="settings-btn" class="settings-btn" title="Settings"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
+        <button id="settings-btn" class="settings-btn" title="Settings"><svg xmlns="http://www.w3.org/2000/svg"
+                width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path
+                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                </path>
+            </svg></button>
         <header>
             <h1 data-i18n="title">Outage Alerts</h1>
             <p class="last-updated-row">
                 <span id="last-updated" data-i18n="checking_updates">Checking for updates...</span>
                 <button id="refresh-btn" class="refresh-btn" title="Refresh">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 2v6h-6"></path>
+                        <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+                        <path d="M3 22v-6h6"></path>
+                        <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+                    </svg>
                 </button>
             </p>
+            <select id="address-filter" class="address-filter">
+                <option value="-1" data-i18n="addr_filter_all">All addresses</option>
+            </select>
         </header>
 
         <div id="settings-panel" class="settings-panel hidden">
@@ -39,7 +55,7 @@
                     <option value="latte" data-i18n="theme_latte">Latte (Pastel Light)</option>
                 </select>
             </div>
-            
+
             <div class="settings-field">
                 <label for="language-select" data-i18n="settings_language">Language</label>
                 <select id="language-select">
@@ -75,20 +91,36 @@
                     <span class="toggle-icon">▼</span>
                 </div>
                 <div class="collapsible-content">
-                    <div class="settings-field">
-                        <label for="city-input" data-i18n="settings_city">City</label>
-                        <input type="text" id="city-input" data-i18n="settings_city_placeholder" placeholder="e.g. Wrocław">
+                    <div id="addresses-list" class="addresses-list"></div>
+                    <button id="add-address-btn" class="save-btn" data-i18n="add_address">+ Add Address</button>
+                    <div id="address-form" class="address-form hidden">
+                        <div class="settings-field">
+                            <label for="address-name-input" data-i18n="address_name">Name</label>
+                            <input type="text" id="address-name-input" data-i18n="address_name_placeholder"
+                                placeholder="e.g. Home, Work">
+                        </div>
+                        <div class="settings-field">
+                            <label for="city-input" data-i18n="settings_city">City</label>
+                            <input type="text" id="city-input" data-i18n="settings_city_placeholder"
+                                placeholder="e.g. Wrocław">
+                        </div>
+                        <div class="settings-field">
+                            <label for="street-input" data-i18n="settings_street">Street</label>
+                            <input type="text" id="street-input" data-i18n="settings_street_placeholder"
+                                placeholder="e.g. Kuźnicza">
+                        </div>
+                        <div class="settings-field">
+                            <label for="house-input" data-i18n="settings_house">House No</label>
+                            <input type="text" id="house-input" data-i18n="settings_house_placeholder"
+                                placeholder="e.g. 25">
+                        </div>
+                        <div id="settings-status" class="settings-status"></div>
+                        <div class="button-row">
+                            <button id="save-settings-btn" class="save-btn" data-i18n="settings_save">Save &
+                                Lookup</button>
+                            <button id="cancel-address-btn" class="cancel-btn" data-i18n="cancel">Cancel</button>
+                        </div>
                     </div>
-                    <div class="settings-field">
-                        <label for="street-input" data-i18n="settings_street">Street</label>
-                        <input type="text" id="street-input" data-i18n="settings_street_placeholder" placeholder="e.g. Kuźnicza">
-                    </div>
-                    <div class="settings-field">
-                        <label for="house-input" data-i18n="settings_house">House No</label>
-                        <input type="text" id="house-input" data-i18n="settings_house_placeholder" placeholder="e.g. 25">
-                    </div>
-                    <div id="settings-status" class="settings-status"></div>
-                    <button id="save-settings-btn" class="save-btn" data-i18n="settings_save">Save & Lookup</button>
                 </div>
             </div>
         </div>

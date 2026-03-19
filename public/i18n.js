@@ -63,7 +63,13 @@ const translations = {
         "source_tauron_short": "Tauron",
         "source_water_short": "MPWiK",
         "source_fortum_short": "Fortum",
-        "lbl_other_alerts_divider": "Other alerts"
+        "lbl_other_alerts_divider": "Other alerts",
+        "addr_filter_all": "All addresses",
+        "add_address": "+ Add Address",
+        "address_name": "Name",
+        "address_name_placeholder": "e.g. Home, Work",
+        "no_addresses": "No addresses configured. Add one below.",
+        "cancel": "Cancel"
     },
     pl: {
         "title": "Awaria",
@@ -126,7 +132,13 @@ const translations = {
         "source_tauron_short": "Tauron",
         "source_water_short": "MPWiK",
         "source_fortum_short": "Fortum",
-        "lbl_other_alerts_divider": "Inne alerty"
+        "lbl_other_alerts_divider": "Inne alerty",
+        "addr_filter_all": "Wszystkie adresy",
+        "add_address": "+ Dodaj adres",
+        "address_name": "Nazwa",
+        "address_name_placeholder": "np. Dom, Praca",
+        "no_addresses": "Brak skonfigurowanych adresów. Dodaj poniżej.",
+        "cancel": "Anuluj"
     }
 };
 

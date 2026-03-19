@@ -3,6 +3,7 @@ if (typeof document !== 'undefined') {
         initSettings();
         initPullToRefresh();
         initRefreshButton();
+        initAddressFilter();
         loadSettingsAndFetch();
     });
 }
@@ -12,6 +13,7 @@ if (typeof document !== 'undefined') {
 let currentSettings = null;
 let lastAlerts = [];
 let lastFetchDate = null;
+let selectedAddressIndex = -1; // -1 means "all addresses"
 
 function initSettings() {
     const btn = document.getElementById('settings-btn');
@@ -19,25 +21,42 @@ function initSettings() {
     const saveBtn = document.getElementById('save-settings-btn');
     const themeSelect = document.getElementById('theme-select');
     const langSelect = document.getElementById('language-select');
-
+    const addAddressBtn = document.getElementById('add-address-btn');
     btn.addEventListener('click', () => {
         panel.classList.toggle('hidden');
     });
 
-    saveBtn.addEventListener('click', saveSettings);
+    saveBtn.addEventListener('click', saveNewAddress);
+
+    addAddressBtn.addEventListener('click', () => {
+        document.getElementById('address-form').classList.remove('hidden');
+        document.getElementById('add-address-btn').classList.add('hidden');
+        document.getElementById('address-name-input').value = '';
+        document.getElementById('city-input').value = '';
+        document.getElementById('street-input').value = '';
+        document.getElementById('house-input').value = '';
+        document.getElementById('settings-status').textContent = '';
+    });
+
+    document.getElementById('cancel-address-btn').addEventListener('click', function() {
+        document.getElementById('address-form').classList.add('hidden');
+        document.getElementById('add-address-btn').classList.remove('hidden');
+        document.getElementById('addresses-list').classList.remove('hidden');
+        document.getElementById('address-name-input').value = '';
+        document.getElementById('city-input').value = '';
+        document.getElementById('street-input').value = '';
+        document.getElementById('house-input').value = '';
+        document.getElementById('settings-status').textContent = '';
+    });
 
     themeSelect.addEventListener('change', async (e) => {
         const newTheme = e.target.value;
         applyTheme(newTheme);
 
-        // Update local state
         if (!currentSettings) {
             currentSettings = {
-                cityName: '',
-                streetName: '',
-                houseNo: '',
-                cityGAID: 0,
-                streetGAID: 0,
+                addresses: [],
+                primaryAddressIndex: null,
                 theme: newTheme,
                 language: 'system',
                 enabledSources: ['tauron', 'water', 'fortum']
@@ -48,7 +67,7 @@ function initSettings() {
 
         await autoSaveSettings();
         const container = document.getElementById('outages-container');
-        renderAlerts(lastAlerts || [], container, currentSettings);
+        renderAlerts(lastAlerts || [], container, currentSettings, selectedAddressIndex);
         updateLastUpdated();
     });
 
@@ -59,11 +78,8 @@ function initSettings() {
 
         if (!currentSettings) {
             currentSettings = {
-                cityName: '',
-                streetName: '',
-                houseNo: '',
-                cityGAID: 0,
-                streetGAID: 0,
+                addresses: [],
+                primaryAddressIndex: null,
                 theme: 'system',
                 language: newLang,
                 enabledSources: ['tauron', 'water', 'fortum']
@@ -73,14 +89,11 @@ function initSettings() {
         }
 
         await autoSaveSettings();
-        
-        // Re-render instantly from cache
         const container = document.getElementById('outages-container');
-        renderAlerts(lastAlerts || [], container, currentSettings);
+        renderAlerts(lastAlerts || [], container, currentSettings, selectedAddressIndex);
         updateLastUpdated();
     });
 
-    // Location Toggle
     const locTrigger = document.querySelector('#location-settings-collapsible .collapsible-trigger');
     locTrigger.addEventListener('click', () => {
         document.getElementById('location-settings-collapsible').classList.toggle('collapsed');
@@ -97,13 +110,92 @@ function initSettings() {
             currentSettings.enabledSources = enabledSources;
             autoSaveSettings().then(() => {
                 const container = document.getElementById('outages-container');
-                renderAlerts(lastAlerts || [], container, currentSettings);
+                renderAlerts(lastAlerts || [], container, currentSettings, selectedAddressIndex);
                 updateLastUpdated();
             });
         });
     });
-
 }
+
+function initAddressFilter() {
+    const filter = document.getElementById('address-filter');
+    filter.addEventListener('change', (e) => {
+        selectedAddressIndex = parseInt(e.target.value, 10);
+        const container = document.getElementById('outages-container');
+        renderAlerts(lastAlerts || [], container, currentSettings, selectedAddressIndex);
+    });
+}
+
+function updateAddressFilter() {
+    const filter = document.getElementById('address-filter');
+    const allOpt = filter.querySelector('option[value="-1"]');
+    filter.innerHTML = '';
+    filter.appendChild(allOpt);
+    
+    const addressCount = currentSettings && currentSettings.addresses ? currentSettings.addresses.length : 0;
+    
+    if (addressCount === 0) {
+        filter.classList.add('hidden');
+    } else if (addressCount === 1) {
+        filter.classList.add('hidden');
+        selectedAddressIndex = 0;
+        const container = document.getElementById('outages-container');
+        renderAlerts(lastAlerts || [], container, currentSettings, selectedAddressIndex);
+    } else {
+        filter.classList.remove('hidden');
+        currentSettings.addresses.forEach((addr, idx) => {
+            const opt = document.createElement('option');
+            opt.value = idx;
+            opt.textContent = addr.name || `${addr.streetName} ${addr.houseNo}`;
+            if (idx === currentSettings.primaryAddressIndex) {
+                opt.textContent += ' ⭐';
+            }
+            filter.appendChild(opt);
+        });
+    }
+}
+
+function renderAddressesList() {
+    const list = document.getElementById('addresses-list');
+    if (!currentSettings || !currentSettings.addresses || currentSettings.addresses.length === 0) {
+        list.innerHTML = `<div class="no-addresses">${typeof t !== 'undefined' ? t('no_addresses') : 'No addresses configured. Add one below.'}</div>`;
+        return;
+    }
+
+    list.innerHTML = currentSettings.addresses.map((addr, idx) => `
+        <div class="address-item">
+            <div class="address-info">
+                <div class="address-name">${addr.name || 'Address ' + (idx + 1)}</div>
+                <div class="address-detail">${addr.streetName} ${addr.houseNo}, ${addr.cityName}</div>
+            </div>
+            <div class="address-actions">
+                ${idx === currentSettings.primaryAddressIndex ? '<span class="primary-badge">⭐</span>' : `<button class="icon-btn" onclick="setPrimaryAddress(${idx})" title="Set as primary">⭐</button>`}
+                <button class="icon-btn delete-btn" onclick="removeAddress(${idx})" title="Remove">🗑️</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+window.setPrimaryAddress = async function(idx) {
+    try {
+        currentSettings = await window.__TAURI__.core.invoke('set_primary_address', { index: idx });
+        renderAddressesList();
+        updateAddressFilter();
+    } catch (error) {
+        console.error('Error setting primary address:', error);
+    }
+};
+
+window.removeAddress = async function(idx) {
+    try {
+        currentSettings = await window.__TAURI__.core.invoke('remove_address', { index: idx });
+        renderAddressesList();
+        updateAddressFilter();
+        fetchOutages();
+    } catch (error) {
+        console.error('Error removing address:', error);
+    }
+};
 
 async function autoSaveSettings() {
     if (!currentSettings) return;
@@ -120,9 +212,8 @@ async function loadSettingsAndFetch() {
     try {
         const settings = await window.__TAURI__.core.invoke('load_settings');
         if (settings) {
-            currentSettings = settings; // Store globally
+            currentSettings = settings;
 
-            // Set language first so translations are correct
             if (settings.language && document.getElementById('language-select')) {
                 document.getElementById('language-select').value = settings.language;
                 initLanguage(settings.language);
@@ -131,36 +222,47 @@ async function loadSettingsAndFetch() {
             }
             applyTranslations();
 
-            document.getElementById('city-input').value = settings.cityName;
-            document.getElementById('street-input').value = settings.streetName;
-            document.getElementById('house-input').value = settings.houseNo;
             if (settings.theme) {
                 document.getElementById('theme-select').value = settings.theme;
             }
             applyTheme(settings.theme || 'system');
-            
-            // Set alert sources
+
             const sources = settings.enabledSources || ['tauron', 'water', 'fortum'];
             document.getElementById('source-tauron-check').checked = sources.includes('tauron');
             document.getElementById('source-water-check').checked = sources.includes('water');
             document.getElementById('source-fortum-check').checked = sources.includes('fortum');
 
-            // Collapse location if it looks valid
-            if (settings.cityName && settings.cityGAID && settings.streetGAID) {
-                document.getElementById('location-settings-collapsible').classList.add('collapsed');
-            }
+            updateAddressFilter();
+            renderAddressesList();
+            document.getElementById('addresses-list').classList.remove('hidden');
+            document.getElementById('add-address-btn').classList.remove('hidden');
+            document.getElementById('address-form').classList.add('hidden');
 
-            fetchOutages();
+            if (settings.addresses && settings.addresses.length > 0) {
+                fetchOutages();
+            } else {
+                const container = document.getElementById('outages-container');
+                container.innerHTML = `<div class="no-outages">${typeof t !== 'undefined' ? t('setup_prompt') : 'Tap ⚙️ to configure your location.'}</div>`;
+                document.getElementById('last-updated').textContent = typeof t !== 'undefined' ? t('not_configured') : 'Not configured';
+                document.getElementById('settings-panel').classList.remove('hidden');
+                applyTheme('system');
+            }
         } else {
             initLanguage('system');
             applyTranslations();
-            // No settings yet — show setup prompt
+            currentSettings = {
+                addresses: [],
+                primaryAddressIndex: null,
+                theme: 'system',
+                language: 'system',
+                enabledSources: ['tauron', 'water', 'fortum']
+            };
+            updateAddressFilter();
+            renderAddressesList();
             const container = document.getElementById('outages-container');
             container.innerHTML = `<div class="no-outages">${typeof t !== 'undefined' ? t('setup_prompt') : 'Tap ⚙️ to configure your location.'}</div>`;
             document.getElementById('last-updated').textContent = typeof t !== 'undefined' ? t('not_configured') : 'Not configured';
             document.getElementById('settings-panel').classList.remove('hidden');
-
-            // Apply default system theme but don't save yet
             applyTheme('system');
         }
     } catch (error) {
@@ -168,12 +270,11 @@ async function loadSettingsAndFetch() {
     }
 }
 
-async function saveSettings() {
+async function saveNewAddress() {
+    const name = document.getElementById('address-name-input').value.trim() || 'Address ' + ((currentSettings?.addresses?.length || 0) + 1);
     const cityName = document.getElementById('city-input').value.trim();
     const streetName = document.getElementById('street-input').value.trim();
     const houseNo = document.getElementById('house-input').value.trim();
-    const theme = document.getElementById('theme-select').value;
-    const language = document.getElementById('language-select').value;
     const status = document.getElementById('settings-status');
 
     if (!cityName || !streetName || !houseNo) {
@@ -186,7 +287,6 @@ async function saveSettings() {
     saveBtn.disabled = true;
 
     try {
-        // Step 1: Lookup city
         status.textContent = typeof t !== 'undefined' ? t('msg_looking_city') : '🔍 Looking up city...';
         status.className = 'settings-status';
         const cities = await window.__TAURI__.core.invoke('lookup_city', { cityName });
@@ -200,7 +300,6 @@ async function saveSettings() {
             return;
         }
 
-        // Step 2: Lookup street
         status.textContent = typeof t !== 'undefined' ? t('msg_looking_street') : '🔍 Looking up street...';
         const streets = await window.__TAURI__.core.invoke('lookup_street', {
             streetName,
@@ -216,44 +315,34 @@ async function saveSettings() {
             return;
         }
 
-        // Step 3: Save settings
         status.textContent = typeof t !== 'undefined' ? t('msg_saving') : '💾 Saving...';
 
-        const newSettings = {
+        const address = {
+            name,
             cityName,
             streetName,
             houseNo,
             cityGAID: city.GAID,
-            streetGAID: street.GAID,
-            theme,
-            language,
-            enabledSources: []
+            streetGAID: street.GAID
         };
-        if (document.getElementById('source-tauron-check').checked) newSettings.enabledSources.push('tauron');
-        if (document.getElementById('source-water-check').checked) newSettings.enabledSources.push('water');
-        if (document.getElementById('source-fortum-check').checked) newSettings.enabledSources.push('fortum');
 
-        await window.__TAURI__.core.invoke('save_settings', {
-            settings: newSettings
-        });
+        currentSettings = await window.__TAURI__.core.invoke('add_address', { address });
 
-        // Update global state
-        currentSettings = newSettings;
-
-        applyTheme(theme);
-        initLanguage(language);
-        applyTranslations();
-
-        status.textContent = `${typeof t !== 'undefined' ? t('msg_saved') : '✅ Saved!'} ${city.GAID}, ${typeof t !== 'undefined' ? t('settings_street') + '=' : 'Street='}${street.GAID}`;
+        status.textContent = typeof t !== 'undefined' ? t('msg_saved') : '✅ Saved!';
         status.className = 'settings-status success';
 
-        // Collapse location section
-        document.getElementById('location-settings-collapsible').classList.add('collapsed');
+        document.getElementById('address-form').classList.add('hidden');
+        document.getElementById('add-address-btn').classList.remove('hidden');
+        document.getElementById('addresses-list').classList.remove('hidden');
+        
+        updateAddressFilter();
+        renderAddressesList();
 
-        // Collapse entire settings panel and refresh outages
         setTimeout(() => {
-            document.getElementById('settings-panel').classList.add('hidden');
             status.textContent = '';
+            if (currentSettings.addresses.length === 1) {
+                document.getElementById('settings-panel').classList.add('hidden');
+            }
         }, 1500);
 
         fetchOutages();
@@ -341,9 +430,9 @@ async function fetchOutages() {
     const container = document.getElementById('outages-container');
     try {
         const alerts = await window.__TAURI__.core.invoke('fetch_all_alerts');
-        lastAlerts = alerts; // Cache for instant re-rendering
+        lastAlerts = alerts;
         updateLastUpdated(new Date());
-        renderAlerts(alerts, container, currentSettings);
+        renderAlerts(alerts, container, currentSettings, selectedAddressIndex);
     } catch (error) {
         console.error('Error fetching data:', error);
         container.innerHTML = `<div class="error">${typeof t !== 'undefined' ? t('err_load_failed') : 'Failed to load alert data. Error: '}${error}</div>`;
@@ -423,131 +512,189 @@ function filterOutages(allOutages, streetName, settings) {
     });
 }
 
-function renderAlerts(alerts, container, settings) {
+function matchesStreetName(alert, streetName) {
+    if (!alert.message || !streetName) return false;
+    
+    if (alert.message.includes(streetName)) return true;
+    
+    const normalize = (name) => name.replace(/^(ul\.|al\.|pl\.|os\.|rondo)\s*/i, '').trim();
+    const fullStreet = normalize(streetName);
+    const significantWords = fullStreet.split(/\s+/).filter(w => w.length >= 3);
+    const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    
+    return significantWords.some(word => {
+        const regex = new RegExp(`\\b${escapeRegExp(word)}\\b`);
+        return regex.test(alert.message);
+    });
+}
+
+function matchesAddress(alert, addresses, addrIdx) {
+    const addr = addresses[addrIdx];
+    if (!addr) return false;
+    
+    // For Tauron, use isLocal flag
+    if (alert.source === 'tauron') {
+        return alert.isLocal === true;
+    }
+    
+    // For Water and Fortum, use street name matching
+    if (!alert.message) return false;
+    return matchesStreetName(alert, addr.streetName);
+}
+
+function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
     const now = new Date();
 
-    // Filter by enabled sources and finished status
     const enabledSources = (settings && settings.enabledSources) ? settings.enabledSources : ['tauron', 'water', 'fortum'];
     const activeAlerts = alerts.filter(item => {
-        // Source filter
         if (!enabledSources.includes(item.source)) return false;
-
-        // Date filter
         if (!item.endDate) return true;
         const end = new Date(item.endDate);
         return isNaN(end.getTime()) || end > now;
     });
 
-    // Group by source
-    const tauronAlerts = activeAlerts.filter(a => a.source === 'tauron');
-    const waterAlerts = activeAlerts.filter(a => a.source === 'water');
-    const fortumAlerts = activeAlerts.filter(a => a.source === 'fortum');
+    const addresses = (settings && settings.addresses) ? settings.addresses : [];
+    
+    let localTauron = [], otherTauron = [];
+    let localWater = [], otherWater = [];
+    let localFortum = [], otherFortum = [];
 
-    // For Tauron, split into local vs other
-    const streetName = (settings && settings.streetName) ? settings.streetName : '';
+    if (selectedAddrIdx >= 0 && addresses[selectedAddrIdx]) {
+        activeAlerts.forEach(item => {
+            if (item.source === 'tauron') {
+                // Only show alerts from the selected address
+                if (item.addressIndex === selectedAddrIdx) {
+                    if (item.isLocal === true) {
+                        localTauron.push(item);
+                    } else {
+                        otherTauron.push(item);
+                    }
+                }
+                // Skip alerts from other addresses - don't show them at all when filtered by specific address
+            } else if (item.source === 'water') {
+                const addr = addresses[selectedAddrIdx];
+                if (addr && matchesStreetName(item, addr.streetName)) {
+                    localWater.push(item);
+                } else {
+                    otherWater.push(item);
+                }
+            } else if (item.source === 'fortum') {
+                const addr = addresses[selectedAddrIdx];
+                if (addr && matchesStreetName(item, addr.streetName)) {
+                    localFortum.push(item);
+                } else {
+                    otherFortum.push(item);
+                }
+            }
+        });
+    } else if (addresses.length > 0) {
+        activeAlerts.forEach(item => {
+            if (item.source === 'tauron') {
+                const isLocal = addresses.some((_, idx) => matchesAddress(item, addresses, idx));
+                if (isLocal) {
+                    localTauron.push(item);
+                } else {
+                    otherTauron.push(item);
+                }
+            } else if (item.source === 'water') {
+                const isLocal = addresses.some((_, idx) => matchesAddress(item, addresses, idx));
+                if (isLocal) {
+                    localWater.push(item);
+                } else {
+                    otherWater.push(item);
+                }
+            } else if (item.source === 'fortum') {
+                const isLocal = addresses.some((_, idx) => matchesAddress(item, addresses, idx));
+                if (isLocal) {
+                    localFortum.push(item);
+                } else {
+                    otherFortum.push(item);
+                }
+            }
+        });
+    } else {
+        otherTauron = activeAlerts.filter(a => a.source === 'tauron');
+        otherWater = activeAlerts.filter(a => a.source === 'water');
+        otherFortum = activeAlerts.filter(a => a.source === 'fortum');
+    }
 
-    const localTauron = streetName
-        ? tauronAlerts.filter(a => {
-            // Check by content matching
-            if (a.message && a.message.includes(streetName)) return true;
-            const normalize = (name) => name.replace(/^(ul\.|al\.|pl\.|os\.|rondo)\s*/i, '').trim();
-            const fullStreet = normalize(streetName);
-            const significantWords = fullStreet.split(/\s+/).filter(w => w.length >= 3);
-            const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            return significantWords.some(word => {
-                const regex = new RegExp(`\\b${escapeRegExp(word)}\\b`);
-                return a.message && regex.test(a.message);
-            });
-        })
-        : [];
-    const localTauronSet = new Set(localTauron);
-    const otherTauron = tauronAlerts.filter(a => !localTauronSet.has(a));
-
-    // For water, search by street name in content
-    const localWater = streetName ? filterAlerts(waterAlerts, streetName) : [];
-    const localWaterSet = new Set(localWater);
-    const otherWater = waterAlerts.filter(a => !localWaterSet.has(a));
-
-    // Fortum alerts (Wrocław only - currently no local filtering)
-    const localFortum = streetName ? filterAlerts(fortumAlerts, streetName) : [];
-    const localFortumSet = new Set(localFortum);
-    const otherFortum = fortumAlerts.filter(a => !localFortumSet.has(a));
+    const hasLocalAlerts = localTauron.length > 0 || localWater.length > 0 || localFortum.length > 0;
+    const hasOtherAlerts = otherTauron.length > 0 || otherWater.length > 0 || otherFortum.length > 0;
+    const hasAnyAlerts = hasLocalAlerts || hasOtherAlerts;
 
     container.innerHTML = '';
 
-    const hasLocalAlerts = localTauron.length > 0 || localWater.length > 0 || localFortum.length > 0;
-
-    // ── Your Location section ──
-    if (hasLocalAlerts) {
+    if (!hasAnyAlerts) {
         const lblYourLoc = typeof t !== 'undefined' ? t('lbl_your_location') : 'Your location';
-        container.innerHTML += `<div class="section-label">${lblYourLoc} (${localTauron.length + localWater.length + localFortum.length})</div>`;
-        container.innerHTML += renderCards(localTauron, 'tauron');
-        container.innerHTML += renderCards(localWater, 'water');
-        container.innerHTML += renderCards(localFortum, 'fortum');
-    } else {
         const msgNoLoc = typeof t !== 'undefined' ? t('msg_no_outages_local') : 'No planned outages for your location.';
-        container.innerHTML += `<div class="no-outages">${msgNoLoc}</div>`;
+        container.innerHTML = `<div class="section-label">${lblYourLoc}</div><div class="no-outages">${msgNoLoc}</div>`;
+        return;
     }
 
-    // ── Other Alerts Divider ──
-    if (otherTauron.length > 0 || otherWater.length > 0 || otherFortum.length > 0) {
+    if (hasLocalAlerts) {
+        const totalLocal = localTauron.length + localWater.length + localFortum.length;
+        const lblYourLoc = typeof t !== 'undefined' ? t('lbl_your_location') : 'Your location';
+        container.innerHTML += `<div class="section-label">${lblYourLoc} (${totalLocal})</div>`;
+        
+        if (localTauron.length > 0) {
+            container.innerHTML += renderCards(localTauron, 'tauron');
+        }
+        if (localWater.length > 0) {
+            container.innerHTML += renderCards(localWater, 'water');
+        }
+        if (localFortum.length > 0) {
+            container.innerHTML += renderCards(localFortum, 'fortum');
+        }
+    }
+
+    if (hasOtherAlerts) {
         const lblDivider = typeof t !== 'undefined' ? t('lbl_other_alerts_divider') : 'Other alerts';
         container.innerHTML += `<div class="other-divider"><span>${lblDivider}</span></div>`;
-    }
+        
+        if (otherTauron.length > 0) {
+            const lblSection = typeof t !== 'undefined' ? t('lbl_section_tauron') : 'Power (Tauron)';
+            container.innerHTML += `
+                <div class="collapsible source-tauron collapsed">
+                    <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
+                        <span>${lblSection} (${otherTauron.length})</span>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        ${renderCards(otherTauron, 'tauron')}
+                    </div>
+                </div>
+            `;
+        }
 
-    // ── Other Tauron section ──
-    if (otherTauron.length > 0) {
-        const lblSection = typeof t !== 'undefined' ? t('lbl_section_tauron') : 'Power (Tauron)';
-        container.innerHTML += `
-            <div class="collapsible source-tauron collapsed">
-                <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
-                    <span>${lblSection} (${otherTauron.length})</span>
-                    <span class="toggle-icon">▼</span>
+        if (otherWater.length > 0) {
+            const lblSection = typeof t !== 'undefined' ? t('lbl_section_water') : 'Water (MPWiK)';
+            container.innerHTML += `
+                <div class="collapsible source-water collapsed">
+                    <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
+                        <span>${lblSection} (${otherWater.length})</span>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        ${renderCards(otherWater, 'water')}
+                    </div>
                 </div>
-                <div class="collapsible-content">
-                    ${renderCards(otherTauron, 'tauron')}
-                </div>
-            </div>
-        `;
-    }
+            `;
+        }
 
-    // ── Other Water section ──
-    if (otherWater.length > 0) {
-        const lblSection = typeof t !== 'undefined' ? t('lbl_section_water') : 'Water (MPWiK)';
-        container.innerHTML += `
-            <div class="collapsible source-water collapsed">
-                <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
-                    <span>${lblSection} (${otherWater.length})</span>
-                    <span class="toggle-icon">▼</span>
+        if (otherFortum.length > 0) {
+            const lblSection = typeof t !== 'undefined' ? t('lbl_section_fortum') : 'Power (Fortum)';
+            container.innerHTML += `
+                <div class="collapsible source-fortum collapsed">
+                    <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
+                        <span>${lblSection} (${otherFortum.length})</span>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        ${renderCards(otherFortum, 'fortum')}
+                    </div>
                 </div>
-                <div class="collapsible-content">
-                    ${renderCards(otherWater, 'water')}
-                </div>
-            </div>
-        `;
-    }
-
-    // ── Other Fortum section ──
-    if (otherFortum.length > 0) {
-        const lblSection = typeof t !== 'undefined' ? t('lbl_section_fortum') : 'Power (Fortum)';
-        container.innerHTML += `
-            <div class="collapsible source-fortum collapsed">
-                <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
-                    <span>${lblSection} (${otherFortum.length})</span>
-                    <span class="toggle-icon">▼</span>
-                </div>
-                <div class="collapsible-content">
-                    ${renderCards(otherFortum, 'fortum')}
-                </div>
-            </div>
-        `;
-    }
-
-
-    // If nothing at all
-    if (activeAlerts.length === 0) {
-        const msgNone = typeof t !== 'undefined' ? t('msg_no_alerts') : 'No active alerts.';
-        container.innerHTML = `<div class="no-outages">${msgNone}</div>`;
+            `;
+        }
     }
 }
 

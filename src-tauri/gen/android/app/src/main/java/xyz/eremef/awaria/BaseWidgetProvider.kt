@@ -132,18 +132,41 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         return candidates.firstOrNull { it.exists() && it.canRead() }
     }
 
-    private fun loadSettings(context: Context): WidgetSettings? {
+    private fun loadSettings(context: Context): List<WidgetSettings>? {
         val settingsFile = findSettingsFile(context) ?: return null
         return try {
             val json = JSONObject(settingsFile.readText())
-            WidgetSettings(
-                    cityGAID = json.getLong("cityGAID"),
-                    streetGAID = json.getLong("streetGAID"),
-                    houseNo = json.getString("houseNo"),
-                    streetName = json.getString("streetName"),
-                    theme = json.optString("theme", "system"),
-                    language = json.optString("language", "system")
-            )
+            val addresses = json.optJSONArray("addresses")
+            
+            if (addresses != null && addresses.length() > 0) {
+                (0 until addresses.length()).map { i ->
+                    val addr = addresses.getJSONObject(i)
+                    WidgetSettings(
+                            cityGAID = addr.getLong("cityGAID"),
+                            streetGAID = addr.getLong("streetGAID"),
+                            houseNo = addr.getString("houseNo"),
+                            streetName = addr.getString("streetName"),
+                            theme = json.optString("theme", "system"),
+                            language = json.optString("language", "system")
+                    )
+                }
+            } else {
+                // Legacy format - single address
+                val cityGAID = json.optLong("cityGAID", 0)
+                val streetGAID = json.optLong("streetGAID", 0)
+                if (cityGAID > 0 && streetGAID > 0) {
+                    listOf(WidgetSettings(
+                            cityGAID = cityGAID,
+                            streetGAID = streetGAID,
+                            houseNo = json.optString("houseNo", ""),
+                            streetName = json.optString("streetName", ""),
+                            theme = json.optString("theme", "system"),
+                            language = json.optString("language", "system")
+                    ))
+                } else {
+                    null
+                }
+            }
         } catch (e: Exception) {
             null
         }
@@ -195,20 +218,27 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    abstract suspend fun fetchCount(settings: WidgetSettings): Int
+    abstract suspend fun fetchCount(settings: List<WidgetSettings>): Int
 
     internal suspend fun updateWidget(
             context: Context,
             appWidgetManager: AppWidgetManager,
             appWidgetId: Int
     ) {
-        val settings = loadSettings(context)
-        val language = settings?.language ?: "system"
-        val dark = isDarkMode(context, settings?.theme ?: "system")
+        val settingsList = loadSettings(context)
+        val language = settingsList?.firstOrNull()?.language ?: "system"
+        val theme = settingsList?.firstOrNull()?.theme ?: "system"
+        val dark = isDarkMode(context, theme)
+        val addressCount = settingsList?.size ?: 0
 
         val count =
                 try {
-                    if (settings != null) fetchCount(settings).toString() else "?"
+                    if (settingsList != null && settingsList.isNotEmpty()) {
+                        val total = fetchCount(settingsList)
+                        if (addressCount > 1) "$total ($addressCount)" else total.toString()
+                    } else {
+                        "?"
+                    }
                 } catch (e: Exception) {
                     "!"
                 }
@@ -217,7 +247,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 if (count != "?" && count != "!") {
                     val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
                     timeFormat.format(Date())
-                } else if (settings == null) {
+                } else if (settingsList == null) {
                     getTranslation("setup", language)
                 } else {
                     "Error"
@@ -331,39 +361,43 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         return views
     }
 
-    protected fun fetchTauronAlertCount(settings: WidgetSettings): Int {
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
-        dateFormat.timeZone = TimeZone.getTimeZone("UTC")
-        val now = dateFormat.format(Date())
-        val baseUrl = "https://www.tauron-dystrybucja.pl/waapi/outages/address"
-        val params =
-                "cityGAID=${settings.cityGAID}&streetGAID=${settings.streetGAID}" +
-                        "&houseNo=${settings.houseNo}" +
-                        "&fromDate=$now&getLightingSupport=false" +
-                        "&getServicedSwitchingoff=true&_=${System.currentTimeMillis()}"
+    protected fun fetchTauronAlertCount(settingsList: List<WidgetSettings>): Int {
+        var totalCount = 0
+        for (settings in settingsList) {
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
+            dateFormat.timeZone = TimeZone.getTimeZone("UTC")
+            val now = dateFormat.format(Date())
+            val baseUrl = "https://www.tauron-dystrybucja.pl/waapi/outages/address"
+            val params =
+                    "cityGAID=${settings.cityGAID}&streetGAID=${settings.streetGAID}" +
+                            "&houseNo=${settings.houseNo}" +
+                            "&fromDate=$now&getLightingSupport=false" +
+                            "&getServicedSwitchingoff=true&_=${System.currentTimeMillis()}"
 
-        val url = URL("$baseUrl?$params")
-        val conn = url.openConnection() as HttpURLConnection
-        conn.requestMethod = "GET"
-        conn.setRequestProperty("accept", "application/json")
-        conn.setRequestProperty("x-requested-with", "XMLHttpRequest")
-        conn.setRequestProperty("Referer", "https://www.tauron-dystrybucja.pl/wylaczenia")
-        conn.connectTimeout = 10000
-        conn.readTimeout = 10000
+            val url = URL("$baseUrl?$params")
+            val conn = url.openConnection() as HttpURLConnection
+            conn.requestMethod = "GET"
+            conn.setRequestProperty("accept", "application/json")
+            conn.setRequestProperty("x-requested-with", "XMLHttpRequest")
+            conn.setRequestProperty("Referer", "https://www.tauron-dystrybucja.pl/wylaczenia")
+            conn.connectTimeout = 10000
+            conn.readTimeout = 10000
 
-        val responseCode = conn.responseCode
-        if (responseCode !in 200..299) {
+            val responseCode = conn.responseCode
+            if (responseCode !in 200..299) {
+                conn.disconnect()
+                continue
+            }
+
+            val response = conn.inputStream.bufferedReader().readText()
             conn.disconnect()
-            throw Exception("Tauron HTTP error: $responseCode")
+
+            totalCount += parseOutageItems(response, settings.streetName)
         }
-
-        val response = conn.inputStream.bufferedReader().readText()
-        conn.disconnect()
-
-        return parseOutageItems(response, settings.streetName)
+        return totalCount
     }
 
-    protected fun fetchMpwikAlertCount(settings: WidgetSettings): Int {
+    protected fun fetchMpwikAlertCount(settingsList: List<WidgetSettings>): Int {
         val url = URL("https://www.mpwik.wroc.pl/wp-admin/admin-ajax.php")
         val conn = url.openConnection() as HttpURLConnection
         conn.requestMethod = "POST"
@@ -388,10 +422,15 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         val response = conn.inputStream.bufferedReader().readText()
         conn.disconnect()
 
-        return parseMpwikItems(response, settings.streetName)
+        // Check against all addresses' street names
+        var totalCount = 0
+        for (settings in settingsList) {
+            totalCount += parseMpwikItems(response, settings.streetName)
+        }
+        return totalCount
     }
 
-    protected fun fetchFortumAlertCount(settings: WidgetSettings): Int {
+    protected fun fetchFortumAlertCount(settingsList: List<WidgetSettings>): Int {
         val cityGuid = "d06e8606-f1d7-eb11-bacb-000d3aa9626e"
         val regionId = "3"
 
@@ -407,10 +446,13 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         val plannedResponse = fetchJson(plannedUrl)
         val currentResponse = fetchJson(currentUrl)
 
-        val plannedCount = parseFortumItems(plannedResponse, settings.streetName)
-        val currentCount = parseFortumItems(currentResponse, settings.streetName)
-
-        return plannedCount + currentCount
+        // Check against all addresses' street names
+        var totalCount = 0
+        for (settings in settingsList) {
+            totalCount += parseFortumItems(plannedResponse, settings.streetName)
+            totalCount += parseFortumItems(currentResponse, settings.streetName)
+        }
+        return totalCount
     }
 
     private fun fetchJson(url: URL): String {
