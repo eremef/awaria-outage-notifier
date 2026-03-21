@@ -1,4 +1,4 @@
-# AWARIA - Application for Warning and Alerting of Repairs and Infrastructure Accidents
+# Application for Warning and Alerting of Repairs and Infrastructure Accidents
 
 [English](README.md) | [Polski](README.pl.md)
 
