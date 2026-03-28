@@ -23,9 +23,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.json.JSONObject
 
 data class WidgetSettings(
@@ -805,6 +803,59 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         }
     }
 
+    protected suspend fun fetchEneaAlertCount(settingsList: List<WidgetSettings>): Int = coroutineScope {
+        var totalCount = 0
+        try {
+            val jobs = (1..32).map { id ->
+                async(Dispatchers.IO) {
+                    try {
+                        val url = URL("https://www.wylaczenia-eneaoperator.pl/rss/rss_unpl_$id.xml")
+                        val conn = url.openConnection() as HttpURLConnection
+                        conn.requestMethod = "GET"
+                        conn.connectTimeout = 5000
+                        conn.readTimeout = 5000
+                        if (conn.responseCode in 200..299) {
+                            conn.inputStream.bufferedReader().readText()
+                        } else null
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+            }
+
+            val xmls = jobs.awaitAll().filterNotNull()
+            val descriptionRegex = Regex("<description><!\\[CDATA\\[(.*?)\\]\\]></description>", RegexOption.DOT_MATCHES_ALL)
+
+            for (settings in settingsList) {
+                var count = 0
+                for (xml in xmls) {
+                    val items = xml.split("<item>").drop(1)
+                    for (itemXml in items) {
+                        val descMatch = descriptionRegex.find(itemXml)
+                        if (descMatch != null) {
+                            val description = descMatch.groupValues[1]
+                            val cityMatch = wordMatch(description, settings.cityName)
+                            
+                            val streetMatches = matchesStreetOnly(
+                                description,
+                                settings.streetName1,
+                                settings.streetName2
+                            )
+                            
+                            if (cityMatch && streetMatches) {
+                                count++
+                            }
+                        }
+                    }
+                }
+                totalCount += count
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Enea sync failed", e)
+        }
+        totalCount
+    }
+
     private fun matchesStreet(
             text: String,
             cityName: String,
@@ -861,7 +912,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
     private fun wordMatch(text: String, word: String): Boolean {
         val escapedWord = java.util.regex.Pattern.quote(word)
-        val regex = Regex("\\b$escapedWord\\b", RegexOption.IGNORE_CASE)
+        val regex = Regex("(?U)\\b$escapedWord\\b", RegexOption.IGNORE_CASE)
         return regex.containsMatchIn(text)
     }
 }

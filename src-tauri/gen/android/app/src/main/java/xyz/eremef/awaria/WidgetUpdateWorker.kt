@@ -46,6 +46,14 @@ class WidgetUpdateWorker(
             fortumProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        // Update Enea widgets
+        val eneaName = ComponentName(context, EneaWidgetProvider::class.java)
+        val eneaIds = appWidgetManager.getAppWidgetIds(eneaName)
+        val eneaProvider = EneaWidgetProvider()
+        for (id in eneaIds) {
+            eneaProvider.updateWidget(context, appWidgetManager, id)
+        }
+
         return androidx.work.ListenableWorker.Result.success()
     }
 }
