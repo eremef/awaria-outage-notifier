@@ -346,7 +346,6 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                                         PendingIntent.FLAG_UPDATE_CURRENT or
                                                 PendingIntent.FLAG_IMMUTABLE
                                 )
-                        refreshPending.send()
                         activityPending
                     } else {
                         refreshPending
