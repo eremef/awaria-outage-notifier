@@ -1,0 +1,115 @@
+> Task :buildSrc:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :buildSrc:compileKotlin UP-TO-DATE
+> Task :buildSrc:compileJava NO-SOURCE
+> Task :buildSrc:compileGroovy NO-SOURCE
+> Task :buildSrc:pluginDescriptors UP-TO-DATE
+> Task :buildSrc:processResources UP-TO-DATE
+> Task :buildSrc:classes UP-TO-DATE
+> Task :buildSrc:jar UP-TO-DATE
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preArm64DebugBuild UP-TO-DATE
+> Task :app:mergeArm64DebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors
+> Task :app:generateArm64DebugBuildConfig UP-TO-DATE
+> Task :tauri-android:preBuild UP-TO-DATE
+> Task :tauri-android:preDebugBuild UP-TO-DATE
+> Task :tauri-android:writeDebugAarMetadata UP-TO-DATE
+> Task :tauri-plugin-fs:preBuild UP-TO-DATE
+> Task :tauri-plugin-fs:preDebugBuild UP-TO-DATE
+> Task :tauri-plugin-fs:writeDebugAarMetadata UP-TO-DATE
+> Task :app:checkArm64DebugAarMetadata UP-TO-DATE
+> Task :app:generateArm64DebugResValues UP-TO-DATE
+> Task :tauri-android:generateDebugResValues UP-TO-DATE
+> Task :tauri-android:generateDebugResources UP-TO-DATE
+> Task :tauri-android:packageDebugResources UP-TO-DATE
+> Task :tauri-plugin-fs:generateDebugResValues UP-TO-DATE
+> Task :tauri-plugin-fs:generateDebugResources UP-TO-DATE
+> Task :tauri-plugin-fs:packageDebugResources UP-TO-DATE
+> Task :app:mapArm64DebugSourceSetPaths UP-TO-DATE
+> Task :app:generateArm64DebugResources UP-TO-DATE
+> Task :app:mergeArm64DebugResources UP-TO-DATE
+> Task :app:packageArm64DebugResources UP-TO-DATE
+> Task :app:parseArm64DebugLocalResources UP-TO-DATE
+> Task :app:createArm64DebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksArm64Debug UP-TO-DATE
+> Task :tauri-android:extractDeepLinksDebug UP-TO-DATE
+> Task :tauri-android:processDebugManifest UP-TO-DATE
+> Task :tauri-plugin-fs:extractDeepLinksDebug UP-TO-DATE
+> Task :tauri-plugin-fs:processDebugManifest UP-TO-DATE
+> Task :app:processArm64DebugMainManifest UP-TO-DATE
+> Task :app:processArm64DebugManifest UP-TO-DATE
+> Task :app:processArm64DebugManifestForPackage UP-TO-DATE
+> Task :tauri-android:compileDebugLibraryResources UP-TO-DATE
+> Task :tauri-android:parseDebugLocalResources UP-TO-DATE
+> Task :tauri-android:generateDebugRFile UP-TO-DATE
+> Task :tauri-plugin-fs:compileDebugLibraryResources UP-TO-DATE
+> Task :tauri-plugin-fs:parseDebugLocalResources UP-TO-DATE
+> Task :tauri-plugin-fs:generateDebugRFile UP-TO-DATE
+> Task :tauri-android:checkKotlinGradlePluginConfigurationErrors
+> Task :tauri-android:generateDebugBuildConfig UP-TO-DATE
+> Task :tauri-android:compileDebugKotlin UP-TO-DATE
+> Task :tauri-android:javaPreCompileDebug UP-TO-DATE
+> Task :tauri-android:compileDebugJavaWithJavac UP-TO-DATE
+> Task :tauri-android:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :tauri-plugin-fs:checkKotlinGradlePluginConfigurationErrors
+> Task :tauri-plugin-fs:compileDebugKotlin UP-TO-DATE
+> Task :tauri-plugin-fs:javaPreCompileDebug UP-TO-DATE
+> Task :tauri-plugin-fs:compileDebugJavaWithJavac NO-SOURCE
+> Task :tauri-plugin-fs:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :app:javaPreCompileArm64Debug UP-TO-DATE
+> Task :app:mergeArm64DebugShaders UP-TO-DATE
+> Task :app:compileArm64DebugShaders NO-SOURCE
+> Task :app:generateArm64DebugAssets UP-TO-DATE
+> Task :tauri-android:mergeDebugShaders UP-TO-DATE
+> Task :tauri-android:compileDebugShaders NO-SOURCE
+> Task :tauri-android:generateDebugAssets UP-TO-DATE
+> Task :tauri-android:mergeDebugAssets UP-TO-DATE
+> Task :tauri-plugin-fs:mergeDebugShaders UP-TO-DATE
+> Task :tauri-plugin-fs:compileDebugShaders NO-SOURCE
+> Task :tauri-plugin-fs:generateDebugAssets UP-TO-DATE
+> Task :tauri-plugin-fs:mergeDebugAssets UP-TO-DATE
+> Task :app:mergeArm64DebugAssets UP-TO-DATE
+> Task :app:compressArm64DebugAssets UP-TO-DATE
+> Task :tauri-android:processDebugJavaRes UP-TO-DATE
+> Task :tauri-plugin-fs:processDebugJavaRes UP-TO-DATE
+> Task :app:checkArm64DebugDuplicateClasses UP-TO-DATE
+> Task :app:desugarArm64DebugFileDependencies UP-TO-DATE
+> Task :app:mergeExtDexArm64Debug UP-TO-DATE
+> Task :tauri-plugin-fs:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :tauri-android:bundleLibRuntimeToDirDebug UP-TO-DATE
+
+> Task :app:rustBuildArm64Debug
+
+> awaria@1.0.18-alpha tauri
+> tauri android android-studio-script --target aarch64
+
+
+thread '<unnamed>' (19256) panicked at crates\tauri-cli\src\mobile\mod.rs:403:6:
+failed to read CLI options: Context("failed to build WebSocket client", Io(Os { code: 10061, kind: ConnectionRefused, message: "Nie mo┐na nawi╣zaŠ po│╣czenia, poniewa┐ komputer docelowy aktywnie go odmawia." }))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+> Task :app:rustBuildArm64Debug FAILED
+> Task :app:processArm64DebugResources
+
+[Incubating] Problems report is available at: file:///D:/eremef/Documents/AI/antigravity/awaria/src-tauri/gen/android/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:rustBuildArm64Debug'.
+> A problem occurred starting process 'command 'npm.bat''
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 9s
+63 actionable tasks: 5 executed, 58 up-to-date

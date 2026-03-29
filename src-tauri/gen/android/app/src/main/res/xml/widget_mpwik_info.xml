@@ -10,4 +10,5 @@
     android:initialLayout="@layout/widget_outage"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
-    android:widgetFeatures="reconfigurable|configuration_optional" />
+    android:widgetFeatures="reconfigurable|configuration_optional"
+    android:previewLayout="@layout/widget_outage" />

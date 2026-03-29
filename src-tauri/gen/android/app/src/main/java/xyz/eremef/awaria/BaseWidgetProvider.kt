@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
+import android.util.Log
 import android.util.SizeF
 import android.widget.RemoteViews
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -22,16 +23,20 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.json.JSONObject
 
 data class WidgetSettings(
-        val cityGAID: Long,
-        val streetGAID: Long,
-        val houseNo: String,
+        val cityName: String,
+        val voivodeship: String,
+        val district: String,
+        val commune: String,
         val streetName: String,
+        val streetName1: String,
+        val streetName2: String?,
+        val houseNo: String,
+        val cityId: Long,
+        val streetId: Long,
         val theme: String,
         val language: String
 )
@@ -40,6 +45,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
     companion object {
         const val WORK_NAME = "xyz.eremef.awaria.WIDGET_UPDATE_WORK"
+        const val TAG = "AwariaWidget"
 
         // Light theme colors (from style.css :root)
         private const val LIGHT_PRIMARY = "#D9006C"
@@ -56,6 +62,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     abstract val lightPrimary: String
     abstract val darkPrimary: String
     abstract val iconResId: Int
+    abstract val labelKey: String
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == refreshAction || intent.action == Intent.ACTION_BOOT_COMPLETED) {
@@ -132,18 +139,36 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         return candidates.firstOrNull { it.exists() && it.canRead() }
     }
 
-    private fun loadSettings(context: Context): WidgetSettings? {
+    private fun loadSettings(context: Context): List<WidgetSettings>? {
         val settingsFile = findSettingsFile(context) ?: return null
         return try {
             val json = JSONObject(settingsFile.readText())
-            WidgetSettings(
-                    cityGAID = json.getLong("cityGAID"),
-                    streetGAID = json.getLong("streetGAID"),
-                    houseNo = json.getString("houseNo"),
-                    streetName = json.getString("streetName"),
-                    theme = json.optString("theme", "system"),
-                    language = json.optString("language", "system")
-            )
+            val addresses = json.optJSONArray("addresses")
+
+            if (addresses != null && addresses.length() > 0) {
+                (0 until addresses.length()).map { i ->
+                    val addr = addresses.getJSONObject(i)
+                    WidgetSettings(
+                            cityName = addr.optString("cityName", ""),
+                            voivodeship = addr.optString("voivodeship", ""),
+                            district = addr.optString("district", ""),
+                            commune = addr.optString("commune", ""),
+                            streetName = addr.optString("streetName", ""),
+                            streetName1 = addr.optString("streetName1", ""),
+                            streetName2 =
+                                    addr.optString("streetName2", "").let {
+                                        if (it.isEmpty()) null else it
+                                    },
+                            houseNo = addr.optString("houseNo", ""),
+                            cityId = addr.optLong("cityId", 0),
+                            streetId = addr.optLong("streetId", 0),
+                            theme = json.optString("theme", "system"),
+                            language = json.optString("language", "system")
+                    )
+                }
+            } else {
+                null
+            }
         } catch (e: Exception) {
             null
         }
@@ -188,27 +213,33 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 else if (lang == "en") false else Locale.getDefault().language.startsWith("pl")
         return when (key) {
             "outages" -> if (isPl) "wyłączeń" else "outages"
-            "alerts" -> if (isPl) "alertów" else "alerts"
             "setup" -> if (isPl) "Skonfiguruj" else "Setup needed"
             "updating" -> if (isPl) "Aktualizacja..." else "Updating..."
             else -> key
         }
     }
 
-    abstract suspend fun fetchCount(settings: WidgetSettings): Int
+    abstract suspend fun fetchCount(settings: List<WidgetSettings>): Int
 
     internal suspend fun updateWidget(
             context: Context,
             appWidgetManager: AppWidgetManager,
             appWidgetId: Int
     ) {
-        val settings = loadSettings(context)
-        val language = settings?.language ?: "system"
-        val dark = isDarkMode(context, settings?.theme ?: "system")
+        val settingsList = loadSettings(context)
+        val language = settingsList?.firstOrNull()?.language ?: "system"
+        val theme = settingsList?.firstOrNull()?.theme ?: "system"
+        val dark = isDarkMode(context, theme)
+        val addressCount = settingsList?.size ?: 0
 
         val count =
                 try {
-                    if (settings != null) fetchCount(settings).toString() else "?"
+                    if (settingsList != null && settingsList.isNotEmpty()) {
+                        val total = fetchCount(settingsList)
+                        if (addressCount > 1) "$total ($addressCount)" else total.toString()
+                    } else {
+                        "?"
+                    }
                 } catch (e: Exception) {
                     "!"
                 }
@@ -217,7 +248,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 if (count != "?" && count != "!") {
                     val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
                     timeFormat.format(Date())
-                } else if (settings == null) {
+                } else if (settingsList == null) {
                     getTranslation("setup", language)
                 } else {
                     "Error"
@@ -296,7 +327,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 )
 
         val clickPending =
-                if (count == "0") {
+                if (count == "0" || count.startsWith("0 (")) {
                     refreshPending
                 } else {
                     val launchIntent =
@@ -307,63 +338,188 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                                                         Intent.FLAG_ACTIVITY_CLEAR_TOP
                                     }
                     if (launchIntent != null) {
-                        val activityPending =
-                                PendingIntent.getActivity(
-                                        context,
-                                        0,
-                                        launchIntent,
-                                        PendingIntent.FLAG_UPDATE_CURRENT or
-                                                PendingIntent.FLAG_IMMUTABLE
-                                )
-                        refreshPending.send()
-                        activityPending
+                        PendingIntent.getActivity(
+                                context,
+                                0,
+                                launchIntent,
+                                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                        )
                     } else {
                         refreshPending
                     }
                 }
-        views.setOnClickPendingIntent(R.id.widget_root, clickPending)
+
+        // Always refresh when clicking the background
+        views.setOnClickPendingIntent(R.id.widget_root, refreshPending)
+
+        // If there are outages, clicking the icon or the count will open the app
+        views.setOnClickPendingIntent(R.id.widget_icon, clickPending)
+        views.setOnClickPendingIntent(R.id.widget_count, clickPending)
 
         applyTheme(views, dark)
-        views.setTextViewText(R.id.widget_label, getTranslation("alerts", language))
+        views.setTextViewText(R.id.widget_label, getTranslation(labelKey, language))
         views.setTextViewText(R.id.widget_count, count)
         views.setTextViewText(R.id.widget_updated, updatedAt)
 
         return views
     }
 
-    protected fun fetchTauronAlertCount(settings: WidgetSettings): Int {
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
-        dateFormat.timeZone = TimeZone.getTimeZone("UTC")
-        val now = dateFormat.format(Date())
-        val baseUrl = "https://www.tauron-dystrybucja.pl/waapi/outages/address"
-        val params =
-                "cityGAID=${settings.cityGAID}&streetGAID=${settings.streetGAID}" +
-                        "&houseNo=${settings.houseNo}" +
-                        "&fromDate=$now&getLightingSupport=false" +
-                        "&getServicedSwitchingoff=true&_=${System.currentTimeMillis()}"
+    protected fun fetchTauronAlertCount(settingsList: List<WidgetSettings>): Int {
+        var totalCount = 0
+        for (settings in settingsList) {
+            try {
+                // Look up city GAID
+                val cityGAID = lookupTauronCity(settings) ?: continue
 
-        val url = URL("$baseUrl?$params")
-        val conn = url.openConnection() as HttpURLConnection
-        conn.requestMethod = "GET"
-        conn.setRequestProperty("accept", "application/json")
-        conn.setRequestProperty("x-requested-with", "XMLHttpRequest")
-        conn.setRequestProperty("Referer", "https://www.tauron-dystrybucja.pl/wylaczenia")
-        conn.connectTimeout = 10000
-        conn.readTimeout = 10000
+                // Check for city without streets (TERYT streetId == 0)
+                val streetGAID =
+                        if (settings.streetName1.isEmpty()) {
+                            lookupTauronStreetDummy(cityGAID)
+                        } else {
+                            val streetQuery = settings.streetName1
+                            lookupTauronStreet(streetQuery, cityGAID)
+                        }
+                                ?: continue
 
-        val responseCode = conn.responseCode
-        if (responseCode !in 200..299) {
-            conn.disconnect()
-            throw Exception("Tauron HTTP error: $responseCode")
+                // Fetch outages
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
+                dateFormat.timeZone = TimeZone.getTimeZone("UTC")
+                val now = dateFormat.format(Date())
+                val baseUrl = "https://www.tauron-dystrybucja.pl/waapi/outages/address"
+                val safeHouseNo =
+                        java.net.URLEncoder.encode(settings.houseNo, "utf-8").replace("+", "%20")
+                val params =
+                        "cityGAID=$cityGAID&streetGAID=$streetGAID" +
+                                "&houseNo=$safeHouseNo" +
+                                "&fromDate=$now&getLightingSupport=false" +
+                                "&getServicedSwitchingoff=true&_=${System.currentTimeMillis()}"
+
+                val url = URL("$baseUrl?$params")
+                val conn = url.openConnection() as HttpURLConnection
+                conn.requestMethod = "GET"
+                conn.setRequestProperty("accept", "application/json")
+                conn.setRequestProperty("x-requested-with", "XMLHttpRequest")
+                conn.setRequestProperty("Referer", "https://www.tauron-dystrybucja.pl/wylaczenia")
+                conn.connectTimeout = 10000
+                conn.readTimeout = 10000
+
+                val responseCode = conn.responseCode
+                if (responseCode !in 200..299) {
+                    conn.disconnect()
+                    continue
+                }
+
+                val response = conn.inputStream.bufferedReader().readText()
+                conn.disconnect()
+
+                totalCount += parseOutageItems(response, settings)
+            } catch (e: Exception) {
+                continue
+            }
         }
-
-        val response = conn.inputStream.bufferedReader().readText()
-        conn.disconnect()
-
-        return parseOutageItems(response, settings.streetName)
+        return totalCount
     }
 
-    protected fun fetchMpwikAlertCount(settings: WidgetSettings): Int {
+    private fun lookupTauronCity(settings: WidgetSettings): Long? {
+        return try {
+            val encoded = java.net.URLEncoder.encode(settings.cityName, "utf-8").replace("+", "%20")
+            val url =
+                    URL(
+                            "https://www.tauron-dystrybucja.pl/waapi/enum/geo/cities?partName=$encoded&_=${System.currentTimeMillis()}"
+                    )
+            val conn = url.openConnection() as HttpURLConnection
+            conn.requestMethod = "GET"
+            conn.setRequestProperty("accept", "application/json")
+            conn.setRequestProperty("x-requested-with", "XMLHttpRequest")
+            conn.setRequestProperty("Referer", "https://www.tauron-dystrybucja.pl/wylaczenia")
+            conn.connectTimeout = 10000
+            conn.readTimeout = 10000
+
+            val responseCode = conn.responseCode
+            if (responseCode !in 200..299) {
+                conn.disconnect()
+                return null
+            }
+
+            val response = conn.inputStream.bufferedReader().readText()
+            conn.disconnect()
+
+            val items = org.json.JSONArray(response)
+            for (i in 0 until items.length()) {
+                val item = items.getJSONObject(i)
+                val prov = item.optString("ProvinceName", "")
+                val dist = item.optString("DistrictName", "")
+                val comm = item.optString("CommuneName", "")
+
+                if (prov.equals(settings.voivodeship, ignoreCase = true) &&
+                                dist.equals(settings.district, ignoreCase = true) &&
+                                comm.equals(settings.commune, ignoreCase = true)
+                ) {
+                    return item.getLong("GAID")
+                }
+            }
+            if (items.length() > 0) items.getJSONObject(0).getLong("GAID") else null
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private fun lookupTauronStreetDummy(cityGAID: Long): Long? {
+        return try {
+            val url =
+                    URL(
+                            "https://www.tauron-dystrybucja.pl/waapi/enum/geo/onlyonestreet?ownerGAID=$cityGAID&_=${System.currentTimeMillis()}"
+                    )
+            val conn = url.openConnection() as HttpURLConnection
+            conn.connectTimeout = 10000
+            conn.readTimeout = 10000
+            if (conn.responseCode !in 200..299) {
+                conn.disconnect()
+                return null
+            }
+            val response = conn.inputStream.bufferedReader().readText()
+            conn.disconnect()
+            val items = org.json.JSONArray(response)
+            if (items.length() > 0) items.getJSONObject(0).getLong("GAID") else null
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private fun lookupTauronStreet(streetName: String, cityGAID: Long): Long? {
+        return try {
+            val encoded = java.net.URLEncoder.encode(streetName, "utf-8").replace("+", "%20")
+            val url =
+                    URL(
+                            "https://www.tauron-dystrybucja.pl/waapi/enum/geo/streets?partName=$encoded&ownerGAID=$cityGAID&_=${System.currentTimeMillis()}"
+                    )
+            val conn = url.openConnection() as HttpURLConnection
+            conn.requestMethod = "GET"
+            conn.setRequestProperty("accept", "application/json")
+            conn.setRequestProperty("x-requested-with", "XMLHttpRequest")
+            conn.setRequestProperty("Referer", "https://www.tauron-dystrybucja.pl/wylaczenia")
+            conn.connectTimeout = 10000
+            conn.readTimeout = 10000
+
+            val responseCode = conn.responseCode
+            if (responseCode !in 200..299) {
+                conn.disconnect()
+                return null
+            }
+
+            val response = conn.inputStream.bufferedReader().readText()
+            conn.disconnect()
+
+            val json = JSONObject("{\"items\":$response}")
+            val items = json.optJSONArray("items") ?: return null
+            if (items.length() == 0) return null
+            items.getJSONObject(0).getLong("GAID")
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    protected fun fetchMpwikAlertCount(settingsList: List<WidgetSettings>): Int {
         val url = URL("https://www.mpwik.wroc.pl/wp-admin/admin-ajax.php")
         val conn = url.openConnection() as HttpURLConnection
         conn.requestMethod = "POST"
@@ -388,29 +544,69 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         val response = conn.inputStream.bufferedReader().readText()
         conn.disconnect()
 
-        return parseMpwikItems(response, settings.streetName)
+        // Check against all addresses' street names
+        var totalCount = 0
+        for (settings in settingsList) {
+            totalCount += parseMpwikItems(response, settings)
+        }
+        return totalCount
     }
 
-    protected fun fetchFortumAlertCount(settings: WidgetSettings): Int {
-        val cityGuid = "d06e8606-f1d7-eb11-bacb-000d3aa9626e"
-        val regionId = "3"
+    protected fun fetchFortumAlertCount(settingsList: List<WidgetSettings>): Int {
+        val citiesUrl = URL("https://formularz.fortum.pl/api/v1/teryt/cities")
+        Log.i(TAG, "Fortum: GET $citiesUrl")
+        val citiesJson =
+                try {
+                    fetchJson(citiesUrl)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to fetch Fortum cities", e)
+                    return 0
+                }
 
-        val plannedUrl =
-                URL(
-                        "https://formularz.fortum.pl/api/v1/switchoffs?cityGuid=$cityGuid&regionId=$regionId&current=false"
-                )
-        val currentUrl =
-                URL(
-                        "https://formularz.fortum.pl/api/v1/switchoffs?cityGuid=$cityGuid&regionId=$regionId&current=true"
-                )
+        val citiesArray = org.json.JSONArray(citiesJson)
+        val cityDataMap = mutableMapOf<String, Pair<String, String>>()
+        for (i in 0 until citiesArray.length()) {
+            val city = citiesArray.getJSONObject(i)
+            val cityName = city.optString("cityName", "").lowercase()
+            if (cityName.isNotEmpty()) {
+                cityDataMap[cityName] =
+                        Pair(city.optString("cityGuid", ""), city.opt("regionId")?.toString() ?: "")
+            }
+        }
 
-        val plannedResponse = fetchJson(plannedUrl)
-        val currentResponse = fetchJson(currentUrl)
+        val cityGroups = settingsList.groupBy { it.cityName.lowercase() }
+        var totalCount = 0
 
-        val plannedCount = parseFortumItems(plannedResponse, settings.streetName)
-        val currentCount = parseFortumItems(currentResponse, settings.streetName)
+        for ((cityNameLower, addresses) in cityGroups) {
+            val data = cityDataMap[cityNameLower] ?: continue
+            val guid = data.first
+            val rid = data.second
+            if (guid.isEmpty() || rid.isEmpty()) continue
 
-        return plannedCount + currentCount
+            try {
+                val plannedUrl =
+                        URL(
+                                "https://formularz.fortum.pl/api/v1/switchoffs?cityGuid=$guid&regionId=$rid&current=false"
+                        )
+                val currentUrl =
+                        URL(
+                                "https://formularz.fortum.pl/api/v1/switchoffs?cityGuid=$guid&regionId=$rid&current=true"
+                        )
+
+                Log.i(TAG, "Fortum API: planned=$plannedUrl, current=$currentUrl")
+
+                val plannedRes = fetchJson(plannedUrl)
+                val currentRes = fetchJson(currentUrl)
+
+                for (addr in addresses) {
+                    totalCount += parseFortumItems(plannedRes, addr)
+                    totalCount += parseFortumItems(currentRes, addr)
+                }
+            } catch (e: Exception) {
+                continue
+            }
+        }
+        return totalCount
     }
 
     private fun fetchJson(url: URL): String {
@@ -431,13 +627,9 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         return response
     }
 
-    internal fun parseFortumItems(jsonString: String, streetName: String): Int {
+    internal fun parseFortumItems(jsonString: String, settings: WidgetSettings): Int {
         val json = JSONObject(jsonString)
         val items = json.optJSONArray("points") ?: return 0
-        val normalizeRegex = Regex("(?i)^(ul\\.|al\\.|pl\\.|os\\.|rondo)\\s*")
-        val fullStreet = normalizeRegex.replace(streetName, "").trim()
-        if (fullStreet.isEmpty()) return 0
-        val significantWords = fullStreet.split(Regex("\\s+")).filter { it.length >= 3 }
         var count = 0
         val now = Date()
         val seenIds = mutableSetOf<String>()
@@ -458,28 +650,14 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             }
 
             val message = item.optString("message", "")
-            if (message.contains(streetName)) {
-                count++
-                continue
-            }
-            val anyMatch =
-                    significantWords.any { word ->
-                        val escapedWord = java.util.regex.Pattern.quote(word)
-                        val regex = Regex("\\b$escapedWord\\b")
-                        regex.containsMatchIn(message)
-                    }
-            if (anyMatch) count++
+            if (matchesStreetOnly(message, settings.streetName1, settings.streetName2)) count++
         }
         return count
     }
 
-    internal fun parseMpwikItems(jsonString: String, streetName: String): Int {
+    internal fun parseMpwikItems(jsonString: String, settings: WidgetSettings): Int {
         val json = JSONObject(jsonString)
         val items = json.optJSONArray("failures") ?: return 0
-        val normalizeRegex = Regex("(?i)^(ul\\.|al\\.|pl\\.|os\\.|rondo)\\s*")
-        val fullStreet = normalizeRegex.replace(streetName, "").trim()
-        if (fullStreet.isEmpty()) return 0
-        val significantWords = fullStreet.split(Regex("\\s+")).filter { it.length >= 3 }
         var count = 0
         val now = Date()
         val mpwikFormat = SimpleDateFormat("dd-MM-yyyy HH:mm", Locale.getDefault())
@@ -493,28 +671,14 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 } catch (e: Exception) {}
             }
             val content = item.optString("content", "")
-            if (content.contains(streetName)) {
-                count++
-                continue
-            }
-            val anyMatch =
-                    significantWords.any { word ->
-                        val escapedWord = java.util.regex.Pattern.quote(word)
-                        val regex = Regex("\\b$escapedWord\\b")
-                        regex.containsMatchIn(content)
-                    }
-            if (anyMatch) count++
+            if (matchesStreetOnly(content, settings.streetName1, settings.streetName2)) count++
         }
         return count
     }
 
-    internal fun parseOutageItems(jsonString: String, streetName: String): Int {
+    internal fun parseOutageItems(jsonString: String, settings: WidgetSettings): Int {
         val json = JSONObject(jsonString)
         val items = json.optJSONArray("OutageItems") ?: return 0
-        val normalizeRegex = Regex("(?i)^(ul\\.|al\\.|pl\\.|os\\.|rondo)\\s*")
-        val fullStreet = normalizeRegex.replace(streetName, "").trim()
-        if (fullStreet.isEmpty()) return 0
-        val significantWords = fullStreet.split(Regex("\\s+")).filter { it.length >= 3 }
         var count = 0
         val now = Date()
         val formats =
@@ -539,18 +703,259 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 if (parsedDate != null && parsedDate.before(now)) continue
             }
             val message = item.optString("Message", "")
-            if (message.contains(streetName)) {
-                count++
-                continue
-            }
-            val anyMatch =
-                    significantWords.any { word ->
-                        val escapedWord = java.util.regex.Pattern.quote(word)
-                        val regex = Regex("\\b$escapedWord\\b")
-                        regex.containsMatchIn(message)
-                    }
-            if (anyMatch) count++
+            if (matchesStreetOnly(message, settings.streetName1, settings.streetName2)) count++
         }
         return count
+    }
+
+    protected fun fetchEnergaAlertCount(settingsList: List<WidgetSettings>): Int {
+        var totalCount = 0
+        try {
+            val apiUrl = fetchEnergaApiUrl() ?: return 0
+            val response = fetchJson(URL(apiUrl))
+            val json = JSONObject(response)
+            val shutdowns =
+                    json.optJSONObject("document")
+                            ?.optJSONObject("payload")
+                            ?.optJSONArray("shutdowns")
+                            ?: return 0
+
+            val now = Date()
+            val formats =
+                    listOf(
+                            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US),
+                            SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
+                    )
+
+            for (settings in settingsList) {
+                var count = 0
+                for (i in 0 until shutdowns.length()) {
+                    val s = shutdowns.getJSONObject(i)
+                    val endStr = s.optString("endDate", "")
+                    if (endStr.isNotEmpty()) {
+                        var end: Date? = null
+                        for (fmt in formats) {
+                            try {
+                                end = fmt.parse(endStr)
+                                if (end != null) break
+                            } catch (e: Exception) {}
+                        }
+                        if (end != null && end.before(now)) continue
+                    }
+                    val message = s.optString("message", "")
+                    val areas = s.optJSONArray("areas")
+
+                    val cityMatch = wordMatch(message, settings.cityName)
+                    var communeMatch = false
+                    if (areas != null) {
+                        for (j in 0 until areas.length()) {
+                            if (wordMatch(areas.getString(j), settings.commune)) {
+                                communeMatch = true
+                                break
+                            }
+                        }
+                    }
+
+                    if (cityMatch &&
+                                    communeMatch &&
+                                    matchesStreetOnly(
+                                            message,
+                                            settings.streetName1,
+                                            settings.streetName2
+                                    )
+                    )
+                            count++
+                }
+                totalCount += count
+            }
+        } catch (e: Exception) {}
+        return totalCount
+    }
+
+    private fun fetchEnergaApiUrl(): String? {
+        return try {
+            val url =
+                    URL(
+                            "https://www.energa-operator.pl/uslugi/awarie-i-wylaczenia/wylaczenia-planowane"
+                    )
+            val html = URL(url.toString()).readText()
+            val regex = Regex("""data-shutdowns="([^"]+)"""")
+            val match = regex.find(html)
+            match?.groupValues?.get(1)?.let { "https://energa-operator.pl$it" }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private fun getEneaRegionsForDistrict(district: String): List<Int> {
+        val d = district.lowercase().removePrefix("m. ")
+        return when (d) {
+            "zielonogórski", "zielona góra" -> listOf(1)
+            "żarski", "żagański" -> listOf(2)
+            "wolsztyński" -> listOf(3)
+            "świebodziński" -> listOf(4)
+            "nowosolski", "wschowski" -> listOf(5)
+            "krośnieński" -> listOf(6)
+            "poznański", "poznań", "śremski", "obornicki" -> listOf(7)
+            "wałecki" -> listOf(8)
+            "wrzesiński", "słupecki", "średzki" -> listOf(9)
+            "szamotulski" -> listOf(10)
+            "pilski", "piła", "złotowski" -> listOf(11)
+            "nowotomyski", "grodziski" -> listOf(12)
+            "leszczyński", "leszno", "gostyński", "rawicki" -> listOf(13)
+            "kościański" -> listOf(14)
+            "gnieźnieński", "gniezno" -> listOf(15)
+            "chodzieski", "czarnkowsko-trzcianecki" -> listOf(16)
+            "bydgoski", "bydgoszcz" -> listOf(17)
+            "świecki", "chełmiński", "tucholski" -> listOf(18)
+            "nakielski", "sępoleński" -> listOf(19)
+            "mogileński", "żniński" -> listOf(20)
+            "inowrocławski", "inowrocław" -> listOf(21)
+            "chojnicki", "człuchowski" -> listOf(22)
+            "szczeciński", "szczecin", "policki" -> listOf(23)
+            "stargardzki", "pyrzycki", "stargard" -> listOf(24)
+            "kamieński", "świnoujście" -> listOf(25)
+            "gryficki", "łobeski" -> listOf(26)
+            "goleniowski" -> listOf(27)
+            "gorzowski", "gorzów wlkp.", "gorzów wielkopolski", "strzelecko-drezdenecki" ->
+                    listOf(28)
+            "sulęciński", "słubicki" -> listOf(29)
+            "międzychodzki" -> listOf(30)
+            "myśliborski" -> listOf(31)
+            "choszczeński" -> listOf(32)
+            else -> (1..32).toList()
+        }
+    }
+
+    protected suspend fun fetchEneaAlertCount(settingsList: List<WidgetSettings>): Int =
+            coroutineScope {
+                var totalCount = 0
+                try {
+                    val targetRegions =
+                            settingsList
+                                    .flatMap { getEneaRegionsForDistrict(it.district) }
+                                    .distinct()
+                    if (targetRegions.isEmpty()) return@coroutineScope 0
+
+                    val jobs =
+                            targetRegions.map { id ->
+                                async(Dispatchers.IO) {
+                                    try {
+                                        val url =
+                                                URL(
+                                                        "https://www.wylaczenia-eneaoperator.pl/rss/rss_unpl_$id.xml"
+                                                )
+                                        val conn = url.openConnection() as HttpURLConnection
+                                        conn.requestMethod = "GET"
+                                        conn.connectTimeout = 10000
+                                        conn.readTimeout = 10000
+                                        if (conn.responseCode in 200..299) {
+                                            conn.inputStream.bufferedReader().readText()
+                                        } else null
+                                    } catch (e: Exception) {
+                                        null
+                                    }
+                                }
+                            }
+
+                    val xmls = jobs.awaitAll().filterNotNull()
+                    val descriptionRegex =
+                            Regex("<description>(.*?)</description>", RegexOption.DOT_MATCHES_ALL)
+
+                    for (settings in settingsList) {
+                        var count = 0
+                        for (xml in xmls) {
+                            val items = xml.split("<item>").drop(1)
+                            for (itemXml in items) {
+                                val descMatch = descriptionRegex.find(itemXml)
+                                if (descMatch != null) {
+                                    var description = descMatch.groupValues[1]
+                                    description =
+                                            description
+                                                    .trim()
+                                                    .removePrefix("<![CDATA[")
+                                                    .removeSuffix("]]>")
+                                                    .trim()
+                                    val cityMatch = wordMatch(description, settings.cityName)
+
+                                    val streetMatches =
+                                            matchesStreetOnly(
+                                                    description,
+                                                    settings.streetName1,
+                                                    settings.streetName2
+                                            )
+
+                                    if (cityMatch && streetMatches) {
+                                        count++
+                                    }
+                                }
+                            }
+                        }
+                        totalCount += count
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Enea sync failed", e)
+                }
+                totalCount
+            }
+
+    private fun matchesStreet(
+            text: String,
+            cityName: String,
+            streetName1: String,
+            streetName2: String?
+    ): Boolean {
+        if (text.isEmpty()) return false
+
+        // City must match
+        if (!wordMatch(text, cityName)) return false
+
+        // Village case: no street name, match by city name only
+        if (streetName1.isEmpty()) {
+            return true
+        }
+
+        // Compound name first (if streetName2 exists)
+        if (streetName2 != null) {
+            val compound = "$streetName2 $streetName1"
+            if (wordMatch(text, compound)) return true
+        }
+
+        // Individual significant words from streetName1
+        val words1 = streetName1.split(Regex("\\s+")).filter { it.length >= 3 }
+        if (words1.any { wordMatch(text, it) }) return true
+
+        return false
+    }
+
+    private fun matchesStreetOnly(
+            text: String,
+            streetName1: String,
+            streetName2: String?
+    ): Boolean {
+        if (text.isEmpty()) return false
+
+        // Village case: no street name
+        if (streetName1.isEmpty()) {
+            return true
+        }
+
+        // Compound name first (if streetName2 exists)
+        if (streetName2 != null) {
+            val compound = "$streetName2 $streetName1"
+            if (wordMatch(text, compound)) return true
+        }
+
+        // Individual significant words from streetName1
+        val words1 = streetName1.split(Regex("\\s+")).filter { it.length >= 3 }
+        if (words1.any { wordMatch(text, it) }) return true
+
+        return false
+    }
+
+    private fun wordMatch(text: String, word: String): Boolean {
+        val escapedWord = java.util.regex.Pattern.quote(word)
+        val regex = Regex("\\b$escapedWord\\b", RegexOption.IGNORE_CASE)
+        return regex.containsMatchIn(text)
     }
 }

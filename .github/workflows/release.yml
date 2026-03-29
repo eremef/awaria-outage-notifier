@@ -55,6 +55,7 @@ jobs:
         uses: softprops/action-gh-release@v2.4.2
         if: startsWith(github.ref, 'refs/tags/')
         with:
+          prerelease: ${{ contains(github.ref_name, 'alpha') }}
           files: |
             awaria-android-${{ github.ref_name }}.apk
             awaria-android-${{ github.ref_name }}.aab
@@ -124,6 +125,7 @@ jobs:
         uses: softprops/action-gh-release@v2.4.2
         if: startsWith(github.ref, 'refs/tags/')
         with:
+          prerelease: ${{ contains(github.ref_name, 'alpha') }}
           files: awaria-ios-${{ github.ref_name }}-unsigned.ipa
 
   release-desktop:
@@ -225,5 +227,6 @@ jobs:
         uses: softprops/action-gh-release@v2.4.2
         if: startsWith(github.ref, 'refs/tags/')
         with:
+          prerelease: ${{ contains(github.ref_name, 'alpha') }}
           files: release-artifacts/*
 

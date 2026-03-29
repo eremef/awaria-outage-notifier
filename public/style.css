@@ -1,4 +1,8 @@
 :root {
+    /* Safe Area Insets (Native Bridge Fallbacks) */
+    --safe-area-inset-top: var(--native-safe-area-inset-top, env(safe-area-inset-top, 0px));
+    --safe-area-inset-bottom: var(--native-safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+
     /* Modern "Friendly" Light Theme */
     --primary-color: #0a0a0a;
     /* Indigo 500 */
@@ -27,6 +31,14 @@
     /* Sky 500 */
     --fortum-color: #00a859;
     /* Fortum Green */
+    --energa-color: #e50512;
+    /* Energa Red */
+    --enea-color: #00225f;
+    /* Enea Blue */
+}
+
+.hidden {
+    display: none !important;
 }
 
 [data-theme="dark"] {
@@ -60,6 +72,10 @@
     /* Gray */
     --fortum-color: #00c86b;
     /* Fortum Green */
+    --energa-color: #f87171;
+    /* Light Red */
+    --enea-color: #60a5fa;
+    /* Light Blue */
 }
 
 [data-theme="emerald"] {
@@ -88,6 +104,9 @@
     /* Amber for Contrast */
     --water-color: #3b82f6;
     /* Blue */
+    --fortum-color: #10b981;
+    --energa-color: #be123c;
+    --enea-color: #0369a1;
 }
 
 [data-theme="ocean"] {
@@ -117,6 +136,9 @@
     --tauron-color: #ff9f43;
     /* Softened Orange-Red */
     --water-color: #38bdf8;
+    --fortum-color: #4ade80;
+    --energa-color: #fb7185;
+    --enea-color: #bae6fd;
 }
 
 [data-theme="nord"] {
@@ -151,6 +173,11 @@
     /* Nord 13 */
     --water-color: #81a1c1;
     /* Nord 9 */
+    --fortum-color: #a3be8c;
+    --energa-color: #bf616a;
+    /* Nord 11 */
+    --enea-color: #5e81ac;
+    /* Nord 10 */
 }
 
 [data-theme="dracula"] {
@@ -177,6 +204,11 @@
     /* Orange */
     --water-color: #8be9fd;
     /* Cyan */
+    --fortum-color: #50fa7b;
+    --energa-color: #ff5555;
+    /* Red */
+    --enea-color: #bd93f9;
+    /* Purple */
 }
 
 [data-theme="sepia"] {
@@ -205,6 +237,9 @@
     /* Saddle Brown */
     --water-color: #556b2f;
     /* Dark Olive */
+    --fortum-color: #6a994e;
+    --energa-color: #9b2226;
+    --enea-color: #003049;
 }
 
 [data-theme="latte"] {
@@ -233,6 +268,9 @@
     /* Golden Caramel */
     --water-color: #588157;
     /* Muted Sage */
+    --fortum-color: #6a994e;
+    --energa-color: #c1121f;
+    --enea-color: #3d405b;
 }
 
 [data-theme="monochrome-light"] {
@@ -258,6 +296,8 @@
     --tauron-color: #525252;
     --water-color: #525252;
     --fortum-color: #525252;
+    --energa-color: #525252;
+    --enea-color: #525252;
 }
 
 [data-theme="monochrome-dark"] {
@@ -283,6 +323,8 @@
     --tauron-color: #a3a3a3;
     --water-color: #a3a3a3;
     --fortum-color: #a3a3a3;
+    --energa-color: #a3a3a3;
+    --enea-color: #a3a3a3;
 }
 
 * {
@@ -298,8 +340,8 @@ body {
     display: flex;
     justify-content: center;
     min-height: 100vh;
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-top: var(--safe-area-inset-top);
+    padding-bottom: var(--safe-area-inset-bottom);
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -314,7 +356,7 @@ header {
     margin-bottom: 0.5rem;
     position: relative;
     padding-bottom: 0.5rem;
-    padding-top: env(safe-area-inset-top);
+    padding-top: var(--safe-area-inset-top);
 }
 
 h1 {
@@ -388,7 +430,7 @@ h1 {
     background: none;
     border: none;
     cursor: pointer;
-    padding: max(env(safe-area-inset-top), 8px) 8px 8px 8px;
+    padding: max(var(--safe-area-inset-top), 8px) 8px 8px 8px;
     opacity: 0.7;
     transition: opacity 0.2s, color 0.3s;
     z-index: 100;
@@ -508,6 +550,12 @@ h1 {
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
+.grayed-out {
+    background-color: var(--background-color) !important;
+    opacity: 0.6;
+    cursor: default;
+}
+
 .save-btn {
     width: 100%;
     padding: 0.75rem;
@@ -559,7 +607,7 @@ h1 {
 .card {
     background-color: var(--card-background);
     border-radius: 12px;
-    padding: 1rem;
+    padding: 0.5rem;
     margin-top: 0.3rem;
     margin-bottom: 0.3rem;
     box-shadow: var(--shadow);
@@ -608,15 +656,18 @@ h1 {
     color: var(--water-color);
 }
 
-.card.source-fortum .outage-type {
-    color: var(--fortum-color);
+.card.source-energa .outage-type {
+    color: var(--energa-color);
 }
 
+.card.source-enea .outage-type {
+    color: var(--enea-color);
+}
 
 .outage-time {
     font-size: 0.85rem;
     font-weight: 600;
-    margin-bottom: 0.5rem;
+    /* margin-bottom: 0.5rem; */
     color: var(--text-color);
 }
 
@@ -703,6 +754,14 @@ h1 {
     color: var(--fortum-color);
 }
 
+.collapsible.source-energa .section-label.other {
+    color: var(--energa-color);
+}
+
+.collapsible.source-enea .section-label.other {
+    color: var(--enea-color);
+}
+
 .other-divider {
     text-align: center;
     display: flex;
@@ -722,11 +781,11 @@ h1 {
 }
 
 .outage-message {
-    margin-top: 0.5rem;
+    /* margin-top: 0.5rem; */
     font-size: 0.9rem;
     color: var(--text-color);
     border-top: 1px solid var(--message-border);
-    padding-top: 0.4rem;
+    /* padding-top: 0.4rem; */
     line-height: 1.4;
 }
 
@@ -802,4 +861,176 @@ h1 {
 .collapsible.collapsed .collapsible-content {
     max-height: 0;
     opacity: 0;
+}
+
+.address-filter {
+    width: 100%;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+    border: 1px solid var(--input-border);
+    border-radius: 0.5rem;
+    background: var(--card-background);
+    color: var(--text-color);
+    font-size: 0.9rem;
+}
+
+.addresses-list {
+    margin-bottom: 1rem;
+}
+
+.address-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: var(--card-background);
+    border: 1px solid var(--input-border);
+    border-radius: 0.5rem;
+}
+
+.address-info {
+    flex: 1;
+}
+
+.address-name {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.address-detail {
+    font-size: 0.85rem;
+    color: var(--secondary-text);
+}
+
+.address-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    font-size: 1rem;
+    opacity: 0.25;
+    transition: opacity 0.2s;
+}
+
+.icon-btn:hover {
+    opacity: 1;
+}
+
+.icon-btn.delete-btn {
+    color: var(--error-text);
+}
+
+.icon-btn.edit-btn {
+    color: var(--text-color);
+}
+
+.primary-badge {
+    font-size: 1rem;
+}
+
+.no-addresses {
+    padding: 1rem;
+    text-align: center;
+    color: var(--secondary-text);
+    font-style: italic;
+}
+
+.address-form {
+    padding: 1rem;
+    background: var(--message-border);
+    border-radius: 0.5rem;
+    margin-top: 1rem;
+}
+
+.cancel-btn {
+    flex: 1;
+    padding: 0.75rem;
+    background: var(--card-background);
+    color: var(--text-color);
+    border: 1px solid var(--input-border);
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-top: 0.5rem;
+}
+
+.cancel-btn:hover {
+    background: var(--message-border);
+    border-color: var(--secondary-text);
+}
+
+.cancel-btn:active {
+    transform: translateY(0);
+}
+
+.button-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+/* ── TERYT Suggestions Dropdown ─────────────────────────── */
+
+.suggestions-dropdown {
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    max-height: 220px;
+    overflow-y: auto;
+    background: var(--card-background);
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    margin-top: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.suggestion-item {
+    padding: 0.6rem 0.75rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--message-border);
+    transition: background 0.15s;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item:hover,
+.suggestion-item:active {
+    background: var(--message-border);
+}
+
+.suggestion-item.no-results {
+    cursor: default;
+    color: var(--secondary-text);
+    font-style: italic;
+}
+
+.suggestion-item.no-results:hover {
+    background: transparent;
+}
+
+.suggestion-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.suggestion-detail {
+    font-size: 0.8rem;
+    color: var(--secondary-text);
+    margin-top: 2px;
+}
+
+.settings-field {
+    position: relative;
 }

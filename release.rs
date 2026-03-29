@@ -108,7 +108,7 @@ fn update_tauri_conf(version: &str) {
                     .chars()
                     .take_while(|c| c.is_whitespace())
                     .collect::<String>();
-                format!("{}  \"version\": \"{}\",", indent, tauri_version)
+                format!("{}\"version\": \"{}\",", indent, tauri_version)
             } else {
                 line.to_string()
             }

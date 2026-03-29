@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Awaria",
-              "version": "1.0.15",
+  "version": "1.0.19",
   "identifier": "xyz.eremef.awaria",
   "build": {
     "frontendDist": "../public"
@@ -31,6 +31,9 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "resources": {
+      "assets/teryt": "teryt"
+    },
     "macOS": {
       "minimumSystemVersion": "11.0",
       "exceptionDomain": "",

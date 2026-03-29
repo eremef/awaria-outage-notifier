@@ -14,32 +14,32 @@ describe('Frontend Logic', () => {
         ];
 
         it('finds outages matching the full street name', () => {
-            const filtered = filterOutages(mockOutages, 'Henryka Probusa', { streetGAID: 0 });
+            const filtered = filterOutages(mockOutages, 'Henryka Probusa');
             expect(filtered.some(o => o.Message.includes('Henryka Probusa'))).toBe(true);
         });
 
         it('finds outages matching the short street name (last part)', () => {
-            const filtered = filterOutages(mockOutages, 'Henryka Probusa', { streetGAID: 0 });
+            const filtered = filterOutages(mockOutages, 'Henryka Probusa');
             expect(filtered.some(o => o.Message.includes('Awaria na Probusa'))).toBe(true);
         });
 
         it('finds outages matching significant parts (ignoring short words)', () => {
-            const filtered = filterOutages(mockOutages, 'Jana Pawła II', { streetGAID: 0 });
+            const filtered = filterOutages(mockOutages, 'Jana Pawła II');
             expect(filtered.some(o => o.Message.includes('Pawła'))).toBe(true);
         });
 
-        it('finds outages by GAID even if text does not match', () => {
-            const filtered = filterOutages(mockOutages, 'Rozbrat', { streetGAID: 105 });
-            expect(filtered.some(o => o.Message === 'Wrocław Probusa..')).toBe(true);
-        });
-
-        it('returns empty array when no match found', () => {
-            const filtered = filterOutages(mockOutages, 'Main Street', { streetGAID: 999 });
+        it('does not match when text does not match (GAID matching is backend-only)', () => {
+            const filtered = filterOutages(mockOutages, 'Kuźnicza');
             expect(filtered).toHaveLength(0);
         });
 
-        it('returns empty array when street name is empty and no GAID match', () => {
-            const filtered = filterOutages(mockOutages, '', { streetGAID: 999 });
+        it('returns empty array when no match found', () => {
+            const filtered = filterOutages(mockOutages, 'Main Street');
+            expect(filtered).toHaveLength(0);
+        });
+
+        it('returns empty array when street name is empty', () => {
+            const filtered = filterOutages(mockOutages, '');
             expect(filtered).toHaveLength(0);
         });
     });
@@ -64,7 +64,7 @@ describe('Frontend Logic', () => {
         });
 
         it('returns empty array when no match', () => {
-            const filtered = filterAlerts(mockAlerts, 'Rozbrat');
+            const filtered = filterAlerts(mockAlerts, 'Marszałkowska');
             expect(filtered).toHaveLength(0);
         });
 

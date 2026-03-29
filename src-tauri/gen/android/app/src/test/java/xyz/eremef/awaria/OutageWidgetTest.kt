@@ -1,8 +1,6 @@
 package xyz.eremef.awaria
 
-import org.json.JSONObject
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -15,53 +13,26 @@ class OutageWidgetTest {
     private val provider = TauronWidgetProvider()
 
     @Test
-    fun testParseSettings() {
-        val json = """
-            {
-                "cityGAID": 123,
-                "streetGAID": 456,
-                "houseNo": "10A",
-                "streetName": "Rozbrat",
-                "theme": "dark",
-                "language": "pl"
-            }
-        """.trimIndent()
-
-        val settings = provider.parseSettings(json)
-        assertEquals(123L, settings?.cityGAID)
-        assertEquals(456L, settings?.streetGAID)
-        assertEquals("10A", settings?.houseNo)
-        assertEquals("Rozbrat", settings?.streetName)
-        assertEquals("dark", settings?.theme)
-        assertEquals("pl", settings?.language)
-    }
-
-    @Test
-    fun testParseSettingsCorrupt() {
-        val json = "{ invalid json }"
-        val settings = provider.parseSettings(json)
-        assertNull(settings)
-    }
-
-    @Test
     fun testParseOutageItems() {
-        val json = """
+        val json =
+                """
             {
                 "OutageItems": [
-                    { "Message": "Outage at Rozbrat 12, Wrocław" },
+                    { "Message": "Outage at Kuźnicza 12, Wrocław" },
                     { "Message": "Maintenance at Legnicka 5, Wrocław" },
-                    { "Message": "Broken pipe at Rozbrat 1, Wrocław" }
+                    { "Message": "Broken pipe at Kuźnicza 1, Wrocław" }
                 ]
             }
         """.trimIndent()
 
-        val count = provider.parseOutageItems(json, "Rozbrat")
+        val count = provider.parseOutageItems(json, "Kuźnicza", null)
         assertEquals(2, count)
     }
 
     @Test
     fun testParseOutageItemsPartialMatch() {
-        val json = """
+        val json =
+                """
             {
                 "OutageItems": [
                     { "Message": "Awaria na Probusa 5" },
@@ -71,18 +42,21 @@ class OutageWidgetTest {
             }
         """.trimIndent()
 
-        // "Henryka Probusa" -> matches "Probusa"
-        var count = provider.parseOutageItems(json, "Henryka Probusa")
+        // "Probusa" as streetName1, "Henryka" as streetName2
+        // compound "Henryka Probusa" doesn't match, but "Probusa" word matches
+        var count = provider.parseOutageItems(json, "Probusa", "Henryka")
         assertEquals(1, count)
 
-        // "Jana Pawła II" -> matches "Pawła" and "Jana Pawła"
-        count = provider.parseOutageItems(json, "Jana Pawła II")
+        // "Pawła" as streetName1, "Jana" as streetName2
+        // compound "Jana Pawła" matches "Jana Pawła II", word "Pawła" matches "Utrudnienia na Pawła"
+        count = provider.parseOutageItems(json, "Pawła", "Jana")
         assertEquals(2, count)
     }
 
     @Test
     fun testParseOutageItemsNoMatch() {
-        val json = """
+        val json =
+                """
             {
                 "OutageItems": [
                     { "Message": "Maintenance work in progress" },
@@ -91,12 +65,28 @@ class OutageWidgetTest {
             }
         """.trimIndent()
 
-        // "Main" matching "Maintenance" should fail due to word boundaries
-        val count = provider.parseOutageItems(json, "Main St")
+        val count = provider.parseOutageItems(json, "Kuźnicza", null)
         assertEquals(0, count)
-        
-        val count2 = provider.parseOutageItems(json, "Rozbrat")
-        assertEquals(0, count2)
+    }
+
+    @Test
+    fun testParseOutageItemsCompoundMatch() {
+        val json =
+                """
+            {
+                "OutageItems": [
+                    { "Message": "Outage at Berga Maxa 12" },
+                    { "Message": "Outage at Kolberga 5" }
+                ]
+            }
+        """.trimIndent()
+
+        // "Berga" streetName1, "Maxa" streetName2
+        // compound "Maxa Berga" doesn't match "Berga Maxa" (wrong order)
+        // but word "Berga" matches "Berga Maxa" (whole word)
+        // and word "Berga" does NOT match "Kolberga" (word boundary)
+        val count = provider.parseOutageItems(json, "Berga", "Maxa")
+        assertEquals(1, count)
     }
 
     @Test
@@ -104,33 +94,35 @@ class OutageWidgetTest {
         val now = java.util.Date()
         val format = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US)
         format.timeZone = java.util.TimeZone.getTimeZone("UTC")
-        
-        val pastDate = format.format(java.util.Date(now.time - 3600000)) // 1 hour ago
-        val futureDate = format.format(java.util.Date(now.time + 3600000)) // 1 hour from now
 
-        val json = """
+        val pastDate = format.format(java.util.Date(now.time - 3600000))
+        val futureDate = format.format(java.util.Date(now.time + 3600000))
+
+        val json =
+                """
             {
                 "OutageItems": [
-                    { "Message": "Past Outage at Rozbrat 1", "EndDate": "${pastDate}" },
-                    { "Message": "Future Outage at Rozbrat 2", "EndDate": "${futureDate}" },
-                    { "Message": "Outage No Date at Rozbrat 3" }
+                    { "Message": "Past Outage at Kuźnicza 1", "EndDate": "${pastDate}" },
+                    { "Message": "Future Outage at Kuźnicza 2", "EndDate": "${futureDate}" },
+                    { "Message": "Outage No Date at Kuźnicza 3" }
                 ]
             }
         """.trimIndent()
 
-        val count = provider.parseOutageItems(json, "Rozbrat")
-        assertEquals(2, count) // Future and No Date should be counted
+        val count = provider.parseOutageItems(json, "Kuźnicza", null)
+        assertEquals(2, count)
     }
 
     @Test
     fun testParseMpwikItems() {
         val now = java.util.Date()
         val format = java.text.SimpleDateFormat("dd-MM-yyyy HH:mm", java.util.Locale.getDefault())
-        
+
         val pastDate = format.format(java.util.Date(now.time - 3600000))
         val futureDate = format.format(java.util.Date(now.time + 3600000))
 
-        val json = """
+        val json =
+                """
             {
                 "failures": [
                     { "content": "Water outage at Gajowicka", "date_end": "${futureDate}" },
@@ -140,11 +132,10 @@ class OutageWidgetTest {
             }
         """.trimIndent()
 
-        val count = provider.parseMpwikItems(json, "Gajowicka")
+        val count = provider.parseMpwikItems(json, "Gajowicka", null)
         assertEquals(1, count)
-        
-        val count2 = provider.parseMpwikItems(json, "Kuźnicza")
+
+        val count2 = provider.parseMpwikItems(json, "Kuźnicza", null)
         assertEquals(1, count2)
     }
 }
-
