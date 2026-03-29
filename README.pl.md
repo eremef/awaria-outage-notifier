@@ -35,7 +35,7 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
   - **Zwijane Kategorie**: Uporządkowany widok "Twoja Lokalizacja" oraz "Pozostałe Awarie".
   - **Responsywny Tryb Ciemny/Jasny**: Natywne wsparcie dla motywów systemowych.
 - **Widżety Android**:
-  - **Osobne Widżety dla Źródeł**: Oddzielne widżety dla Tauronu, Fortum i MPWiK.
+  - **Osobne Widżety dla Źródeł**: Oddzielne widżety dla każdego dostawcy.
   - **Zoptymalizowany Układ**: Kompaktowy rozmiar 1x1 pokazujący liczbę alertów dla wybranej ulicy.
   - **Odświeżanie Jednym Tapnięciem**: Dotknij widżetu, aby natychmiast zaktualizować dane.
   - **Współdzielona Konfiguracja**: Ustawienia synchronizują się automatycznie z głównej aplikacji.
