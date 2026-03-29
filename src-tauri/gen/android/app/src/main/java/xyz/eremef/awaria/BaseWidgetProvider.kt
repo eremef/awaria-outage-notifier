@@ -213,10 +213,8 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 else if (lang == "en") false else Locale.getDefault().language.startsWith("pl")
         return when (key) {
             "outages" -> if (isPl) "wyłączeń" else "outages"
-            "alerts" -> if (isPl) "alertów" else "alerts"
             "setup" -> if (isPl) "Skonfiguruj" else "Setup needed"
             "updating" -> if (isPl) "Aktualizacja..." else "Updating..."
-            "heating" -> if (isPl) "Ogrzewanie" else "Heating"
             else -> key
         }
     }
@@ -340,20 +338,23 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                                                         Intent.FLAG_ACTIVITY_CLEAR_TOP
                                     }
                     if (launchIntent != null) {
-                        val activityPending =
-                                PendingIntent.getActivity(
-                                        context,
-                                        0,
-                                        launchIntent,
-                                        PendingIntent.FLAG_UPDATE_CURRENT or
-                                                PendingIntent.FLAG_IMMUTABLE
-                                )
-                        activityPending
+                        PendingIntent.getActivity(
+                                context,
+                                0,
+                                launchIntent,
+                                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                        )
                     } else {
                         refreshPending
                     }
                 }
-        views.setOnClickPendingIntent(R.id.widget_root, clickPending)
+
+        // Always refresh when clicking the background
+        views.setOnClickPendingIntent(R.id.widget_root, refreshPending)
+
+        // If there are outages, clicking the icon or the count will open the app
+        views.setOnClickPendingIntent(R.id.widget_icon, clickPending)
+        views.setOnClickPendingIntent(R.id.widget_count, clickPending)
 
         applyTheme(views, dark)
         views.setTextViewText(R.id.widget_label, getTranslation(labelKey, language))
@@ -385,7 +386,8 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 dateFormat.timeZone = TimeZone.getTimeZone("UTC")
                 val now = dateFormat.format(Date())
                 val baseUrl = "https://www.tauron-dystrybucja.pl/waapi/outages/address"
-                val safeHouseNo = java.net.URLEncoder.encode(settings.houseNo, "utf-8").replace("+", "%20")
+                val safeHouseNo =
+                        java.net.URLEncoder.encode(settings.houseNo, "utf-8").replace("+", "%20")
                 val params =
                         "cityGAID=$cityGAID&streetGAID=$streetGAID" +
                                 "&houseNo=$safeHouseNo" +
@@ -815,7 +817,8 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             "kamieński", "świnoujście" -> listOf(25)
             "gryficki", "łobeski" -> listOf(26)
             "goleniowski" -> listOf(27)
-            "gorzowski", "gorzów wlkp.", "gorzów wielkopolski", "strzelecko-drezdenecki" -> listOf(28)
+            "gorzowski", "gorzów wlkp.", "gorzów wielkopolski", "strzelecko-drezdenecki" ->
+                    listOf(28)
             "sulęciński", "słubicki" -> listOf(29)
             "międzychodzki" -> listOf(30)
             "myśliborski" -> listOf(31)
@@ -828,7 +831,10 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             coroutineScope {
                 var totalCount = 0
                 try {
-                    val targetRegions = settingsList.flatMap { getEneaRegionsForDistrict(it.district) }.distinct()
+                    val targetRegions =
+                            settingsList
+                                    .flatMap { getEneaRegionsForDistrict(it.district) }
+                                    .distinct()
                     if (targetRegions.isEmpty()) return@coroutineScope 0
 
                     val jobs =

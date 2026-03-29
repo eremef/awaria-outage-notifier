@@ -1,4 +1,8 @@
 :root {
+    /* Safe Area Insets (Native Bridge Fallbacks) */
+    --safe-area-inset-top: var(--native-safe-area-inset-top, env(safe-area-inset-top, 0px));
+    --safe-area-inset-bottom: var(--native-safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+
     /* Modern "Friendly" Light Theme */
     --primary-color: #0a0a0a;
     /* Indigo 500 */
@@ -336,8 +340,8 @@ body {
     display: flex;
     justify-content: center;
     min-height: 100vh;
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-top: var(--safe-area-inset-top);
+    padding-bottom: var(--safe-area-inset-bottom);
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -352,7 +356,7 @@ header {
     margin-bottom: 0.5rem;
     position: relative;
     padding-bottom: 0.5rem;
-    padding-top: env(safe-area-inset-top);
+    padding-top: var(--safe-area-inset-top);
 }
 
 h1 {
@@ -426,7 +430,7 @@ h1 {
     background: none;
     border: none;
     cursor: pointer;
-    padding: max(env(safe-area-inset-top), 8px) 8px 8px 8px;
+    padding: max(var(--safe-area-inset-top), 8px) 8px 8px 8px;
     opacity: 0.7;
     transition: opacity 0.2s, color 0.3s;
     z-index: 100;
