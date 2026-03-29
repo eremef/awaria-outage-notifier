@@ -37,7 +37,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **Collapsible categories**: Organized view of "Your Location" vs "Other Outages".
   - **Responsive Dark/Light mode**: Native transition support.
 - **Android Widgets**:
-  - **Individual Source Widgets**: Separate widgets for Power (Tauron, Fortum) and Water (MPWiK).
+  - **Individual Source Widgets**: Separate widgets for all providers.
   - **Optimized Layout**: Compact 1x1 design showing alert counts for your specific street.
   - **One-tap refresh**: Tap the widget to trigger an immediate update.
   - **Shared configuration**: Settings sync automatically from the main app.
