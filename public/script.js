@@ -168,7 +168,7 @@ function initSettings() {
                 primaryAddressIndex: null,
                 theme: newTheme,
                 language: 'system',
-                enabledSources: ['tauron', 'water', 'fortum', 'energa', 'enea']
+                enabledSources: []
             };
         } else {
             currentSettings.theme = newTheme;
@@ -191,7 +191,7 @@ function initSettings() {
                 primaryAddressIndex: null,
                 theme: 'system',
                 language: newLang,
-                enabledSources: ['tauron', 'water', 'fortum', 'energa', 'enea']
+                enabledSources: []
             };
         } else {
             currentSettings.language = newLang;
@@ -526,14 +526,10 @@ async function loadSettingsAndFetch() {
             }
             applyTheme(settings.theme || 'system');
 
-            if (settings.enabledSources) {
-                if (!settings.enabledSources.includes('enea')) {
-                    settings.enabledSources.push('enea');
-                    autoSaveSettings();
-                }
-            }
+            // If enabledSources is present, we respect it as is. 
+            // The fallback below handles the case where it's entirely missing.
 
-            const sources = settings.enabledSources || ['tauron', 'water', 'fortum', 'energa', 'enea'];
+            const sources = settings.enabledSources || [];
             document.getElementById('source-tauron-check').checked = sources.includes('tauron');
             document.getElementById('source-water-check').checked = sources.includes('water');
             document.getElementById('source-fortum-check').checked = sources.includes('fortum');
@@ -567,7 +563,7 @@ async function loadSettingsAndFetch() {
                 primaryAddressIndex: null,
                 theme: 'system',
                 language: 'system',
-                enabledSources: ['tauron', 'water', 'fortum', 'energa', 'enea']
+                enabledSources: []
             };
             updateAddressFilter();
             renderAddressesList();

@@ -270,13 +270,7 @@ impl Default for Settings {
             primary_address_index: None,
             theme: None,
             language: None,
-            enabled_sources: Some(vec![
-                "tauron".to_string(),
-                "water".to_string(),
-                "fortum".to_string(),
-                "energa".to_string(),
-                "enea".to_string(),
-            ]),
+            enabled_sources: Some(Vec::new()),
         }
     }
 }

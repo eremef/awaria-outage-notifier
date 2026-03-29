@@ -468,13 +468,7 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
     let enabled_sources = settings
         .as_ref()
         .and_then(|s| s.enabled_sources.clone())
-        .unwrap_or_else(|| {
-            vec![
-                "tauron".to_string(),
-                "water".to_string(),
-                "fortum".to_string(),
-            ]
-        });
+        .unwrap_or_default();
 
     log::info!(
         "fetch_all_alerts: enabled_sources={:?}, addresses={}",
