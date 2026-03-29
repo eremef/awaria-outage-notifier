@@ -48,16 +48,18 @@ function createSchema(db) {
       rm       INTEGER NOT NULL,
       nazwa    TEXT NOT NULL,
       sym      INTEGER NOT NULL,
-      sympod   INTEGER NOT NULL
-    );
+      sympod   INTEGER NOT NULL,
+      PRIMARY KEY (sym)
+    ) WITHOUT ROWID;
 
     CREATE TABLE ulic (
       sym      INTEGER NOT NULL,
       sym_ul   INTEGER NOT NULL,
       cecha    TEXT,
       nazwa_1  TEXT NOT NULL,
-      nazwa_2  TEXT
-    );
+      nazwa_2  TEXT,
+      PRIMARY KEY (sym, sym_ul)
+    ) WITHOUT ROWID;
 
     CREATE TABLE rodz_miej (
       rm      INTEGER NOT NULL,
@@ -71,11 +73,9 @@ function createSchema(db) {
 
     CREATE INDEX idx_terc_codes ON terc (woj, pow, gmi, rodz);
 
-    CREATE INDEX idx_simc_sym ON simc (sym);
     CREATE INDEX idx_simc_codes ON simc (woj, pow, gmi, rodz_gmi);
     CREATE INDEX idx_simc_nazwa ON simc (nazwa);
 
-    CREATE INDEX idx_ulic_sym ON ulic (sym);
     CREATE INDEX idx_ulic_nazwa ON ulic (nazwa_1);
   `);
 }
@@ -195,6 +195,10 @@ console.log(`  → ${ulicCount} rows`);
 
 console.log("Fixing data...");
 fixData(db);
+console.log(`  → OK`);
+
+console.log("Vacuuming database to reclaim space...");
+db.exec("VACUUM");
 console.log(`  → OK`);
 
 db.pragma("journal_mode = DELETE");
