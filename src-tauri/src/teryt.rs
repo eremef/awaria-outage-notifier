@@ -74,15 +74,16 @@ pub fn lookup_cities(app: &AppHandle, city_name: &str) -> Result<Vec<TerytCity>,
                    AND city.pow = commune.pow AND city.gmi = commune.gmi \
                    AND city.rodz_gmi = commune.rodz \
                WHERE city.sym = city.sympod \
-                   AND city.nazwa = ?1 COLLATE NOCASE \
+                   AND city.nazwa like ?1 COLLATE NOCASE \
                ORDER BY voivodeship.nazwa, district.nazwa, commune.nazwa \
                LIMIT 20";
 
     let mut stmt = conn
         .prepare(sql)
         .map_err(|e| format!("Failed to prepare city query: {}", e))?;
+    let pattern = format!("{}%", city_name);
     let rows = stmt
-        .query_map([city_name.to_string()], |row| {
+        .query_map([pattern], |row| {
             Ok(TerytCity {
                 voivodeship: row.get::<_, Option<String>>(0)?.unwrap_or_default(),
                 district: row.get::<_, Option<String>>(1)?.unwrap_or_default(),

@@ -52,10 +52,6 @@ function createSchema(db) {
     );
 
     CREATE TABLE ulic (
-      woj      INTEGER NOT NULL,
-      pow      INTEGER NOT NULL,
-      gmi      INTEGER NOT NULL,
-      rodz_gmi INTEGER NOT NULL,
       sym      INTEGER NOT NULL,
       sym_ul   INTEGER NOT NULL,
       cecha    TEXT,
@@ -80,7 +76,6 @@ function createSchema(db) {
     CREATE INDEX idx_simc_nazwa ON simc (nazwa);
 
     CREATE INDEX idx_ulic_sym ON ulic (sym);
-    CREATE INDEX idx_ulic_sym_ul ON ulic (sym_ul);
     CREATE INDEX idx_ulic_nazwa ON ulic (nazwa_1);
   `);
 }
@@ -137,15 +132,11 @@ function loadSimc(db) {
 function loadUlic(db) {
   const { rows } = parseCsv(CSV_FILES.ulic);
   const stmt = db.prepare(
-    "INSERT INTO ulic (woj, pow, gmi, rodz_gmi, sym, sym_ul, cecha, nazwa_1, nazwa_2) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    "INSERT INTO ulic (sym, sym_ul, cecha, nazwa_1, nazwa_2) VALUES (?, ?, ?, ?, ?)"
   );
   const tx = db.transaction((rows) => {
     for (const r of rows) {
       stmt.run(
-        parseInt(r.WOJ, 10),
-        parseInt(r.POW, 10),
-        parseInt(r.GMI, 10),
-        parseInt(r.RODZ_GMI, 10),
         parseInt(r.SYM, 10),
         parseInt(r.SYM_UL, 10),
         r.CECHA || null,

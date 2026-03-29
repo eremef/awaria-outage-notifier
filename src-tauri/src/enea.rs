@@ -71,6 +71,46 @@ fn date_regex() -> &'static regex::Regex {
     })
 }
 
+pub fn get_enea_regions_for_district(district: &str) -> Vec<u32> {
+    let d = district.to_lowercase();
+    let d = d.strip_prefix("m. ").unwrap_or(&d);
+    match d {
+        "zielonogórski" | "zielona góra" => vec![1],
+        "żarski" | "żagański" => vec![2],
+        "wolsztyński" => vec![3],
+        "świebodziński" => vec![4],
+        "nowosolski" | "wschowski" => vec![5],
+        "krośnieński" => vec![6],
+        "poznański" | "poznań" | "śremski" | "obornicki" => vec![7],
+        "wałecki" => vec![8],
+        "wrzesiński" | "słupecki" | "średzki" => vec![9],
+        "szamotulski" => vec![10],
+        "pilski" | "piła" | "złotowski" => vec![11],
+        "nowotomyski" | "grodziski" => vec![12],
+        "leszczyński" | "leszno" | "gostyński" | "rawicki" => vec![13],
+        "kościański" => vec![14],
+        "gnieźnieński" | "gniezno" => vec![15],
+        "chodzieski" | "czarnkowsko-trzcianecki" => vec![16],
+        "bydgoski" | "bydgoszcz" => vec![17],
+        "świecki" | "chełmiński" | "tucholski" => vec![18],
+        "nakielski" | "sępoleński" => vec![19],
+        "mogileński" | "żniński" => vec![20],
+        "inowrocławski" | "inowrocław" => vec![21],
+        "chojnicki" | "człuchowski" => vec![22],
+        "szczeciński" | "szczecin" | "policki" => vec![23],
+        "stargardzki" | "pyrzycki" | "stargard" => vec![24],
+        "kamieński" | "świnoujście" => vec![25],
+        "gryficki" | "łobeski" => vec![26],
+        "goleniowski" => vec![27],
+        "gorzowski" | "gorzów wlkp." | "gorzów wielkopolski" | "strzelecko-drezdenecki" => vec![28],
+        "sulęciński" | "słubicki" => vec![29],
+        "międzychodzki" => vec![30],
+        "myśliborski" => vec![31],
+        "choszczeński" => vec![32],
+        _ => (1..=32).collect(),
+    }
+}
+
 impl EneaItem {
     pub fn to_unified(&self) -> UnifiedAlert {
         let (mut start_date, mut end_date) = (None, None);
@@ -146,10 +186,13 @@ impl EneaItem {
     }
 }
 
-pub async fn fetch_all_enea_outages(client: &Client) -> Result<Vec<EneaItem>, String> {
+pub async fn fetch_all_enea_outages(client: &Client, target_regions: &[u32]) -> Result<Vec<EneaItem>, String> {
     let mut futures = Vec::new();
     
     for (id, expected_region) in ENEA_REGIONS {
+        if !target_regions.contains(id) {
+            continue;
+        }
         let url = format!("{}{}.xml", ENEA_BASE_URL, id);
         let expected_name = (*expected_region).to_string();
         futures.push(async move {

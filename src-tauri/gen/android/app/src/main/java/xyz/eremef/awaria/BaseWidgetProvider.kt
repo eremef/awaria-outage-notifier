@@ -329,7 +329,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 )
 
         val clickPending =
-                if (count == "0") {
+                if (count == "0" || count.startsWith("0 (")) {
                     refreshPending
                 } else {
                     val launchIntent =
@@ -372,16 +372,10 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
                 // Check for city without streets (TERYT streetId == 0)
                 val streetGAID =
-                        if (settings.streetId == 0L) {
+                        if (settings.streetName1.isEmpty()) {
                             lookupTauronStreetDummy(cityGAID)
                         } else {
-                            // Look up street GAID — use compound name if streetName2 exists
-                            val streetQuery =
-                                    if (settings.streetName2 != null) {
-                                        "${settings.streetName2} ${settings.streetName1}"
-                                    } else {
-                                        settings.streetName1
-                                    }
+                            val streetQuery = settings.streetName1
                             lookupTauronStreet(streetQuery, cityGAID)
                         }
                                 ?: continue
@@ -391,9 +385,10 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 dateFormat.timeZone = TimeZone.getTimeZone("UTC")
                 val now = dateFormat.format(Date())
                 val baseUrl = "https://www.tauron-dystrybucja.pl/waapi/outages/address"
+                val safeHouseNo = java.net.URLEncoder.encode(settings.houseNo, "utf-8").replace("+", "%20")
                 val params =
                         "cityGAID=$cityGAID&streetGAID=$streetGAID" +
-                                "&houseNo=${settings.houseNo}" +
+                                "&houseNo=$safeHouseNo" +
                                 "&fromDate=$now&getLightingSupport=false" +
                                 "&getServicedSwitchingoff=true&_=${System.currentTimeMillis()}"
 
@@ -425,7 +420,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
     private fun lookupTauronCity(settings: WidgetSettings): Long? {
         return try {
-            val encoded = settings.cityName.replace(" ", "%20")
+            val encoded = java.net.URLEncoder.encode(settings.cityName, "utf-8").replace("+", "%20")
             val url =
                     URL(
                             "https://www.tauron-dystrybucja.pl/waapi/enum/geo/cities?partName=$encoded&_=${System.currentTimeMillis()}"
@@ -491,7 +486,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
     private fun lookupTauronStreet(streetName: String, cityGAID: Long): Long? {
         return try {
-            val encoded = streetName.replace(" ", "%20")
+            val encoded = java.net.URLEncoder.encode(streetName, "utf-8").replace("+", "%20")
             val url =
                     URL(
                             "https://www.tauron-dystrybucja.pl/waapi/enum/geo/streets?partName=$encoded&ownerGAID=$cityGAID&_=${System.currentTimeMillis()}"
@@ -558,23 +553,22 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     protected fun fetchFortumAlertCount(settingsList: List<WidgetSettings>): Int {
         val citiesUrl = URL("https://formularz.fortum.pl/api/v1/teryt/cities")
         Log.i(TAG, "Fortum: GET $citiesUrl")
-        val citiesJson = try {
-            fetchJson(citiesUrl)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to fetch Fortum cities", e)
-            return 0
-        }
-        
+        val citiesJson =
+                try {
+                    fetchJson(citiesUrl)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to fetch Fortum cities", e)
+                    return 0
+                }
+
         val citiesArray = org.json.JSONArray(citiesJson)
         val cityDataMap = mutableMapOf<String, Pair<String, String>>()
         for (i in 0 until citiesArray.length()) {
             val city = citiesArray.getJSONObject(i)
             val cityName = city.optString("cityName", "").lowercase()
             if (cityName.isNotEmpty()) {
-                cityDataMap[cityName] = Pair(
-                    city.optString("cityGuid", ""),
-                    city.opt("regionId")?.toString() ?: ""
-                )
+                cityDataMap[cityName] =
+                        Pair(city.optString("cityGuid", ""), city.opt("regionId")?.toString() ?: "")
             }
         }
 
@@ -586,16 +580,22 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             val guid = data.first
             val rid = data.second
             if (guid.isEmpty() || rid.isEmpty()) continue
-            
+
             try {
-                val plannedUrl = URL("https://formularz.fortum.pl/api/v1/switchoffs?cityGuid=$guid&regionId=$rid&current=false")
-                val currentUrl = URL("https://formularz.fortum.pl/api/v1/switchoffs?cityGuid=$guid&regionId=$rid&current=true")
-                
+                val plannedUrl =
+                        URL(
+                                "https://formularz.fortum.pl/api/v1/switchoffs?cityGuid=$guid&regionId=$rid&current=false"
+                        )
+                val currentUrl =
+                        URL(
+                                "https://formularz.fortum.pl/api/v1/switchoffs?cityGuid=$guid&regionId=$rid&current=true"
+                        )
+
                 Log.i(TAG, "Fortum API: planned=$plannedUrl, current=$currentUrl")
 
                 val plannedRes = fetchJson(plannedUrl)
                 val currentRes = fetchJson(currentUrl)
-                
+
                 for (addr in addresses) {
                     totalCount += parseFortumItems(plannedRes, addr)
                     totalCount += parseFortumItems(currentRes, addr)
@@ -648,13 +648,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             }
 
             val message = item.optString("message", "")
-            if (matchesStreetOnly(
-                            message,
-                            settings.streetName1,
-                            settings.streetName2
-                    )
-            )
-                    count++
+            if (matchesStreetOnly(message, settings.streetName1, settings.streetName2)) count++
         }
         return count
     }
@@ -675,14 +669,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 } catch (e: Exception) {}
             }
             val content = item.optString("content", "")
-            if (matchesStreet(
-                            content,
-                            settings.cityName,
-                            settings.streetName1,
-                            settings.streetName2
-                    )
-            )
-                    count++
+            if (matchesStreetOnly(content, settings.streetName1, settings.streetName2)) count++
         }
         return count
     }
@@ -714,14 +701,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 if (parsedDate != null && parsedDate.before(now)) continue
             }
             val message = item.optString("Message", "")
-            if (matchesStreet(
-                            message,
-                            settings.cityName,
-                            settings.streetName1,
-                            settings.streetName2
-                    )
-            )
-                    count++
+            if (matchesStreetOnly(message, settings.streetName1, settings.streetName2)) count++
         }
         return count
     }
@@ -762,7 +742,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                     }
                     val message = s.optString("message", "")
                     val areas = s.optJSONArray("areas")
-                    
+
                     val cityMatch = wordMatch(message, settings.cityName)
                     var communeMatch = false
                     if (areas != null) {
@@ -774,11 +754,13 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                         }
                     }
 
-                    if (cityMatch && communeMatch && matchesStreetOnly(
-                                    message,
-                                    settings.streetName1,
-                                    settings.streetName2
-                            )
+                    if (cityMatch &&
+                                    communeMatch &&
+                                    matchesStreetOnly(
+                                            message,
+                                            settings.streetName1,
+                                            settings.streetName2
+                                    )
                     )
                             count++
                 }
@@ -803,58 +785,113 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    protected suspend fun fetchEneaAlertCount(settingsList: List<WidgetSettings>): Int = coroutineScope {
-        var totalCount = 0
-        try {
-            val jobs = (1..32).map { id ->
-                async(Dispatchers.IO) {
-                    try {
-                        val url = URL("https://www.wylaczenia-eneaoperator.pl/rss/rss_unpl_$id.xml")
-                        val conn = url.openConnection() as HttpURLConnection
-                        conn.requestMethod = "GET"
-                        conn.connectTimeout = 5000
-                        conn.readTimeout = 5000
-                        if (conn.responseCode in 200..299) {
-                            conn.inputStream.bufferedReader().readText()
-                        } else null
-                    } catch (e: Exception) {
-                        null
-                    }
-                }
-            }
+    private fun getEneaRegionsForDistrict(district: String): List<Int> {
+        val d = district.lowercase().removePrefix("m. ")
+        return when (d) {
+            "zielonogórski", "zielona góra" -> listOf(1)
+            "żarski", "żagański" -> listOf(2)
+            "wolsztyński" -> listOf(3)
+            "świebodziński" -> listOf(4)
+            "nowosolski", "wschowski" -> listOf(5)
+            "krośnieński" -> listOf(6)
+            "poznański", "poznań", "śremski", "obornicki" -> listOf(7)
+            "wałecki" -> listOf(8)
+            "wrzesiński", "słupecki", "średzki" -> listOf(9)
+            "szamotulski" -> listOf(10)
+            "pilski", "piła", "złotowski" -> listOf(11)
+            "nowotomyski", "grodziski" -> listOf(12)
+            "leszczyński", "leszno", "gostyński", "rawicki" -> listOf(13)
+            "kościański" -> listOf(14)
+            "gnieźnieński", "gniezno" -> listOf(15)
+            "chodzieski", "czarnkowsko-trzcianecki" -> listOf(16)
+            "bydgoski", "bydgoszcz" -> listOf(17)
+            "świecki", "chełmiński", "tucholski" -> listOf(18)
+            "nakielski", "sępoleński" -> listOf(19)
+            "mogileński", "żniński" -> listOf(20)
+            "inowrocławski", "inowrocław" -> listOf(21)
+            "chojnicki", "człuchowski" -> listOf(22)
+            "szczeciński", "szczecin", "policki" -> listOf(23)
+            "stargardzki", "pyrzycki", "stargard" -> listOf(24)
+            "kamieński", "świnoujście" -> listOf(25)
+            "gryficki", "łobeski" -> listOf(26)
+            "goleniowski" -> listOf(27)
+            "gorzowski", "gorzów wlkp.", "gorzów wielkopolski", "strzelecko-drezdenecki" -> listOf(28)
+            "sulęciński", "słubicki" -> listOf(29)
+            "międzychodzki" -> listOf(30)
+            "myśliborski" -> listOf(31)
+            "choszczeński" -> listOf(32)
+            else -> (1..32).toList()
+        }
+    }
 
-            val xmls = jobs.awaitAll().filterNotNull()
-            val descriptionRegex = Regex("<description><!\\[CDATA\\[(.*?)\\]\\]></description>", RegexOption.DOT_MATCHES_ALL)
+    protected suspend fun fetchEneaAlertCount(settingsList: List<WidgetSettings>): Int =
+            coroutineScope {
+                var totalCount = 0
+                try {
+                    val targetRegions = settingsList.flatMap { getEneaRegionsForDistrict(it.district) }.distinct()
+                    if (targetRegions.isEmpty()) return@coroutineScope 0
 
-            for (settings in settingsList) {
-                var count = 0
-                for (xml in xmls) {
-                    val items = xml.split("<item>").drop(1)
-                    for (itemXml in items) {
-                        val descMatch = descriptionRegex.find(itemXml)
-                        if (descMatch != null) {
-                            val description = descMatch.groupValues[1]
-                            val cityMatch = wordMatch(description, settings.cityName)
-                            
-                            val streetMatches = matchesStreetOnly(
-                                description,
-                                settings.streetName1,
-                                settings.streetName2
-                            )
-                            
-                            if (cityMatch && streetMatches) {
-                                count++
+                    val jobs =
+                            targetRegions.map { id ->
+                                async(Dispatchers.IO) {
+                                    try {
+                                        val url =
+                                                URL(
+                                                        "https://www.wylaczenia-eneaoperator.pl/rss/rss_unpl_$id.xml"
+                                                )
+                                        val conn = url.openConnection() as HttpURLConnection
+                                        conn.requestMethod = "GET"
+                                        conn.connectTimeout = 10000
+                                        conn.readTimeout = 10000
+                                        if (conn.responseCode in 200..299) {
+                                            conn.inputStream.bufferedReader().readText()
+                                        } else null
+                                    } catch (e: Exception) {
+                                        null
+                                    }
+                                }
+                            }
+
+                    val xmls = jobs.awaitAll().filterNotNull()
+                    val descriptionRegex =
+                            Regex("<description>(.*?)</description>", RegexOption.DOT_MATCHES_ALL)
+
+                    for (settings in settingsList) {
+                        var count = 0
+                        for (xml in xmls) {
+                            val items = xml.split("<item>").drop(1)
+                            for (itemXml in items) {
+                                val descMatch = descriptionRegex.find(itemXml)
+                                if (descMatch != null) {
+                                    var description = descMatch.groupValues[1]
+                                    description =
+                                            description
+                                                    .trim()
+                                                    .removePrefix("<![CDATA[")
+                                                    .removeSuffix("]]>")
+                                                    .trim()
+                                    val cityMatch = wordMatch(description, settings.cityName)
+
+                                    val streetMatches =
+                                            matchesStreetOnly(
+                                                    description,
+                                                    settings.streetName1,
+                                                    settings.streetName2
+                                            )
+
+                                    if (cityMatch && streetMatches) {
+                                        count++
+                                    }
+                                }
                             }
                         }
+                        totalCount += count
                     }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Enea sync failed", e)
                 }
-                totalCount += count
+                totalCount
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Enea sync failed", e)
-        }
-        totalCount
-    }
 
     private fun matchesStreet(
             text: String,
@@ -912,7 +949,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
     private fun wordMatch(text: String, word: String): Boolean {
         val escapedWord = java.util.regex.Pattern.quote(word)
-        val regex = Regex("(?U)\\b$escapedWord\\b", RegexOption.IGNORE_CASE)
+        val regex = Regex("\\b$escapedWord\\b", RegexOption.IGNORE_CASE)
         return regex.containsMatchIn(text)
     }
 }

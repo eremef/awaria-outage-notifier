@@ -609,35 +609,44 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
 
     // Fetch Enea alerts
     if enabled_sources.contains(&"enea".to_string()) {
-        match build_client() {
-            Ok(client) => match enea::fetch_all_enea_outages(&client).await {
-                Ok(items) => {
-                    if let Some(ref s) = settings {
-                        for (idx, addr) in s.addresses.iter().enumerate() {
-                            let local_items: Vec<UnifiedAlert> = items
-                                .iter()
-                                .filter(|item| {
-                                    item.matches_address(
-                                        &addr.city_name,
-                                        &addr.commune,
-                                        &addr.street_name_1,
-                                        &addr.street_name_2,
-                                    )
-                                })
-                                .map(|item| {
-                                    let mut alert = item.to_unified();
-                                    alert.address_index = Some(idx);
-                                    alert.is_local = Some(true);
-                                    alert
-                                })
-                                .collect();
-                            all_alerts.extend(local_items);
+        if let Some(ref s) = settings {
+            let mut target_regions = Vec::new();
+            for addr in &s.addresses {
+                target_regions.extend(enea::get_enea_regions_for_district(&addr.district));
+            }
+            target_regions.sort();
+            target_regions.dedup();
+
+            if !target_regions.is_empty() {
+                match build_client() {
+                    Ok(client) => match enea::fetch_all_enea_outages(&client, &target_regions).await {
+                        Ok(items) => {
+                            for (idx, addr) in s.addresses.iter().enumerate() {
+                                let local_items: Vec<UnifiedAlert> = items
+                                    .iter()
+                                    .filter(|item| {
+                                        item.matches_address(
+                                            &addr.city_name,
+                                            &addr.commune,
+                                            &addr.street_name_1,
+                                            &addr.street_name_2,
+                                        )
+                                    })
+                                    .map(|item| {
+                                        let mut alert = item.to_unified();
+                                        alert.address_index = Some(idx);
+                                        alert.is_local = Some(true);
+                                        alert
+                                    })
+                                    .collect();
+                                all_alerts.extend(local_items);
+                            }
                         }
-                    }
+                        Err(e) => errors.push(format!("Enea API Error: {}", e)),
+                    },
+                    Err(e) => errors.push(format!("Enea Client Error: {}", e)),
                 }
-                Err(e) => errors.push(format!("Enea API Error: {}", e)),
-            },
-            Err(e) => errors.push(format!("Enea Client Error: {}", e)),
+            }
         }
     }
 
@@ -653,9 +662,9 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn test_fetch_eneo_outages_real_backend() {
+    async fn test_fetch_enea_outages_real_backend() {
         let client = build_client().unwrap();
-        let items = enea::fetch_all_enea_outages(&client).await.unwrap();
+        let items = enea::fetch_all_enea_outages(&client, &[7]).await.unwrap();
         
         let kicin_items: Vec<_> = items.into_iter()
             .filter(|i| i.matches_address("Kicin", "", "Poznańska", &None))
