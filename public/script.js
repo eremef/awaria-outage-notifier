@@ -1025,7 +1025,7 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         }
 
         if (otherFortum.length > 0) {
-            const lblSection = typeof t !== 'undefined' ? t('lbl_section_fortum') : 'Power (Fortum)';
+            const lblSection = typeof t !== 'undefined' ? t('lbl_section_fortum') : 'Heating (Fortum)';
             container.innerHTML += `
                 <div class="collapsible source-fortum collapsed">
                     <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
@@ -1073,7 +1073,7 @@ function renderCards(alerts, source) {
     const sourceLabel = source === 'water'
         ? ((typeof t !== 'undefined' ? t('source_water') : null) || '💧 Water Outage')
         : source === 'fortum'
-            ? ((typeof t !== 'undefined' ? t('source_fortum') : null) || '⚡ Fortum Outage')
+            ? ((typeof t !== 'undefined' ? t('source_fortum') : null) || '🔥 Heating Outage (Fortum)')
             : source === 'energa'
                 ? ((typeof t !== 'undefined' ? t('source_energa') : null) || '⚡ Energa Outage')
                 : source === 'enea'

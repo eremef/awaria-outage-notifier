@@ -10,12 +10,14 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
 
 ## Downloads
 
-https://eremef.xyz/awaria
+[https://eremef.xyz/awaria](https://eremef.xyz/awaria)
 
 ## Supported Sources
 
 - **⚡ Power (Tauron)**: Planned maintenance and emergency power outages.
-- **⚡ Power (Fortum)**: Planned and current power outages (Wrocław area).
+- **⚡ Power (Energa)**: Planned power outages.
+- **⚡ Power (Enea)**: Planned maintenance for western Poland.
+- **🔥 Heating (Fortum)**: Planned and current heating/hot water outages.
 - **💧 Water (MPWiK)**: Water failures and maintenance work (currently Wrocław area).
 
 ## Android app
@@ -28,6 +30,7 @@ https://eremef.xyz/awaria
 
 - **Multi-Source Logic**: Aggregates alerts from different utility providers (Power, Water, etc.).
 - **Source Selection**: Customize which types of outages you want to see in the settings.
+- **Multi-Address Support**: Monitor up to 20 different locations simultaneously.
 - **Smart Address Matching**: Highlights alerts affecting your specific address while keeping you informed about the surrounding area.
 - **Premium Design**:
   - **Modern Interface**: Indigo-based "friendly" UI with vibrant source indicators (Rose/Sky).
@@ -111,4 +114,4 @@ Settings are stored in `settings.json` in the app's data directory:
 
 - **Widget shows "?"**: The settings haven't been configured yet. Open the main app and set your location.
 - **EOF Errors**: Most likely a temporary race condition during settings sync. The app includes resilient logic to retry or fall back to defaults.
-- **Missing Alerts**: Check if you have the specific outage category enabled in the settings.
+- **Missing Alerts**: Check if you have the specific outage category enabled in the settings. **Note**: For new users, all sources are disabled by default.

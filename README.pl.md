@@ -4,17 +4,18 @@
   <img height="600" alt="image" src="https://github.com/user-attachments/assets/5c13103e-8c9d-4067-b994-55e32fb21de2" />
 </p>
 
-
 Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiadomienia w czasie rzeczywistym o planowanych i awaryjnych przerwach w dostawie mediów. **AWARIA** agreguje dane od wielu dostawców w jeden przejrzysty interfejs.
 
 ## Pobieranie
 
-https://eremef.xyz/awaria
+[https://eremef.xyz/awaria](https://eremef.xyz/awaria)
 
 ## Wspierane Źródła
 
 - **⚡ Prąd (Tauron)**: Planowane konserwacje i awaryjne wyłączenia prądu.
-- **⚡ Prąd (Fortum)**: Planowane i bieżące wyłączenia prądu (obszar Wrocławia).
+- **⚡ Prąd (Energa)**: Planowane wyłączenia prądu.
+- **⚡ Prąd (Enea)**: Planowane konserwacje dla obszaru zachodniej Polski.
+- **🔥 Ogrzewanie (Fortum)**: Planowane i bieżące wyłączenia ogrzewania oraz ciepłej wody.
 - **💧 Woda (MPWiK)**: Awarie wodociągowe i prace konserwacyjne (obecnie obszar Wrocławia).
 
 ## Aplikacja Android
@@ -27,6 +28,7 @@ https://eremef.xyz/awaria
 
 - **Logika Multi-Source**: Agreguje alerty od różnych dostawców mediów (prąd, woda itp.).
 - **Wybór Źródeł**: Możliwość dostosowania rodzajów awarii widocznych w ustawieniach.
+- **Wsparcie dla wielu adresów**: Monitoruj do 20 różnych lokalizacji jednocześnie.
 - **Inteligentne Dopasowanie Adresu**: Wyróżnia alerty dotyczące konkretnego adresu, informując jednocześnie o sytuacji w okolicy.
 - **Design Premium**:
   - **Nowoczesny Interfejs**: System Indigo - przyjazny UI z żywymi wskaźnikami źródeł.
@@ -110,4 +112,4 @@ Ustawienia są przechowywane w pliku `settings.json` w katalogu danych aplikacji
 
 - **Widżet pokazuje "?"**: Ustawienia nie zostały jeszcze skonfigurowane. Otwórz główną aplikację i ustaw swoją lokalizację.
 - **Błędy EOF**: Najprawdopodobniej chwilowy błąd dostępu podczas synchronizacji ustawień. Aplikacja posiada logikę ponawiania prób.
-- **Brak Alertów**: Sprawdź, czy dana kategoria mediów jest włączona w ustawieniach.
+- **Brak Alertów**: Sprawdź, czy dana kategoria mediów jest włączona w ustawieniach. **Uwaga**: Dla nowych użytkowników wszystkie źródła są domyślnie wyłączone.
