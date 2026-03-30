@@ -12,6 +12,8 @@ pub enum AlertSource {
     Fortum,
     Energa,
     Enea,
+    Pge,
+    Stoen,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
@@ -50,6 +52,8 @@ impl std::fmt::Display for AlertSource {
             AlertSource::Fortum => "fortum",
             AlertSource::Energa => "energa",
             AlertSource::Enea => "enea",
+            AlertSource::Pge => "pge",
+            AlertSource::Stoen => "stoen",
         };
         write!(f, "{}", s)
     }

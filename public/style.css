@@ -35,6 +35,9 @@
     /* Energa Red */
     --enea-color: #00225f;
     /* Enea Blue */
+    --pge-color: #1e3a8a;
+    /* PGE Blue */
+    --stoen-color: #ea1b0a;
 }
 
 .hidden {
@@ -42,40 +45,42 @@
 }
 
 [data-theme="dark"] {
-    /* Monochrome Dark Theme */
-    --primary-color: #a0a0a0;
-    /* Neutral Gray */
-    --background-color: #0a0a0a;
-    /* Near Black */
-    --card-background: #1a1a1a;
-    /* Dark Gray */
-    --text-color: #e8e8e8;
-    /* Off White */
-    --secondary-text: #888888;
-    /* Medium Gray */
-    --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
-    --input-border: #2a2a2a;
-    /* Dark Border */
-    --input-focus: #c0c0c0;
-    /* Light Gray Focus */
-    --error-bg: #1a0a0a;
-    --error-text: #d0a0a0;
-    --error-border: #3a2020;
-    --success-bg: #0a1a0a;
-    --success-text: #a0c0a0;
-    --success-border: #1a3020;
-    --message-border: #252525;
-    --label-border: #2a2a2a;
-    --tauron-color: #da9f68;
-    /* Gray */
-    --water-color: #18a8e0;
-    /* Gray */
-    --fortum-color: #00c86b;
-    /* Fortum Green */
+    /* Standard Dark Theme */
+    --primary-color: #818cf8;
+    /* Indigo 400 */
+    --background-color: #0f172a;
+    /* Slate 900 */
+    --card-background: #1e293b;
+    /* Slate 800 */
+    --text-color: #f1f5f9;
+    /* Slate 100 */
+    --secondary-text: #94a3b8;
+    /* Slate 400 */
+    --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+    --input-border: #334155;
+    /* Slate 700 */
+    --input-focus: #818cf8;
+    --error-bg: #450a0a;
+    --error-text: #fca5a5;
+    --error-border: #7f1d1d;
+    --success-bg: #064e3b;
+    --success-text: #6ee7b7;
+    --success-border: #065f46;
+    --message-border: #1e293b;
+    --label-border: #334155;
+    --tauron-color: #f59e0b;
+    /* Amber 500 */
+    --water-color: #38bdf8;
+    /* Sky 400 */
+    --fortum-color: #10b981;
+    /* Emerald 500 */
     --energa-color: #f87171;
-    /* Light Red */
+    /* Red 400 */
     --enea-color: #60a5fa;
-    /* Light Blue */
+    /* Blue 400 */
+    --pge-color: #3b82f6;
+    /* Blue 500 */
+    --stoen-color: #f87171;
 }
 
 [data-theme="emerald"] {
@@ -107,6 +112,8 @@
     --fortum-color: #10b981;
     --energa-color: #be123c;
     --enea-color: #0369a1;
+    --pge-color: #1d4ed8;
+    --stoen-color: #be123c;
 }
 
 [data-theme="ocean"] {
@@ -115,9 +122,8 @@
     /* Cyan 500 */
     --background-color: #083344;
     /* Cyan 950 */
-    --card-background: #0e7490;
-    /* Cyan 700 mixed darker */
     --card-background: #155e75;
+    /* Cyan 800 mixed darker */
     --text-color: #ecfeff;
     /* Cyan 50 */
     --secondary-text: #a5f3fc;
@@ -139,6 +145,8 @@
     --fortum-color: #4ade80;
     --energa-color: #fb7185;
     --enea-color: #bae6fd;
+    --pge-color: #7dd3fc;
+    --stoen-color: #fb7185;
 }
 
 [data-theme="nord"] {
@@ -178,6 +186,9 @@
     /* Nord 11 */
     --enea-color: #5e81ac;
     /* Nord 10 */
+    --pge-color: #88c0d0;
+    /* Nord 8 */
+    --stoen-color: #bf616a;
 }
 
 [data-theme="dracula"] {
@@ -209,6 +220,9 @@
     /* Red */
     --enea-color: #bd93f9;
     /* Purple */
+    --pge-color: #6272a4;
+    /* Indigo-ish Gray */
+    --stoen-color: #ff5555;
 }
 
 [data-theme="sepia"] {
@@ -240,6 +254,8 @@
     --fortum-color: #6a994e;
     --energa-color: #9b2226;
     --enea-color: #003049;
+    --pge-color: #2a4d69;
+    --stoen-color: #9b2226;
 }
 
 [data-theme="latte"] {
@@ -271,6 +287,8 @@
     --fortum-color: #6a994e;
     --energa-color: #c1121f;
     --enea-color: #3d405b;
+    --pge-color: #4a4e69;
+    --stoen-color: #c1121f;
 }
 
 [data-theme="monochrome-light"] {
@@ -298,6 +316,8 @@
     --fortum-color: #525252;
     --energa-color: #525252;
     --enea-color: #525252;
+    --pge-color: #525252;
+    --stoen-color: #525252;
 }
 
 [data-theme="monochrome-dark"] {
@@ -325,6 +345,8 @@
     --fortum-color: #a3a3a3;
     --energa-color: #a3a3a3;
     --enea-color: #a3a3a3;
+    --pge-color: #a3a3a3;
+    --stoen-color: #a3a3a3;
 }
 
 * {
@@ -689,7 +711,15 @@ h1 {
     border-top: 4px solid var(--fortum-color);
 }
 
-.card:not(.source-tauron):not(.source-water):not(.source-fortum) {
+.card.source-pge {
+    border-top: 4px solid var(--pge-color);
+}
+
+.card.source-stoen {
+    border-top: 4px solid var(--stoen-color);
+}
+
+.card:not(.source-tauron):not(.source-water):not(.source-fortum):not(.source-energa):not(.source-enea):not(.source-pge):not(.source-stoen) {
     border-top: 4px solid #7c7c7c;
 }
 
@@ -707,6 +737,14 @@ h1 {
 
 .card.source-enea .outage-type {
     color: var(--enea-color);
+}
+
+.card.source-pge .outage-type {
+    color: var(--pge-color);
+}
+
+.card.source-stoen .outage-type {
+    color: var(--stoen-color);
 }
 
 .outage-time {

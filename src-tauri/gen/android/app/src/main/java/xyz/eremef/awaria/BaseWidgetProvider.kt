@@ -827,6 +827,71 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         }
     }
 
+    protected suspend fun fetchPgeAlertCount(settingsList: List<WidgetSettings>): Int {
+        var totalCount = 0
+        try {
+            val now = Date()
+            val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
+            val stopAtFrom = sdf.format(now).replace(" ", "+").replace(":", "%3A")
+            val future = Date(now.time + 90L * 24 * 60 * 60 * 1000) // 90 days
+            val startAtTo = sdf.format(future).replace(" ", "+").replace(":", "%3A")
+
+            val urlString = "https://power-outage.gkpge.pl/api/power-outage?startAtTo=$startAtTo&stopAtFrom=$stopAtFrom&types[]=2"
+            val response = fetchJson(URL(urlString))
+            val outages = org.json.JSONArray(response)
+
+            for (settings in settingsList) {
+                var count = 0
+                for (i in 0 until outages.length()) {
+                    val outage = outages.getJSONObject(i)
+                    val description = outage.optString("description", "")
+                    val cityMatchDesc = description.lowercase().contains(settings.cityName.lowercase())
+                    val addresses = outage.optJSONArray("addresses") ?: continue
+                    var matched = false
+                    for (j in 0 until addresses.length()) {
+                        val addr = addresses.getJSONObject(j)
+                        val teryt = addr.optJSONObject("teryt")
+                        if (teryt != null) {
+                            val vMatch = teryt.optString("voivodeshipName").uppercase() == settings.voivodeship.uppercase()
+                            if (!vMatch) continue
+
+                            val dMatch = teryt.optString("countyName").lowercase() == settings.district.lowercase()
+                            if (!dMatch) continue
+
+                            val cMatch = teryt.optString("communeName").lowercase() == settings.commune.lowercase()
+                            if (!cMatch) continue
+
+                            val cityMatch = teryt.optString("cityName").lowercase() == settings.cityName.lowercase()
+                            if (!cityMatch) continue
+                            
+                            val streetQuery = settings.streetName1.lowercase()
+                            val streetMatch = if (streetQuery.isEmpty()) true else teryt.optString("streetName").lowercase().contains(streetQuery)
+
+                            if (streetMatch) {
+                                matched = true
+                                break
+                            }
+                        } else if (cityMatchDesc) {
+                            if (settings.streetName1.isEmpty()) {
+                                matched = true
+                                break
+                            }
+                            if (description.lowercase().contains(settings.streetName1.lowercase())) {
+                                matched = true
+                                break
+                            }
+                        }
+                    }
+                    if (matched) count++
+                }
+                totalCount += count
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "PGE sync failed", e)
+        }
+        return totalCount
+    }
+
     protected suspend fun fetchEneaAlertCount(settingsList: List<WidgetSettings>): Int =
             coroutineScope {
                 var totalCount = 0
@@ -957,5 +1022,103 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         val escapedWord = java.util.regex.Pattern.quote(word)
         val regex = Regex("\\b$escapedWord\\b", RegexOption.IGNORE_CASE)
         return regex.containsMatchIn(text)
+    }
+
+    protected suspend fun fetchStoenAlertCount(settingsList: List<WidgetSettings>): Int {
+        var totalCount = 0
+        try {
+            val url = URL("https://awaria.stoen.pl/public/api/planned-outage/search/compressed-report")
+            val conn = url.openConnection() as HttpURLConnection
+            conn.requestMethod = "POST"
+            conn.doOutput = true
+            conn.setRequestProperty("Content-Type", "application/json")
+            conn.setRequestProperty("Referer", "https://awaria.stoen.pl/public/planned?pagelimit=9999")
+            conn.setRequestProperty("Origin", "https://awaria.stoen.pl")
+            conn.connectTimeout = 15000
+            conn.readTimeout = 15000
+
+            val payload = JSONObject().apply {
+                put("id", null)
+                put("area", null)
+                put("outageStart", null)
+                put("outageEnd", null)
+                put("page", JSONObject().apply {
+                    put("limit", 9999)
+                    put("offset", 0)
+                })
+            }
+
+            conn.outputStream.use { it.write(payload.toString().toByteArray(Charsets.UTF_8)) }
+
+            if (conn.responseCode !in 200..299) {
+                conn.disconnect()
+                return 0
+            }
+
+            val response = conn.inputStream.bufferedReader().readText()
+            conn.disconnect()
+
+            val outages = org.json.JSONArray(response)
+            val now = Date()
+            val stoenFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+
+            for (settings in settingsList) {
+                val cityLower = settings.cityName.lowercase()
+                val isWarszawa = cityLower == "warszawa" || cityLower == "warsaw" || settings.cityId == 918123L
+                if (!isWarszawa) continue
+
+                var count = 0
+                for (i in 0 until outages.length()) {
+                    val outage = outages.getJSONObject(i)
+                    
+                    // Filter by date
+                    val endStr = outage.optString("outageEnd", "")
+                    if (endStr.isNotEmpty()) {
+                        try {
+                            val end = stoenFormat.parse(endStr)
+                            if (end != null && end.before(now)) continue
+                        } catch (e: Exception) {}
+                    }
+
+                    if (settings.streetName1.isEmpty()) {
+                        count++
+                        continue
+                    }
+
+                    val addresses = outage.optJSONArray("addresses") ?: continue
+                    var streetMatched = false
+                    for (j in 0 until addresses.length()) {
+                        val addr = addresses.getJSONObject(j)
+                        val street = addr.optString("streetName", "")
+                        if (street.isNotEmpty()) {
+                            val streetNorm = street.lowercase()
+                                .replace("ul. ", "")
+                                .replace("al. ", "")
+                                .replace("pl. ", "")
+                                .replace("os. ", "")
+                                .trim()
+                            
+                            val query = settings.streetName1.lowercase()
+                            if (streetNorm.contains(query) || query.contains(streetNorm)) {
+                                if (settings.houseNo.isEmpty()) {
+                                    streetMatched = true
+                                    break
+                                }
+                                val houseNumbers = addr.optString("houseNumbers", "")
+                                if (houseNumbers.isEmpty() || houseNumbers.contains(settings.houseNo)) {
+                                    streetMatched = true
+                                    break
+                                }
+                            }
+                        }
+                    }
+                    if (streetMatched) count++
+                }
+                totalCount += count
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "STOEN fetch error", e)
+        }
+        return totalCount
     }
 }

@@ -3,7 +3,9 @@ mod enea;
 mod energa;
 mod fortum;
 mod mpwik;
+mod pge;
 mod state_db;
+mod stoen;
 mod tauron;
 mod teryt;
 
@@ -343,6 +345,58 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
         }
     }
 
+    // Fetch PGE alerts
+    if enabled_sources.contains(&"pge".to_string()) {
+        if let Some(ref s) = settings {
+            match pge::fetch_pge_outages().await {
+                Ok(outages) => {
+                    for (idx, addr) in s.addresses.iter().enumerate() {
+                        let local_outages: Vec<UnifiedAlert> = outages
+                            .iter()
+                            .filter(|po| pge::matches_address(po, addr))
+                            .map(|po| {
+                                let mut alert = po.to_unified();
+                                alert.address_index = Some(idx);
+                                alert.is_local = Some(true);
+                                alert
+                            })
+                            .collect();
+                        all_alerts.extend(local_outages);
+                    }
+                }
+                Err(e) => errors.push(format!("PGE: {}", e)),
+            }
+        }
+    }
+
+    // Fetch STOEN alerts
+    if enabled_sources.contains(&"stoen".to_string()) {
+        if let Some(ref s) = settings {
+            match stoen::fetch_stoen_outages().await {
+                Ok(outages) => {
+                    for outage in outages {
+                        let mut matched = false;
+                        for (idx, addr) in s.addresses.iter().enumerate() {
+                            if stoen::matches_address(&outage, addr) {
+                                let mut alert = outage.to_unified();
+                                alert.address_index = Some(idx);
+                                alert.is_local = Some(true);
+                                all_alerts.push(alert);
+                                matched = true;
+                            }
+                        }
+                        if !matched {
+                            let mut alert = outage.to_unified();
+                            alert.is_local = Some(false);
+                            all_alerts.push(alert);
+                        }
+                    }
+                }
+                Err(e) => errors.push(format!("STOEN: {}", e)),
+            }
+        }
+    }
+
     // --- PROCESSS NEW ALERTS AND NOTIFY ---
     if let Some(ref s) = settings {
         for alert in &all_alerts {
@@ -357,7 +411,7 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
                             if !seen {
                                 // Trigger notification
                                 let title = match alert.source {
-                                    AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea => "Nowa awaria prądu",
+                                    AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea | AlertSource::Pge | AlertSource::Stoen => "Nowa awaria prądu",
                                     AlertSource::Water => "Nowa awaria wody",
                                     AlertSource::Fortum => "Nowa awaria ogrzewania",
                                 };

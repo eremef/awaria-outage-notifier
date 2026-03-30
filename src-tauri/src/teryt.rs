@@ -75,7 +75,7 @@ pub fn lookup_cities(app: &AppHandle, city_name: &str) -> Result<Vec<TerytCity>,
                    AND city.rodz_gmi = commune.rodz \
                WHERE city.sym = city.sympod \
                    AND city.nazwa like ?1 COLLATE NOCASE \
-               ORDER BY voivodeship.nazwa, district.nazwa, commune.nazwa \
+               ORDER BY city.nazwa, voivodeship.nazwa, district.nazwa, commune.nazwa \
                LIMIT 20";
 
     let mut stmt = conn
