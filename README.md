@@ -1,6 +1,6 @@
-# Application for Warning and Alerting of Repairs and Infrastructure Accidents
-
 [English](README.md) | [Polski](README.pl.md)
+
+# Application for Warning and Alerting of Repairs and Infrastructure Accidents
 
 <p align="center">
    <img height="600" alt="image" src="https://github.com/user-attachments/assets/108932b2-0fe0-4a19-8769-61d4962835ac" />
