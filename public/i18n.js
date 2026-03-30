@@ -5,6 +5,8 @@ const translations = {
     en: {
         "title": "Awaria",
         "settings_appearance": "Appearance",
+        "notify": "Notify",
+        "source_name": "Source",
         "settings_theme": "Theme",
         "theme_system": "System Default",
         "theme_light": "Light",
@@ -86,6 +88,8 @@ const translations = {
     pl: {
         "title": "Awaria",
         "settings_appearance": "Wygląd",
+        "notify": "Powiadomienia",
+        "source_name": "Źródło",
         "settings_theme": "Motyw",
         "theme_system": "Domyślny systemowy",
         "theme_light": "Jasny",

@@ -211,7 +211,7 @@ function initSettings() {
     ['source-tauron-check', 'source-water-check', 'source-fortum-check', 'source-energa-check', 'source-enea-check'].forEach(id => {
         const checkbox = document.getElementById(id);
         if (!checkbox) return;
-        checkbox.addEventListener('change', () => {
+        checkbox.addEventListener('change', async () => {
             if (!currentSettings) return;
             const enabledSources = [];
             if (document.getElementById('source-tauron-check').checked) enabledSources.push('tauron');
@@ -220,9 +220,28 @@ function initSettings() {
             if (document.getElementById('source-energa-check') && document.getElementById('source-energa-check').checked) enabledSources.push('energa');
             if (document.getElementById('source-enea-check') && document.getElementById('source-enea-check').checked) enabledSources.push('enea');
             currentSettings.enabledSources = enabledSources;
-            autoSaveSettings().then(() => {
-                fetchOutages();
-            });
+            await autoSaveSettings();
+            fetchOutages();
+        });
+    });
+
+    ['notify-tauron-check', 'notify-water-check', 'notify-fortum-check', 'notify-energa-check', 'notify-enea-check'].forEach(id => {
+        const checkbox = document.getElementById(id);
+        if (!checkbox) return;
+        checkbox.addEventListener('change', async () => {
+            if (!currentSettings) return;
+            if (!currentSettings.notificationPreferences) {
+                currentSettings.notificationPreferences = {
+                    tauron: false,
+                    water: false,
+                    fortum: false,
+                    energa: false,
+                    enea: false
+                };
+            }
+            const prefKey = id.split('-')[1]; // tauron, water, etc.
+            currentSettings.notificationPreferences[prefKey] = checkbox.checked;
+            await autoSaveSettings();
         });
     });
 }
@@ -539,6 +558,13 @@ async function loadSettingsAndFetch() {
             if (document.getElementById('source-enea-check')) {
                 document.getElementById('source-enea-check').checked = sources.includes('enea');
             }
+
+            const notifyPrefs = settings.notificationPreferences || {};
+            if (document.getElementById('notify-tauron-check')) document.getElementById('notify-tauron-check').checked = !!notifyPrefs.tauron;
+            if (document.getElementById('notify-water-check')) document.getElementById('notify-water-check').checked = !!notifyPrefs.water;
+            if (document.getElementById('notify-fortum-check')) document.getElementById('notify-fortum-check').checked = !!notifyPrefs.fortum;
+            if (document.getElementById('notify-energa-check')) document.getElementById('notify-energa-check').checked = !!notifyPrefs.energa;
+            if (document.getElementById('notify-enea-check')) document.getElementById('notify-enea-check').checked = !!notifyPrefs.enea;
 
             updateAddressFilter();
             renderAddressesList();

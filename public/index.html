@@ -66,33 +66,62 @@
             </div>
 
             <div class="settings-title" data-i18n="settings_sources">Alert Sources</div>
+            <div class="settings-field-row header">
+                <div class="source-group header-label" data-i18n="source_name">Source</div>
+                <div class="notify-group header-label" data-i18n="notify">Notify</div>
+            </div>
             <div class="settings-field-group">
                 <div class="settings-group-label" data-i18n="source_power">Power</div>
                 <div class="settings-field-row indent">
-                    <input type="checkbox" id="source-tauron-check" checked>
-                    <label for="source-tauron-check" data-i18n="source_tauron_name">Tauron</label>
+                    <div class="source-group checkbox-pair">
+                        <input type="checkbox" id="source-tauron-check" checked>
+                        <label for="source-tauron-check" data-i18n="source_tauron_name">Tauron</label>
+                    </div>
+                    <div class="notify-group checkbox-pair mini">
+                        <input type="checkbox" id="notify-tauron-check">
+                    </div>
                 </div>
                 <div class="settings-field-row indent">
-                    <input type="checkbox" id="source-energa-check" checked>
-                    <label for="source-energa-check" data-i18n="source_energa_name">Energa</label>
+                    <div class="source-group checkbox-pair">
+                        <input type="checkbox" id="source-energa-check" checked>
+                        <label for="source-energa-check" data-i18n="source_energa_name">Energa</label>
+                    </div>
+                    <div class="notify-group checkbox-pair mini">
+                        <input type="checkbox" id="notify-energa-check">
+                    </div>
                 </div>
                 <div class="settings-field-row indent">
-                    <input type="checkbox" id="source-enea-check" checked>
-                    <label for="source-enea-check" data-i18n="source_enea_name">Enea</label>
+                    <div class="source-group checkbox-pair">
+                        <input type="checkbox" id="source-enea-check" checked>
+                        <label for="source-enea-check" data-i18n="source_enea_name">Enea</label>
+                    </div>
+                    <div class="notify-group checkbox-pair mini">
+                        <input type="checkbox" id="notify-enea-check">
+                    </div>
                 </div>
             </div>
             <div class="settings-field-group">
                 <div class="settings-group-label" data-i18n="source_heating">Heating</div>
                 <div class="settings-field-row indent">
-                    <input type="checkbox" id="source-fortum-check" checked>
-                    <label for="source-fortum-check" data-i18n="source_fortum_name">Fortum</label>
+                    <div class="source-group checkbox-pair">
+                        <input type="checkbox" id="source-fortum-check" checked>
+                        <label for="source-fortum-check" data-i18n="source_fortum_name">Fortum</label>
+                    </div>
+                    <div class="notify-group checkbox-pair mini">
+                        <input type="checkbox" id="notify-fortum-check">
+                    </div>
                 </div>
             </div>
             <div class="settings-field-group">
                 <div class="settings-group-label" data-i18n="source_water_name">Water</div>
                 <div class="settings-field-row indent">
-                    <input type="checkbox" id="source-water-check" checked>
-                    <label for="source-water-check" data-i18n="source_water_short">MPWiK</label>
+                    <div class="source-group checkbox-pair">
+                        <input type="checkbox" id="source-water-check" checked>
+                        <label for="source-water-check" data-i18n="source_water_short">MPWiK</label>
+                    </div>
+                    <div class="notify-group checkbox-pair mini">
+                        <input type="checkbox" id="notify-water-check">
+                    </div>
                 </div>
             </div>
 

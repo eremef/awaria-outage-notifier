@@ -1,9 +1,6 @@
-use crate::tauron::OutageItem;
 use serde::{Deserialize, Serialize};
-
-pub const MPWIK_URL: &str = "https://www.mpwik.wroc.pl/wp-admin/admin-ajax.php";
-pub const FORTUM_URL: &str = "https://formularz.fortum.pl/api/v1/switchoffs";
-pub const FORTUM_CITIES_URL: &str = "https://formularz.fortum.pl/api/v1/teryt/cities";
+use std::collections::HashMap;
+use sha2::{Sha256, Digest};
 
 // ── Alert source abstraction ──────────────────────────────
 
@@ -31,196 +28,34 @@ pub struct UnifiedAlert {
     pub is_local: Option<bool>,
 }
 
-// ── MPWiK (water) types ───────────────────────────────────
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct MpwikFailureItem {
-    pub content: Option<String>,
-    pub date_start: Option<String>,
-    pub date_end: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct MpwikResponse {
-    pub failures: Option<Vec<MpwikFailureItem>>,
-}
-
-// ── Fortum types ─────────────────────────────────────────
-
-#[derive(Debug, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct FortumCity {
-    pub city_guid: String,
-    pub city_name: String,
-    pub region_id: u32,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct FortumResponse {
-    #[serde(default)]
-    pub points: Vec<FortumPoint>,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct FortumPoint {
-    pub switch_off_id: String,
-    pub start_date: Option<String>,
-    pub end_date: Option<String>,
-    pub message: Option<String>,
-}
-
-/// Parse MPWiK date format "DD-MM-YYYY HH:mm" into ISO "YYYY-MM-DDTHH:mm:00".
-pub fn parse_mpwik_date(date_str: &str) -> Option<String> {
-    let parts: Vec<&str> = date_str.splitn(2, ' ').collect();
-    if parts.len() != 2 {
-        return None;
-    }
-    let date_parts: Vec<&str> = parts[0].split('-').collect();
-    if date_parts.len() != 3 {
-        return None;
-    }
-    Some(format!(
-        "{}-{}-{}T{}:00",
-        date_parts[2], date_parts[1], date_parts[0], parts[1]
-    ))
-}
-
-impl MpwikFailureItem {
-    pub fn to_unified(&self) -> UnifiedAlert {
-        UnifiedAlert {
-            source: AlertSource::Water,
-            startDate: self.date_start.as_deref().and_then(parse_mpwik_date),
-            endDate: self.date_end.as_deref().and_then(parse_mpwik_date),
-            message: self.content.clone(),
-            description: None,
-            address_index: None,
-            is_local: None,
+impl UnifiedAlert {
+    pub fn to_hash(&self) -> String {
+        let mut hasher = Sha256::new();
+        hasher.update(self.source.to_string());
+        if let Some(msg) = &self.message {
+            hasher.update(msg);
         }
+        if let Some(start) = &self.startDate {
+            hasher.update(start);
+        }
+        format!("{:x}", hasher.finalize())
     }
 }
 
-impl FortumPoint {
-    pub fn to_unified(&self) -> UnifiedAlert {
-        UnifiedAlert {
-            source: AlertSource::Fortum,
-            startDate: self.start_date.clone(),
-            endDate: self.end_date.clone(),
-            message: self.message.clone(),
-            description: None,
-            address_index: None,
-            is_local: None,
-        }
+impl std::fmt::Display for AlertSource {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            AlertSource::Tauron => "tauron",
+            AlertSource::Water => "water",
+            AlertSource::Fortum => "fortum",
+            AlertSource::Energa => "energa",
+            AlertSource::Enea => "enea",
+        };
+        write!(f, "{}", s)
     }
 }
 
-impl OutageItem {
-    pub fn to_unified(&self) -> UnifiedAlert {
-        UnifiedAlert {
-            source: AlertSource::Tauron,
-            startDate: self.StartDate.clone(),
-            endDate: self.EndDate.clone(),
-            message: self.Message.clone(),
-            description: self.Description.clone(),
-            address_index: None,
-            is_local: None,
-        }
-    }
-}
 
-pub fn matches_address(
-    message: &Option<String>,
-    city_name: &str,
-    street_name_1: &str,
-    street_name_2: &Option<String>,
-) -> bool {
-    let Some(message) = message else {
-        return false;
-    };
-
-    fn word_match(text: &str, word: &str) -> bool {
-        let pattern = format!(r"(?i)\b{}\b", regex::escape(word));
-        regex::Regex::new(&pattern)
-            .map(|r| r.is_match(text))
-            .unwrap_or(false)
-    }
-
-    // City must match
-    if !word_match(message, city_name) {
-        return false;
-    }
-
-    if street_name_1.is_empty() {
-        return true;
-    }
-
-    // Build priority list: compound name first (if nazwa_2 exists), then individual words
-    let mut candidates: Vec<String> = Vec::new();
-    if let Some(n2) = street_name_2 {
-        let compound = format!("{} {}", n2.trim(), street_name_1.trim());
-        candidates.push(compound);
-    }
-
-    // Add significant individual words (>= 3 chars)
-    for word in street_name_1.split_whitespace() {
-        if word.len() >= 3 {
-            candidates.push(word.to_string());
-        }
-    }
-    if let Some(n2) = street_name_2 {
-        for word in n2.split_whitespace() {
-            if word.len() >= 3 {
-                candidates.push(word.to_string());
-            }
-        }
-    }
-
-    candidates.iter().any(|c| word_match(message, c))
-}
-
-pub fn matches_street_only(
-    message: &Option<String>,
-    street_name_1: &str,
-    street_name_2: &Option<String>,
-) -> bool {
-    let Some(message) = message else {
-        return false;
-    };
-
-    fn word_match(text: &str, word: &str) -> bool {
-        let pattern = format!(r"(?i)\b{}\b", regex::escape(word));
-        regex::Regex::new(&pattern)
-            .map(|r| r.is_match(text))
-            .unwrap_or(false)
-    }
-
-    if street_name_1.is_empty() {
-        return true;
-    }
-
-    // Build priority list: compound name first (if nazwa_2 exists), then individual words
-    let mut candidates: Vec<String> = Vec::new();
-    if let Some(n2) = street_name_2 {
-        let compound = format!("{} {}", n2.trim(), street_name_1.trim());
-        candidates.push(compound);
-    }
-
-    // Add significant individual words (>= 3 chars)
-    for word in street_name_1.split_whitespace() {
-        if word.len() >= 3 {
-            candidates.push(word.to_string());
-        }
-    }
-    if let Some(n2) = street_name_2 {
-        for word in n2.split_whitespace() {
-            if word.len() >= 3 {
-                candidates.push(word.to_string());
-            }
-        }
-    }
-
-    candidates.iter().any(|c| word_match(message, c))
-}
 
 // ── Address & Settings ────────────────────────────────────
 
@@ -261,6 +96,8 @@ pub struct Settings {
     pub language: Option<String>,
     #[serde(default, rename = "enabledSources")]
     pub enabled_sources: Option<Vec<String>>,
+    #[serde(default, rename = "notificationPreferences")]
+    pub notification_preferences: HashMap<String, bool>,
 }
 
 impl Default for Settings {
@@ -271,6 +108,7 @@ impl Default for Settings {
             theme: None,
             language: None,
             enabled_sources: Some(Vec::new()),
+            notification_preferences: HashMap::new(),
         }
     }
 }
@@ -353,44 +191,5 @@ mod tests {
         let test_path = std::path::Path::new("non_existent_settings.json");
         let loaded = load_settings_from_path(test_path).expect("Failed to load settings");
         assert_eq!(None, loaded);
-    }
-
-    #[test]
-    fn test_parse_mpwik_date() {
-        let date = "12-03-2026 08:30";
-        let parsed = parse_mpwik_date(date);
-        assert_eq!(parsed, Some("2026-03-12T08:30:00".to_string()));
-
-        let invalid = "invalid date";
-        assert_eq!(parse_mpwik_date(invalid), None);
-    }
-
-    #[test]
-    fn test_mpwik_to_unified() {
-        let item = MpwikFailureItem {
-            content: Some("Test water outage".to_string()),
-            date_start: Some("12-03-2026 08:30".to_string()),
-            date_end: Some("12-03-2026 16:00".to_string()),
-        };
-        let unified = item.to_unified();
-        assert_eq!(unified.source, AlertSource::Water);
-        assert_eq!(unified.message, Some("Test water outage".to_string()));
-        assert_eq!(unified.startDate, Some("2026-03-12T08:30:00".to_string()));
-        assert_eq!(unified.endDate, Some("2026-03-12T16:00:00".to_string()));
-    }
-
-    #[test]
-    fn test_tauron_to_unified() {
-        let item = OutageItem {
-            GAID: Some(123),
-            Message: Some("Test power outage".to_string()),
-            StartDate: Some("2026-03-12T08:30:00".to_string()),
-            EndDate: Some("2026-03-12T16:00:00".to_string()),
-            Description: Some("Testing".to_string()),
-        };
-        let unified = item.to_unified();
-        assert_eq!(unified.source, AlertSource::Tauron);
-        assert_eq!(unified.message, Some("Test power outage".to_string()));
-        assert_eq!(unified.description, Some("Testing".to_string()));
     }
 }

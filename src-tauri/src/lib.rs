@@ -1,20 +1,24 @@
 mod api_logic;
 mod enea;
 mod energa;
+mod fortum;
+mod mpwik;
+mod state_db;
 mod tauron;
 mod teryt;
 
 use api_logic::{
-    load_settings_from_path, matches_address, matches_street_only, save_settings_to_path,
-    AddressEntry, FortumCity, Settings, UnifiedAlert, FORTUM_CITIES_URL, FORTUM_URL, MPWIK_URL,
+    load_settings_from_path, save_settings_to_path,
+    AddressEntry, AlertSource, Settings, UnifiedAlert,
 };
-use chrono::{SecondsFormat, Utc};
+use tauri_plugin_notification::NotificationExt;
+
 use std::fs;
 use std::path::PathBuf;
 use tauri::command;
 use tauri::AppHandle;
 use tauri::Manager;
-use tauron::{build_client, GeoItem, OutageResponse, BASE_URL};
+use tauron::build_client;
 use teryt::{TerytCity, TerytStreet};
 
 fn settings_path(app: &AppHandle) -> Result<PathBuf, String> {
@@ -23,120 +27,6 @@ fn settings_path(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(data_dir.join("settings.json"))
 }
 
-// ── Tauron API lookups (internal, for outage fetching) ───
-
-async fn lookup_city(
-    city_name: &str,
-    voivodeship: &str,
-    district: &str,
-    commune: &str,
-) -> Result<Vec<GeoItem>, String> {
-    let client = build_client()?;
-    let cache_bust = Utc::now().timestamp_millis().to_string();
-    let encoded_name = city_name.replace(' ', "%20");
-    let url = format!(
-        "{}/enum/geo/cities?partName={}&_={}",
-        BASE_URL, encoded_name, cache_bust
-    );
-
-    log::info!("Tauron API: GET {}", url);
-
-    let res = client
-        .get(&url)
-        .header("accept", "application/json")
-        .header("x-requested-with", "XMLHttpRequest")
-        .header("Referer", "https://www.tauron-dystrybucja.pl/wylaczenia")
-        .send()
-        .await
-        .map_err(|e| e.to_string())?;
-
-    if !res.status().is_success() {
-        return Err(format!("HTTP error: {}", res.status()));
-    }
-
-    let cities: Vec<GeoItem> = res.json().await.map_err(|e| e.to_string())?;
-
-    // Filter by administrative units
-    let filtered: Vec<GeoItem> = if voivodeship.is_empty() {
-        cities
-    } else {
-        cities
-            .into_iter()
-            .filter(|c| {
-                let p_match = c
-                    .ProvinceName
-                    .as_ref()
-                    .map(|p| p.to_lowercase() == voivodeship.to_lowercase())
-                    .unwrap_or(false);
-                let d_match = c
-                    .DistrictName
-                    .as_ref()
-                    .map(|d| d.to_lowercase() == district.to_lowercase())
-                    .unwrap_or(false);
-                let c_match = c
-                    .CommuneName
-                    .as_ref()
-                    .map(|cm| cm.to_lowercase() == commune.to_lowercase())
-                    .unwrap_or(false);
-                p_match && d_match && c_match
-            })
-            .collect()
-    };
-
-    Ok(filtered)
-}
-async fn lookup_street(street_name: &str, city_gaid: u64) -> Result<Vec<GeoItem>, String> {
-    let client = build_client()?;
-    let cache_bust = Utc::now().timestamp_millis().to_string();
-    let encoded_name = street_name.replace(' ', "%20");
-    let url = format!(
-        "{}/enum/geo/streets?partName={}&ownerGAID={}&_={}",
-        BASE_URL, encoded_name, city_gaid, cache_bust
-    );
-
-    log::info!("Tauron API: GET {}", url);
-
-    let res = client
-        .get(&url)
-        .header("accept", "application/json")
-        .header("x-requested-with", "XMLHttpRequest")
-        .header("Referer", "https://www.tauron-dystrybucja.pl/wylaczenia")
-        .send()
-        .await
-        .map_err(|e| e.to_string())?;
-
-    if !res.status().is_success() {
-        return Err(format!("HTTP error: {}", res.status()));
-    }
-
-    res.json().await.map_err(|e| e.to_string())
-}
-
-async fn lookup_only_one_street(city_gaid: u64) -> Result<Vec<GeoItem>, String> {
-    let client = build_client()?;
-    let cache_bust = Utc::now().timestamp_millis().to_string();
-    let url = format!(
-        "{}/enum/geo/onlyonestreet?ownerGAID={}&_={}",
-        BASE_URL, city_gaid, cache_bust
-    );
-
-    log::info!("Tauron API (onlyonestreet): GET {}", url);
-
-    let res = client
-        .get(&url)
-        .header("accept", "application/json")
-        .header("x-requested-with", "XMLHttpRequest")
-        .header("Referer", "https://www.tauron-dystrybucja.pl/wylaczenia")
-        .send()
-        .await
-        .map_err(|e| e.to_string())?;
-
-    if !res.status().is_success() {
-        return Err(format!("HTTP error: {}", res.status()));
-    }
-
-    res.json().await.map_err(|e| e.to_string())
-}
 
 // ── TERYT local lookups ───────────────────────────────────
 
@@ -245,197 +135,6 @@ async fn update_address(
     Ok(settings)
 }
 
-// ── Outage fetching ───────────────────────────────────────
-
-async fn fetch_tauron_outages(address: &AddressEntry) -> Result<OutageResponse, String> {
-    let street_query = match &address.street_name_2 {
-        Some(n2) => format!("{} {}", n2.trim(), address.street_name_1.trim()),
-        None => address.street_name_1.clone(),
-    };
-
-    log::info!(
-        "Tauron: fetching for city='{}' ({}/{}/{}), street='{}'",
-        address.city_name,
-        address.voivodeship,
-        address.district,
-        address.commune,
-        street_query
-    );
-
-    // Look up Tauron GAIDs dynamically from address names
-    let cities = lookup_city(
-        &address.city_name,
-        &address.voivodeship,
-        &address.district,
-        &address.commune,
-    )
-    .await?;
-    let city = cities
-        .into_iter()
-        .next()
-        .ok_or_else(|| format!("City '{}' not found in Tauron", address.city_name))?;
-
-    log::info!("Tauron: found city '{}' GAID={}", city.Name, city.GAID);
-
-    let streets = if address.street_name_1.is_empty() {
-        lookup_only_one_street(city.GAID).await?
-    } else {
-        lookup_street(&street_query, city.GAID).await?
-    };
-
-    if streets.is_empty() {
-        return Err(format!(
-            "Street '{}' not found in Tauron (no results)",
-            street_query
-        ));
-    }
-
-    for s in &streets {
-        log::info!("Tauron: street candidate: '{}' (GAID={})", s.Name, s.GAID);
-    }
-
-    let street = streets.into_iter().next().unwrap();
-
-    log::info!(
-        "Tauron: found street '{}' GAID={} (queried as '{}')",
-        street.Name,
-        street.GAID,
-        street_query
-    );
-
-    let now = Utc::now();
-    let from_date = now.to_rfc3339_opts(SecondsFormat::Millis, true);
-    let cache_bust = now.timestamp_millis().to_string();
-
-    let url = format!(
-        "{}/outages/address?cityGAID={}&streetGAID={}&houseNo={}&fromDate={}&getLightingSupport=false&getServicedSwitchingoff=true&_={}",
-        BASE_URL, city.GAID, street.GAID, address.house_no.replace(' ', "%20"), from_date.replace(' ', "%20"), cache_bust
-    );
-
-    log::info!("Tauron API (outages){}", url);
-
-    let client = build_client()?;
-    let res = client
-        .get(&url)
-        .header("accept", "application/json")
-        .header("x-requested-with", "XMLHttpRequest")
-        .header("Referer", "https://www.tauron-dystrybucja.pl/wylaczenia")
-        .send()
-        .await
-        .map_err(|e| e.to_string())?;
-
-    if !res.status().is_success() {
-        return Err(format!("HTTP error! status: {}", res.status()));
-    }
-
-    let mut data = res
-        .json::<OutageResponse>()
-        .await
-        .map_err(|e| e.to_string())?;
-
-    data.debug_query = Some(url.clone());
-
-    Ok(data)
-}
-
-async fn fetch_water_alerts() -> Result<Vec<UnifiedAlert>, String> {
-    let client = build_client()?;
-    let res = client
-        .post(MPWIK_URL)
-        .header(
-            "content-type",
-            "application/x-www-form-urlencoded; charset=UTF-8",
-        )
-        .header("accept", "application/json")
-        .header("x-requested-with", "XMLHttpRequest")
-        .header("origin", "https://www.mpwik.wroc.pl")
-        .header("referer", "https://www.mpwik.wroc.pl/")
-        .body("action=all")
-        .send()
-        .await
-        .map_err(|e| e.to_string())?;
-
-    if !res.status().is_success() {
-        return Err(format!("MPWiK HTTP error: {}", res.status()));
-    }
-
-    let data: api_logic::MpwikResponse = res.json().await.map_err(|e| e.to_string())?;
-    let alerts: Vec<UnifiedAlert> = data
-        .failures
-        .unwrap_or_default()
-        .iter()
-        .map(|f| f.to_unified())
-        .collect();
-
-    Ok(alerts)
-}
-
-async fn fetch_fortum_cities() -> Result<Vec<FortumCity>, String> {
-    let client = build_client()?;
-    log::info!("Fortum: GET {}", FORTUM_CITIES_URL);
-    let res = client
-        .get(FORTUM_CITIES_URL)
-        .header("accept", "application/json")
-        .send()
-        .await
-        .map_err(|e| e.to_string())?;
-
-    if !res.status().is_success() {
-        return Err(format!("Fortum cities HTTP error: {}", res.status()));
-    }
-
-    res.json().await.map_err(|e| e.to_string())
-}
-
-async fn fetch_fortum_alerts(city_guid: &str, region_id: u32) -> Result<Vec<UnifiedAlert>, String> {
-    let client = build_client()?;
-
-    let planned_url = format!(
-        "{}?cityGuid={}&regionId={}&current=false",
-        FORTUM_URL, city_guid, region_id
-    );
-    let current_url = format!(
-        "{}?cityGuid={}&regionId={}&current=true",
-        FORTUM_URL, city_guid, region_id
-    );
-
-    log::info!("Fortum API: planned={}, current={}", planned_url, current_url);
-
-    let (planned_res, current_res) = tokio::join!(
-        client
-            .get(&planned_url)
-            .header("accept", "application/json")
-            .send(),
-        client
-            .get(&current_url)
-            .header("accept", "application/json")
-            .send()
-    );
-
-    let planned_data: api_logic::FortumResponse = planned_res
-        .map_err(|e| e.to_string())?
-        .json()
-        .await
-        .map_err(|e| e.to_string())?;
-
-    let current_data: api_logic::FortumResponse = current_res
-        .map_err(|e| e.to_string())?
-        .json()
-        .await
-        .map_err(|e| e.to_string())?;
-
-    let mut seen_ids = std::collections::HashSet::new();
-    let mut all_points = planned_data.points;
-    all_points.extend(current_data.points);
-
-    let alerts: Vec<UnifiedAlert> = all_points
-        .into_iter()
-        .filter(|p| seen_ids.insert(p.switch_off_id.clone()))
-        .map(|p| p.to_unified())
-        .collect();
-
-    Ok(alerts)
-}
 
 async fn fetch_energa_alerts() -> Result<Vec<energa::EnergaShutdown>, String> {
     let client = build_client()?;
@@ -480,7 +179,7 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
     if enabled_sources.contains(&"tauron".to_string()) {
         if let Some(ref s) = settings {
             for (idx, addr) in s.addresses.iter().enumerate() {
-                match fetch_tauron_outages(addr).await {
+                match tauron::fetch_tauron_outages(addr).await {
                     Ok(response) => {
                         let alerts: Vec<UnifiedAlert> = response
                             .OutageItems
@@ -490,7 +189,7 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
                                 let mut alert = item.to_unified();
                                 alert.address_index = Some(idx);
                                 alert.is_local = Some(
-                                    matches_address(&item.Message, &addr.city_name, &addr.street_name_1, &addr.street_name_2),
+                                    tauron::matches_address(&item.Message, &addr.city_name, &addr.street_name_1, &addr.street_name_2),
                                 );
                                 alert
                             })
@@ -508,7 +207,7 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
 
     // Fetch MPWiK water alerts (only if provider enabled)
     if enabled_sources.contains(&"water".to_string()) {
-        match fetch_water_alerts().await {
+        match mpwik::fetch_water_alerts().await {
             Ok(water_alerts) => all_alerts.extend(water_alerts),
             Err(e) => errors.push(format!("MPWiK: {}", e)),
         }
@@ -516,7 +215,7 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
 
     // Fetch Fortum alerts (only if provider enabled)
     if enabled_sources.contains(&"fortum".to_string()) {
-        match fetch_fortum_cities().await {
+        match fortum::fetch_fortum_cities().await {
             Ok(cities) => {
                 if let Some(ref s) = settings {
                     // Group addresses by Fortum city to minimize API calls
@@ -533,12 +232,12 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
                     }
 
                     for ((guid, rid, city_name), addrs) in city_map {
-                        match fetch_fortum_alerts(&guid, rid).await {
+                        match fortum::fetch_fortum_alerts(&guid, rid).await {
                             Ok(alerts) => {
                                 for a in &alerts {
                                     let mut matched_any = false;
                                     for (idx, addr) in &addrs {
-                                        if matches_street_only(
+                                        if fortum::matches_street_only(
                                             &a.message,
                                             &addr.street_name_1,
                                             &addr.street_name_2,
@@ -644,6 +343,45 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
         }
     }
 
+    // --- PROCESSS NEW ALERTS AND NOTIFY ---
+    if let Some(ref s) = settings {
+        for alert in &all_alerts {
+            if alert.is_local == Some(true) {
+                let source_key = alert.source.to_string();
+                let notified_enabled = s.notification_preferences.get(&source_key).copied().unwrap_or(false);
+                
+                if notified_enabled {
+                    let hash = alert.to_hash();
+                    match state_db::is_alert_seen(&app, &source_key, &hash) {
+                        Ok(seen) => {
+                            if !seen {
+                                // Trigger notification
+                                let title = match alert.source {
+                                    AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea => "Nowa awaria prądu",
+                                    AlertSource::Water => "Nowa awaria wody",
+                                    AlertSource::Fortum => "Nowa awaria ogrzewania",
+                                };
+                                let body = alert.message.clone().unwrap_or_default();
+                                
+                                log::info!("Triggering notification for {}: {}", source_key, body);
+                                app.notification()
+                                    .builder()
+                                    .title(title)
+                                    .body(body)
+                                    .show()
+                                    .ok();
+                                
+                                // Mark as seen
+                                state_db::mark_alert_as_seen(&app, &source_key, &hash).ok();
+                            }
+                        }
+                        Err(e) => log::error!("Database error while checking alert status: {}", e),
+                    }
+                }
+            }
+        }
+    }
+
     if all_alerts.is_empty() && !errors.is_empty() {
         return Err(errors.join("; "));
     }
@@ -681,7 +419,10 @@ async fn teryt_city_has_streets(app: AppHandle, city_id: u64) -> Result<bool, St
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_notification::init())
         .setup(|app| {
+            state_db::init_db(app.handle())?;
+            state_db::prune_old_alerts(app.handle(), 30)?;
             if cfg!(debug_assertions) {
                 app.handle().plugin(
                     tauri_plugin_log::Builder::default()

@@ -245,7 +245,6 @@ mod tests {
     #[test]
     fn test_enea_address_match() {
         let item = EneaItem {
-            region: "Zielona Góra".to_string(),
             title: Some(" Świdnica, 2026-03-30, 2026-03-30 08:00 - 2026-03-30 16:00".to_string()),
             description: Some("Obszar Świdnica\nw dniach: 2026-03-30\nmiejscowości Piaski 45, 46, działki".to_string()),
         };
@@ -255,7 +254,6 @@ mod tests {
         assert!(!item.matches_address("Wrocław", "", "", &None));
 
         let kicin = EneaItem {
-            region: "Poznań".to_string(),
             title: Some("Kicin, 2026-04-16".to_string()),
             description: Some("Obszar Kicin\nw dniach: 2026-04-16\nKicin: ul. Swarzędzka od 1 do 9, ul. Gwarna 2, 4, ,ul. Poznańska 43, 45, 47.".to_string()),
         };
