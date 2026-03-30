@@ -34,6 +34,9 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
 - **Source Selection**: Customize which types of outages you want to see in the settings.
 - **Multi-Address Support**: Monitor up to 20 different locations simultaneously.
 - **Smart Address Matching**: Highlights alerts affecting your specific address (or addresses). **Note**: Currently, matching is performed at the city and street level; building-specific filtering by house number is not yet implemented.
+- **Real-time Push Notifications**: Receive instant alerts on your desktop or mobile device when a new outage is detected for your location.
+- **Background Monitoring**: Automatically checks for updates in the background, even when the app is minimized or closed.
+- **Throttled Parallelism**: Modern backend logic that fetches from all providers simultaneously with smart retries for maximum reliability.
 - **Premium Design**:
   - **Modern Interface**: Indigo-based "friendly" UI with vibrant source indicators (Rose/Sky).
   - **Collapsible categories**: Organized view of "Your Location" vs "Other Outages".

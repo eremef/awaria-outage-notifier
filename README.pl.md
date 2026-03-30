@@ -32,6 +32,9 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
 - **Wybór Źródeł**: Możliwość dostosowania rodzajów awarii widocznych w ustawieniach.
 - **Wsparcie dla wielu adresów**: Monitoruj do 20 różnych lokalizacji jednocześnie.
 - **Inteligentne Dopasowanie Adresu**: Wyróżnia alerty dotyczące konkretnego adresu (lub adresów). **Uwaga**: Obecnie dopasowanie odbywa się na poziomie miasta i ulicy; filtrowanie według konkretnego numeru domu nie jest jeszcze zaimplementowane.
+- **Powiadomienia Push w Czasie Rzeczywistym**: Otrzymuj natychmiastowe alerty na komputerze lub urządzeniu mobilnym, gdy wykryta zostanie nowa awaria dla Twojej lokalizacji.
+- **Monitorowanie w Tle**: Automatyczne sprawdzanie aktualizacji w tle, nawet gdy aplikacja jest zminimalizowana lub zamknięta.
+- **Zrównoleglona Logika**: Nowoczesny backend pobierający dane od wszystkich dostawców jednocześnie z inteligentnym systemem ponawiania prób.
 - **Design Premium**:
   - **Nowoczesny Interfejs**: System Indigo - przyjazny UI z żywymi wskaźnikami źródeł.
   - **Zwijane Kategorie**: Uporządkowany widok "Twoja Lokalizacja" oraz "Pozostałe Awarie".
