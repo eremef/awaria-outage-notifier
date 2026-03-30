@@ -11,12 +11,12 @@ jobs:
   release-android:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 20
           cache: 'npm'
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -52,7 +52,7 @@ jobs:
           mv src-tauri/gen/android/app/build/outputs/bundle/universalRelease/app-universal-release.aab awaria-android-${{ github.ref_name }}.aab || true
           
       - name: Upload APK
-        uses: softprops/action-gh-release@v2.4.2
+        uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           prerelease: ${{ contains(github.ref_name, 'alpha') }}
@@ -63,8 +63,8 @@ jobs:
   release-ios:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 20
       - name: Install Rust target
@@ -122,7 +122,7 @@ jobs:
           zip -r awaria-ios-${{ github.ref_name }}-unsigned.ipa Payload
 
       - name: Upload IPA
-        uses: softprops/action-gh-release@v2.4.2
+        uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           prerelease: ${{ contains(github.ref_name, 'alpha') }}
@@ -151,9 +151,9 @@ jobs:
 
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 20
           cache: 'npm'
@@ -224,7 +224,7 @@ jobs:
           ls -R release-artifacts
 
       - name: Upload Release Assets
-        uses: softprops/action-gh-release@v2.4.2
+        uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           prerelease: ${{ contains(github.ref_name, 'alpha') }}
