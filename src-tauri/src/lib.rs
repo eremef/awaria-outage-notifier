@@ -8,20 +8,28 @@ mod state_db;
 mod stoen;
 mod tauron;
 mod teryt;
+mod utils;
 
 use api_logic::{
     load_settings_from_path, save_settings_to_path,
     AddressEntry, AlertSource, Settings, UnifiedAlert,
 };
+use tauri::command;
+use tauri::AppHandle;
+use tauri::Manager;
 use tauri_plugin_notification::NotificationExt;
 
 use std::fs;
 use std::path::PathBuf;
-use tauri::command;
-use tauri::AppHandle;
-use tauri::Manager;
-use tauron::build_client;
+use utils::{build_client, retry};
+use std::sync::Arc;
+use tokio::sync::Semaphore;
+use futures::future::join_all;
 use teryt::{TerytCity, TerytStreet};
+
+
+const MAX_CONCURRENT_REQUESTS: usize = 5;
+
 
 fn settings_path(app: &AppHandle) -> Result<PathBuf, String> {
     let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
@@ -139,6 +147,7 @@ async fn update_address(
 
 
 async fn fetch_energa_alerts() -> Result<Vec<energa::EnergaShutdown>, String> {
+
     let client = build_client()?;
     let url = energa::extract_energa_api_url(&client).await?;
     log::info!("Energa API calculated URL: {}", url);
@@ -177,146 +186,176 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
         settings.as_ref().map(|s| s.addresses.len()).unwrap_or(0)
     );
 
-    // Fetch Tauron alerts for each address (only if provider enabled)
-    if enabled_sources.contains(&"tauron".to_string()) {
-        if let Some(ref s) = settings {
+    let semaphore = Arc::new(Semaphore::new(MAX_CONCURRENT_REQUESTS));
+    let mut tasks = Vec::new();
+
+    if let Some(s) = settings {
+        let s = Arc::new(s);
+
+        // --- Tauron (Parallel per address) ---
+        if enabled_sources.contains(&"tauron".to_string()) {
             for (idx, addr) in s.addresses.iter().enumerate() {
-                match tauron::fetch_tauron_outages(addr).await {
-                    Ok(response) => {
-                        let alerts: Vec<UnifiedAlert> = response
-                            .OutageItems
-                            .unwrap_or_default()
-                            .iter()
-                            .map(|item| {
-                                let mut alert = item.to_unified();
-                                alert.address_index = Some(idx);
-                                alert.is_local = Some(
-                                    tauron::matches_address(&item.Message, &addr.city_name, &addr.street_name_1, &addr.street_name_2),
-                                );
-                                alert
-                            })
-                            .collect();
-                        all_alerts.extend(alerts);
+                let addr = addr.clone();
+                let sem = semaphore.clone();
+                tasks.push(tokio::spawn(async move {
+                    let _permit = sem.acquire().await.ok();
+                    match retry(|| tauron::fetch_tauron_outages(&addr), 3).await {
+                        Ok(response) => {
+                            let alerts: Vec<UnifiedAlert> = response
+                                .OutageItems
+                                .unwrap_or_default()
+                                .into_iter()
+                                .map(|item| {
+                                    let mut alert = item.to_unified();
+                                    alert.address_index = Some(idx);
+                                    alert.is_local = Some(tauron::matches_address(
+                                        &item.Message,
+                                        &addr.city_name,
+                                        &addr.street_name_1,
+                                        &addr.street_name_2,
+                                    ));
+                                    alert
+                                })
+                                .collect();
+                            (alerts, Vec::<String>::new())
+                        }
+                        Err(e) => (Vec::new(), vec![format!("Tauron[{}]: {}", idx, e)]),
                     }
-                    Err(e) => {
-                        log::error!("Tauron[{}]: {}", idx, e);
-                        errors.push(format!("Tauron[{}]: {}", idx, e));
-                    }
-                }
+                }));
             }
         }
-    }
 
-    // Fetch MPWiK water alerts (only if provider enabled)
-    if enabled_sources.contains(&"water".to_string()) {
-        match mpwik::fetch_water_alerts().await {
-            Ok(water_alerts) => all_alerts.extend(water_alerts),
-            Err(e) => errors.push(format!("MPWiK: {}", e)),
+        // --- MPWiK Water ---
+        if enabled_sources.contains(&"water".to_string()) {
+            let sem = semaphore.clone();
+            tasks.push(tokio::spawn(async move {
+                let _permit = sem.acquire().await.ok();
+                match retry(|| mpwik::fetch_water_alerts(), 3).await {
+                    Ok(alerts) => (alerts, Vec::new()),
+                    Err(e) => (Vec::new(), vec![format!("MPWiK: {}", e)]),
+                }
+            }));
         }
-    }
 
-    // Fetch Fortum alerts (only if provider enabled)
-    if enabled_sources.contains(&"fortum".to_string()) {
-        match fortum::fetch_fortum_cities().await {
-            Ok(cities) => {
-                if let Some(ref s) = settings {
-                    // Group addresses by Fortum city to minimize API calls
-                    let mut city_map = std::collections::HashMap::new();
-                    for (idx, addr) in s.addresses.iter().enumerate() {
-                        if let Some(fc) = cities.iter().find(|c| {
-                            c.city_name.to_lowercase() == addr.city_name.to_lowercase()
-                        }) {
-                            city_map
-                                .entry((fc.city_guid.clone(), fc.region_id, fc.city_name.clone()))
-                                .or_insert_with(Vec::new)
-                                .push((idx, addr));
+        // --- Fortum ---
+        if enabled_sources.contains(&"fortum".to_string()) {
+            let s_fortum = s.clone();
+            let sem = semaphore.clone();
+            tasks.push(tokio::spawn(async move {
+                let _permit = sem.acquire().await.ok();
+                match retry(|| fortum::fetch_fortum_cities(), 3).await {
+                    Ok(cities) => {
+                        let mut city_map = std::collections::HashMap::new();
+                        for (idx, addr) in s_fortum.addresses.iter().enumerate() {
+                            if let Some(fc) = cities.iter().find(|c| {
+                                c.city_name.to_lowercase() == addr.city_name.to_lowercase()
+                            }) {
+                                city_map
+                                    .entry((fc.city_guid.clone(), fc.region_id, fc.city_name.clone()))
+                                    .or_insert_with(Vec::new)
+                                    .push((idx, addr));
+                            }
                         }
-                    }
 
-                    for ((guid, rid, city_name), addrs) in city_map {
-                        match fortum::fetch_fortum_alerts(&guid, rid).await {
-                            Ok(alerts) => {
-                                for a in &alerts {
-                                    let mut matched_any = false;
-                                    for (idx, addr) in &addrs {
-                                        if fortum::matches_street_only(
-                                            &a.message,
-                                            &addr.street_name_1,
-                                            &addr.street_name_2,
-                                        ) {
-                                            let mut alert = a.clone();
-                                            alert.address_index = Some(*idx);
-                                            alert.is_local = Some(true);
-                                            all_alerts.push(alert);
-                                            matched_any = true;
+                        let mut fortum_alerts = Vec::new();
+                        let mut fortum_errors = Vec::new();
+
+                        for ((guid, rid, city_name), addrs) in city_map {
+                            match retry(|| fortum::fetch_fortum_alerts(&guid, rid), 3).await {
+                                Ok(alerts) => {
+                                    for a in alerts {
+                                        let mut matched_any = false;
+                                        for (idx, addr) in &addrs {
+                                            if fortum::matches_street_only(
+                                                &a.message,
+                                                &addr.street_name_1,
+                                                &addr.street_name_2,
+                                            ) {
+                                                let mut alert = a.clone();
+                                                alert.address_index = Some(*idx);
+                                                alert.is_local = Some(true);
+                                                fortum_alerts.push(alert);
+                                                matched_any = true;
+                                            }
                                         }
-                                    }
-
-                                    if !matched_any {
-                                        if let Some((idx, _)) = addrs.first() {
-                                            let mut alert = a.clone();
-                                            alert.address_index = Some(*idx);
-                                            alert.is_local = Some(false);
-                                            all_alerts.push(alert);
+                                        if !matched_any {
+                                            if let Some((idx, _)) = addrs.first() {
+                                                let mut alert = a.clone();
+                                                alert.address_index = Some(*idx);
+                                                alert.is_local = Some(false);
+                                                fortum_alerts.push(alert);
+                                            }
                                         }
                                     }
                                 }
+                                Err(e) => fortum_errors.push(format!("Fortum ({}): {}", city_name, e)),
                             }
-                            Err(e) => errors.push(format!("Fortum ({}): {}", city_name, e)),
                         }
+                        (fortum_alerts, fortum_errors)
                     }
+                    Err(e) => (Vec::new(), vec![format!("Fortum cities: {}", e)]),
                 }
-            }
-            Err(e) => errors.push(format!("Fortum cities: {}", e)),
+            }));
         }
-    }
 
-    // Fetch Energa alerts
-    if enabled_sources.contains(&"energa".to_string()) {
-        match fetch_energa_alerts().await {
-            Ok(shutdowns) => {
-                if let Some(ref s) = settings {
-                    for (idx, addr) in s.addresses.iter().enumerate() {
-                        let local_shutdowns: Vec<UnifiedAlert> = shutdowns
-                            .iter()
-                            .filter(|sd| {
-                                sd.matches_address(
-                                    &addr.city_name,
-                                    &addr.commune,
-                                    &addr.street_name_1,
-                                    &addr.street_name_2,
-                                )
-                            })
-                            .map(|sd| {
-                                let mut alert = sd.to_unified();
-                                alert.address_index = Some(idx);
-                                alert.is_local = Some(true);
-                                alert
-                            })
-                            .collect();
-                        all_alerts.extend(local_shutdowns);
+        // --- Energa ---
+        if enabled_sources.contains(&"energa".to_string()) {
+            let s_energa = s.clone();
+            let sem = semaphore.clone();
+            tasks.push(tokio::spawn(async move {
+                let _permit = sem.acquire().await.ok();
+                match retry(|| fetch_energa_alerts(), 3).await {
+                    Ok(shutdowns) => {
+                        let mut alerts = Vec::new();
+                        for (idx, addr) in s_energa.addresses.iter().enumerate() {
+                            let local_shutdowns: Vec<UnifiedAlert> = shutdowns
+                                .iter()
+                                .filter(|sd| {
+                                    sd.matches_address(
+                                        &addr.city_name,
+                                        &addr.commune,
+                                        &addr.street_name_1,
+                                        &addr.street_name_2,
+                                    )
+                                })
+                                .map(|sd| {
+                                    let mut alert = sd.to_unified();
+                                    alert.address_index = Some(idx);
+                                    alert.is_local = Some(true);
+                                    alert
+                                })
+                                .collect();
+                            alerts.extend(local_shutdowns);
+                        }
+                        (alerts, Vec::new())
                     }
+                    Err(e) => (Vec::new(), vec![format!("Energa: {}", e)]),
                 }
-            }
-            Err(e) => errors.push(format!("Energa: {}", e)),
+            }));
         }
-    }
 
-    // Fetch Enea alerts
-    if enabled_sources.contains(&"enea".to_string()) {
-        if let Some(ref s) = settings {
-            let mut target_regions = Vec::new();
-            for addr in &s.addresses {
-                target_regions.extend(enea::get_enea_regions_for_district(&addr.district));
-            }
-            target_regions.sort();
-            target_regions.dedup();
+        // --- Enea ---
+        if enabled_sources.contains(&"enea".to_string()) {
+            let s_enea = s.clone();
+            let sem = semaphore.clone();
+            tasks.push(tokio::spawn(async move {
+                let _permit = sem.acquire().await.ok();
+                let mut target_regions = Vec::new();
+                for addr in &s_enea.addresses {
+                    target_regions.extend(enea::get_enea_regions_for_district(&addr.district));
+                }
+                target_regions.sort();
+                target_regions.dedup();
 
-            if !target_regions.is_empty() {
+                if target_regions.is_empty() {
+                    return (Vec::new(), Vec::new());
+                }
+
                 match build_client() {
-                    Ok(client) => match enea::fetch_all_enea_outages(&client, &target_regions).await {
+                    Ok(client) => match retry(|| enea::fetch_all_enea_outages(&client, &target_regions), 3).await {
                         Ok(items) => {
-                            for (idx, addr) in s.addresses.iter().enumerate() {
+                            let mut alerts = Vec::new();
+                            for (idx, addr) in s_enea.addresses.iter().enumerate() {
                                 let local_items: Vec<UnifiedAlert> = items
                                     .iter()
                                     .filter(|item| {
@@ -334,76 +373,101 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
                                         alert
                                     })
                                     .collect();
-                                all_alerts.extend(local_items);
+                                alerts.extend(local_items);
                             }
+                            (alerts, Vec::new())
                         }
-                        Err(e) => errors.push(format!("Enea API Error: {}", e)),
+                        Err(e) => (Vec::new(), vec![format!("Enea API Error: {}", e)]),
                     },
-                    Err(e) => errors.push(format!("Enea Client Error: {}", e)),
+                    Err(e) => (Vec::new(), vec![format!("Enea Client Error: {}", e)]),
                 }
-            }
+            }));
         }
-    }
 
-    // Fetch PGE alerts
-    if enabled_sources.contains(&"pge".to_string()) {
-        if let Some(ref s) = settings {
-            match pge::fetch_pge_outages().await {
-                Ok(outages) => {
-                    for (idx, addr) in s.addresses.iter().enumerate() {
-                        let local_outages: Vec<UnifiedAlert> = outages
-                            .iter()
-                            .filter(|po| pge::matches_address(po, addr))
-                            .map(|po| {
-                                let mut alert = po.to_unified();
-                                alert.address_index = Some(idx);
-                                alert.is_local = Some(true);
-                                alert
-                            })
-                            .collect();
-                        all_alerts.extend(local_outages);
+        // --- PGE ---
+        if enabled_sources.contains(&"pge".to_string()) {
+            let s_pge = s.clone();
+            let sem = semaphore.clone();
+            tasks.push(tokio::spawn(async move {
+                let _permit = sem.acquire().await.ok();
+                match retry(|| pge::fetch_pge_outages(), 3).await {
+                    Ok(outages) => {
+                        let mut alerts = Vec::new();
+                        for (idx, addr) in s_pge.addresses.iter().enumerate() {
+                            let local_outages: Vec<UnifiedAlert> = outages
+                                .iter()
+                                .filter(|po| pge::matches_address(po, addr))
+                                .map(|po| {
+                                    let mut alert = po.to_unified();
+                                    alert.address_index = Some(idx);
+                                    alert.is_local = Some(true);
+                                    alert
+                                })
+                                .collect();
+                            alerts.extend(local_outages);
+                        }
+                        (alerts, Vec::new())
                     }
+                    Err(e) => (Vec::new(), vec![format!("PGE: {}", e)]),
                 }
-                Err(e) => errors.push(format!("PGE: {}", e)),
-            }
+            }));
         }
-    }
 
-    // Fetch STOEN alerts
-    if enabled_sources.contains(&"stoen".to_string()) {
-        if let Some(ref s) = settings {
-            match stoen::fetch_stoen_outages().await {
-                Ok(outages) => {
-                    for outage in outages {
-                        let mut matched = false;
-                        for (idx, addr) in s.addresses.iter().enumerate() {
-                            if stoen::matches_address(&outage, addr) {
+        // --- Stoen ---
+        if enabled_sources.contains(&"stoen".to_string()) {
+            let s_stoen = s.clone();
+            let sem = semaphore.clone();
+            tasks.push(tokio::spawn(async move {
+                let _permit = sem.acquire().await.ok();
+                match retry(|| stoen::fetch_stoen_outages(), 3).await {
+                    Ok(outages) => {
+                        let mut alerts = Vec::new();
+                        for outage in outages {
+                            let mut matched = false;
+                            for (idx, addr) in s_stoen.addresses.iter().enumerate() {
+                                if stoen::matches_address(&outage, addr) {
+                                    let mut alert = outage.to_unified();
+                                    alert.address_index = Some(idx);
+                                    alert.is_local = Some(true);
+                                    alerts.push(alert);
+                                    matched = true;
+                                }
+                            }
+                            if !matched {
                                 let mut alert = outage.to_unified();
-                                alert.address_index = Some(idx);
-                                alert.is_local = Some(true);
-                                all_alerts.push(alert);
-                                matched = true;
+                                alert.is_local = Some(false);
+                                alerts.push(alert);
                             }
                         }
-                        if !matched {
-                            let mut alert = outage.to_unified();
-                            alert.is_local = Some(false);
-                            all_alerts.push(alert);
-                        }
+                        (alerts, Vec::new())
                     }
+                    Err(e) => (Vec::new(), vec![format!("STOEN: {}", e)]),
                 }
-                Err(e) => errors.push(format!("STOEN: {}", e)),
+            }));
+        }
+
+        // Wait for all tasks to complete
+        let results = join_all(tasks).await;
+        for res in results {
+            match res {
+                Ok((alerts, errs)) => {
+                    all_alerts.extend(alerts);
+                    errors.extend(errs);
+                }
+                Err(e) => errors.push(format!("Task panic: {}", e)),
             }
         }
-    }
 
-    // --- PROCESSS NEW ALERTS AND NOTIFY ---
-    if let Some(ref s) = settings {
+        // --- PROCESS NEW ALERTS AND NOTIFY ---
         for alert in &all_alerts {
             if alert.is_local == Some(true) {
                 let source_key = alert.source.to_string();
-                let notified_enabled = s.notification_preferences.get(&source_key).copied().unwrap_or(false);
-                
+                let notified_enabled = s
+                    .notification_preferences
+                    .get(&source_key)
+                    .copied()
+                    .unwrap_or(false);
+
                 if notified_enabled {
                     let hash = alert.to_hash();
                     match state_db::is_alert_seen(&app, &source_key, &hash) {
@@ -411,12 +475,16 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
                             if !seen {
                                 // Trigger notification
                                 let title = match alert.source {
-                                    AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea | AlertSource::Pge | AlertSource::Stoen => "Nowa awaria prądu",
+                                    AlertSource::Tauron
+                                    | AlertSource::Energa
+                                    | AlertSource::Enea
+                                    | AlertSource::Pge
+                                    | AlertSource::Stoen => "Nowa awaria prądu",
                                     AlertSource::Water => "Nowa awaria wody",
                                     AlertSource::Fortum => "Nowa awaria ogrzewania",
                                 };
                                 let body = alert.message.clone().unwrap_or_default();
-                                
+
                                 log::info!("Triggering notification for {}: {}", source_key, body);
                                 app.notification()
                                     .builder()
@@ -424,7 +492,7 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
                                     .body(body)
                                     .show()
                                     .ok();
-                                
+
                                 // Mark as seen
                                 state_db::mark_alert_as_seen(&app, &source_key, &hash).ok();
                             }

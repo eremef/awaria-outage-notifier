@@ -1,4 +1,6 @@
 use crate::api_logic::{AddressEntry, AlertSource, UnifiedAlert};
+use crate::utils::build_client;
+
 use chrono::{Duration, Utc};
 use chrono_tz::Europe::Warsaw;
 use serde::{Deserialize, Serialize};
@@ -31,7 +33,7 @@ pub struct PgeOutage {
 }
 
 pub async fn fetch_pge_outages() -> Result<Vec<PgeOutage>, String> {
-    let client = crate::tauron::build_client()?;
+    let client = build_client()?;
     let now = Utc::now().with_timezone(&Warsaw);
     let start_at_to = (now + Duration::days(90)).format("%Y-%m-%d %H:%M:%S").to_string();
     let stop_at_from = now.format("%Y-%m-%d %H:%M:%S").to_string();

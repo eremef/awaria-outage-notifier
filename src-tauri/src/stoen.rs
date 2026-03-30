@@ -1,4 +1,5 @@
 use crate::api_logic::{AddressEntry, AlertSource, UnifiedAlert};
+use crate::utils::build_client;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -35,7 +36,7 @@ struct StoenPayload {
 }
 
 pub async fn fetch_stoen_outages() -> Result<Vec<StoenOutage>, String> {
-    let client = crate::tauron::build_client()?;
+    let client = build_client()?;
     let url = "https://awaria.stoen.pl/public/api/planned-outage/search/compressed-report";
 
     let payload = StoenPayload {

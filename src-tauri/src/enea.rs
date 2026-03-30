@@ -1,7 +1,9 @@
 use crate::api_logic::{AlertSource, UnifiedAlert};
 use reqwest::Client;
 use serde::Deserialize;
-use std::sync::OnceLock;
+use std::sync::{Arc, OnceLock};
+use tokio::sync::Semaphore;
+use crate::utils::retry;
 
 pub const ENEA_BASE_URL: &str = "https://www.wylaczenia-eneaoperator.pl/rss/rss_unpl_";
 
@@ -187,6 +189,7 @@ impl EneaItem {
 }
 
 pub async fn fetch_all_enea_outages(client: &Client, target_regions: &[u32]) -> Result<Vec<EneaItem>, String> {
+    let semaphore = Arc::new(Semaphore::new(5)); // Limit concurrent RSS fetches
     let mut futures = Vec::new();
     
     for (id, expected_region) in ENEA_REGIONS {
@@ -195,37 +198,36 @@ pub async fn fetch_all_enea_outages(client: &Client, target_regions: &[u32]) -> 
         }
         let url = format!("{}{}.xml", ENEA_BASE_URL, id);
         let expected_name = (*expected_region).to_string();
+        let sem = semaphore.clone();
+        let client_c = client.clone();
         futures.push(async move {
-            let res = client.get(&url).send().await.ok()?;
-            if !res.status().is_success() {
-                log::warn!("Enea region {} failed with status {}", id, res.status());
-                return None;
-            }
-            let xml = res.text().await.ok()?;
-            let rss: Rss = match quick_xml::de::from_str(&xml) {
-                Ok(r) => r,
-                Err(e) => {
-                    log::warn!("Failed to parse XML for Region {}: {}", id, e);
-                    return None;
+            let _permit = sem.acquire().await.ok();
+            
+            retry(|| async {
+                let res = client_c.get(&url).send().await.map_err(|e| e.to_string())?;
+                if !res.status().is_success() {
+                    return Err(format!("Status {}", res.status()));
                 }
-            };
-            
-            let region = rss.channel.title
-                .strip_prefix("Planowane wyłączenia - ")
-                .unwrap_or(&rss.channel.title)
-                .trim()
-                .to_string();
-            
-            if region != expected_name {
-                 log::warn!("Region mismatch! Expected '{}', got '{}'", expected_name, region);
-            }
+                let xml = res.text().await.map_err(|e| e.to_string())?;
+                let rss: Rss = quick_xml::de::from_str(&xml).map_err(|e| e.to_string())?;
+                
+                let region = rss.channel.title
+                    .strip_prefix("Planowane wyłączenia - ")
+                    .unwrap_or(&rss.channel.title)
+                    .trim()
+                    .to_string();
+                
+                if region != expected_name {
+                     log::warn!("Region mismatch! Expected '{}', got '{}'", expected_name, region);
+                }
 
-            let items: Vec<EneaItem> = rss.channel.items.into_iter().map(|item| EneaItem {
-                title: item.title,
-                description: item.description,
-            }).collect();
-            
-            Some(items)
+                let items: Vec<EneaItem> = rss.channel.items.into_iter().map(|item| EneaItem {
+                    title: item.title,
+                    description: item.description,
+                }).collect();
+                
+                Ok(items)
+            }, 3).await.ok()
         });
     }
 

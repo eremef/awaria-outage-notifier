@@ -1,5 +1,5 @@
 use crate::api_logic::{AlertSource, UnifiedAlert};
-use crate::tauron::build_client;
+use crate::utils::build_client;
 use serde::{Deserialize, Serialize};
 
 pub const FORTUM_URL: &str = "https://formularz.fortum.pl/api/v1/switchoffs";

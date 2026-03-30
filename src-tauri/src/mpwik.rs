@@ -1,5 +1,6 @@
 use crate::api_logic::{AlertSource, UnifiedAlert};
-use crate::tauron::build_client;
+use crate::utils::build_client_http1;
+
 use serde::{Deserialize, Serialize};
 
 pub const MPWIK_URL: &str = "https://www.mpwik.wroc.pl/wp-admin/admin-ajax.php";
@@ -47,7 +48,7 @@ impl MpwikFailureItem {
 }
 
 pub async fn fetch_water_alerts() -> Result<Vec<UnifiedAlert>, String> {
-    let client = build_client()?;
+    let client = build_client_http1()?;
     let res = client
         .post(MPWIK_URL)
         .header(

@@ -1,4 +1,5 @@
 use crate::api_logic::{AlertSource, UnifiedAlert};
+use crate::utils::build_client;
 use chrono::{SecondsFormat, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -43,12 +44,6 @@ impl OutageItem {
             is_local: None,
         }
     }
-}
-
-pub fn build_client() -> Result<reqwest::Client, String> {
-    reqwest::Client::builder()
-        .build()
-        .map_err(|e| e.to_string())
 }
 
 pub async fn lookup_city(
