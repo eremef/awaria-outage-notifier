@@ -845,6 +845,17 @@ h1 {
     color: var(--enea-color);
 }
 
+.collapsible.source-pge .section-label.other {
+    color: var(--pge-color);
+}
+
+.collapsible.source-stoen .section-label.other {
+    color: var(--stoen-color);
+}
+
+
+
+
 .other-divider {
     text-align: center;
     display: flex;

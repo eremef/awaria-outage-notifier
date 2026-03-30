@@ -618,16 +618,11 @@ async function loadSettingsAndFetch() {
 async function saveNewAddress() {
     const name = document.getElementById('address-name-input').value.trim() || 'Address ' + ((currentSettings?.addresses?.length || 0) + 1);
     const streetName = document.getElementById('street-input').value.trim();
-    const houseNo = document.getElementById('house-input').value.trim();
+    const houseNo = document.getElementById('house-input').value.trim() || '1';
     const status = document.getElementById('settings-status');
 
     if (!selectedCityId || (!selectedStreetId && !cityHasNoStreets)) {
         status.textContent = typeof t !== 'undefined' ? t('err_fields_required') : '⚠️ Please select a city and street from the lists.';
-        status.className = 'settings-status error';
-        return;
-    }
-    if (!houseNo) {
-        status.textContent = typeof t !== 'undefined' ? t('err_fields_required') : '⚠️ House number is required.';
         status.className = 'settings-status error';
         return;
     }

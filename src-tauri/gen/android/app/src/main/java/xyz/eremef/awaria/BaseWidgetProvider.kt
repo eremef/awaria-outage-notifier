@@ -1060,8 +1060,8 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
             val outages = org.json.JSONArray(response)
             val now = Date()
-            val stoenFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
-
+            val stoenFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
+            
             for (settings in settingsList) {
                 val cityLower = settings.cityName.lowercase()
                 val isWarszawa = cityLower == "warszawa" || cityLower == "warsaw" || settings.cityId == 918123L
@@ -1071,7 +1071,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 for (i in 0 until outages.length()) {
                     val outage = outages.getJSONObject(i)
                     
-                    // Filter by date
+                    // Filter by date (End of outage must be in the future)
                     val endStr = outage.optString("outageEnd", "")
                     if (endStr.isNotEmpty()) {
                         try {
@@ -1099,16 +1099,10 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                                 .trim()
                             
                             val query = settings.streetName1.lowercase()
+                            // If street names match, we count it (Stoen is matched by street only per user request)
                             if (streetNorm.contains(query) || query.contains(streetNorm)) {
-                                if (settings.houseNo.isEmpty()) {
-                                    streetMatched = true
-                                    break
-                                }
-                                val houseNumbers = addr.optString("houseNumbers", "")
-                                if (houseNumbers.isEmpty() || houseNumbers.contains(settings.houseNo)) {
-                                    streetMatched = true
-                                    break
-                                }
+                                streetMatched = true
+                                break
                             }
                         }
                     }

@@ -103,11 +103,31 @@ pub fn matches_address(outage: &StoenOutage, address: &AddressEntry) -> bool {
 
 impl StoenOutage {
     pub fn to_unified(&self) -> UnifiedAlert {
+        let mut addr_parts = Vec::new();
+        for addr in &self.addresses {
+            let street = addr.streetName.as_deref().unwrap_or("?");
+            let nums = addr.houseNumbers.as_deref().unwrap_or("");
+            let part = format!("{} {}", street, nums).trim().to_string();
+            if !part.is_empty() {
+                addr_parts.push(part);
+            }
+        }
+
+        let base_msg = self
+            .comment
+            .clone()
+            .unwrap_or_else(|| "Planowane wyłączenie prądu".to_string());
+        let full_msg = if addr_parts.is_empty() {
+            base_msg
+        } else {
+            format!("{}. Adresy: {}", base_msg.trim_end_matches('.'), addr_parts.join(", "))
+        };
+
         UnifiedAlert {
             source: AlertSource::Stoen,
             startDate: Some(self.outageStart.clone()),
             endDate: Some(self.outageEnd.clone()),
-            message: self.comment.clone().or_else(|| Some("Planowane wyłączenie prądu".to_string())),
+            message: Some(full_msg),
             description: Some("Obszar: Warszawa".to_string()),
             address_index: None,
             is_local: None,
@@ -127,7 +147,7 @@ mod tests {
             for addr in &outage.addresses {
                 if let Some(street) = &addr.streetName {
                     if street.to_lowercase().contains("grzybowska") {
-                        println!("Found Grzybowska: {} with numbers {:?}", street, addr.houseNumbers);
+                        println!("Found Grzybowska: {:?}", outage);
                     }
                 }
             }

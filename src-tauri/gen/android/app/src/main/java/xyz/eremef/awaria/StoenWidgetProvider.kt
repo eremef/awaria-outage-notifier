@@ -5,8 +5,8 @@ import android.content.Context
 
 class StoenWidgetProvider : BaseWidgetProvider() {
     override val refreshAction: String = "xyz.eremef.awaria.ACTION_REFRESH_STOEN"
-    override val lightPrimary: String = "#c026d3" // Stoen Magenta
-    override val darkPrimary: String = "#e879f9"
+    override val lightPrimary: String = "#ea1b0a"
+    override val darkPrimary: String = "#f87171"
     override val iconResId: Int = R.drawable.ic_electricity
     override val labelKey: String = "outages"
 
