@@ -1,3 +1,5 @@
+[English](README.md) | [Polski](README.pl.md)
+
 # Aplikacja Wygodnego Alarmowanie o Remontach i Infrastrukturalnych Awariach
 
 <p align="center">
