@@ -119,14 +119,95 @@ pub fn matches_address(
 
 impl PgeOutage {
     pub fn to_unified(&self) -> UnifiedAlert {
+        let mut addr_parts = Vec::new();
+        for addr in &self.addresses {
+            let mut s = String::new();
+            if let Some(teryt) = &addr.teryt {
+                if let Some(st) = &teryt.streetName {
+                    s.push_str(st);
+                }
+            }
+            if let Some(nums) = &addr.numbers {
+                if !s.is_empty() {
+                    s.push(' ');
+                }
+                s.push_str(nums);
+            }
+            if !s.is_empty() {
+                addr_parts.push(s);
+            }
+        }
+
+        let address_summary = if !addr_parts.is_empty() {
+            addr_parts.join("; ")
+        } else {
+            String::new()
+        };
+
+        let description = if !address_summary.is_empty() {
+            if let Some(region) = &self.regionName {
+                format!("{} ({})", address_summary, region)
+            } else {
+                address_summary
+            }
+        } else {
+            self.regionName.clone().unwrap_or_default()
+        };
+
         UnifiedAlert {
             source: AlertSource::Pge,
             startDate: Some(self.startAt.clone()),
             endDate: Some(self.stopAt.clone()),
-            message: self.description.clone().or_else(|| self.regionName.clone()),
-            description: self.regionName.clone(),
+            message: Some(description),
+            description: self.description.clone().or_else(|| self.regionName.clone()),
             address_index: None,
             is_local: None,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_pge_to_unified_formatting() {
+        let outage = PgeOutage {
+            id: 1,
+            startAt: "2026-03-31 10:00:00".to_string(),
+            stopAt: "2026-03-31 14:00:00".to_string(),
+            description: Some("Planned maintenance".to_string()),
+            regionName: Some("Rejon Gliwice".to_string()),
+            addresses: vec![
+                PgeAddress {
+                    teryt: Some(PgeTeryt {
+                        voivodeshipName: None,
+                        countyName: None,
+                        communeName: None,
+                        cityName: None,
+                        streetName: Some("ul. Wiejska".to_string()),
+                    }),
+                    numbers: Some("1, 2, 3".to_string()),
+                },
+                PgeAddress {
+                    teryt: Some(PgeTeryt {
+                        voivodeshipName: None,
+                        countyName: None,
+                        communeName: None,
+                        cityName: None,
+                        streetName: Some("ul. Polna".to_string()),
+                    }),
+                    numbers: Some("10-20".to_string()),
+                },
+            ],
+        };
+
+        let unified = outage.to_unified();
+        assert_eq!(unified.source, AlertSource::Pge);
+        assert_eq!(
+            unified.message,
+            Some("ul. Wiejska 1, 2, 3; ul. Polna 10-20 (Rejon Gliwice)".to_string())
+        );
+        assert_eq!(unified.description, Some("Planned maintenance".to_string()));
     }
 }

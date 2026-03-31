@@ -129,7 +129,7 @@ impl StoenOutage {
             startDate: Some(self.outageStart.clone()),
             endDate: Some(self.outageEnd.clone()),
             message: Some(full_msg),
-            description: Some("Obszar: Warszawa".to_string()),
+            description: None,
             address_index: None,
             is_local: None,
         }

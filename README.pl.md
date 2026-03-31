@@ -19,7 +19,7 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
 - **⚡ Prąd (Enea)**: Planowane konserwacje (Zachodnia Polska).
 - **⚡ Prąd (PGE)**: Planowane wyłączenia prądu (Wschodnia i Centralna Polska).
 - **⚡ Prąd (Stoen)**: Planowane wyłączenia prądu (Warszawa i okolice).
-- **🔥 Ogrzewanie (Fortum)**: Planowane i bieżące wyłączenia ogrzewania oraz ciepłej wody.
+- **🔥 Ciepło (Fortum)**: Planowane i bieżące wyłączenia ogrzewania oraz ciepłej wody.
 - **💧 Woda (MPWiK)**: Awarie wodociągowe i prace konserwacyjne (obecnie obszar Wrocławia).
 
 ## Aplikacja Android

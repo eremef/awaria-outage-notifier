@@ -19,7 +19,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
 - **⚡ Power (Enea)**: Planned maintenance (Western Poland).
 - **⚡ Power (PGE)**: Planned power outages (Eastern/Central Poland).
 - **⚡ Power (Stoen)**: Planned power outages (Warsaw area).
-- **🔥 Heating (Fortum)**: Planned and current heating/hot water outages.
+- **🔥 Heat (Fortum)**: Planned and current heat/hot water outages.
 - **💧 Water (MPWiK)**: Water failures and maintenance work (currently Wrocław area).
 
 ## Android app

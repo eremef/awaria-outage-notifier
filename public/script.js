@@ -38,6 +38,10 @@ function initSettings() {
     const addAddressBtn = document.getElementById('add-address-btn');
     btn.addEventListener('click', () => {
         panel.classList.toggle('hidden');
+        if (!panel.classList.contains('hidden')) {
+            window.scrollTo({ top: 0, behavior: 'instant' });
+            panel.scrollTop = 0;
+        }
     });
 
     saveBtn.addEventListener('click', saveNewAddress);
@@ -203,10 +207,6 @@ function initSettings() {
         updateLastUpdated();
     });
 
-    const locTrigger = document.querySelector('#location-settings-collapsible .collapsible-trigger');
-    locTrigger.addEventListener('click', () => {
-        document.getElementById('location-settings-collapsible').classList.toggle('collapsed');
-    });
 
     ['source-tauron-check', 'source-water-check', 'source-fortum-check', 'source-energa-check', 'source-enea-check', 'source-pge-check', 'source-stoen-check'].forEach(id => {
         const checkbox = document.getElementById(id);
@@ -1035,14 +1035,9 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         const lblYourLoc = typeof t !== 'undefined' ? t('lbl_your_location') : 'Your location';
         container.innerHTML += `<div class="section-label">${lblYourLoc} (${totalLocal})</div>`;
 
+        // Order: Power (Tauron, Energa, Enea, PGE, Stoen) -> Heat (Fortum) -> Water (MPWiK)
         if (localTauron.length > 0) {
             container.innerHTML += renderCards(localTauron, 'tauron');
-        }
-        if (localWater.length > 0) {
-            container.innerHTML += renderCards(localWater, 'water');
-        }
-        if (localFortum.length > 0) {
-            container.innerHTML += renderCards(localFortum, 'fortum');
         }
         if (localEnerga.length > 0) {
             container.innerHTML += renderCards(localEnerga, 'energa');
@@ -1056,12 +1051,19 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         if (localStoen.length > 0) {
             container.innerHTML += renderCards(localStoen, 'stoen');
         }
+        if (localFortum.length > 0) {
+            container.innerHTML += renderCards(localFortum, 'fortum');
+        }
+        if (localWater.length > 0) {
+            container.innerHTML += renderCards(localWater, 'water');
+        }
     }
 
     if (hasOtherAlerts) {
         const lblDivider = typeof t !== 'undefined' ? t('lbl_other_alerts_divider') : 'Other alerts';
         container.innerHTML += `<div class="other-divider"><span>${lblDivider}</span></div>`;
 
+        // Order: Power (Tauron, Energa, Enea, PGE, Stoen) -> Heat (Fortum) -> Water (MPWiK)
         if (otherTauron.length > 0) {
             const lblSection = typeof t !== 'undefined' ? t('lbl_section_tauron') : 'Power (Tauron)';
             container.innerHTML += `
@@ -1077,35 +1079,6 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
             `;
         }
 
-        if (otherWater.length > 0) {
-            const lblSection = typeof t !== 'undefined' ? t('lbl_section_water') : 'Water (MPWiK)';
-            container.innerHTML += `
-                <div class="collapsible source-water collapsed">
-                    <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
-                        <span>${lblSection} (${otherWater.length})</span>
-                        <span class="toggle-icon">▼</span>
-                    </div>
-                    <div class="collapsible-content">
-                        ${renderCards(otherWater, 'water')}
-                    </div>
-                </div>
-            `;
-        }
-
-        if (otherFortum.length > 0) {
-            const lblSection = typeof t !== 'undefined' ? t('lbl_section_fortum') : 'Heating (Fortum)';
-            container.innerHTML += `
-                <div class="collapsible source-fortum collapsed">
-                    <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
-                        <span>${lblSection} (${otherFortum.length})</span>
-                        <span class="toggle-icon">▼</span>
-                    </div>
-                    <div class="collapsible-content">
-                        ${renderCards(otherFortum, 'fortum')}
-                    </div>
-                </div>
-            `;
-        }
         if (otherEnerga.length > 0) {
             const lblSection = (typeof t !== 'undefined' ? t('lbl_section_energa') : null) || 'Power (Energa)';
             container.innerHTML += `
@@ -1162,6 +1135,36 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
                 </div>
             `;
         }
+
+        if (otherFortum.length > 0) {
+            const lblSection = typeof t !== 'undefined' ? t('lbl_section_fortum') : 'Heat (Fortum)';
+            container.innerHTML += `
+                <div class="collapsible source-fortum collapsed">
+                    <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
+                        <span>${lblSection} (${otherFortum.length})</span>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        ${renderCards(otherFortum, 'fortum')}
+                    </div>
+                </div>
+            `;
+        }
+
+        if (otherWater.length > 0) {
+            const lblSection = typeof t !== 'undefined' ? t('lbl_section_water') : 'Water (MPWiK)';
+            container.innerHTML += `
+                <div class="collapsible source-water collapsed">
+                    <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
+                        <span>${lblSection} (${otherWater.length})</span>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        ${renderCards(otherWater, 'water')}
+                    </div>
+                </div>
+            `;
+        }
     }
 }
 
@@ -1169,7 +1172,7 @@ function renderCards(alerts, source) {
     const sourceLabel = source === 'water'
         ? ((typeof t !== 'undefined' ? t('source_water') : null) || '💧 Water Outage')
         : source === 'fortum'
-            ? ((typeof t !== 'undefined' ? t('source_fortum') : null) || '🔥 Heating Outage (Fortum)')
+            ? ((typeof t !== 'undefined' ? t('source_fortum') : null) || '🔥 Heat Outage (Fortum)')
             : source === 'energa'
                 ? ((typeof t !== 'undefined' ? t('source_energa') : null) || '⚡ Energa Outage')
                 : source === 'enea'

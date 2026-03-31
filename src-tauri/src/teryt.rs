@@ -110,8 +110,8 @@ pub fn lookup_streets(
     let conn = Connection::open_with_flags(path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
         .map_err(|e| format!("Failed to open teryt DB: {}", e))?;
 
-    let sql = "SELECT street.cecha || IFNULL(' ' || street.nazwa_2, '') || ' ' || street.nazwa_1 AS full_name,
-                       street.sym, street.sym_ul, street.nazwa_1, street.nazwa_2 \
+    let sql = "SELECT distinct street.cecha || IFNULL(' ' || street.nazwa_2, '') || ' ' || street.nazwa_1 AS full_name,
+                       ?1 sym, street.sym_ul, street.nazwa_1, street.nazwa_2 \
                FROM ulic street \
                LEFT JOIN simc city ON street.sym = city.sym \
                LEFT JOIN simc city_part ON city_part.sym = street.sym \
