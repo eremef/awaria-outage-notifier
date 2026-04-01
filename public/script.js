@@ -573,9 +573,14 @@ function hideSuggestions(id) {
 }
 
 function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+    if (typeof str !== 'string') return str;
+    return str.replace(/[&<>"']/g, m => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    })[m]);
 }
 
 async function loadSettingsAndFetch() {
@@ -1075,55 +1080,54 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
     const hasOtherAlerts = otherTauron.length > 0 || otherWater.length > 0 || otherFortum.length > 0 || otherEnerga.length > 0 || otherEnea.length > 0 || otherPge.length > 0 || otherStoen.length > 0;
     const hasAnyAlerts = hasLocalAlerts || hasOtherAlerts;
 
-    container.innerHTML = '';
-
+    let html = '';
     if (!hasAnyAlerts) {
         const lblYourLoc = typeof t !== 'undefined' ? t('lbl_your_location') : 'Your location';
         const msgNoLoc = typeof t !== 'undefined' ? t('msg_no_outages_local') : 'No planned outages for your location.';
-        container.innerHTML = `<div class="section-label">${lblYourLoc}</div><div class="no-outages">${msgNoLoc}</div>`;
+        container.innerHTML = `<div class="section-label">${escapeHtml(lblYourLoc)}</div><div class="no-outages">${escapeHtml(msgNoLoc)}</div>`;
         return;
     }
 
     if (hasLocalAlerts) {
         const totalLocal = localTauron.length + localWater.length + localFortum.length + localEnerga.length + localEnea.length + localPge.length + localStoen.length;
         const lblYourLoc = typeof t !== 'undefined' ? t('lbl_your_location') : 'Your location';
-        container.innerHTML += `<div class="section-label">${lblYourLoc} (${totalLocal})</div>`;
+        html += `<div class="section-label">${escapeHtml(lblYourLoc)} (${totalLocal})</div>`;
 
         // Order: Power (Tauron, Energa, Enea, PGE, Stoen) -> Heat (Fortum) -> Water (MPWiK)
         if (localTauron.length > 0) {
-            container.innerHTML += renderCards(localTauron, 'tauron');
+            html += renderCards(localTauron, 'tauron');
         }
         if (localEnerga.length > 0) {
-            container.innerHTML += renderCards(localEnerga, 'energa');
+            html += renderCards(localEnerga, 'energa');
         }
         if (localEnea.length > 0) {
-            container.innerHTML += renderCards(localEnea, 'enea');
+            html += renderCards(localEnea, 'enea');
         }
         if (localPge.length > 0) {
-            container.innerHTML += renderCards(localPge, 'pge');
+            html += renderCards(localPge, 'pge');
         }
         if (localStoen.length > 0) {
-            container.innerHTML += renderCards(localStoen, 'stoen');
+            html += renderCards(localStoen, 'stoen');
         }
         if (localFortum.length > 0) {
-            container.innerHTML += renderCards(localFortum, 'fortum');
+            html += renderCards(localFortum, 'fortum');
         }
         if (localWater.length > 0) {
-            container.innerHTML += renderCards(localWater, 'water');
+            html += renderCards(localWater, 'water');
         }
     }
 
     if (hasOtherAlerts) {
         const lblDivider = typeof t !== 'undefined' ? t('lbl_other_alerts_divider') : 'Other alerts';
-        container.innerHTML += `<div class="other-divider"><span>${lblDivider}</span></div>`;
+        html += `<div class="other-divider"><span>${escapeHtml(lblDivider)}</span></div>`;
 
         // Order: Power (Tauron, Energa, Enea, PGE, Stoen) -> Heat (Fortum) -> Water (MPWiK)
         if (otherTauron.length > 0) {
             const lblSection = typeof t !== 'undefined' ? t('lbl_section_tauron') : 'Power (Tauron)';
-            container.innerHTML += `
+            html += `
                 <div class="collapsible source-tauron collapsed">
                     <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
-                        <span>${lblSection} (${otherTauron.length})</span>
+                        <span>${escapeHtml(lblSection)} (${otherTauron.length})</span>
                         <span class="toggle-icon">▼</span>
                     </div>
                     <div class="collapsible-content">
@@ -1135,10 +1139,10 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
 
         if (otherEnerga.length > 0) {
             const lblSection = (typeof t !== 'undefined' ? t('lbl_section_energa') : null) || 'Power (Energa)';
-            container.innerHTML += `
+            html += `
                 <div class="collapsible source-energa collapsed">
                     <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
-                        <span>${lblSection} (${otherEnerga.length})</span>
+                        <span>${escapeHtml(lblSection)} (${otherEnerga.length})</span>
                         <span class="toggle-icon">▼</span>
                     </div>
                     <div class="collapsible-content">
@@ -1149,10 +1153,10 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         }
         if (otherEnea.length > 0) {
             const lblSection = (typeof t !== 'undefined' ? t('lbl_section_enea') : null) || 'Power (Enea)';
-            container.innerHTML += `
+            html += `
                 <div class="collapsible source-enea collapsed">
                     <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
-                        <span>${lblSection} (${otherEnea.length})</span>
+                        <span>${escapeHtml(lblSection)} (${otherEnea.length})</span>
                         <span class="toggle-icon">▼</span>
                     </div>
                     <div class="collapsible-content">
@@ -1163,10 +1167,10 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         }
         if (otherPge.length > 0) {
             const lblSection = (typeof t !== 'undefined' ? t('lbl_section_pge') : null) || 'Power (PGE)';
-            container.innerHTML += `
+            html += `
                 <div class="collapsible source-pge collapsed">
                     <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
-                        <span>${lblSection} (${otherPge.length})</span>
+                        <span>${escapeHtml(lblSection)} (${otherPge.length})</span>
                         <span class="toggle-icon">▼</span>
                     </div>
                     <div class="collapsible-content">
@@ -1177,10 +1181,10 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         }
         if (otherStoen.length > 0) {
             const lblSection = (typeof t !== 'undefined' ? t('lbl_section_stoen') : null) || 'Power (Stoen)';
-            container.innerHTML += `
+            html += `
                 <div class="collapsible source-stoen collapsed">
                     <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
-                        <span>${lblSection} (${otherStoen.length})</span>
+                        <span>${escapeHtml(lblSection)} (${otherStoen.length})</span>
                         <span class="toggle-icon">▼</span>
                     </div>
                     <div class="collapsible-content">
@@ -1192,10 +1196,10 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
 
         if (otherFortum.length > 0) {
             const lblSection = typeof t !== 'undefined' ? t('lbl_section_fortum') : 'Heat (Fortum)';
-            container.innerHTML += `
+            html += `
                 <div class="collapsible source-fortum collapsed">
                     <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
-                        <span>${lblSection} (${otherFortum.length})</span>
+                        <span>${escapeHtml(lblSection)} (${otherFortum.length})</span>
                         <span class="toggle-icon">▼</span>
                     </div>
                     <div class="collapsible-content">
@@ -1207,10 +1211,10 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
 
         if (otherWater.length > 0) {
             const lblSection = typeof t !== 'undefined' ? t('lbl_section_water') : 'Water (MPWiK)';
-            container.innerHTML += `
+            html += `
                 <div class="collapsible source-water collapsed">
                     <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
-                        <span>${lblSection} (${otherWater.length})</span>
+                        <span>${escapeHtml(lblSection)} (${otherWater.length})</span>
                         <span class="toggle-icon">▼</span>
                     </div>
                     <div class="collapsible-content">
@@ -1220,6 +1224,7 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
             `;
         }
     }
+    container.innerHTML = html;
 }
 
 function renderCards(alerts, source) {
@@ -1239,12 +1244,12 @@ function renderCards(alerts, source) {
 
     return alerts.map(item => `
         <div class="card source-${source}">
-            <span class="outage-type">${sourceLabel}</span>
+            <span class="outage-type">${escapeHtml(sourceLabel)}</span>
             <div class="outage-time">
                 ${formatDate(item.startDate)} – ${formatDate(item.endDate)}
             </div>
-            ${item.description ? `<div class="outage-reason">${item.description}</div>` : ''}
-            ${item.message ? `<div class="outage-message">${item.message}</div>` : ''}
+            ${item.description ? `<div class="outage-reason">${escapeHtml(item.description)}</div>` : ''}
+            ${item.message ? `<div class="outage-message">${escapeHtml(item.message)}</div>` : ''}
         </div>
     `).join('');
 }

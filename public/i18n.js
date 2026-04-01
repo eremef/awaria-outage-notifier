@@ -241,15 +241,18 @@ function applyTranslations() {
             } else {
                 let val = t(key);
                 if (key === 'footer_copyright') {
-                    val = val.replace('%YEAR%', new Date().getFullYear());
-                }
-                if (key === 'footer_version') {
+                    const year = new Date().getFullYear();
+                    el.textContent = `© ${year} `;
+                    const a = document.createElement('a');
+                    a.href = "https://eremef.xyz";
+                    a.target = "_blank";
+                    a.rel = "noopener noreferrer";
+                    a.className = "external-link";
+                    a.textContent = "eremef";
+                    el.appendChild(a);
+                } else if (key === 'footer_version') {
                     const version = window.appVersion || 'v1.0.20';
-                    val = val.replace('%VERSION%', version);
-                }
-                // Use innerHTML for the footer to support links
-                if (key === 'footer_copyright') {
-                    el.innerHTML = val;
+                    el.textContent = val.replace('%VERSION%', version);
                 } else {
                     el.textContent = val;
                 }
