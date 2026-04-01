@@ -1,3 +1,19 @@
+.sticky-nav {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 0.5rem;
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    padding-top: var(--safe-area-inset-top);
+    border-bottom: 1px solid var(--message-border);
+    transition: background-color 0.3s ease;
+}
+
 :root {
     /* Safe Area Insets (Native Bridge Fallbacks) */
     --safe-area-inset-top: var(--native-safe-area-inset-top, env(safe-area-inset-top, 0px));
@@ -38,6 +54,7 @@
     --pge-color: #1e3a8a;
     /* PGE Blue */
     --stoen-color: #ea1b0a;
+    --nav-bg: rgba(248, 250, 252, 0.85);
 }
 
 .hidden {
@@ -81,6 +98,7 @@
     --pge-color: #3b82f6;
     /* Blue 500 */
     --stoen-color: #f87171;
+    --nav-bg: rgba(15, 23, 42, 0.85);
 }
 
 [data-theme="emerald"] {
@@ -114,6 +132,7 @@
     --enea-color: #0369a1;
     --pge-color: #1d4ed8;
     --stoen-color: #be123c;
+    --nav-bg: rgba(240, 253, 244, 0.85);
 }
 
 [data-theme="ocean"] {
@@ -147,6 +166,7 @@
     --enea-color: #bae6fd;
     --pge-color: #7dd3fc;
     --stoen-color: #fb7185;
+    --nav-bg: rgba(8, 51, 68, 0.85);
 }
 
 [data-theme="nord"] {
@@ -189,6 +209,7 @@
     --pge-color: #88c0d0;
     /* Nord 8 */
     --stoen-color: #bf616a;
+    --nav-bg: rgba(46, 52, 64, 0.85);
 }
 
 [data-theme="dracula"] {
@@ -360,9 +381,10 @@ body {
     margin: 0;
     padding: 0;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
     min-height: 100vh;
-    padding-top: var(--safe-area-inset-top);
+    padding-top: 0;
     padding-bottom: var(--safe-area-inset-bottom);
     transition: background-color 0.3s ease, color 0.3s ease;
 }
@@ -375,16 +397,15 @@ body {
 
 header {
     text-align: center;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0px;
     position: relative;
-    padding-bottom: 0.5rem;
-    padding-top: var(--safe-area-inset-top);
+    padding: 0;
 }
 
 h1 {
     color: var(--primary-color);
     font-size: 1.8rem;
-    margin-bottom: 0;
+    margin: 0;
 }
 
 .last-updated-row {
@@ -446,16 +467,16 @@ h1 {
 /* ── Settings ──────────────────────────────── */
 
 .settings-btn {
-    position: fixed;
-    top: 10px;
-    right: 5px;
+    position: absolute;
+    top: max(var(--safe-area-inset-top), 8px);
+    right: 8px;
     background: none;
     border: none;
     cursor: pointer;
-    padding: max(var(--safe-area-inset-top), 8px) 8px 8px 8px;
+    padding: 8px;
     opacity: 0.7;
     transition: opacity 0.2s, color 0.3s;
-    z-index: 100;
+    z-index: 1100;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1128,4 +1149,177 @@ h1 {
 
 .settings-field {
     position: relative;
+}
+
+/* ── Footer ───────────────────────────────── */
+.app-footer {
+    margin-top: auto;
+    padding: 2rem 1rem;
+    text-align: center;
+    color: var(--secondary-text);
+    font-size: 0.85rem;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+    width: 100%;
+    max-width: 600px;
+}
+
+.app-footer:hover {
+    opacity: 1;
+}
+
+.footer-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.footer-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+[data-i18n="footer_version"] {
+    opacity: 0.4;
+    font-size: 0.7rem;
+    padding-top: 1.25rem;
+    display: inline-block;
+}
+
+.footer-separator {
+    color: var(--label-border);
+}
+
+.github-link {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.github-link:hover {
+    color: var(--primary-color);
+}
+
+.github-link svg {
+    width: 16px;
+    height: 16px;
+}
+
+.external-link {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s ease, text-decoration-style 0.2s ease;
+}
+
+.external-link:hover {
+    color: var(--primary-color);
+    text-decoration-style: solid;
+}
+
+/* ── Cuplink Support Button ───────────────── */
+.cuplink-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 48px;
+    height: 48px;
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.cuplink-btn:hover {
+    transform: scale(1.15) rotate(5deg);
+}
+
+.cuplink-icons-container {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    background: var(--card-background);
+    /* Just a faint bg for the icon circle */
+}
+
+.cuplink-icon {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Icon alternation cycle: 9s total, 3s each icon */
+.icon-1 {
+    animation: cuplink-cycle 9s infinite;
+}
+
+.icon-2 {
+    animation: cuplink-cycle 9s infinite 3s;
+}
+
+.icon-3 {
+    animation: cuplink-cycle 9s infinite 6s;
+}
+
+@keyframes cuplink-cycle {
+    0% {
+        opacity: 0;
+        transform: translateY(10px) scale(0.8);
+    }
+
+    5% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    33.33% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    38.33% {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.8);
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+@media (max-width: 600px) {
+    .cuplink-btn {
+        width: 40px;
+        height: 40px;
+        bottom: 16px;
+        right: 16px;
+    }
+
+    .cuplink-icons-container {
+        width: 40px;
+        height: 40px;
+    }
+
+    .cuplink-icon {
+        width: 40px;
+        height: 40px;
+    }
 }

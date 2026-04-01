@@ -209,7 +209,19 @@ pub async fn fetch_all_enea_outages(client: &Client, target_regions: &[u32]) -> 
                     return Err(format!("Status {}", res.status()));
                 }
                 let xml = res.text().await.map_err(|e| e.to_string())?;
-                let rss: Rss = quick_xml::de::from_str(&xml).map_err(|e| e.to_string())?;
+                
+                // Sanitize XML: replace bare ampersands with &amp;
+                // Enea operator RSS feeds often contain unescaped '&'.
+                // Since 'regex' crate doesn't support lookahead, we use a replacement chain
+                // to avoid double-escaping existing entities.
+                let sanitized_xml = xml.replace("&", "&amp;")
+                    .replace("&amp;amp;", "&amp;")
+                    .replace("&amp;lt;", "&lt;")
+                    .replace("&amp;gt;", "&gt;")
+                    .replace("&amp;quot;", "&quot;")
+                    .replace("&amp;apos;", "&apos;");
+
+                let rss: Rss = quick_xml::de::from_str(&sanitized_xml).map_err(|e| e.to_string())?;
                 
                 let region = rss.channel.title
                     .strip_prefix("Planowane wyłączenia - ")
@@ -263,5 +275,31 @@ mod tests {
         let result = kicin.matches_address("Kicin", "", "Poznańska", &None);
         println!("Kicin Poznańska matched: {}", result);
         assert!(result);
+    }
+
+    #[test]
+    fn test_enea_xml_sanitization() {
+        let raw_xml = r#"<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+<channel>
+    <title>Planowane wyłączenia - Poznań & B BRZOZOWSKI</title>
+    <item>
+        <title>Kicin & Ciesielska, 2026-04-16 & 2026-04-17</title>
+        <description>Obszar Kicin & surrounding areas</description>
+    </item>
+</channel>
+</rss>"#;
+
+        let sanitized = raw_xml.replace("&", "&amp;")
+            .replace("&amp;amp;", "&amp;")
+            .replace("&amp;lt;", "&lt;")
+            .replace("&amp;gt;", "&gt;")
+            .replace("&amp;quot;", "&quot;")
+            .replace("&amp;apos;", "&apos;");
+
+        let rss: Rss = quick_xml::de::from_str(&sanitized).unwrap();
+        assert_eq!(rss.channel.title, "Planowane wyłączenia - Poznań & B BRZOZOWSKI");
+        assert_eq!(rss.channel.items[0].title, Some("Kicin & Ciesielska, 2026-04-16 & 2026-04-17".to_string()));
+        assert_eq!(rss.channel.items[0].description, Some("Obszar Kicin & surrounding areas".to_string()));
     }
 }

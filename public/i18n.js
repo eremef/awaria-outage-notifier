@@ -89,7 +89,11 @@ const translations = {
         "no_streets": "No streets",
         "edit_address": "Edit Address",
         "save_changes": "Save Changes",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "footer_copyright": "© %YEAR% <a href=\"https://eremef.xyz\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"external-link\">eremef</a>",
+        "footer_version": "Awaria v1.0.20-alpha.5",
+        "footer_github": "GitHub",
+        "cuplink_support": "Enjoying this app? Buy me a virtual coffee to support its development!"
     },
     pl: {
         "title": "Awaria",
@@ -178,7 +182,11 @@ const translations = {
         "no_streets": "Brak ulic",
         "edit_address": "Edytuj adres",
         "save_changes": "Zapisz zmiany",
-        "cancel": "Anuluj"
+        "cancel": "Anuluj",
+        "footer_copyright": "© %YEAR% <a href=\"https://eremef.xyz\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"external-link\">eremef</a>",
+        "footer_version": "Awaria v1.0.20-alpha.5",
+        "footer_github": "GitHub",
+        "cuplink_support": "Podoba Ci się ta aplikacja? Postaw mi wirtualną kawę, aby wesprzeć jej rozwój!"
     }
 };
 
@@ -221,18 +229,31 @@ function t(key) {
  */
 function applyTranslations() {
     document.documentElement.lang = currentLang;
-    const elements = document.querySelectorAll('[data-i18n]');
+    const elements = document.querySelectorAll('[data-i18n], [data-i18n-title]');
     elements.forEach(el => {
         const key = el.getAttribute('data-i18n');
+        const titleKey = el.getAttribute('data-i18n-title');
 
-        // Handle input placeholders specifically
-        if (el.tagName === 'INPUT' && el.hasAttribute('placeholder')) {
-            // Only translate if there's a specific placeholder key, else default to textContent style
-            // We use key + "_placeholder" if it exists, otherwise just the key
-            const val = t(key);
-            el.setAttribute('placeholder', val);
-        } else {
-            el.textContent = t(key);
+        if (key) {
+            // Handle input placeholders specifically
+            if (el.tagName === 'INPUT' && el.hasAttribute('placeholder')) {
+                el.setAttribute('placeholder', t(key));
+            } else {
+                let val = t(key);
+                if (key === 'footer_copyright') {
+                    val = val.replace('%YEAR%', new Date().getFullYear());
+                }
+                // Use innerHTML for the footer to support links
+                if (key === 'footer_copyright') {
+                    el.innerHTML = val;
+                } else {
+                    el.textContent = val;
+                }
+            }
+        }
+
+        if (titleKey) {
+            el.setAttribute('title', t(titleKey));
         }
     });
 }

@@ -227,11 +227,32 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
 
         // --- MPWiK Water ---
         if enabled_sources.contains(&"water".to_string()) {
+            let s_water = s.clone();
             let sem = semaphore.clone();
             tasks.push(tokio::spawn(async move {
                 let _permit = sem.acquire().await.ok();
                 match retry(|| mpwik::fetch_water_alerts(), 3).await {
-                    Ok(alerts) => (alerts, Vec::new()),
+                    Ok(items) => {
+                        let mut alerts = Vec::new();
+                        for item in items {
+                            let mut matched = false;
+                            for (idx, addr) in s_water.addresses.iter().enumerate() {
+                                if mpwik::matches_address(&item.content, addr) {
+                                    let mut alert = item.to_unified();
+                                    alert.address_index = Some(idx);
+                                    alert.is_local = Some(true);
+                                    alerts.push(alert);
+                                    matched = true;
+                                }
+                            }
+                            if !matched {
+                                let mut alert = item.to_unified();
+                                alert.is_local = Some(false);
+                                alerts.push(alert);
+                            }
+                        }
+                        (alerts, Vec::new())
+                    }
                     Err(e) => (Vec::new(), vec![format!("MPWiK: {}", e)]),
                 }
             }));
@@ -540,6 +561,7 @@ async fn teryt_city_has_streets(app: AppHandle, city_id: u64) -> Result<bool, St
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_notification::init())
         .setup(|app| {

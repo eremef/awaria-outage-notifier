@@ -14,6 +14,15 @@
     "core:window:allow-maximize",
     "core:window:allow-set-title",
     "notification:default",
-    "notification:allow-show"
+    "notification:allow-show",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        { "url": "https://*" },
+        { "url": "http://*" }
+      ]
+    },
+    "opener:allow-default-urls",
+    "opener:allow-open-path"
   ]
 }

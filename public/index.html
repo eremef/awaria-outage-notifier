@@ -10,32 +10,34 @@
 
 <body>
     <div class="container">
-        <button id="settings-btn" class="settings-btn" title="Settings"><svg xmlns="http://www.w3.org/2000/svg"
-                width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path
-                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
-                </path>
-            </svg></button>
-        <header>
-            <h1 data-i18n="title">Outage Alerts</h1>
-            <p class="last-updated-row">
-                <span id="last-updated" data-i18n="checking_updates">Checking for updates...</span>
-                <button id="refresh-btn" class="refresh-btn" title="Refresh">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 2v6h-6"></path>
-                        <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
-                        <path d="M3 22v-6h6"></path>
-                        <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
-                    </svg>
-                </button>
-            </p>
-            <select id="address-filter" class="address-filter">
-                <option value="-1" data-i18n="addr_filter_all">All addresses</option>
-            </select>
-        </header>
+        <div class="sticky-nav">
+            <button id="settings-btn" class="settings-btn" title="Settings"><svg xmlns="http://www.w3.org/2000/svg"
+                    width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                    </path>
+                </svg></button>
+            <header>
+                <h1 data-i18n="title">Outage Alerts</h1>
+                <p class="last-updated-row">
+                    <span id="last-updated" data-i18n="checking_updates">Checking for updates...</span>
+                    <button id="refresh-btn" class="refresh-btn" title="Refresh">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 2v6h-6"></path>
+                            <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+                            <path d="M3 22v-6h6"></path>
+                            <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+                        </svg>
+                    </button>
+                </p>
+                <select id="address-filter" class="address-filter">
+                    <option value="-1" data-i18n="addr_filter_all">All addresses</option>
+                </select>
+            </header>
+        </div>
 
         <div id="settings-panel" class="settings-panel hidden">
             <div class="settings-title" data-i18n="settings_appearance">Appearance</div>
@@ -190,8 +192,39 @@
             <div class="loading" data-i18n="loading_data">Loading alert data...</div>
         </main>
     </div>
+
+    <a href="https://cuplink.to/eremef.xyz" target="_blank" class="cuplink-btn" data-i18n-title="cuplink_support">
+        <div class="cuplink-icons-container">
+            <img src="assets/cappucino.png" class="cuplink-icon icon-1" alt="Cappucino">
+            <img src="assets/latte.png" class="cuplink-icon icon-2" alt="Latte">
+            <img src="assets/espresso.png" class="cuplink-icon icon-3" alt="Espresso">
+        </div>
+    </a>
     <script src="i18n.js"></script>
     <script src="script.js"></script>
+
+    <footer class="app-footer">
+        <div class="footer-content">
+            <div class="footer-row">
+                <span data-i18n="footer_copyright">© 2026 eremef</span>
+            </div>
+            <div class="footer-row">
+                <a href="https://github.com/eremef/awaria-outage-notifier" target="_blank" rel="noopener noreferrer"
+                    class="github-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path
+                            d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+                        </path>
+                    </svg>
+                    <span data-i18n="footer_github">GitHub</span>
+                </a>
+            </div>
+            <div class="footer-row">
+                <span data-i18n="footer_version">v1.0.20-alpha.5</span>
+            </div>
+        </div>
+    </footer>
 </body>
 
 </html>

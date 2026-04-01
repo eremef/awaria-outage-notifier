@@ -6,6 +6,20 @@ if (typeof document !== 'undefined') {
         initAddressFilter();
         loadSettingsAndFetch();
     });
+
+    // Handle external links via Tauri opener
+    document.addEventListener('click', (e) => {
+        const link = e.target.closest('a[target="_blank"]');
+        if (link && window.__TAURI__) {
+            e.preventDefault();
+            console.log('Attempting to open link:', link.href);
+            // In Tauri v2, the opener plugin provides an 'open_url' command
+            window.__TAURI__.core.invoke('plugin:opener|open_url', { url: link.href })
+                .catch(err => {
+                    console.error('Failed to open link:', err);
+                });
+        }
+    });
 }
 
 // ── Settings ──────────────────────────────────────────────
