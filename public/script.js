@@ -5,6 +5,30 @@ if (typeof document !== 'undefined') {
         initRefreshButton();
         initAddressFilter();
         loadSettingsAndFetch();
+        debugSafeAreas();
+    });
+
+    function debugSafeAreas() {
+        if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+            const styles = getComputedStyle(document.documentElement);
+            const top = styles.getPropertyValue('--safe-area-inset-top').trim();
+            const bottom = styles.getPropertyValue('--safe-area-inset-bottom').trim();
+            console.log('Mobile Safe Area Insets: ' + JSON.stringify({ top, bottom }));
+        }
+    }
+
+    // Handle external links via Tauri opener
+    document.addEventListener('click', (e) => {
+        const link = e.target.closest('a[target="_blank"]');
+        if (link && window.__TAURI__) {
+            e.preventDefault();
+            console.log('Attempting to open link:', link.href);
+            // In Tauri v2, the opener plugin provides an 'open_url' command
+            window.__TAURI__.core.invoke('plugin:opener|open_url', { url: link.href })
+                .catch(err => {
+                    console.error('Failed to open link:', err);
+                });
+        }
     });
 }
 
@@ -14,6 +38,9 @@ let currentSettings = null;
 let lastAlerts = [];
 let lastFetchDate = null;
 let selectedAddressIndex = -1; // -1 means "all addresses"
+let isFetching = false;
+let isSearchingCities = false;
+let isSearchingStreets = false;
 
 let selectedCityId = null;
 let selectedCityName = '';
@@ -38,6 +65,10 @@ function initSettings() {
     const addAddressBtn = document.getElementById('add-address-btn');
     btn.addEventListener('click', () => {
         panel.classList.toggle('hidden');
+        if (!panel.classList.contains('hidden')) {
+            window.scrollTo({ top: 0, behavior: 'instant' });
+            panel.scrollTop = 0;
+        }
     });
 
     saveBtn.addEventListener('click', saveNewAddress);
@@ -203,15 +234,11 @@ function initSettings() {
         updateLastUpdated();
     });
 
-    const locTrigger = document.querySelector('#location-settings-collapsible .collapsible-trigger');
-    locTrigger.addEventListener('click', () => {
-        document.getElementById('location-settings-collapsible').classList.toggle('collapsed');
-    });
 
-    ['source-tauron-check', 'source-water-check', 'source-fortum-check', 'source-energa-check', 'source-enea-check'].forEach(id => {
+    ['source-tauron-check', 'source-water-check', 'source-fortum-check', 'source-energa-check', 'source-enea-check', 'source-pge-check', 'source-stoen-check'].forEach(id => {
         const checkbox = document.getElementById(id);
         if (!checkbox) return;
-        checkbox.addEventListener('change', () => {
+        checkbox.addEventListener('change', async () => {
             if (!currentSettings) return;
             const enabledSources = [];
             if (document.getElementById('source-tauron-check').checked) enabledSources.push('tauron');
@@ -219,10 +246,32 @@ function initSettings() {
             if (document.getElementById('source-fortum-check').checked) enabledSources.push('fortum');
             if (document.getElementById('source-energa-check') && document.getElementById('source-energa-check').checked) enabledSources.push('energa');
             if (document.getElementById('source-enea-check') && document.getElementById('source-enea-check').checked) enabledSources.push('enea');
+            if (document.getElementById('source-pge-check') && document.getElementById('source-pge-check').checked) enabledSources.push('pge');
+            if (document.getElementById('source-stoen-check') && document.getElementById('source-stoen-check').checked) enabledSources.push('stoen');
             currentSettings.enabledSources = enabledSources;
-            autoSaveSettings().then(() => {
-                fetchOutages();
-            });
+            await autoSaveSettings();
+            fetchOutages();
+        });
+    });
+
+    ['notify-tauron-check', 'notify-water-check', 'notify-fortum-check', 'notify-energa-check', 'notify-enea-check', 'notify-pge-check', 'notify-stoen-check'].forEach(id => {
+        const checkbox = document.getElementById(id);
+        if (!checkbox) return;
+        checkbox.addEventListener('change', async () => {
+            if (!currentSettings) return;
+            if (!currentSettings.notificationPreferences) {
+                currentSettings.notificationPreferences = {
+                    tauron: false,
+                    water: false,
+                    fortum: false,
+                    energa: false,
+                    enea: false,
+                    pge: false
+                };
+            }
+            const prefKey = id.split('-')[1]; // tauron, water, etc.
+            currentSettings.notificationPreferences[prefKey] = checkbox.checked;
+            await autoSaveSettings();
         });
     });
 }
@@ -368,6 +417,8 @@ async function autoSaveSettings() {
 // ── TERYT Search ──────────────────────────────────────────
 
 async function searchCities(query) {
+    if (isSearchingCities) return;
+    isSearchingCities = true;
     try {
         console.log('Searching cities:', query);
         const results = await window.__TAURI__.core.invoke('teryt_lookup_city', { cityName: query });
@@ -378,6 +429,8 @@ async function searchCities(query) {
         const container = document.getElementById('city-suggestions');
         container.innerHTML = `<div class="suggestion-item no-results">Error: ${escapeHtml(String(error))}</div>`;
         container.classList.remove('hidden');
+    } finally {
+        isSearchingCities = false;
     }
 }
 
@@ -449,10 +502,11 @@ function renderCitySuggestions(cities) {
 }
 
 async function searchStreets(query) {
-    if (!selectedCityId) {
-        console.warn('searchStreets: no city selected');
+    if (!selectedCityId || isSearchingStreets) {
+        if (!selectedCityId) console.warn('searchStreets: no city selected');
         return;
     }
+    isSearchingStreets = true;
     try {
         console.log('Searching streets for city_id:', selectedCityId, 'query:', query);
         const results = await window.__TAURI__.core.invoke('teryt_lookup_street', {
@@ -466,6 +520,8 @@ async function searchStreets(query) {
         const container = document.getElementById('street-suggestions');
         container.innerHTML = `<div class="suggestion-item no-results">Error: ${escapeHtml(String(error))}</div>`;
         container.classList.remove('hidden');
+    } finally {
+        isSearchingStreets = false;
     }
 }
 
@@ -539,6 +595,21 @@ async function loadSettingsAndFetch() {
             if (document.getElementById('source-enea-check')) {
                 document.getElementById('source-enea-check').checked = sources.includes('enea');
             }
+            if (document.getElementById('source-pge-check')) {
+                document.getElementById('source-pge-check').checked = sources.includes('pge');
+            }
+            if (document.getElementById('source-stoen-check')) {
+                document.getElementById('source-stoen-check').checked = sources.includes('stoen');
+            }
+
+            const notifyPrefs = settings.notificationPreferences || {};
+            if (document.getElementById('notify-tauron-check')) document.getElementById('notify-tauron-check').checked = !!notifyPrefs.tauron;
+            if (document.getElementById('notify-water-check')) document.getElementById('notify-water-check').checked = !!notifyPrefs.water;
+            if (document.getElementById('notify-fortum-check')) document.getElementById('notify-fortum-check').checked = !!notifyPrefs.fortum;
+            if (document.getElementById('notify-energa-check')) document.getElementById('notify-energa-check').checked = !!notifyPrefs.energa;
+            if (document.getElementById('notify-enea-check')) document.getElementById('notify-enea-check').checked = !!notifyPrefs.enea;
+            if (document.getElementById('notify-pge-check')) document.getElementById('notify-pge-check').checked = !!notifyPrefs.pge;
+            if (document.getElementById('notify-stoen-check')) document.getElementById('notify-stoen-check').checked = !!notifyPrefs.stoen;
 
             updateAddressFilter();
             renderAddressesList();
@@ -581,16 +652,11 @@ async function loadSettingsAndFetch() {
 async function saveNewAddress() {
     const name = document.getElementById('address-name-input').value.trim() || 'Address ' + ((currentSettings?.addresses?.length || 0) + 1);
     const streetName = document.getElementById('street-input').value.trim();
-    const houseNo = document.getElementById('house-input').value.trim();
+    const houseNo = document.getElementById('house-input').value.trim() || '1';
     const status = document.getElementById('settings-status');
 
     if (!selectedCityId || (!selectedStreetId && !cityHasNoStreets)) {
         status.textContent = typeof t !== 'undefined' ? t('err_fields_required') : '⚠️ Please select a city and street from the lists.';
-        status.className = 'settings-status error';
-        return;
-    }
-    if (!houseNo) {
-        status.textContent = typeof t !== 'undefined' ? t('err_fields_required') : '⚠️ House number is required.';
         status.className = 'settings-status error';
         return;
     }
@@ -725,6 +791,9 @@ function initPullToRefresh() {
 // ── Alerts ─────────────────────────────────────────────────
 
 async function fetchOutages() {
+    if (isFetching) return;
+    isFetching = true;
+
     const container = document.getElementById('outages-container');
     try {
         const alerts = await window.__TAURI__.core.invoke('fetch_all_alerts');
@@ -734,6 +803,8 @@ async function fetchOutages() {
     } catch (error) {
         console.error('Error fetching data:', error);
         container.innerHTML = `<div class="error">${typeof t !== 'undefined' ? t('err_load_failed') : 'Failed to load alert data. Error: '}${error}</div>`;
+    } finally {
+        isFetching = false;
     }
 }
 
@@ -840,7 +911,7 @@ function matchesAddress(alert, addresses, addrIdx) {
     const addr = addresses[addrIdx];
     if (!addr) return false;
 
-    if (alert.source === 'tauron' || alert.source === 'energa' || alert.source === 'enea') {
+    if (alert.source === 'tauron' || alert.source === 'energa' || alert.source === 'enea' || alert.source === 'pge' || alert.source === 'stoen') {
         return alert.isLocal === true && alert.addressIndex === addrIdx;
     }
 
@@ -852,7 +923,7 @@ function matchesAddress(alert, addresses, addrIdx) {
 function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
     const now = new Date();
 
-    const enabledSources = (settings && settings.enabledSources) ? settings.enabledSources : ['tauron', 'water', 'fortum', 'energa', 'enea'];
+    const enabledSources = (settings && settings.enabledSources) ? settings.enabledSources : ['tauron', 'water', 'fortum', 'energa', 'enea', 'pge', 'stoen'];
     const activeAlerts = alerts.filter(item => {
         if (!enabledSources.includes(item.source)) return false;
         if (!item.endDate) return true;
@@ -867,6 +938,8 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
     let localFortum = [], otherFortum = [];
     let localEnerga = [], otherEnerga = [];
     let localEnea = [], otherEnea = [];
+    let localPge = [], otherPge = [];
+    let localStoen = [], otherStoen = [];
 
     if (selectedAddrIdx >= 0 && addresses[selectedAddrIdx]) {
         activeAlerts.forEach(item => {
@@ -905,6 +978,18 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
                     localEnea.push(item);
                 } else {
                     otherEnea.push(item);
+                }
+            } else if (item.source === 'pge') {
+                if (item.addressIndex === selectedAddrIdx && item.isLocal === true) {
+                    localPge.push(item);
+                } else {
+                    otherPge.push(item);
+                }
+            } else if (item.source === 'stoen') {
+                if (item.addressIndex === selectedAddrIdx && item.isLocal === true) {
+                    localStoen.push(item);
+                } else {
+                    otherStoen.push(item);
                 }
             }
         });
@@ -945,6 +1030,20 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
                 } else {
                     otherEnea.push(item);
                 }
+            } else if (item.source === 'pge') {
+                const isLocal = addresses.some((_, idx) => matchesAddress(item, addresses, idx));
+                if (isLocal) {
+                    localPge.push(item);
+                } else {
+                    otherPge.push(item);
+                }
+            } else if (item.source === 'stoen') {
+                const isLocal = addresses.some((_, idx) => matchesAddress(item, addresses, idx));
+                if (isLocal) {
+                    localStoen.push(item);
+                } else {
+                    otherStoen.push(item);
+                }
             }
         });
     } else {
@@ -953,10 +1052,12 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         otherFortum = activeAlerts.filter(a => a.source === 'fortum');
         otherEnerga = activeAlerts.filter(a => a.source === 'energa');
         otherEnea = activeAlerts.filter(a => a.source === 'enea');
+        otherPge = activeAlerts.filter(a => a.source === 'pge');
+        otherStoen = activeAlerts.filter(a => a.source === 'stoen');
     }
 
-    const hasLocalAlerts = localTauron.length > 0 || localWater.length > 0 || localFortum.length > 0 || localEnerga.length > 0 || localEnea.length > 0;
-    const hasOtherAlerts = otherTauron.length > 0 || otherWater.length > 0 || otherFortum.length > 0 || otherEnerga.length > 0 || otherEnea.length > 0;
+    const hasLocalAlerts = localTauron.length > 0 || localWater.length > 0 || localFortum.length > 0 || localEnerga.length > 0 || localEnea.length > 0 || localPge.length > 0 || localStoen.length > 0;
+    const hasOtherAlerts = otherTauron.length > 0 || otherWater.length > 0 || otherFortum.length > 0 || otherEnerga.length > 0 || otherEnea.length > 0 || otherPge.length > 0 || otherStoen.length > 0;
     const hasAnyAlerts = hasLocalAlerts || hasOtherAlerts;
 
     container.innerHTML = '';
@@ -969,18 +1070,13 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
     }
 
     if (hasLocalAlerts) {
-        const totalLocal = localTauron.length + localWater.length + localFortum.length + localEnerga.length + localEnea.length;
+        const totalLocal = localTauron.length + localWater.length + localFortum.length + localEnerga.length + localEnea.length + localPge.length + localStoen.length;
         const lblYourLoc = typeof t !== 'undefined' ? t('lbl_your_location') : 'Your location';
         container.innerHTML += `<div class="section-label">${lblYourLoc} (${totalLocal})</div>`;
 
+        // Order: Power (Tauron, Energa, Enea, PGE, Stoen) -> Heat (Fortum) -> Water (MPWiK)
         if (localTauron.length > 0) {
             container.innerHTML += renderCards(localTauron, 'tauron');
-        }
-        if (localWater.length > 0) {
-            container.innerHTML += renderCards(localWater, 'water');
-        }
-        if (localFortum.length > 0) {
-            container.innerHTML += renderCards(localFortum, 'fortum');
         }
         if (localEnerga.length > 0) {
             container.innerHTML += renderCards(localEnerga, 'energa');
@@ -988,12 +1084,25 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         if (localEnea.length > 0) {
             container.innerHTML += renderCards(localEnea, 'enea');
         }
+        if (localPge.length > 0) {
+            container.innerHTML += renderCards(localPge, 'pge');
+        }
+        if (localStoen.length > 0) {
+            container.innerHTML += renderCards(localStoen, 'stoen');
+        }
+        if (localFortum.length > 0) {
+            container.innerHTML += renderCards(localFortum, 'fortum');
+        }
+        if (localWater.length > 0) {
+            container.innerHTML += renderCards(localWater, 'water');
+        }
     }
 
     if (hasOtherAlerts) {
         const lblDivider = typeof t !== 'undefined' ? t('lbl_other_alerts_divider') : 'Other alerts';
         container.innerHTML += `<div class="other-divider"><span>${lblDivider}</span></div>`;
 
+        // Order: Power (Tauron, Energa, Enea, PGE, Stoen) -> Heat (Fortum) -> Water (MPWiK)
         if (otherTauron.length > 0) {
             const lblSection = typeof t !== 'undefined' ? t('lbl_section_tauron') : 'Power (Tauron)';
             container.innerHTML += `
@@ -1009,35 +1118,6 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
             `;
         }
 
-        if (otherWater.length > 0) {
-            const lblSection = typeof t !== 'undefined' ? t('lbl_section_water') : 'Water (MPWiK)';
-            container.innerHTML += `
-                <div class="collapsible source-water collapsed">
-                    <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
-                        <span>${lblSection} (${otherWater.length})</span>
-                        <span class="toggle-icon">▼</span>
-                    </div>
-                    <div class="collapsible-content">
-                        ${renderCards(otherWater, 'water')}
-                    </div>
-                </div>
-            `;
-        }
-
-        if (otherFortum.length > 0) {
-            const lblSection = typeof t !== 'undefined' ? t('lbl_section_fortum') : 'Heating (Fortum)';
-            container.innerHTML += `
-                <div class="collapsible source-fortum collapsed">
-                    <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
-                        <span>${lblSection} (${otherFortum.length})</span>
-                        <span class="toggle-icon">▼</span>
-                    </div>
-                    <div class="collapsible-content">
-                        ${renderCards(otherFortum, 'fortum')}
-                    </div>
-                </div>
-            `;
-        }
         if (otherEnerga.length > 0) {
             const lblSection = (typeof t !== 'undefined' ? t('lbl_section_energa') : null) || 'Power (Energa)';
             container.innerHTML += `
@@ -1066,6 +1146,64 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
                 </div>
             `;
         }
+        if (otherPge.length > 0) {
+            const lblSection = (typeof t !== 'undefined' ? t('lbl_section_pge') : null) || 'Power (PGE)';
+            container.innerHTML += `
+                <div class="collapsible source-pge collapsed">
+                    <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
+                        <span>${lblSection} (${otherPge.length})</span>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        ${renderCards(otherPge, 'pge')}
+                    </div>
+                </div>
+            `;
+        }
+        if (otherStoen.length > 0) {
+            const lblSection = (typeof t !== 'undefined' ? t('lbl_section_stoen') : null) || 'Power (Stoen)';
+            container.innerHTML += `
+                <div class="collapsible source-stoen collapsed">
+                    <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
+                        <span>${lblSection} (${otherStoen.length})</span>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        ${renderCards(otherStoen, 'stoen')}
+                    </div>
+                </div>
+            `;
+        }
+
+        if (otherFortum.length > 0) {
+            const lblSection = typeof t !== 'undefined' ? t('lbl_section_fortum') : 'Heat (Fortum)';
+            container.innerHTML += `
+                <div class="collapsible source-fortum collapsed">
+                    <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
+                        <span>${lblSection} (${otherFortum.length})</span>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        ${renderCards(otherFortum, 'fortum')}
+                    </div>
+                </div>
+            `;
+        }
+
+        if (otherWater.length > 0) {
+            const lblSection = typeof t !== 'undefined' ? t('lbl_section_water') : 'Water (MPWiK)';
+            container.innerHTML += `
+                <div class="collapsible source-water collapsed">
+                    <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
+                        <span>${lblSection} (${otherWater.length})</span>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        ${renderCards(otherWater, 'water')}
+                    </div>
+                </div>
+            `;
+        }
     }
 }
 
@@ -1073,12 +1211,16 @@ function renderCards(alerts, source) {
     const sourceLabel = source === 'water'
         ? ((typeof t !== 'undefined' ? t('source_water') : null) || '💧 Water Outage')
         : source === 'fortum'
-            ? ((typeof t !== 'undefined' ? t('source_fortum') : null) || '🔥 Heating Outage (Fortum)')
+            ? ((typeof t !== 'undefined' ? t('source_fortum') : null) || '🔥 Heat Outage (Fortum)')
             : source === 'energa'
                 ? ((typeof t !== 'undefined' ? t('source_energa') : null) || '⚡ Energa Outage')
                 : source === 'enea'
                     ? ((typeof t !== 'undefined' ? t('source_enea') : null) || '⚡ Enea Outage')
-                    : ((typeof t !== 'undefined' ? t('source_tauron') : null) || '⚡ Power Outage');
+                    : source === 'pge'
+                        ? ((typeof t !== 'undefined' ? t('source_pge') : null) || '⚡ PGE Outage')
+                        : source === 'stoen'
+                            ? ((typeof t !== 'undefined' ? t('source_stoen') : null) || '⚡ Stoen Outage')
+                            : ((typeof t !== 'undefined' ? t('source_tauron') : null) || '⚡ Power Outage');
 
     return alerts.map(item => `
         <div class="card source-${source}">

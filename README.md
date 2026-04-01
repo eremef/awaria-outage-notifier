@@ -1,6 +1,6 @@
-# Application for Warning and Alerting of Repairs and Infrastructure Accidents
-
 [English](README.md) | [Polski](README.pl.md)
+
+# Application for Warning and Alerting of Repairs and Infrastructure Accidents
 
 <p align="center">
    <img height="600" alt="image" src="https://github.com/user-attachments/assets/108932b2-0fe0-4a19-8769-61d4962835ac" />
@@ -15,9 +15,11 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
 ## Supported Sources
 
 - **⚡ Power (Tauron)**: Planned maintenance and emergency power outages.
-- **⚡ Power (Energa)**: Planned power outages.
-- **⚡ Power (Enea)**: Planned maintenance for western Poland.
-- **🔥 Heating (Fortum)**: Planned and current heating/hot water outages.
+- **⚡ Power (Energa)**: Planned power outages (Northern Poland).
+- **⚡ Power (Enea)**: Planned maintenance (Western Poland).
+- **⚡ Power (PGE)**: Planned power outages (Eastern/Central Poland).
+- **⚡ Power (Stoen)**: Planned power outages (Warsaw area).
+- **🔥 Heat (Fortum)**: Planned and current heat/hot water outages.
 - **💧 Water (MPWiK)**: Water failures and maintenance work (currently Wrocław area).
 
 ## Android app
@@ -31,7 +33,10 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
 - **Multi-Source Logic**: Aggregates alerts from different utility providers (Power, Water, etc.).
 - **Source Selection**: Customize which types of outages you want to see in the settings.
 - **Multi-Address Support**: Monitor up to 20 different locations simultaneously.
-- **Smart Address Matching**: Highlights alerts affecting your specific address while keeping you informed about the surrounding area.
+- **Smart Address Matching**: Highlights alerts affecting your specific address (or addresses). **Note**: Currently, matching is performed at the city and street level; building-specific filtering by house number is not yet implemented.
+- **Real-time Push Notifications**: Receive instant alerts on your desktop or mobile device when a new outage is detected for your location.
+- **Background Monitoring**: Automatically checks for updates in the background, even when the app is minimized or closed.
+- **Throttled Parallelism**: Modern backend logic that fetches from all providers simultaneously with smart retries for maximum reliability.
 - **Premium Design**:
   - **Modern Interface**: Indigo-based "friendly" UI with vibrant source indicators (Rose/Sky).
   - **Collapsible categories**: Organized view of "Your Location" vs "Other Outages".
@@ -101,7 +106,7 @@ The APK will be located at:
 
 - **Frontend**: Vanilla HTML/JS/CSS in `public/`. Indigo design system with custom HSL tokens.
 - **Backend (Rust)**: `src-tauri/src/lib.rs` orchestrates asynchronous fetching from multiple APIs and converts them to a `UnifiedAlert` format.
-- **Android Widgets**: Native implementation utilizing a `BaseWidgetProvider` with specific providers for each utility (`TauronWidgetProvider`, `MpwikWidgetProvider`). Includes a `WorkManager` background worker for periodic updates.
+- **Android Widgets**: Native implementation utilizing a `BaseWidgetProvider` with specific providers for each utility (e.g. `TauronWidgetProvider`, `StoenWidgetProvider`). Includes a `WorkManager` background worker for periodic updates.
 
 ## Settings
 

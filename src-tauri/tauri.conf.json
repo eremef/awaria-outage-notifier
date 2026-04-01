@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Awaria",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "identifier": "xyz.eremef.awaria",
   "build": {
     "frontendDist": "../public"
@@ -21,6 +21,7 @@
       "csp": null
     }
   },
+  "plugins": {},
   "bundle": {
     "active": true,
     "targets": "all",

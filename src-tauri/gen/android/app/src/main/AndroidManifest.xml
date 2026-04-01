@@ -100,6 +100,36 @@
                 android:resource="@xml/widget_enea_info" />
         </receiver>
 
+        <receiver
+            android:name=".PgeWidgetProvider"
+            android:exported="true"
+            android:label="PGE">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_PGE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_pge_info" />
+        </receiver>
+        
+        <receiver
+            android:name=".StoenWidgetProvider"
+            android:exported="true"
+            android:label="Stoen">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_STOEN" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_stoen_info" />
+        </receiver>
+
         <provider
           android:name="androidx.core.content.FileProvider"
           android:authorities="${applicationId}.fileprovider"

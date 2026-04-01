@@ -54,6 +54,22 @@ class WidgetUpdateWorker(
             eneaProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        // Update PGE widgets
+        val pgeName = ComponentName(context, PgeWidgetProvider::class.java)
+        val pgeIds = appWidgetManager.getAppWidgetIds(pgeName)
+        val pgeProvider = PgeWidgetProvider()
+        for (id in pgeIds) {
+            pgeProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update Stoen widgets
+        val stoenName = ComponentName(context, StoenWidgetProvider::class.java)
+        val stoenIds = appWidgetManager.getAppWidgetIds(stoenName)
+        val stoenProvider = StoenWidgetProvider()
+        for (id in stoenIds) {
+            stoenProvider.updateWidget(context, appWidgetManager, id)
+        }
+
         return androidx.work.ListenableWorker.Result.success()
     }
 }

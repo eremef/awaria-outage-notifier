@@ -14,6 +14,31 @@ fn main() {
 
     let new_version = &args[1];
 
+    let current_branch = get_current_branch();
+    let is_production_or_beta = {
+        let base_version: String = new_version
+            .chars()
+            .take_while(|c| c.is_ascii_digit() || *c == '.')
+            .collect();
+
+        if base_version.len() == new_version.len() {
+            true // Production
+        } else {
+            let suffix = &new_version[base_version.len()..];
+            let suffix_clean = if suffix.starts_with('-') || suffix.starts_with('.') {
+                &suffix[1..]
+            } else {
+                suffix
+            };
+            suffix_clean.starts_with("beta")
+        }
+    };
+
+    if is_production_or_beta && current_branch != "main" {
+        eprintln!("Error: Production and beta releases ({}) are only allowed from the main branch. Current branch: {}", new_version, current_branch);
+        std::process::exit(1);
+    }
+
     update_cargo_toml(new_version);
     update_package_json(new_version);
     update_tauri_conf(new_version);
@@ -129,4 +154,13 @@ fn run_command(program: &str, args: &[&str], dir: &str) {
         Ok(s) => eprintln!("Command {} failed with exit code: {:?}", program, s.code()),
         Err(e) => eprintln!("Failed to run {}: {}", program, e),
     }
+}
+
+fn get_current_branch() -> String {
+    let output = Command::new("git")
+        .args(&["rev-parse", "--abbrev-ref", "HEAD"])
+        .output()
+        .expect("Failed to execute git command");
+
+    String::from_utf8_lossy(&output.stdout).trim().to_string()
 }

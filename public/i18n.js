@@ -5,6 +5,8 @@ const translations = {
     en: {
         "title": "Awaria",
         "settings_appearance": "Appearance",
+        "notify": "Notify",
+        "source_name": "Source",
         "settings_theme": "Theme",
         "theme_system": "System Default",
         "theme_light": "Light",
@@ -27,7 +29,7 @@ const translations = {
         "settings_street": "Street",
         "settings_street_placeholder": "e.g. Kuźnicza",
         "settings_house": "House No",
-        "settings_house_placeholder": "e.g. 25",
+        "settings_house_placeholder": "e.g. 25 (default 1)",
         "settings_save": "Save",
         "refresh_pull": "↻ Release to refresh",
         "refresh_loading": "↻ Refreshing...",
@@ -48,30 +50,36 @@ const translations = {
         "lbl_other_outages": "Other outages",
         "msg_no_outages_local": "No local alerts found.",
         "lbl_planned_outage": "Planned Outage",
-        "source_tauron": "⚡ Power Outage",
-        "source_water": "💧 Water Outage",
-        "source_fortum": "🔥 Heating Outage (Fortum)",
-        "source_energa": "⚡ Energa Outage",
-        "source_enea": "⚡ Enea Outage",
+        "source_tauron": "⚡ Power Outage (Tauron)",
+        "source_water": "💧 Water Outage (MPWiK)",
+        "source_fortum": "🔥 Heat Outage (Fortum)",
+        "source_energa": "⚡ Power Outage (Energa)",
+        "source_enea": "⚡ Power Outage (Enea)",
+        "source_stoen": "⚡ Power Outage (Stoen)",
+        "source_pge": "⚡ Power Outage (PGE)",
         "lbl_section_tauron": "Power (Tauron)",
         "lbl_section_water": "Water (MPWiK)",
-        "lbl_section_fortum": "Heating (Fortum)",
+        "lbl_section_fortum": "Heat (Fortum)",
         "lbl_section_energa": "Power (Energa)",
         "lbl_section_enea": "Power (Enea)",
+        "lbl_section_pge": "Power (PGE)",
+        "lbl_section_stoen": "Power (Stoen)",
         "msg_no_alerts": "No active alerts.",
         "settings_sources": "Alert Sources",
         "source_power": "Power",
-        "source_heating": "Heating",
+        "source_heating": "Heat",
         "source_tauron_name": "Tauron",
         "source_fortum_name": "Fortum",
         "source_energa_name": "Energa",
         "source_enea_name": "Enea",
+        "source_pge_name": "PGE",
         "source_water_name": "Water",
         "source_tauron_short": "Tauron",
         "source_water_short": "MPWiK",
         "source_fortum_short": "Fortum",
         "source_energa_short": "Energa",
         "source_enea_short": "Enea",
+        "source_stoen_short": "Stoen",
         "lbl_other_alerts_divider": "Other alerts",
         "addr_filter_all": "All addresses",
         "add_address": "+ Add Address",
@@ -81,11 +89,17 @@ const translations = {
         "no_streets": "No streets",
         "edit_address": "Edit Address",
         "save_changes": "Save Changes",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "footer_copyright": "© %YEAR% <a href=\"https://eremef.xyz\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"external-link\">eremef</a>",
+        "footer_version": "Awaria v1.0.20-alpha.5",
+        "footer_github": "GitHub",
+        "cuplink_support": "Enjoying this app? Buy me a virtual coffee to support its development!"
     },
     pl: {
         "title": "Awaria",
         "settings_appearance": "Wygląd",
+        "notify": "Powiadomienia",
+        "source_name": "Źródło",
         "settings_theme": "Motyw",
         "theme_system": "Domyślny systemowy",
         "theme_light": "Jasny",
@@ -108,7 +122,7 @@ const translations = {
         "settings_street": "Ulica",
         "settings_street_placeholder": "np. Kuźnicza",
         "settings_house": "Nr domu",
-        "settings_house_placeholder": "np. 25",
+        "settings_house_placeholder": "np. 25 (domyślnie 1)",
         "settings_save": "Zapisz",
         "refresh_pull": "↻ Puść, aby odświeżyć",
         "refresh_loading": "↻ Odświeżanie...",
@@ -131,28 +145,34 @@ const translations = {
         "lbl_planned_outage": "Planowane wyłączenie",
         "source_tauron": "⚡ Wyłączenie prądu (Tauron)",
         "source_water": "💧 Wyłączenie wody (MPWiK)",
-        "source_fortum": "🔥 Wyłączenie ogrzewania (Fortum)",
+        "source_fortum": "🔥 Wyłączenie ciepła (Fortum)",
         "source_energa": "⚡ Wyłączenie prądu (Energa)",
         "source_enea": "⚡ Wyłączenie prądu (Enea)",
+        "source_stoen": "⚡ Wyłączenie prądu (Stoen)",
+        "source_pge": "⚡ Wyłączenie prądu (PGE)",
         "lbl_section_tauron": "Prąd (Tauron)",
         "lbl_section_water": "Woda (MPWiK)",
-        "lbl_section_fortum": "Ogrzewanie (Fortum)",
+        "lbl_section_fortum": "Ciepło (Fortum)",
         "lbl_section_energa": "Prąd (Energa)",
         "lbl_section_enea": "Prąd (Enea)",
+        "lbl_section_pge": "Prąd (PGE)",
+        "lbl_section_stoen": "Prąd (Stoen)",
         "msg_no_alerts": "Brak aktywnych alertów.",
         "settings_sources": "Źródła alertów",
         "source_power": "Prąd",
-        "source_heating": "Ogrzewanie",
+        "source_heating": "Ciepło",
         "source_tauron_name": "Tauron",
         "source_fortum_name": "Fortum",
         "source_energa_name": "Energa",
         "source_enea_name": "Enea",
+        "source_pge_name": "PGE",
         "source_water_name": "Woda",
         "source_tauron_short": "Tauron",
         "source_water_short": "MPWiK",
         "source_fortum_short": "Fortum",
         "source_energa_short": "Energa",
         "source_enea_short": "Enea",
+        "source_stoen_short": "Stoen",
         "lbl_other_alerts_divider": "Inne alerty",
         "addr_filter_all": "Wszystkie adresy",
         "add_address": "+ Dodaj adres",
@@ -162,7 +182,11 @@ const translations = {
         "no_streets": "Brak ulic",
         "edit_address": "Edytuj adres",
         "save_changes": "Zapisz zmiany",
-        "cancel": "Anuluj"
+        "cancel": "Anuluj",
+        "footer_copyright": "© %YEAR% <a href=\"https://eremef.xyz\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"external-link\">eremef</a>",
+        "footer_version": "Awaria v1.0.20-alpha.5",
+        "footer_github": "GitHub",
+        "cuplink_support": "Podoba Ci się ta aplikacja? Postaw mi wirtualną kawę, aby wesprzeć jej rozwój!"
     }
 };
 
@@ -205,18 +229,31 @@ function t(key) {
  */
 function applyTranslations() {
     document.documentElement.lang = currentLang;
-    const elements = document.querySelectorAll('[data-i18n]');
+    const elements = document.querySelectorAll('[data-i18n], [data-i18n-title]');
     elements.forEach(el => {
         const key = el.getAttribute('data-i18n');
+        const titleKey = el.getAttribute('data-i18n-title');
 
-        // Handle input placeholders specifically
-        if (el.tagName === 'INPUT' && el.hasAttribute('placeholder')) {
-            // Only translate if there's a specific placeholder key, else default to textContent style
-            // We use key + "_placeholder" if it exists, otherwise just the key
-            const val = t(key);
-            el.setAttribute('placeholder', val);
-        } else {
-            el.textContent = t(key);
+        if (key) {
+            // Handle input placeholders specifically
+            if (el.tagName === 'INPUT' && el.hasAttribute('placeholder')) {
+                el.setAttribute('placeholder', t(key));
+            } else {
+                let val = t(key);
+                if (key === 'footer_copyright') {
+                    val = val.replace('%YEAR%', new Date().getFullYear());
+                }
+                // Use innerHTML for the footer to support links
+                if (key === 'footer_copyright') {
+                    el.innerHTML = val;
+                } else {
+                    el.textContent = val;
+                }
+            }
+        }
+
+        if (titleKey) {
+            el.setAttribute('title', t(titleKey));
         }
     });
 }

@@ -9,3 +9,4 @@ Thumbs.db
 src-tauri/gen/android/build*.txt
 src-tauri/gen/android/compile*.txt
 src-tauri/gen/android/rebuild*.txt
+plans/

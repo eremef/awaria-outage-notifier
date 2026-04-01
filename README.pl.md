@@ -1,3 +1,5 @@
+[English](README.md) | [Polski](README.pl.md)
+
 # Aplikacja Wygodnego Alarmowanie o Remontach i Infrastrukturalnych Awariach
 
 <p align="center">
@@ -13,9 +15,11 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
 ## Wspierane Źródła
 
 - **⚡ Prąd (Tauron)**: Planowane konserwacje i awaryjne wyłączenia prądu.
-- **⚡ Prąd (Energa)**: Planowane wyłączenia prądu.
-- **⚡ Prąd (Enea)**: Planowane konserwacje dla obszaru zachodniej Polski.
-- **🔥 Ogrzewanie (Fortum)**: Planowane i bieżące wyłączenia ogrzewania oraz ciepłej wody.
+- **⚡ Prąd (Energa)**: Planowane wyłączenia prądu (Północna Polska).
+- **⚡ Prąd (Enea)**: Planowane konserwacje (Zachodnia Polska).
+- **⚡ Prąd (PGE)**: Planowane wyłączenia prądu (Wschodnia i Centralna Polska).
+- **⚡ Prąd (Stoen)**: Planowane wyłączenia prądu (Warszawa i okolice).
+- **🔥 Ciepło (Fortum)**: Planowane i bieżące wyłączenia ogrzewania oraz ciepłej wody.
 - **💧 Woda (MPWiK)**: Awarie wodociągowe i prace konserwacyjne (obecnie obszar Wrocławia).
 
 ## Aplikacja Android
@@ -29,7 +33,10 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
 - **Logika Multi-Source**: Agreguje alerty od różnych dostawców mediów (prąd, woda itp.).
 - **Wybór Źródeł**: Możliwość dostosowania rodzajów awarii widocznych w ustawieniach.
 - **Wsparcie dla wielu adresów**: Monitoruj do 20 różnych lokalizacji jednocześnie.
-- **Inteligentne Dopasowanie Adresu**: Wyróżnia alerty dotyczące konkretnego adresu, informując jednocześnie o sytuacji w okolicy.
+- **Inteligentne Dopasowanie Adresu**: Wyróżnia alerty dotyczące konkretnego adresu (lub adresów). **Uwaga**: Obecnie dopasowanie odbywa się na poziomie miasta i ulicy; filtrowanie według konkretnego numeru domu nie jest jeszcze zaimplementowane.
+- **Powiadomienia Push w Czasie Rzeczywistym**: Otrzymuj natychmiastowe alerty na komputerze lub urządzeniu mobilnym, gdy wykryta zostanie nowa awaria dla Twojej lokalizacji.
+- **Monitorowanie w Tle**: Automatyczne sprawdzanie aktualizacji w tle, nawet gdy aplikacja jest zminimalizowana lub zamknięta.
+- **Zrównoleglona Logika**: Nowoczesny backend pobierający dane od wszystkich dostawców jednocześnie z inteligentnym systemem ponawiania prób.
 - **Design Premium**:
   - **Nowoczesny Interfejs**: System Indigo - przyjazny UI z żywymi wskaźnikami źródeł.
   - **Zwijane Kategorie**: Uporządkowany widok "Twoja Lokalizacja" oraz "Pozostałe Awarie".
@@ -99,7 +106,7 @@ Plik APK zostanie zapisany w lokalizacji:
 
 - **Frontend**: Vanilla HTML/JS/CSS w folderze `public/`. System projektowy Indigo z niestandardowymi tokenami HSL.
 - **Backend (Rust)**: `src-tauri/src/lib.rs` zarządza asynchronicznym pobieraniem danych z wielu API i konwertuje je na ujednolicony format `UnifiedAlert`.
-- **Widżety Android**: Natywna implementacja wykorzystująca `BaseWidgetProvider` z konkretnymi klasami dla każdego dostawcy (`TauronWidgetProvider`, `MpwikWidgetProvider`). Zawiera mechanizm `WorkManager` do okresowych aktualizacji w tle.
+- **Widżety Android**: Natywna implementacja wykorzystująca `BaseWidgetProvider` z konkretnymi klasami dla każdego dostawcy (np. `TauronWidgetProvider`, `StoenWidgetProvider`). Zawiera mechanizm `WorkManager` do okresowych aktualizacji w tle.
 
 ## Ustawienia
 

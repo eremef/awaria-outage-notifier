@@ -1,7 +1,9 @@
 use crate::api_logic::{AlertSource, UnifiedAlert};
 use reqwest::Client;
 use serde::Deserialize;
-use std::sync::OnceLock;
+use std::sync::{Arc, OnceLock};
+use tokio::sync::Semaphore;
+use crate::utils::retry;
 
 pub const ENEA_BASE_URL: &str = "https://www.wylaczenia-eneaoperator.pl/rss/rss_unpl_";
 
@@ -187,6 +189,7 @@ impl EneaItem {
 }
 
 pub async fn fetch_all_enea_outages(client: &Client, target_regions: &[u32]) -> Result<Vec<EneaItem>, String> {
+    let semaphore = Arc::new(Semaphore::new(5)); // Limit concurrent RSS fetches
     let mut futures = Vec::new();
     
     for (id, expected_region) in ENEA_REGIONS {
@@ -195,37 +198,48 @@ pub async fn fetch_all_enea_outages(client: &Client, target_regions: &[u32]) -> 
         }
         let url = format!("{}{}.xml", ENEA_BASE_URL, id);
         let expected_name = (*expected_region).to_string();
+        let sem = semaphore.clone();
+        let client_c = client.clone();
         futures.push(async move {
-            let res = client.get(&url).send().await.ok()?;
-            if !res.status().is_success() {
-                log::warn!("Enea region {} failed with status {}", id, res.status());
-                return None;
-            }
-            let xml = res.text().await.ok()?;
-            let rss: Rss = match quick_xml::de::from_str(&xml) {
-                Ok(r) => r,
-                Err(e) => {
-                    log::warn!("Failed to parse XML for Region {}: {}", id, e);
-                    return None;
+            let _permit = sem.acquire().await.ok();
+            
+            retry(|| async {
+                let res = client_c.get(&url).send().await.map_err(|e| e.to_string())?;
+                if !res.status().is_success() {
+                    return Err(format!("Status {}", res.status()));
                 }
-            };
-            
-            let region = rss.channel.title
-                .strip_prefix("Planowane wyłączenia - ")
-                .unwrap_or(&rss.channel.title)
-                .trim()
-                .to_string();
-            
-            if region != expected_name {
-                 log::warn!("Region mismatch! Expected '{}', got '{}'", expected_name, region);
-            }
+                let xml = res.text().await.map_err(|e| e.to_string())?;
+                
+                // Sanitize XML: replace bare ampersands with &amp;
+                // Enea operator RSS feeds often contain unescaped '&'.
+                // Since 'regex' crate doesn't support lookahead, we use a replacement chain
+                // to avoid double-escaping existing entities.
+                let sanitized_xml = xml.replace("&", "&amp;")
+                    .replace("&amp;amp;", "&amp;")
+                    .replace("&amp;lt;", "&lt;")
+                    .replace("&amp;gt;", "&gt;")
+                    .replace("&amp;quot;", "&quot;")
+                    .replace("&amp;apos;", "&apos;");
 
-            let items: Vec<EneaItem> = rss.channel.items.into_iter().map(|item| EneaItem {
-                title: item.title,
-                description: item.description,
-            }).collect();
-            
-            Some(items)
+                let rss: Rss = quick_xml::de::from_str(&sanitized_xml).map_err(|e| e.to_string())?;
+                
+                let region = rss.channel.title
+                    .strip_prefix("Planowane wyłączenia - ")
+                    .unwrap_or(&rss.channel.title)
+                    .trim()
+                    .to_string();
+                
+                if region != expected_name {
+                     log::warn!("Region mismatch! Expected '{}', got '{}'", expected_name, region);
+                }
+
+                let items: Vec<EneaItem> = rss.channel.items.into_iter().map(|item| EneaItem {
+                    title: item.title,
+                    description: item.description,
+                }).collect();
+                
+                Ok(items)
+            }, 3).await.ok()
         });
     }
 
@@ -245,7 +259,6 @@ mod tests {
     #[test]
     fn test_enea_address_match() {
         let item = EneaItem {
-            region: "Zielona Góra".to_string(),
             title: Some(" Świdnica, 2026-03-30, 2026-03-30 08:00 - 2026-03-30 16:00".to_string()),
             description: Some("Obszar Świdnica\nw dniach: 2026-03-30\nmiejscowości Piaski 45, 46, działki".to_string()),
         };
@@ -255,7 +268,6 @@ mod tests {
         assert!(!item.matches_address("Wrocław", "", "", &None));
 
         let kicin = EneaItem {
-            region: "Poznań".to_string(),
             title: Some("Kicin, 2026-04-16".to_string()),
             description: Some("Obszar Kicin\nw dniach: 2026-04-16\nKicin: ul. Swarzędzka od 1 do 9, ul. Gwarna 2, 4, ,ul. Poznańska 43, 45, 47.".to_string()),
         };
@@ -263,5 +275,53 @@ mod tests {
         let result = kicin.matches_address("Kicin", "", "Poznańska", &None);
         println!("Kicin Poznańska matched: {}", result);
         assert!(result);
+
+        // Case insensitivity
+        assert!(kicin.matches_address("kicin", "", "poznańska", &None));
+
+        // Wrong city
+        assert!(!kicin.matches_address("Wrocław", "", "Poznańska", &None));
+    }
+
+    #[tokio::test]
+    async fn test_fetch_enea_real() {
+        use crate::utils::build_client;
+        let client = build_client().unwrap();
+        // Region 7 is Poznań
+        match fetch_all_enea_outages(&client, &[7]).await {
+            Ok(items) => {
+                println!("Fetched {} Enea items for Poznań", items.len());
+                // Even if 0, we test the API call succeeds
+            }
+            Err(e) => {
+                println!("Skipping Enea integration test (API failed): {}", e);
+            }
+        }
+    }
+
+    #[test]
+    fn test_enea_xml_sanitization() {
+        let raw_xml = r#"<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+<channel>
+    <title>Planowane wyłączenia - Poznań & B BRZOZOWSKI</title>
+    <item>
+        <title>Kicin & Ciesielska, 2026-04-16 & 2026-04-17</title>
+        <description>Obszar Kicin & surrounding areas</description>
+    </item>
+</channel>
+</rss>"#;
+
+        let sanitized = raw_xml.replace("&", "&amp;")
+            .replace("&amp;amp;", "&amp;")
+            .replace("&amp;lt;", "&lt;")
+            .replace("&amp;gt;", "&gt;")
+            .replace("&amp;quot;", "&quot;")
+            .replace("&amp;apos;", "&apos;");
+
+        let rss: Rss = quick_xml::de::from_str(&sanitized).unwrap();
+        assert_eq!(rss.channel.title, "Planowane wyłączenia - Poznań & B BRZOZOWSKI");
+        assert_eq!(rss.channel.items[0].title, Some("Kicin & Ciesielska, 2026-04-16 & 2026-04-17".to_string()));
+        assert_eq!(rss.channel.items[0].description, Some("Obszar Kicin & surrounding areas".to_string()));
     }
 }

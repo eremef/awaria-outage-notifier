@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "1.0.19-beta"
+version = "1.0.20-alpha.7"
 description = "AWARIA"
 authors = ["eremef.xyz"]
 license = ""
@@ -33,3 +33,7 @@ rusqlite = { version = "0.31", features = ["bundled"] }
 tauri-plugin-fs = "2.4.5"
 quick-xml = { version = "0.39.2", features = ["serialize"] }
 futures = "0.3.32"
+tauri-plugin-notification = "2.2.1"
+sha2 = "0.10.8"
+chrono-tz = "0.10.4"
+tauri-plugin-opener = "2"
