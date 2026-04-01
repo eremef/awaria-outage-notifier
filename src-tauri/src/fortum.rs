@@ -152,3 +152,39 @@ pub fn matches_street_only(
 
     candidates.iter().any(|c| word_match(message, c))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_fortum_matches_street_only() {
+        assert!(matches_street_only(
+            &Some("Wrocław, ul. Legnicka 10".to_string()),
+            "Legnicka",
+            &None
+        ));
+
+        assert!(matches_street_only(
+            &Some("Wrocław, ul. Henryka Probusa 12".to_string()),
+            "Probusa",
+            &Some("Henryka".to_string())
+        ));
+
+        assert!(!matches_street_only(
+            &Some("Wrocław, ul. Legnicka 10".to_string()),
+            "Probusa",
+            &None
+        ));
+    }
+
+    #[tokio::test]
+    async fn test_fetch_fortum_real() {
+        // Wrocław GUID
+        let test_guid = "9b6e8284-904d-45f1-8316-d98c2536c4b2";
+        let test_region = 1421312;
+        let alerts = fetch_fortum_alerts(test_guid, test_region).await.unwrap();
+        println!("Fetched {} Fortum alerts for Wrocław", alerts.len());
+        // Even if empty, we check it doesn't crash
+    }
+}

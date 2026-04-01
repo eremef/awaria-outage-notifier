@@ -210,4 +210,51 @@ mod tests {
         );
         assert_eq!(unified.description, Some("Planned maintenance".to_string()));
     }
+
+    #[test]
+    fn test_pge_matches_address() {
+        let addr = AddressEntry {
+            name: "Home".to_string(),
+            city_name: "Wrocław".to_string(),
+            voivodeship: "DOLNOŚLĄSKIE".to_string(),
+            district: "Wrocław".to_string(),
+            commune: "Wrocław".to_string(),
+            street_name: "ul. Kuźnicza".to_string(),
+            street_name_1: "Kuźnicza".to_string(),
+            street_name_2: None,
+            house_no: "25".to_string(),
+            city_id: Some(969400),
+            street_id: Some(13900),
+        };
+
+        let outage = PgeOutage {
+            id: 1,
+            startAt: "2026-03-31 10:00:00".to_string(),
+            stopAt: "2026-03-31 14:00:00".to_string(),
+            description: Some("Kuźnicza 12-25".to_string()),
+            regionName: None,
+            addresses: vec![PgeAddress {
+                teryt: Some(PgeTeryt {
+                    voivodeshipName: Some("DOLNOŚLĄSKIE".to_string()),
+                    countyName: Some("Wrocław".to_string()),
+                    communeName: Some("Wrocław".to_string()),
+                    cityName: Some("Wrocław".to_string()),
+                    streetName: Some("ul. Kuźnicza".to_string()),
+                }),
+                numbers: Some("12-25".to_string()),
+            }],
+        };
+
+        assert!(matches_address(&outage, &addr));
+
+        let mut addr_wrong = addr.clone();
+        addr_wrong.city_name = "Warszawa".to_string();
+        assert!(!matches_address(&outage, &addr_wrong));
+    }
+
+    #[tokio::test]
+    async fn test_fetch_pge_real() {
+        let outages = fetch_pge_outages().await.unwrap();
+        println!("Fetched {} PGE outages", outages.len());
+    }
 }

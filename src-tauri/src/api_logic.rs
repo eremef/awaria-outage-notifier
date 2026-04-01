@@ -196,4 +196,42 @@ mod tests {
         let loaded = load_settings_from_path(test_path).expect("Failed to load settings");
         assert_eq!(None, loaded);
     }
+
+    #[test]
+    fn test_unified_alert_hashing() {
+        let alert1 = UnifiedAlert {
+            source: AlertSource::Tauron,
+            startDate: Some("2024-01-01 10:00".to_string()),
+            endDate: None,
+            message: Some("Brak prądu".to_string()),
+            description: None,
+            address_index: None,
+            is_local: None,
+        };
+
+        let alert2 = UnifiedAlert {
+            source: AlertSource::Tauron,
+            startDate: Some("2024-01-01 10:00".to_string()),
+            endDate: Some("2024-01-01 14:00".to_string()),
+            message: Some("Brak prądu".to_string()),
+            description: Some("Different desc".to_string()),
+            address_index: Some(1),
+            is_local: Some(true),
+        };
+
+        // Hashes should match if source, message, and startDate match (ignoring desc/endDate etc.)
+        assert_eq!(alert1.to_hash(), alert2.to_hash());
+
+        let alert3 = UnifiedAlert {
+            source: AlertSource::Energa,
+            ..alert1.clone()
+        };
+        assert_ne!(alert1.to_hash(), alert3.to_hash());
+
+        let alert4 = UnifiedAlert {
+            message: Some("Inny komunikat".to_string()),
+            ..alert1.clone()
+        };
+        assert_ne!(alert1.to_hash(), alert4.to_hash());
+    }
 }

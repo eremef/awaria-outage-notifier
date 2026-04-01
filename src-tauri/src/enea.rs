@@ -275,6 +275,28 @@ mod tests {
         let result = kicin.matches_address("Kicin", "", "Poznańska", &None);
         println!("Kicin Poznańska matched: {}", result);
         assert!(result);
+
+        // Case insensitivity
+        assert!(kicin.matches_address("kicin", "", "poznańska", &None));
+
+        // Wrong city
+        assert!(!kicin.matches_address("Wrocław", "", "Poznańska", &None));
+    }
+
+    #[tokio::test]
+    async fn test_fetch_enea_real() {
+        use crate::utils::build_client;
+        let client = build_client().unwrap();
+        // Region 7 is Poznań
+        match fetch_all_enea_outages(&client, &[7]).await {
+            Ok(items) => {
+                println!("Fetched {} Enea items for Poznań", items.len());
+                // Even if 0, we test the API call succeeds
+            }
+            Err(e) => {
+                println!("Skipping Enea integration test (API failed): {}", e);
+            }
+        }
     }
 
     #[test]

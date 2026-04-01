@@ -63,7 +63,10 @@ pub fn lookup_cities(app: &AppHandle, city_name: &str) -> Result<Vec<TerytCity>,
     let path = db_path(app)?;
     let conn = Connection::open_with_flags(path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
         .map_err(|e| format!("Failed to open teryt DB: {}", e))?;
+    _lookup_cities(&conn, city_name)
+}
 
+fn _lookup_cities(conn: &Connection, city_name: &str) -> Result<Vec<TerytCity>, String> {
     let sql = "SELECT voivodeship.nazwa, district.nazwa, commune.nazwa, city.nazwa, city.sym \
                FROM simc city \
                LEFT JOIN terc voivodeship ON city.woj = voivodeship.woj \
@@ -109,7 +112,14 @@ pub fn lookup_streets(
     let path = db_path(app)?;
     let conn = Connection::open_with_flags(path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
         .map_err(|e| format!("Failed to open teryt DB: {}", e))?;
+    _lookup_streets(&conn, city_id, street_name)
+}
 
+fn _lookup_streets(
+    conn: &Connection,
+    city_id: u64,
+    street_name: &str,
+) -> Result<Vec<TerytStreet>, String> {
     let sql = "SELECT distinct street.cecha || IFNULL(' ' || street.nazwa_2, '') || ' ' || street.nazwa_1 AS full_name,
                        ?1 sym, street.sym_ul, street.nazwa_1, street.nazwa_2 \
                FROM ulic street \
@@ -149,7 +159,10 @@ pub fn city_has_streets(app: &AppHandle, city_id: u64) -> Result<bool, String> {
     let path = db_path(app)?;
     let conn = Connection::open_with_flags(path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
         .map_err(|e| format!("Failed to open teryt DB: {}", e))?;
+    _city_has_streets(&conn, city_id)
+}
 
+fn _city_has_streets(conn: &Connection, city_id: u64) -> Result<bool, String> {
     let sql = "SELECT count(1)
                FROM ulic street
                LEFT JOIN simc city ON street.sym = city.sym
@@ -162,4 +175,54 @@ pub fn city_has_streets(app: &AppHandle, city_id: u64) -> Result<bool, String> {
         .map_err(|e| format!("Street count query failed: {}", e))?;
 
     Ok(count > 0)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn setup_mock_db() -> Connection {
+        let conn = Connection::open_in_memory().unwrap();
+        // Setup minimal TERYT schema
+        conn.execute_batch("
+            CREATE TABLE terc (woj TEXT, pow TEXT, gmi TEXT, rodz TEXT, nazwa TEXT);
+            CREATE TABLE simc (woj TEXT, pow TEXT, gmi TEXT, rodz_gmi TEXT, nazwa TEXT, sym INTEGER, sympod INTEGER);
+            CREATE TABLE ulic (sym INTEGER, sym_ul INTEGER, cecha TEXT, nazwa_1 TEXT, nazwa_2 TEXT);
+
+            -- Insert Voivodeship
+            INSERT INTO terc VALUES ('02', NULL, NULL, NULL, 'DOLNOŚLĄSKIE');
+            -- Insert District
+            INSERT INTO terc VALUES ('02', '64', NULL, NULL, 'Wrocław');
+            -- Insert City
+            INSERT INTO simc VALUES ('02', '64', '01', '1', 'Wrocław', 969400, 969400);
+            -- Insert Street
+            INSERT INTO ulic VALUES (969400, 13900, 'ul.', 'Kuźnicza', NULL);
+        ").unwrap();
+        conn
+    }
+
+    #[test]
+    fn test_lookup_cities() {
+        let conn = setup_mock_db();
+        let results = _lookup_cities(&conn, "Wroc").unwrap();
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].city, "Wrocław");
+        assert_eq!(results[0].city_id, 969400);
+    }
+
+    #[test]
+    fn test_lookup_streets() {
+        let conn = setup_mock_db();
+        let results = _lookup_streets(&conn, 969400, "Kuź").unwrap();
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].street_name_1, "Kuźnicza");
+        assert_eq!(results[0].full_street_name, "ul. Kuźnicza");
+    }
+
+    #[test]
+    fn test_city_has_streets() {
+        let conn = setup_mock_db();
+        assert!(_city_has_streets(&conn, 969400).unwrap());
+        assert!(!_city_has_streets(&conn, 12345).unwrap());
+    }
 }

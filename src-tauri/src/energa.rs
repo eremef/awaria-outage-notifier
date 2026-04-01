@@ -156,6 +156,24 @@ mod tests {
         assert!(!shutdown.matches_address("Gdańsk", "Tuliszków", "Długa", &None));
 
         // Matching city but completely wrong street -> should fail
-        assert!(!shutdown.matches_address("Gdańsk", "", "Długa", &None));
+        assert!(!shutdown.matches_address("Tuliszków", "Tuliszków", "Króótka", &None));
+    }
+
+    #[tokio::test]
+    async fn test_fetch_energa_real() {
+        use crate::utils::build_client;
+        let client = build_client().unwrap();
+        match extract_energa_api_url(&client).await {
+            Ok(url) => {
+                println!("Extracted Energa URL: {}", url);
+                let res = client.get(&url).send().await.unwrap();
+                assert!(res.status().is_success());
+                let data: EnergaResponse = res.json().await.unwrap();
+                println!("Found {} Energa shutdowns", data.document.payload.shutdowns.len());
+            }
+            Err(e) => {
+                println!("Skipping Energa integration test (URL extract failed): {}", e);
+            }
+        }
     }
 }

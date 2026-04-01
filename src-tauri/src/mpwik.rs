@@ -180,5 +180,20 @@ mod tests {
         addr_warsaw.city_name = "Warszawa".to_string();
         addr_warsaw.city_id = Some(918123);
         assert!(!matches_address(&msg, &addr_warsaw));
+
+        // Mixed case and without "ul."
+        assert!(matches_address(&Some("WROCŁAW KUŹNICZA 25".to_string()), &addr));
+    }
+
+    #[tokio::test]
+    async fn test_fetch_water_real() {
+        match fetch_water_alerts().await {
+            Ok(items) => {
+                println!("Fetched {} MPWiK items", items.len());
+            }
+            Err(e) => {
+                println!("Skipping MPWiK integration test (API failed): {}", e);
+            }
+        }
     }
 }

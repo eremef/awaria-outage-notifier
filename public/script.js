@@ -5,7 +5,17 @@ if (typeof document !== 'undefined') {
         initRefreshButton();
         initAddressFilter();
         loadSettingsAndFetch();
+        debugSafeAreas();
     });
+
+    function debugSafeAreas() {
+        if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+            const styles = getComputedStyle(document.documentElement);
+            const top = styles.getPropertyValue('--safe-area-inset-top').trim();
+            const bottom = styles.getPropertyValue('--safe-area-inset-bottom').trim();
+            console.log('Mobile Safe Area Insets: ' + JSON.stringify({ top, bottom }));
+        }
+    }
 
     // Handle external links via Tauri opener
     document.addEventListener('click', (e) => {
@@ -28,6 +38,9 @@ let currentSettings = null;
 let lastAlerts = [];
 let lastFetchDate = null;
 let selectedAddressIndex = -1; // -1 means "all addresses"
+let isFetching = false;
+let isSearchingCities = false;
+let isSearchingStreets = false;
 
 let selectedCityId = null;
 let selectedCityName = '';
@@ -404,6 +417,8 @@ async function autoSaveSettings() {
 // ── TERYT Search ──────────────────────────────────────────
 
 async function searchCities(query) {
+    if (isSearchingCities) return;
+    isSearchingCities = true;
     try {
         console.log('Searching cities:', query);
         const results = await window.__TAURI__.core.invoke('teryt_lookup_city', { cityName: query });
@@ -414,6 +429,8 @@ async function searchCities(query) {
         const container = document.getElementById('city-suggestions');
         container.innerHTML = `<div class="suggestion-item no-results">Error: ${escapeHtml(String(error))}</div>`;
         container.classList.remove('hidden');
+    } finally {
+        isSearchingCities = false;
     }
 }
 
@@ -485,10 +502,11 @@ function renderCitySuggestions(cities) {
 }
 
 async function searchStreets(query) {
-    if (!selectedCityId) {
-        console.warn('searchStreets: no city selected');
+    if (!selectedCityId || isSearchingStreets) {
+        if (!selectedCityId) console.warn('searchStreets: no city selected');
         return;
     }
+    isSearchingStreets = true;
     try {
         console.log('Searching streets for city_id:', selectedCityId, 'query:', query);
         const results = await window.__TAURI__.core.invoke('teryt_lookup_street', {
@@ -502,6 +520,8 @@ async function searchStreets(query) {
         const container = document.getElementById('street-suggestions');
         container.innerHTML = `<div class="suggestion-item no-results">Error: ${escapeHtml(String(error))}</div>`;
         container.classList.remove('hidden');
+    } finally {
+        isSearchingStreets = false;
     }
 }
 
@@ -771,6 +791,9 @@ function initPullToRefresh() {
 // ── Alerts ─────────────────────────────────────────────────
 
 async function fetchOutages() {
+    if (isFetching) return;
+    isFetching = true;
+
     const container = document.getElementById('outages-container');
     try {
         const alerts = await window.__TAURI__.core.invoke('fetch_all_alerts');
@@ -780,6 +803,8 @@ async function fetchOutages() {
     } catch (error) {
         console.error('Error fetching data:', error);
         container.innerHTML = `<div class="error">${typeof t !== 'undefined' ? t('err_load_failed') : 'Failed to load alert data. Error: '}${error}</div>`;
+    } finally {
+        isFetching = false;
     }
 }
 
