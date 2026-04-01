@@ -89,7 +89,7 @@ checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 
 [[package]]
 name = "app"
-version = "1.0.20-alpha.5"
+version = "1.0.20-alpha.6"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -6439,3 +6439,4 @@ dependencies = [
  "syn 2.0.117",
  "winnow 0.7.15",
 ]
+              
