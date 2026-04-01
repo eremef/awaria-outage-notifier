@@ -532,6 +532,11 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
     Ok(all_alerts)
 }
 
+#[tauri::command]
+fn get_app_version() -> String {
+    env!("CARGO_PKG_VERSION").to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -586,7 +591,8 @@ pub fn run() {
             add_address,
             remove_address,
             set_primary_address,
-            update_address
+            update_address,
+            get_app_version
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

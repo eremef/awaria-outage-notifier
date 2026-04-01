@@ -91,7 +91,7 @@ const translations = {
         "save_changes": "Save Changes",
         "cancel": "Cancel",
         "footer_copyright": "© %YEAR% <a href=\"https://eremef.xyz\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"external-link\">eremef</a>",
-        "footer_version": "Awaria v1.0.20-alpha.5",
+        "footer_version": "Awaria V%VERSION%",
         "footer_github": "GitHub",
         "cuplink_support": "Enjoying this app? Buy me a virtual coffee to support its development!"
     },
@@ -184,7 +184,7 @@ const translations = {
         "save_changes": "Zapisz zmiany",
         "cancel": "Anuluj",
         "footer_copyright": "© %YEAR% <a href=\"https://eremef.xyz\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"external-link\">eremef</a>",
-        "footer_version": "Awaria v1.0.20-alpha.5",
+        "footer_version": "Awaria V%VERSION%",
         "footer_github": "GitHub",
         "cuplink_support": "Podoba Ci się ta aplikacja? Postaw mi wirtualną kawę, aby wesprzeć jej rozwój!"
     }
@@ -242,6 +242,10 @@ function applyTranslations() {
                 let val = t(key);
                 if (key === 'footer_copyright') {
                     val = val.replace('%YEAR%', new Date().getFullYear());
+                }
+                if (key === 'footer_version') {
+                    const version = window.appVersion || 'v1.0.20';
+                    val = val.replace('%VERSION%', version);
                 }
                 // Use innerHTML for the footer to support links
                 if (key === 'footer_copyright') {

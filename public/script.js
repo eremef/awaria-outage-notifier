@@ -6,6 +6,7 @@ if (typeof document !== 'undefined') {
         initAddressFilter();
         loadSettingsAndFetch();
         debugSafeAreas();
+        fetchAppVersion();
     });
 
     function debugSafeAreas() {
@@ -14,6 +15,20 @@ if (typeof document !== 'undefined') {
             const top = styles.getPropertyValue('--safe-area-inset-top').trim();
             const bottom = styles.getPropertyValue('--safe-area-inset-bottom').trim();
             console.log('Mobile Safe Area Insets: ' + JSON.stringify({ top, bottom }));
+        }
+    }
+
+    async function fetchAppVersion() {
+        if (window.__TAURI__) {
+            try {
+                const version = await window.__TAURI__.core.invoke('get_app_version');
+                window.appVersion = version;
+                if (typeof applyTranslations === 'function') {
+                    applyTranslations();
+                }
+            } catch (error) {
+                console.error('Failed to fetch app version:', error);
+            }
         }
     }
 
