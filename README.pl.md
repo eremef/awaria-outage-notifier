@@ -1,6 +1,6 @@
 [English](README.md) | [Polski](README.pl.md)
 
-# Aplikacja Wygodnego Alarmowanie o Remontach i Infrastrukturalnych Awariach
+# Aplikacja Wygodnego Alarmowania o Remontach i Infrastrukturalnych Awariach
 
 <p align="center">
   <img height="600" alt="image" src="https://github.com/user-attachments/assets/5c13103e-8c9d-4067-b994-55e32fb21de2" />
