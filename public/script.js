@@ -250,20 +250,48 @@ function initSettings() {
     });
 
 
-    ['source-tauron-check', 'source-water-check', 'source-fortum-check', 'source-energa-check', 'source-enea-check', 'source-pge-check', 'source-stoen-check'].forEach(id => {
-        const checkbox = document.getElementById(id);
-        if (!checkbox) return;
-        checkbox.addEventListener('change', async () => {
+    const sourceNotifyPairs = [
+        { source: 'source-tauron-check', notify: 'notify-tauron-check' },
+        { source: 'source-water-check', notify: 'notify-water-check' },
+        { source: 'source-fortum-check', notify: 'notify-fortum-check' },
+        { source: 'source-energa-check', notify: 'notify-energa-check' },
+        { source: 'source-enea-check', notify: 'notify-enea-check' },
+        { source: 'source-pge-check', notify: 'notify-pge-check' },
+        { source: 'source-stoen-check', notify: 'notify-stoen-check' }
+    ];
+
+    function updateNotifyStatus(sourceId, notifyId) {
+        const sourceCheck = document.getElementById(sourceId);
+        const notifyCheck = document.getElementById(notifyId);
+        if (sourceCheck && notifyCheck) {
+            notifyCheck.disabled = !sourceCheck.checked;
+            // Add a class only to the notification group for visual feedback
+            const notifyGroup = notifyCheck.closest('.notify-group');
+            if (notifyGroup) {
+                if (notifyCheck.disabled) {
+                    notifyGroup.classList.add('notify-disabled');
+                } else {
+                    notifyGroup.classList.remove('notify-disabled');
+                }
+            }
+        }
+    }
+
+    sourceNotifyPairs.forEach(pair => {
+        const sourceCheckbox = document.getElementById(pair.source);
+        if (!sourceCheckbox) return;
+        sourceCheckbox.addEventListener('change', async () => {
             if (!currentSettings) return;
             const enabledSources = [];
-            if (document.getElementById('source-tauron-check').checked) enabledSources.push('tauron');
-            if (document.getElementById('source-water-check').checked) enabledSources.push('water');
-            if (document.getElementById('source-fortum-check').checked) enabledSources.push('fortum');
-            if (document.getElementById('source-energa-check') && document.getElementById('source-energa-check').checked) enabledSources.push('energa');
-            if (document.getElementById('source-enea-check') && document.getElementById('source-enea-check').checked) enabledSources.push('enea');
-            if (document.getElementById('source-pge-check') && document.getElementById('source-pge-check').checked) enabledSources.push('pge');
-            if (document.getElementById('source-stoen-check') && document.getElementById('source-stoen-check').checked) enabledSources.push('stoen');
+            sourceNotifyPairs.forEach(p => {
+                const cb = document.getElementById(p.source);
+                if (cb && cb.checked) {
+                    const srcName = p.source.split('-')[1]; // tauron, water, etc.
+                    enabledSources.push(srcName);
+                }
+            });
             currentSettings.enabledSources = enabledSources;
+            updateNotifyStatus(pair.source, pair.notify);
             await autoSaveSettings();
             fetchOutages();
         });
@@ -631,6 +659,29 @@ async function loadSettingsAndFetch() {
             if (document.getElementById('notify-pge-check')) document.getElementById('notify-pge-check').checked = !!notifyPrefs.pge;
             if (document.getElementById('notify-stoen-check')) document.getElementById('notify-stoen-check').checked = !!notifyPrefs.stoen;
 
+            // Update disabled status for all notify checkboxes
+            const pairs = [
+                { source: 'source-tauron-check', notify: 'notify-tauron-check' },
+                { source: 'source-water-check', notify: 'notify-water-check' },
+                { source: 'source-fortum-check', notify: 'notify-fortum-check' },
+                { source: 'source-energa-check', notify: 'notify-energa-check' },
+                { source: 'source-enea-check', notify: 'notify-enea-check' },
+                { source: 'source-pge-check', notify: 'notify-pge-check' },
+                { source: 'source-stoen-check', notify: 'notify-stoen-check' }
+            ];
+            pairs.forEach(p => {
+                const sourceCheck = document.getElementById(p.source);
+                const notifyCheck = document.getElementById(p.notify);
+                if (sourceCheck && notifyCheck) {
+                    notifyCheck.disabled = !sourceCheck.checked;
+                    const notifyGroup = notifyCheck.closest('.notify-group');
+                    if (notifyGroup) {
+                        if (notifyCheck.disabled) notifyGroup.classList.add('notify-disabled');
+                        else notifyGroup.classList.remove('notify-disabled');
+                    }
+                }
+            });
+
             updateAddressFilter();
             renderAddressesList();
             document.getElementById('addresses-list').classList.remove('hidden');
@@ -656,6 +707,29 @@ async function loadSettingsAndFetch() {
                 language: 'system',
                 enabledSources: []
             };
+
+            // Explicitly uncheck and disable all source/notify pairs on first run
+            const pairs = [
+                { source: 'source-tauron-check', notify: 'notify-tauron-check' },
+                { source: 'source-water-check', notify: 'notify-water-check' },
+                { source: 'source-fortum-check', notify: 'notify-fortum-check' },
+                { source: 'source-energa-check', notify: 'notify-energa-check' },
+                { source: 'source-enea-check', notify: 'notify-enea-check' },
+                { source: 'source-pge-check', notify: 'notify-pge-check' },
+                { source: 'source-stoen-check', notify: 'notify-stoen-check' }
+            ];
+            pairs.forEach(p => {
+                const s = document.getElementById(p.source);
+                const n = document.getElementById(p.notify);
+                if (s) s.checked = false;
+                if (n) {
+                    n.checked = false;
+                    n.disabled = true;
+                    const notifyGroup = n.closest('.notify-group');
+                    if (notifyGroup) notifyGroup.classList.add('notify-disabled');
+                }
+            });
+
             updateAddressFilter();
             renderAddressesList();
             const container = document.getElementById('outages-container');

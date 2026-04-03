@@ -591,7 +591,6 @@ h1 {
 
 .checkbox-pair.mini {
     font-size: 0.8em;
-    opacity: 0.8;
 }
 
 .checkbox-pair input[type="checkbox"] {
@@ -1315,4 +1314,26 @@ h1 {
     100% {
         opacity: 0;
     }
+}
+
+/* ── Disabled States ───────────────────────── */
+.notify-disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.notify-disabled input[type="checkbox"] {
+    cursor: not-allowed;
+}
+
+.notify-bell-icon {
+    color: var(--secondary-text);
+    transition: color 0.3s ease, transform 0.3s ease;
+    opacity: 0.6;
+}
+
+input[type="checkbox"]:checked + .notify-bell-icon {
+    color: #f59e0b; /* Amber/Yellow for active notifications */
+    opacity: 1;
+    transform: scale(1.1);
 }
