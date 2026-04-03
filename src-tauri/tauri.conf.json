@@ -42,6 +42,9 @@
       "providerShortName": null,
       "signingIdentity": null,
       "entitlements": null
+    },
+    "android": {
+      "versionCode": 10020
     }
   }
 }

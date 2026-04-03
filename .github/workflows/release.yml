@@ -51,7 +51,7 @@ jobs:
           mv src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk awaria-android-${{ github.ref_name }}.apk
           mv src-tauri/gen/android/app/build/outputs/bundle/universalRelease/app-universal-release.aab awaria-android-${{ github.ref_name }}.aab || true
           
-      - name: Upload APK
+      - name: Upload APK & Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
@@ -59,6 +59,17 @@ jobs:
           files: |
             awaria-android-${{ github.ref_name }}.apk
             awaria-android-${{ github.ref_name }}.aab
+
+      - name: Upload to Google Play
+        uses: r0adkll/upload-google-play@v1
+        if: startsWith(github.ref, 'refs/tags/') && !contains(github.ref_name, 'alpha')
+        with:
+          serviceAccountJsonPlain: ${{ secrets.PLAY_SERVICE_ACCOUNT_KEY }}
+          packageName: xyz.eremef.awaria
+          releaseFiles: awaria-android-${{ github.ref_name }}.aab
+          track: internal
+          status: completed
+          metadataDirectory: metadata/android
 
   release-ios:
     runs-on: macos-latest

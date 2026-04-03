@@ -1,0 +1,15 @@
+Nowoczesna aplikacja zapewniająca powiadomienia w czasie rzeczywistym o planowanych pracach i nagłych awariach mediów. Awaria agreguje dane od wielu dostawców w jeden przejrzysty interfejs.
+
+Wspierane Źródła:
+- Prąd: Tauron, Energa, Enea, PGE, Stoen
+- Ciepło: Fortum
+- Woda: MPWiK (obecnie obszar Wrocławia)
+
+Główne Funkcje:
+- Wsparcie dla wielu adresów: Monitoruj do 20 lokalizacji jednocześnie.
+- Inteligentne Dopasowanie: Aplikacja wyróżnia alerty dotyczące Twojej ulicy.
+- Powiadomienia Push: Natychmiastowe informacje o nowych awariach.
+- Widżety Android: Kompaktowe widżety 1x1 do szybkiego sprawdzania statusu.
+- Prywatność: Brak kont w chmurze. Twoja lokalizacja i ustawienia pozostają na urządzeniu.
+
+Pobierz Awarię już dziś i bądź na bieżąco z sytuacją w Twojej okolicy!

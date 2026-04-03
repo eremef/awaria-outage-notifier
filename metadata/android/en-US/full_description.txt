@@ -1,0 +1,15 @@
+A modern application providing real-time alerts for planned maintenance and emergency utility outages. Awaria aggregates data from multiple utility providers into a single, intuitive interface.
+
+Supported Sources:
+- Power: Tauron, Energa, Enea, PGE, Stoen
+- Heat: Fortum
+- Water: MPWiK (currently Wrocław area)
+
+Key Features:
+- Multi-Address Support: Monitor up to 20 different locations simultaneously.
+- Smart Address Matching: Automatically highlights alerts affecting your specific street.
+- Real-time Notifications: Receive instant alerts on your mobile device.
+- Android Widgets: Compact 1x1 widgets for one-tap status checks.
+- Privacy First: No cloud accounts required. Your location and settings stay on your device.
+
+Download Awaria today and stay informed about utility issues in your area!
