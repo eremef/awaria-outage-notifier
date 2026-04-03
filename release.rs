@@ -125,6 +125,17 @@ fn update_tauri_conf(version: &str) {
 
     let content = fs::read_to_string(&tauri_path).expect("Failed to read tauri.conf.json");
 
+    let version_code = {
+        let parts: Vec<u32> = tauri_version
+            .split('.')
+            .map(|s| s.parse().unwrap_or(0))
+            .collect();
+        let major = parts.get(0).copied().unwrap_or(0);
+        let minor = parts.get(1).copied().unwrap_or(0);
+        let patch = parts.get(2).copied().unwrap_or(0);
+        major * 10000 + minor * 100 + patch
+    };
+
     let new_content = content
         .lines()
         .map(|line| {
@@ -134,6 +145,17 @@ fn update_tauri_conf(version: &str) {
                     .take_while(|c| c.is_whitespace())
                     .collect::<String>();
                 format!("{}\"version\": \"{}\",", indent, tauri_version)
+            } else if line.contains("\"versionCode\"") {
+                let indent = line
+                    .chars()
+                    .take_while(|c| c.is_whitespace())
+                    .collect::<String>();
+                let has_comma = line.trim().ends_with(',');
+                if has_comma {
+                    format!("{}\"versionCode\": {},", indent, version_code)
+                } else {
+                    format!("{}\"versionCode\": {}", indent, version_code)
+                }
             } else {
                 line.to_string()
             }
