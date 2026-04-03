@@ -21,7 +21,7 @@ val keystoreProperties = Properties().apply {
 }
 
 android {
-    compileSdk = 34
+    compileSdk = 35
     namespace = "xyz.eremef.awaria"
 
     signingConfigs {
@@ -39,7 +39,7 @@ android {
         manifestPlaceholders["usesCleartextTraffic"] = "false"
         applicationId = "xyz.eremef.awaria"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
     }
@@ -63,6 +63,9 @@ android {
                     .plus(getDefaultProguardFile("proguard-android-optimize.txt"))
                     .toList().toTypedArray()
             )
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
         }
     }
     kotlinOptions {
