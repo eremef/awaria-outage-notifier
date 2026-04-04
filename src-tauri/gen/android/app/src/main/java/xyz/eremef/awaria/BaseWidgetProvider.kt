@@ -38,7 +38,9 @@ data class WidgetSettings(
         val cityId: Long,
         val streetId: Long,
         val theme: String,
-        val language: String
+        val language: String,
+        val isActive: Boolean,
+        val sourceEnabled: Boolean
 )
 
 abstract class BaseWidgetProvider : AppWidgetProvider() {
@@ -63,6 +65,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     abstract val darkPrimary: String
     abstract val iconResId: Int
     abstract val labelKey: String
+    abstract val sourceKey: String
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == refreshAction || intent.action == Intent.ACTION_BOOT_COMPLETED) {
@@ -144,6 +147,21 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         return try {
             val json = JSONObject(settingsFile.readText())
             val addresses = json.optJSONArray("addresses")
+            val enabledSources = json.optJSONArray("enabledSources")
+
+            val isSourceEnabled =
+                    if (enabledSources != null) {
+                        var found = false
+                        for (i in 0 until enabledSources.length()) {
+                            if (enabledSources.getString(i) == sourceKey) {
+                                found = true
+                                break
+                            }
+                        }
+                        found
+                    } else {
+                        true // Default to enabled if field missing
+                    }
 
             if (addresses != null && addresses.length() > 0) {
                 (0 until addresses.length()).map { i ->
@@ -163,7 +181,9 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                             cityId = addr.optLong("cityId", 0),
                             streetId = addr.optLong("streetId", 0),
                             theme = json.optString("theme", "system"),
-                            language = json.optString("language", "system")
+                            language = json.optString("language", "system"),
+                            isActive = addr.optBoolean("isActive", true),
+                            sourceEnabled = isSourceEnabled
                     )
                 }
             } else {
@@ -215,6 +235,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             "outages" -> if (isPl) "wyłączeń" else "outages"
             "setup" -> if (isPl) "Skonfiguruj" else "Setup needed"
             "updating" -> if (isPl) "Aktualizacja..." else "Updating..."
+            "inactive" -> if (isPl) "Nieaktywne" else "Inactive"
             else -> key
         }
     }
@@ -230,29 +251,36 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         val language = settingsList?.firstOrNull()?.language ?: "system"
         val theme = settingsList?.firstOrNull()?.theme ?: "system"
         val dark = isDarkMode(context, theme)
-        val addressCount = settingsList?.size ?: 0
+        val sourceEnabled = settingsList?.firstOrNull()?.sourceEnabled ?: true
 
-        val count =
-                try {
-                    if (settingsList != null && settingsList.isNotEmpty()) {
-                        val total = fetchCount(settingsList)
-                        if (addressCount > 1) "$total ($addressCount)" else total.toString()
-                    } else {
-                        "?"
-                    }
-                } catch (e: Exception) {
-                    "!"
-                }
+        val activeSettings = settingsList?.filter { it.isActive } ?: emptyList()
+        val addressCount = activeSettings.size
+
+        var count = "?"
+        var statusMessage: String? = null
+
+        if (!sourceEnabled) {
+            count = "–"
+            statusMessage = getTranslation("inactive", language)
+        } else if (settingsList == null || activeSettings.isEmpty()) {
+            count = "?"
+            statusMessage = getTranslation("setup", language)
+        } else {
+            try {
+                val total = fetchCount(activeSettings)
+                count = if (addressCount > 1) "$total ($addressCount)" else total.toString()
+            } catch (e: Exception) {
+                count = "!"
+                statusMessage = "Error"
+            }
+        }
 
         val updatedAt =
-                if (count != "?" && count != "!") {
-                    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-                    timeFormat.format(Date())
-                } else if (settingsList == null) {
-                    getTranslation("setup", language)
-                } else {
-                    "Error"
-                }
+                statusMessage
+                        ?: run {
+                            val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+                            timeFormat.format(Date())
+                        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val viewMapping =
@@ -327,7 +355,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 )
 
         val clickPending =
-                if (count == "0" || count.startsWith("0 (")) {
+                if (count == "0" || count.startsWith("0 (") || count == "?" || count == "!" || count == "–") {
                     refreshPending
                 } else {
                     val launchIntent =

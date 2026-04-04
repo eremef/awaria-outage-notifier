@@ -10,6 +10,7 @@ class TauronWidgetProvider : BaseWidgetProvider() {
     override val darkPrimary: String = "#FF4DA6"
     override val iconResId: Int = R.drawable.ic_electricity
     override val labelKey: String = "outages"
+    override val sourceKey: String = "tauron"
 
     override suspend fun fetchCount(settings: List<WidgetSettings>): Int {
         return fetchTauronAlertCount(settings)
