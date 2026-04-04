@@ -190,17 +190,34 @@ pub async fn fetch_tauron_outages(address: &crate::api_logic::AddressEntry) -> R
 
     log::info!("Tauron: found city '{}' GAID={}", city.Name, city.GAID);
 
-    let streets = if address.street_name_1.is_empty() {
+    let mut streets = if address.street_name_1.is_empty() {
         lookup_only_one_street(city.GAID).await?
     } else {
         lookup_street(&street_query, city.GAID).await?
     };
 
+    // Fallback 1: If full street_query failed, try just street_name_1 (the core name)
+    if streets.is_empty() && !address.street_name_1.is_empty() && street_query != address.street_name_1 {
+        log::info!("Tauron: street_query '{}' failed, trying fallback with '{}'", street_query, address.street_name_1);
+        streets = lookup_street(&address.street_name_1, city.GAID).await.unwrap_or_default();
+    }
+
+    // Fallback 2: Try the full street_name from TERYT dropdown if it's different
+    if streets.is_empty() && !address.street_name.is_empty() && address.street_name != street_query && address.street_name != address.street_name_1 {
+        log::info!("Tauron: previous fallbacks failed, trying full street_name '{}'", address.street_name);
+        streets = lookup_street(&address.street_name, city.GAID).await.unwrap_or_default();
+    }
+
     if streets.is_empty() {
-        return Err(format!(
-            "Street '{}' not found in Tauron (no results)",
-            street_query
-        ));
+        log::warn!(
+            "Street '{}' not found in Tauron for city GAID {}. Returning empty result instead of error.",
+            street_query,
+            city.GAID
+        );
+        return Ok(OutageResponse {
+            OutageItems: None,
+            debug_query: None,
+        });
     }
 
     for s in &streets {

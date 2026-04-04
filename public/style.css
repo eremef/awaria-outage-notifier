@@ -533,7 +533,7 @@ h1 {
 }
 
 .settings-field {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
 }
 
 .settings-field label {
@@ -648,6 +648,53 @@ h1 {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.settings-field.valid input {
+    border-color: var(--success-text) !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2310b981' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.25rem;
+    padding-right: 2.5rem;
+}
+
+.settings-field.invalid input {
+    border-color: var(--error-text) !important;
+    animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-4px);
+    }
+
+    75% {
+        transform: translateX(4px);
+    }
+}
+
+.selection-hint {
+    font-size: 0.75rem;
+    color: var(--secondary-text);
+    margin-top: 0.25rem;
+    display: none;
+    opacity: 0;
+    transform: translateY(-5px);
+    transition: all 0.2s ease;
+    pointer-events: none;
+}
+
+.settings-field:focus-within:not(.valid) .selection-hint {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .grayed-out {
@@ -796,11 +843,12 @@ h1 {
 .no-outages {
     text-align: center;
     padding: 1.5rem;
-    background-color: var(--success-bg);
-    color: var(--success-text);
+    background-color: var(--card-background);
+    color: var(--secondary-text);
     border-radius: 12px;
-    border: 1px solid var(--success-border);
+    border: 1px solid var(--message-border);
     margin: 1rem 0;
+    font-style: italic;
 }
 
 .error {
@@ -1074,6 +1122,7 @@ h1 {
     background: var(--message-border);
     border-radius: 0.5rem;
     margin-top: 1rem;
+    scroll-margin-top: calc(105px + var(--safe-area-inset-top));
 }
 
 .cancel-btn {
@@ -1316,6 +1365,130 @@ h1 {
     }
 }
 
+/* ── All Clear Dashboard ───────────────────────── */
+.all-clear-view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+}
+
+.all-clear-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text-color);
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.all-clear-title::before {
+    content: '✓';
+    color: var(--success-text);
+    font-size: 1.6rem;
+}
+
+.all-clear-subtitle {
+    font-size: 0.9rem;
+    color: var(--secondary-text);
+    margin-bottom: 2rem;
+    max-width: 260px;
+}
+
+.status-dashboard {
+    width: 100%;
+    max-width: 450px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 2.5rem;
+}
+
+.status-item {
+    background: var(--card-background);
+    padding: 0.25rem;
+    border-radius: 12px;
+    border: 1px solid var(--message-border);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    box-shadow: var(--shadow);
+    text-align: left;
+}
+
+.status-dot {
+    width: 7px;
+    height: 7px;
+    background-color: var(--success-text);
+    border-radius: 50%;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.status-dot::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    border-radius: 50%;
+    background-color: var(--success-text);
+    opacity: 0.3;
+    animation: status-pulse 2s infinite;
+}
+
+@keyframes status-pulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.4;
+    }
+
+    100% {
+        transform: scale(2.5);
+        opacity: 0;
+    }
+}
+
+.status-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.status-name {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.status-label {
+    font-size: 0.6rem;
+    color: var(--success-text);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.big-refresh-btn {
+    padding: 0.8rem 2.5rem;
+    background: var(--primary-color);
+    color: var(--card-background);
+    border: none;
+    border-radius: 100px;
+    font-weight: 750;
+    font-size: 0.9rem;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.big-refresh-btn:active {
+    transform: scale(0.96) translateY(2px);
+}
+
 /* ── Disabled States ───────────────────────── */
 .notify-disabled {
     opacity: 0.5;
@@ -1332,8 +1505,79 @@ h1 {
     opacity: 0.6;
 }
 
-input[type="checkbox"]:checked + .notify-bell-icon {
-    color: #f59e0b; /* Amber/Yellow for active notifications */
+input[type="checkbox"]:checked+.notify-bell-icon {
+    color: #f59e0b;
+    /* Amber/Yellow for active notifications */
     opacity: 1;
     transform: scale(1.1);
 }
+
+/* ── Empty State View ─────────────────────────── */
+.empty-state-view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3.5rem 1.5rem;
+    text-align: center;
+    background: var(--card-background);
+    border-radius: 16px;
+    border: 1px solid var(--message-border);
+    box-shadow: var(--shadow);
+    margin: 1rem 0;
+    transition: all 0.3s ease;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.empty-state-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text-color);
+    margin-bottom: 0.75rem;
+}
+
+.empty-state-subtitle {
+    font-size: 0.95rem;
+    color: var(--secondary-text);
+    margin-bottom: 2rem;
+    max-width: 320px;
+    line-height: 1.6;
+}
+
+.empty-state-cta-container {
+    display: flex;
+    justify-content: center;
+}
+
+.empty-state-cta {
+    padding: 0.9rem 2.5rem;
+    background: var(--primary-color);
+    color: var(--card-background);
+    border: none;
+    border-radius: 100px;
+    font-weight: 750;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.empty-state-cta:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.empty-state-cta:active {
+    transform: scale(0.96) translateY(0);
+}

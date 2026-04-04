@@ -168,17 +168,21 @@ async fn fetch_energa_alerts() -> Result<Vec<energa::EnergaShutdown>, String> {
 }
 
 #[command]
-async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
+async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Result<Vec<UnifiedAlert>, String> {
     let path = settings_path(&app)?;
     let settings = load_settings_from_path(&path)?;
 
     let mut all_alerts: Vec<UnifiedAlert> = Vec::new();
     let mut errors: Vec<String> = Vec::new();
 
-    let enabled_sources = settings
+    let mut enabled_sources = settings
         .as_ref()
         .and_then(|s| s.enabled_sources.clone())
         .unwrap_or_default();
+
+    if let Some(requested) = sources {
+        enabled_sources.retain(|s| requested.contains(s));
+    }
 
     log::info!(
         "fetch_all_alerts: enabled_sources={:?}, addresses={}",
@@ -190,6 +194,10 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
     let mut tasks = Vec::new();
 
     if let Some(s) = settings {
+        if s.addresses.is_empty() {
+            log::info!("fetch_all_alerts: No addresses found, skipping fetch.");
+            return Ok(all_alerts);
+        }
         let s = Arc::new(s);
 
         // --- Tauron (Parallel per address) ---
@@ -208,6 +216,11 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
                                 .map(|item| {
                                     let mut alert = item.to_unified();
                                     alert.address_index = Some(idx);
+                                    let city_prefix = format!("Miejscowość: {}", addr.city_name);
+                                    alert.description = Some(match alert.description {
+                                        Some(d) if !d.is_empty() => format!("{}. {}", city_prefix, d),
+                                        _ => city_prefix,
+                                    });
                                     alert.is_local = Some(tauron::matches_address(
                                         &item.Message,
                                         &addr.city_name,
@@ -241,6 +254,7 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
                                     let mut alert = item.to_unified();
                                     alert.address_index = Some(idx);
                                     alert.is_local = Some(true);
+                                    alert.description = Some(format!("Miejscowość: {}", addr.city_name));
                                     alerts.push(alert);
                                     matched = true;
                                 }
@@ -248,6 +262,7 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
                             if !matched {
                                 let mut alert = item.to_unified();
                                 alert.is_local = Some(false);
+                                alert.description = Some("Miejscowość: Wrocław".to_string());
                                 alerts.push(alert);
                             }
                         }
@@ -295,15 +310,25 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
                                                 let mut alert = a.clone();
                                                 alert.address_index = Some(*idx);
                                                 alert.is_local = Some(true);
+                                                let city_prefix = format!("Miejscowość: {}", addr.city_name);
+                                                alert.description = Some(match alert.description {
+                                                    Some(d) if !d.is_empty() => format!("{}. {}", city_prefix, d),
+                                                    _ => city_prefix,
+                                                });
                                                 fortum_alerts.push(alert);
                                                 matched_any = true;
                                             }
                                         }
                                         if !matched_any {
-                                            if let Some((idx, _)) = addrs.first() {
+                                            if let Some((idx, addr)) = addrs.first() {
                                                 let mut alert = a.clone();
                                                 alert.address_index = Some(*idx);
                                                 alert.is_local = Some(false);
+                                                let city_prefix = format!("Miejscowość: {}", addr.city_name);
+                                                alert.description = Some(match alert.description {
+                                                    Some(d) if !d.is_empty() => format!("{}. {}", city_prefix, d),
+                                                    _ => city_prefix,
+                                                });
                                                 fortum_alerts.push(alert);
                                             }
                                         }
@@ -343,6 +368,7 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
                                     let mut alert = sd.to_unified();
                                     alert.address_index = Some(idx);
                                     alert.is_local = Some(true);
+                                    alert.description = Some(format!("Miejscowość: {}", addr.city_name));
                                     alert
                                 })
                                 .collect();
@@ -391,6 +417,7 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
                                         let mut alert = item.to_unified();
                                         alert.address_index = Some(idx);
                                         alert.is_local = Some(true);
+                                        alert.description = Some(format!("Miejscowość: {}", addr.city_name));
                                         alert
                                     })
                                     .collect();
@@ -422,6 +449,7 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
                                     let mut alert = po.to_unified();
                                     alert.address_index = Some(idx);
                                     alert.is_local = Some(true);
+                                    alert.description = Some(format!("Miejscowość: {}", addr.city_name));
                                     alert
                                 })
                                 .collect();
@@ -450,6 +478,7 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
                                     let mut alert = outage.to_unified();
                                     alert.address_index = Some(idx);
                                     alert.is_local = Some(true);
+                                    alert.description = Some(format!("Miejscowość: {}", addr.city_name));
                                     alerts.push(alert);
                                     matched = true;
                                 }
@@ -457,6 +486,7 @@ async fn fetch_all_alerts(app: AppHandle) -> Result<Vec<UnifiedAlert>, String> {
                             if !matched {
                                 let mut alert = outage.to_unified();
                                 alert.is_local = Some(false);
+                                alert.description = Some("Miejscowość: Warszawa".to_string());
                                 alerts.push(alert);
                             }
                         }

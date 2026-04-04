@@ -54,6 +54,7 @@ let lastAlerts = [];
 let lastFetchDate = null;
 let selectedAddressIndex = -1; // -1 means "all addresses"
 let isFetching = false;
+let fetchingSources = new Set();
 let isSearchingCities = false;
 let isSearchingStreets = false;
 
@@ -109,8 +110,13 @@ function initSettings() {
         cityHasNoStreets = false;
         editingAddressIndex = null;
         document.getElementById('street-input').classList.remove('grayed-out');
+        document.getElementById('city-input').parentElement.classList.remove('valid');
+        document.getElementById('street-input').parentElement.classList.remove('valid');
         hideSuggestions('city-suggestions');
         hideSuggestions('street-suggestions');
+        
+        // Scroll to form
+        document.getElementById('address-form').scrollIntoView({ behavior: 'smooth' });
     });
 
     document.getElementById('cancel-address-btn').addEventListener('click', function () {
@@ -134,25 +140,32 @@ function initSettings() {
         selectedStreetName2 = null;
         cityHasNoStreets = false;
         document.getElementById('street-input').classList.remove('grayed-out');
+        document.getElementById('city-input').parentElement.classList.remove('valid');
+        document.getElementById('street-input').parentElement.classList.remove('valid');
         hideSuggestions('city-suggestions');
         hideSuggestions('street-suggestions');
     });
 
     const cityInput = document.getElementById('city-input');
     cityInput.addEventListener('input', () => {
-        selectedCityId = null;
-        selectedCityName = '';
-        selectedVoivodeship = '';
-        selectedDistrict = '';
-        selectedCommune = '';
-        selectedStreetId = null;
-        selectedStreetName = '';
-        selectedStreetName1 = '';
-        selectedStreetName2 = null;
-        document.getElementById('street-input').value = '';
-        document.getElementById('street-input').disabled = true;
-        cityHasNoStreets = false;
-        hideSuggestions('street-suggestions');
+        // Clear selection if input changes
+        if (selectedCityId) {
+            selectedCityId = null;
+            selectedCityName = '';
+            selectedVoivodeship = '';
+            selectedDistrict = '';
+            selectedCommune = '';
+            selectedStreetId = null;
+            selectedStreetName = '';
+            selectedStreetName1 = '';
+            selectedStreetName2 = null;
+            document.getElementById('street-input').value = '';
+            document.getElementById('street-input').disabled = true;
+            document.getElementById('street-input').parentElement.classList.remove('valid');
+            cityInput.parentElement.classList.remove('valid');
+            cityHasNoStreets = false;
+            hideSuggestions('street-suggestions');
+        }
 
         clearTimeout(cityDebounceTimer);
         const query = cityInput.value.trim();
@@ -171,10 +184,14 @@ function initSettings() {
 
     const streetInput = document.getElementById('street-input');
     streetInput.addEventListener('input', () => {
-        selectedStreetId = null;
-        selectedStreetName = '';
-        selectedStreetName1 = '';
-        selectedStreetName2 = null;
+        // Clear selection if input changes
+        if (selectedStreetId && !cityHasNoStreets) {
+            selectedStreetId = null;
+            selectedStreetName = '';
+            selectedStreetName1 = '';
+            selectedStreetName2 = null;
+            streetInput.parentElement.classList.remove('valid');
+        }
 
         clearTimeout(streetDebounceTimer);
         const query = streetInput.value.trim();
@@ -293,7 +310,13 @@ function initSettings() {
             currentSettings.enabledSources = enabledSources;
             updateNotifyStatus(pair.source, pair.notify);
             await autoSaveSettings();
-            fetchOutages();
+            if (sourceCheckbox.checked) {
+                const srcName = pair.source.split('-')[1];
+                fetchOutages(srcName);
+            } else {
+                const container = document.getElementById('outages-container');
+                renderAlerts(lastAlerts || [], container, currentSettings, selectedAddressIndex);
+            }
         });
     });
 
@@ -431,6 +454,13 @@ window.editAddress = function (idx) {
     selectedStreetName1 = addr.streetName1 || '';
     selectedStreetName2 = addr.streetName2 || null;
 
+    if (selectedCityId) {
+        document.getElementById('city-input').parentElement.classList.add('valid');
+    }
+    if (selectedStreetId !== null) {
+        document.getElementById('street-input').parentElement.classList.add('valid');
+    }
+
     // Check if city has streets
     if (addr.streetId === 0) {
         cityHasNoStreets = true;
@@ -499,49 +529,74 @@ function renderCitySuggestions(cities) {
 
     container.querySelectorAll('.suggestion-item[data-city-id]').forEach(el => {
         el.addEventListener('click', () => {
-            selectedCityId = parseInt(el.dataset.cityId, 10);
-            selectedCityName = el.dataset.cityName;
-            selectedVoivodeship = el.dataset.voivodeship;
-            selectedDistrict = el.dataset.district;
-            selectedCommune = el.dataset.commune;
-            console.log('City selected:', selectedCityName, 'ID:', selectedCityId, 'Units:', selectedVoivodeship, selectedDistrict, selectedCommune);
-            document.getElementById('city-input').value = selectedCityName;
-            hideSuggestions('city-suggestions');
-
-            selectedStreetId = null;
-            selectedStreetName = '';
-            cityHasNoStreets = false;
-
-            // Check if city has streets
-            window.__TAURI__.core.invoke('teryt_city_has_streets', { cityId: selectedCityId })
-                .then(hasStreets => {
-                    cityHasNoStreets = !hasStreets;
-                    const streetInput = document.getElementById('street-input');
-                    if (cityHasNoStreets) {
-                        streetInput.value = t('no_streets');
-                        streetInput.disabled = true;
-                        streetInput.classList.add('grayed-out');
-                        selectedStreetId = 0; // special ID for no streets
-                        selectedStreetName = '';
-                        selectedStreetName1 = '';
-                        selectedStreetName2 = null;
-                        document.getElementById('house-input').focus();
-                    } else {
-                        streetInput.value = '';
-                        streetInput.disabled = false;
-                        streetInput.classList.remove('grayed-out');
-                        streetInput.focus();
-                    }
-                })
-                .catch(err => {
-                    console.error('Error checking city streets:', err);
-                    document.getElementById('street-input').disabled = false;
-                    document.getElementById('street-input').focus();
-                });
+            const cityData = {
+                city_id: parseInt(el.dataset.cityId, 10),
+                city: el.dataset.cityName,
+                voivodeship: el.dataset.voivodeship,
+                district: el.dataset.district,
+                commune: el.dataset.commune
+            };
+            selectCity(cityData);
         });
     });
 
     container.classList.remove('hidden');
+
+    const cityQueryValue = document.getElementById('city-input').value.trim().toLowerCase();
+    const exactMatches = cities.filter(c => c.city.toLowerCase() === cityQueryValue);
+    
+    // Only auto-select if there is exactly ONE exact name match.
+    // If there are multiple cities with the same name, the user must choose manually.
+    if (exactMatches.length === 1 && !selectedCityId) {
+        selectCity(exactMatches[0]);
+    }
+}
+
+function selectCity(c) {
+    selectedCityId = c.city_id;
+    selectedCityName = c.city;
+    selectedVoivodeship = c.voivodeship;
+    selectedDistrict = c.district;
+    selectedCommune = c.commune;
+    
+    const cityInput = document.getElementById('city-input');
+    cityInput.value = selectedCityName;
+    cityInput.parentElement.classList.add('valid');
+    cityInput.parentElement.classList.remove('invalid');
+    hideSuggestions('city-suggestions');
+
+    selectedStreetId = null;
+    selectedStreetName = '';
+    cityHasNoStreets = false;
+    document.getElementById('street-input').parentElement.classList.remove('valid');
+
+    // Check if city has streets
+    window.__TAURI__.core.invoke('teryt_city_has_streets', { cityId: selectedCityId })
+        .then(hasStreets => {
+            cityHasNoStreets = !hasStreets;
+            const streetInput = document.getElementById('street-input');
+            if (cityHasNoStreets) {
+                streetInput.value = typeof t !== 'undefined' ? t('no_streets') : 'No streets';
+                streetInput.disabled = true;
+                streetInput.classList.add('grayed-out');
+                selectedStreetId = 0; // special ID for no streets
+                selectedStreetName = '';
+                selectedStreetName1 = '';
+                selectedStreetName2 = null;
+                streetInput.parentElement.classList.add('valid');
+                document.getElementById('house-input').focus();
+            } else {
+                streetInput.value = '';
+                streetInput.disabled = false;
+                streetInput.classList.remove('grayed-out');
+                streetInput.focus();
+            }
+        })
+        .catch(err => {
+            console.error('Error checking city streets:', err);
+            document.getElementById('street-input').disabled = false;
+            document.getElementById('street-input').focus();
+        });
 }
 
 async function searchStreets(query) {
@@ -584,16 +639,39 @@ function renderStreetSuggestions(streets) {
 
     container.querySelectorAll('.suggestion-item[data-street-id]').forEach(el => {
         el.addEventListener('click', () => {
-            selectedStreetId = parseInt(el.dataset.streetId, 10);
-            selectedStreetName = el.dataset.streetName;
-            selectedStreetName1 = el.dataset.streetName1;
-            selectedStreetName2 = el.dataset.streetName2 || null;
-            document.getElementById('street-input').value = selectedStreetName;
-            hideSuggestions('street-suggestions');
+            const streetData = {
+                street_id: parseInt(el.dataset.streetId, 10),
+                full_street_name: el.dataset.streetName,
+                street_name_1: el.dataset.streetName1,
+                street_name_2: el.dataset.streetName2 || null
+            };
+            selectStreet(streetData);
         });
     });
 
     container.classList.remove('hidden');
+
+    const streetQueryValue = document.getElementById('street-input').value.trim().toLowerCase();
+    const exactMatches = streets.filter(s => s.full_street_name.toLowerCase() === streetQueryValue);
+
+    // Only auto-select if there is exactly ONE exact name match.
+    if (exactMatches.length === 1 && !selectedStreetId) {
+        selectStreet(exactMatches[0]);
+    }
+}
+
+function selectStreet(s) {
+    selectedStreetId = s.street_id;
+    selectedStreetName = s.full_street_name;
+    selectedStreetName1 = s.street_name_1;
+    selectedStreetName2 = s.street_name_2;
+    
+    const streetInput = document.getElementById('street-input');
+    streetInput.value = selectedStreetName;
+    streetInput.parentElement.classList.add('valid');
+    streetInput.parentElement.classList.remove('invalid');
+    hideSuggestions('street-suggestions');
+    document.getElementById('house-input').focus();
 }
 
 function hideSuggestions(id) {
@@ -613,6 +691,7 @@ function escapeHtml(str) {
 
 async function loadSettingsAndFetch() {
     try {
+        const container = document.getElementById('outages-container');
         const settings = await window.__TAURI__.core.invoke('load_settings');
         if (settings) {
             currentSettings = settings;
@@ -691,11 +770,9 @@ async function loadSettingsAndFetch() {
             if (settings.addresses && settings.addresses.length > 0) {
                 fetchOutages();
             } else {
-                const container = document.getElementById('outages-container');
-                container.innerHTML = `<div class="no-outages">${typeof t !== 'undefined' ? t('setup_prompt') : 'Tap ⚙️ to configure your location.'}</div>`;
+                renderAlerts([], container, currentSettings, selectedAddressIndex);
                 document.getElementById('last-updated').textContent = typeof t !== 'undefined' ? t('not_configured') : 'Not configured';
                 document.getElementById('settings-panel').classList.remove('hidden');
-                applyTheme('system');
             }
         } else {
             initLanguage('system');
@@ -732,11 +809,9 @@ async function loadSettingsAndFetch() {
 
             updateAddressFilter();
             renderAddressesList();
-            const container = document.getElementById('outages-container');
-            container.innerHTML = `<div class="no-outages">${typeof t !== 'undefined' ? t('setup_prompt') : 'Tap ⚙️ to configure your location.'}</div>`;
+            renderAlerts([], container, currentSettings, selectedAddressIndex);
             document.getElementById('last-updated').textContent = typeof t !== 'undefined' ? t('not_configured') : 'Not configured';
             document.getElementById('settings-panel').classList.remove('hidden');
-            applyTheme('system');
         }
     } catch (error) {
         console.error('Error loading settings:', error);
@@ -749,9 +824,21 @@ async function saveNewAddress() {
     const houseNo = document.getElementById('house-input').value.trim() || '1';
     const status = document.getElementById('settings-status');
 
+    const cityField = document.getElementById('city-input').parentElement;
+    const streetField = document.getElementById('street-input').parentElement;
+
     if (!selectedCityId || (!selectedStreetId && !cityHasNoStreets)) {
+        if (!selectedCityId) cityField.classList.add('invalid');
+        if (!selectedStreetId && !cityHasNoStreets) streetField.classList.add('invalid');
+
         status.textContent = typeof t !== 'undefined' ? t('err_fields_required') : '⚠️ Please select a city and street from the lists.';
         status.className = 'settings-status error';
+        
+        // Remove invalid class after animation
+        setTimeout(() => {
+            cityField.classList.remove('invalid');
+            streetField.classList.remove('invalid');
+        }, 1000);
         return;
     }
 
@@ -884,21 +971,41 @@ function initPullToRefresh() {
 
 // ── Alerts ─────────────────────────────────────────────────
 
-async function fetchOutages() {
-    if (isFetching) return;
-    isFetching = true;
+async function fetchOutages(specificSource = null) {
+    if (specificSource) {
+        if (fetchingSources.has(specificSource)) return;
+        fetchingSources.add(specificSource);
+    } else {
+        if (isFetching) return;
+        isFetching = true;
+    }
 
     const container = document.getElementById('outages-container');
     try {
-        const alerts = await window.__TAURI__.core.invoke('fetch_all_alerts');
-        lastAlerts = alerts;
+        const invokeArgs = specificSource ? { sources: [specificSource] } : { sources: null };
+        const newAlerts = await window.__TAURI__.core.invoke('fetch_all_alerts', invokeArgs);
+
+        if (specificSource) {
+            // Merge new alerts for this source into lastAlerts
+            lastAlerts = (lastAlerts || []).filter(a => a.source !== specificSource).concat(newAlerts);
+        } else {
+            lastAlerts = newAlerts;
+        }
+
         updateLastUpdated(new Date());
-        renderAlerts(alerts, container, currentSettings, selectedAddressIndex);
+        renderAlerts(lastAlerts || [], container, currentSettings, selectedAddressIndex);
     } catch (error) {
         console.error('Error fetching data:', error);
-        container.innerHTML = `<div class="error">${typeof t !== 'undefined' ? t('err_load_failed') : 'Failed to load alert data. Error: '}${error}</div>`;
+        // Only show full error message on full fetch
+        if (!specificSource) {
+            container.innerHTML = `<div class="error">${typeof t !== 'undefined' ? t('err_load_failed') : 'Failed to load alert data. Error: '}${error}</div>`;
+        }
     } finally {
-        isFetching = false;
+        if (specificSource) {
+            fetchingSources.delete(specificSource);
+        } else {
+            isFetching = false;
+        }
     }
 }
 
@@ -1027,6 +1134,50 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
 
     const addresses = (settings && settings.addresses) ? settings.addresses : [];
 
+    if (addresses.length === 0) {
+        const title = typeof t !== 'undefined' ? t('empty_state_title') : 'Welcome to Awaria';
+        const subtitle = typeof t !== 'undefined' ? t('empty_state_subtitle') : 'Configure your location to see outages.';
+        const cta = typeof t !== 'undefined' ? t('empty_state_cta') : 'Add Address';
+
+        container.innerHTML = `
+            <div class="empty-state-view">
+                <div class="empty-state-icon">📍</div>
+                <div class="empty-state-title">${escapeHtml(title)}</div>
+                <div class="empty-state-subtitle">${escapeHtml(subtitle)}</div>
+                <div class="empty-state-cta-container">
+                    <button class="empty-state-cta" id="btn-empty-state-cta">
+                        ${escapeHtml(cta)}
+                    </button>
+                </div>
+            </div>
+        `;
+
+        const ctaBtn = document.getElementById('btn-empty-state-cta');
+        if (ctaBtn) {
+            ctaBtn.addEventListener('click', () => {
+                const panel = document.getElementById('settings-panel');
+                panel.classList.remove('hidden');
+                const addBtn = document.getElementById('add-address-btn');
+                if (addBtn) addBtn.click();
+            });
+        }
+        return;
+    }
+
+    const isWarszawa = (addr) => {
+        if (!addr) return false;
+        const city = (addr.cityName || '').toLowerCase();
+        return city === 'warszawa' || city === 'warsaw' || addr.cityId === 918123;
+    };
+    const isWroclaw = (addr) => {
+        if (!addr) return false;
+        const city = (addr.cityName || '').toLowerCase();
+        return city === 'wrocław' || city === 'wroclaw' || addr.cityId === 969400;
+    };
+
+    const hasAnyWarszawa = addresses.some(isWarszawa);
+    const hasAnyWroclaw = addresses.some(isWroclaw);
+
     let localTauron = [], otherTauron = [];
     let localWater = [], otherWater = [];
     let localFortum = [], otherFortum = [];
@@ -1051,7 +1202,7 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
                 const addr = addresses[selectedAddrIdx];
                 if (addr && matchesStreetName(item, addr)) {
                     localWater.push(item);
-                } else {
+                } else if (isWroclaw(addr)) {
                     otherWater.push(item);
                 }
             } else if (item.source === 'fortum') {
@@ -1080,9 +1231,10 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
                     otherPge.push(item);
                 }
             } else if (item.source === 'stoen') {
+                const addr = addresses[selectedAddrIdx];
                 if (item.addressIndex === selectedAddrIdx && item.isLocal === true) {
                     localStoen.push(item);
-                } else {
+                } else if (isWarszawa(addr)) {
                     otherStoen.push(item);
                 }
             }
@@ -1100,7 +1252,7 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
                 const isLocal = addresses.some((_, idx) => matchesAddress(item, addresses, idx));
                 if (isLocal) {
                     localWater.push(item);
-                } else {
+                } else if (hasAnyWroclaw) {
                     otherWater.push(item);
                 }
             } else if (item.source === 'fortum') {
@@ -1135,7 +1287,7 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
                 const isLocal = addresses.some((_, idx) => matchesAddress(item, addresses, idx));
                 if (isLocal) {
                     localStoen.push(item);
-                } else {
+                } else if (hasAnyWarszawa) {
                     otherStoen.push(item);
                 }
             }
@@ -1156,9 +1308,42 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
 
     let html = '';
     if (!hasAnyAlerts) {
-        const lblYourLoc = typeof t !== 'undefined' ? t('lbl_your_location') : 'Your location';
-        const msgNoLoc = typeof t !== 'undefined' ? t('msg_no_outages_local') : 'No planned outages for your location.';
-        container.innerHTML = `<div class="section-label">${escapeHtml(lblYourLoc)}</div><div class="no-outages">${escapeHtml(msgNoLoc)}</div>`;
+        const title = typeof t !== 'undefined' ? t('all_clear_title') : 'Everything looks good!';
+        const subtitle = typeof t !== 'undefined' ? t('all_clear_subtitle') : 'No outages detected.';
+        const providersLbl = typeof t !== 'undefined' ? t('monitored_providers') : 'Monitored Providers';
+        const operationalLbl = typeof t !== 'undefined' ? t('status_operational') : 'Operational';
+        const refreshLbl = typeof t !== 'undefined' ? t('refresh_now') : 'Refresh Now';
+
+        const statusItems = enabledSources.map(src => {
+            const name = typeof t !== 'undefined' ? t(`source_${src}_short`) : src;
+            return `
+                <div class="status-item">
+                    <div class="status-dot"></div>
+                    <div class="status-info">
+                        <span class="status-name">${escapeHtml(name)}</span>
+                        <span class="status-label">${escapeHtml(operationalLbl)}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = `
+            <div class="all-clear-view">
+                <div class="all-clear-title">${escapeHtml(title)}</div>
+                <div class="all-clear-subtitle">${escapeHtml(subtitle)}</div>
+                
+                <div class="section-label" style="width: 100%; max-width: 450px; margin-bottom: 1rem; text-align: left;">
+                    ${escapeHtml(providersLbl)}
+                </div>
+                <div class="status-dashboard">
+                    ${statusItems}
+                </div>
+
+                <button class="big-refresh-btn" onclick="fetchOutages()" id="btn-dashboard-refresh">
+                    ${escapeHtml(refreshLbl)}
+                </button>
+            </div>
+        `;
         return;
     }
 
