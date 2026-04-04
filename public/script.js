@@ -391,19 +391,38 @@ function renderAddressesList() {
     }
 
     list.innerHTML = currentSettings.addresses.map((addr, idx) => `
-        <div class="address-item">
+        <div class="address-item ${addr.isActive === false ? 'disabled' : ''}">
+            <div class="checkbox-pair mini" style="margin-right: 0.75rem; margin-top: 2px;">
+                <input type="checkbox" ${addr.isActive !== false ? 'checked' : ''} onchange="toggleAddressActive(${idx})" title="${addr.isActive === false ? (typeof t !== 'undefined' ? t('lbl_address_disabled') : 'Disabled') : (typeof t !== 'undefined' ? t('lbl_address_active') : 'Active')}">
+            </div>
             <div class="address-info">
-                <div class="address-name">${addr.name || 'Address ' + (idx + 1)}</div>
+                <div class="address-name">${addr.name || (typeof t !== 'undefined' ? t('address_name') + ' ' + (idx + 1) : 'Address ' + (idx + 1))}</div>
                 <div class="address-detail">${addr.streetName} ${addr.houseNo}, ${addr.cityName}</div>
             </div>
             <div class="address-actions">
-                ${idx === currentSettings.primaryAddressIndex ? '<span class="primary-badge">⭐</span>' : `<button class="icon-btn" onclick="setPrimaryAddress(${idx})" title="Set as primary">⭐</button>`}
+                ${idx === currentSettings.primaryAddressIndex ? '<span class="primary-badge" title="Primary">⭐</span>' : `<button class="icon-btn" onclick="setPrimaryAddress(${idx})" title="Set as primary">⭐</button>`}
                 <button class="icon-btn edit-btn" onclick="editAddress(${idx})" title="Edit">✏️</button>
                 <button class="icon-btn delete-btn" onclick="removeAddress(${idx})" title="Remove">🗑️</button>
             </div>
         </div>
     `).join('');
 }
+
+window.toggleAddressActive = async function (idx) {
+    if (!currentSettings || !currentSettings.addresses[idx]) return;
+    const addr = currentSettings.addresses[idx];
+    addr.isActive = !addr.isActive;
+
+    try {
+        await window.__TAURI__.core.invoke('save_settings', { settings: currentSettings });
+        renderAddressesList();
+        fetchOutages();
+    } catch (error) {
+        console.error('Error toggling address status:', error);
+        addr.isActive = !addr.isActive; // revert on error
+        renderAddressesList();
+    }
+};
 
 window.setPrimaryAddress = async function (idx) {
     try {
@@ -860,7 +879,8 @@ async function saveNewAddress() {
             streetName2: selectedStreetName2,
             houseNo,
             cityId: selectedCityId,
-            streetId: selectedStreetId
+            streetId: selectedStreetId,
+            isActive: editingAddressIndex !== null ? (currentSettings.addresses[editingAddressIndex].isActive !== false) : true
         };
 
         if (editingAddressIndex !== null) {
@@ -1133,10 +1153,11 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
     });
 
     const addresses = (settings && settings.addresses) ? settings.addresses : [];
+    const hasAnyActiveAddress = addresses.some(a => a.isActive !== false);
 
     if (addresses.length === 0) {
         const title = typeof t !== 'undefined' ? t('empty_state_title') : 'Welcome to Awaria';
-        const subtitle = typeof t !== 'undefined' ? t('empty_state_subtitle') : 'Configure your location to see outages.';
+        const subtitle = typeof t !== 'undefined' ? t('empty_state_subtitle') : 'Start by adding your first location to monitor for power, water, and heat outages.';
         const cta = typeof t !== 'undefined' ? t('empty_state_cta') : 'Add Address';
 
         container.innerHTML = `
@@ -1159,6 +1180,69 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
                 panel.classList.remove('hidden');
                 const addBtn = document.getElementById('add-address-btn');
                 if (addBtn) addBtn.click();
+            });
+        }
+        return;
+    } else if (!hasAnyActiveAddress) {
+        const title = typeof t !== 'undefined' ? t('disabled_state_title') : 'Monitoring Paused';
+        const subtitle = typeof t !== 'undefined' ? t('disabled_state_subtitle') : 'All your saved locations are currently disabled. Enable them in settings to see outages.';
+        const cta = typeof t !== 'undefined' ? t('disabled_state_cta') : 'Open Settings';
+
+        container.innerHTML = `
+            <div class="empty-state-view">
+                <div class="empty-state-icon">⏸️</div>
+                <div class="empty-state-title">${escapeHtml(title)}</div>
+                <div class="empty-state-subtitle">${escapeHtml(subtitle)}</div>
+                <div class="empty-state-cta-container">
+                    <button class="empty-state-cta" id="btn-disabled-state-cta">
+                        ${escapeHtml(cta)}
+                    </button>
+                </div>
+            </div>
+        `;
+
+        const ctaBtn = document.getElementById('btn-disabled-state-cta');
+        if (ctaBtn) {
+            ctaBtn.addEventListener('click', () => {
+                const panel = document.getElementById('settings-panel');
+                panel.classList.remove('hidden');
+                const section = document.getElementById('location-settings-section');
+                if (section) {
+                    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        }
+        return;
+    } else if (enabledSources.length === 0) {
+        const title = typeof t !== 'undefined' ? t('sources_disabled_state_title') : 'Alerts Disabled';
+        const subtitle = typeof t !== 'undefined' ? t('sources_disabled_state_subtitle') : 'No alert sources are enabled. Enable them in settings to see outages.';
+        const cta = typeof t !== 'undefined' ? t('disabled_state_cta') : 'Open Settings';
+
+        container.innerHTML = `
+            <div class="empty-state-view">
+                <div class="empty-state-icon">🔕</div>
+                <div class="empty-state-title">${escapeHtml(title)}</div>
+                <div class="empty-state-subtitle">${escapeHtml(subtitle)}</div>
+                <div class="empty-state-cta-container">
+                    <button class="empty-state-cta" id="btn-sources-disabled-cta">
+                        ${escapeHtml(cta)}
+                    </button>
+                </div>
+            </div>
+        `;
+
+        const ctaBtn = document.getElementById('btn-sources-disabled-cta');
+        if (ctaBtn) {
+            ctaBtn.addEventListener('click', () => {
+                const panel = document.getElementById('settings-panel');
+                panel.classList.remove('hidden');
+                // Target the "Alert Sources" title
+                const sourcesTitle = [...panel.querySelectorAll('.settings-title')].find(el => el.getAttribute('data-i18n') === 'settings_sources');
+                if (sourcesTitle) {
+                    sourcesTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                    panel.scrollTo({ top: 0, behavior: 'smooth' });
+                }
             });
         }
         return;

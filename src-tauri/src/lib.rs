@@ -171,6 +171,7 @@ async fn fetch_energa_alerts() -> Result<Vec<energa::EnergaShutdown>, String> {
 async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Result<Vec<UnifiedAlert>, String> {
     let path = settings_path(&app)?;
     let settings = load_settings_from_path(&path)?;
+    let settings_orig = settings.clone();
 
     let mut all_alerts: Vec<UnifiedAlert> = Vec::new();
     let mut errors: Vec<String> = Vec::new();
@@ -194,15 +195,34 @@ async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Resul
     let mut tasks = Vec::new();
 
     if let Some(s) = settings {
-        if s.addresses.is_empty() {
-            log::info!("fetch_all_alerts: No addresses found, skipping fetch.");
+        if s.addresses.is_empty() || s.addresses.iter().all(|a| !a.is_active) {
+            log::info!("fetch_all_alerts: No active addresses found, skipping fetch.");
             return Ok(all_alerts);
         }
         let s = Arc::new(s);
 
+        let has_active_wroclaw = s.addresses.iter().any(|a| a.is_active && is_wroclaw(a));
+        let has_active_warszawa = s.addresses.iter().any(|a| a.is_active && is_warszawa(a));
+
+        let active_voivodeships: Vec<String> = s.addresses.iter()
+            .filter(|a| a.is_active)
+            .map(|a| a.voivodeship.to_lowercase())
+            .collect();
+
+        let has_pge_region = active_voivodeships.iter().any(|v| 
+            v.contains("lubelskie") || v.contains("podlaskie") || v.contains("łódzkie") || 
+            v.contains("świętokrzyskie") || v.contains("mazowieckie") || v.contains("małopolskie") || 
+            v.contains("podkarpackie")
+        );
+
+        let has_energa_region = active_voivodeships.iter().any(|v| 
+            v.contains("pomorskie") || v.contains("warmińsko") || v.contains("zachodniopomorskie") || 
+            v.contains("wielkopolskie") || v.contains("kujawsko") || v.contains("mazowieckie")
+        );
+
         // --- Tauron (Parallel per address) ---
         if enabled_sources.contains(&"tauron".to_string()) {
-            for (idx, addr) in s.addresses.iter().enumerate() {
+            for (idx, addr) in s.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
                 let addr = addr.clone();
                 let sem = semaphore.clone();
                 tasks.push(tokio::spawn(async move {
@@ -239,7 +259,7 @@ async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Resul
         }
 
         // --- MPWiK Water ---
-        if enabled_sources.contains(&"water".to_string()) {
+        if enabled_sources.contains(&"water".to_string()) && has_active_wroclaw {
             let s_water = s.clone();
             let sem = semaphore.clone();
             tasks.push(tokio::spawn(async move {
@@ -249,7 +269,7 @@ async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Resul
                         let mut alerts = Vec::new();
                         for item in items {
                             let mut matched = false;
-                            for (idx, addr) in s_water.addresses.iter().enumerate() {
+                            for (idx, addr) in s_water.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
                                 if mpwik::matches_address(&item.content, addr) {
                                     let mut alert = item.to_unified();
                                     alert.address_index = Some(idx);
@@ -282,7 +302,7 @@ async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Resul
                 match retry(|| fortum::fetch_fortum_cities(), 3).await {
                     Ok(cities) => {
                         let mut city_map = std::collections::HashMap::new();
-                        for (idx, addr) in s_fortum.addresses.iter().enumerate() {
+                        for (idx, addr) in s_fortum.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
                             if let Some(fc) = cities.iter().find(|c| {
                                 c.city_name.to_lowercase() == addr.city_name.to_lowercase()
                             }) {
@@ -345,7 +365,7 @@ async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Resul
         }
 
         // --- Energa ---
-        if enabled_sources.contains(&"energa".to_string()) {
+        if enabled_sources.contains(&"energa".to_string()) && has_energa_region {
             let s_energa = s.clone();
             let sem = semaphore.clone();
             tasks.push(tokio::spawn(async move {
@@ -353,7 +373,7 @@ async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Resul
                 match retry(|| fetch_energa_alerts(), 3).await {
                     Ok(shutdowns) => {
                         let mut alerts = Vec::new();
-                        for (idx, addr) in s_energa.addresses.iter().enumerate() {
+                        for (idx, addr) in s_energa.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
                             let local_shutdowns: Vec<UnifiedAlert> = shutdowns
                                 .iter()
                                 .filter(|sd| {
@@ -388,7 +408,7 @@ async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Resul
             tasks.push(tokio::spawn(async move {
                 let _permit = sem.acquire().await.ok();
                 let mut target_regions = Vec::new();
-                for addr in &s_enea.addresses {
+                for addr in s_enea.addresses.iter().filter(|a| a.is_active) {
                     target_regions.extend(enea::get_enea_regions_for_district(&addr.district));
                 }
                 target_regions.sort();
@@ -402,7 +422,7 @@ async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Resul
                     Ok(client) => match retry(|| enea::fetch_all_enea_outages(&client, &target_regions), 3).await {
                         Ok(items) => {
                             let mut alerts = Vec::new();
-                            for (idx, addr) in s_enea.addresses.iter().enumerate() {
+                            for (idx, addr) in s_enea.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
                                 let local_items: Vec<UnifiedAlert> = items
                                     .iter()
                                     .filter(|item| {
@@ -433,7 +453,7 @@ async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Resul
         }
 
         // --- PGE ---
-        if enabled_sources.contains(&"pge".to_string()) {
+        if enabled_sources.contains(&"pge".to_string()) && has_pge_region {
             let s_pge = s.clone();
             let sem = semaphore.clone();
             tasks.push(tokio::spawn(async move {
@@ -441,7 +461,7 @@ async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Resul
                 match retry(|| pge::fetch_pge_outages(), 3).await {
                     Ok(outages) => {
                         let mut alerts = Vec::new();
-                        for (idx, addr) in s_pge.addresses.iter().enumerate() {
+                        for (idx, addr) in s_pge.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
                             let local_outages: Vec<UnifiedAlert> = outages
                                 .iter()
                                 .filter(|po| pge::matches_address(po, addr))
@@ -463,7 +483,7 @@ async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Resul
         }
 
         // --- Stoen ---
-        if enabled_sources.contains(&"stoen".to_string()) {
+        if enabled_sources.contains(&"stoen".to_string()) && has_active_warszawa {
             let s_stoen = s.clone();
             let sem = semaphore.clone();
             tasks.push(tokio::spawn(async move {
@@ -473,7 +493,7 @@ async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Resul
                         let mut alerts = Vec::new();
                         for outage in outages {
                             let mut matched = false;
-                            for (idx, addr) in s_stoen.addresses.iter().enumerate() {
+                            for (idx, addr) in s_stoen.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
                                 if stoen::matches_address(&outage, addr) {
                                     let mut alert = outage.to_unified();
                                     alert.address_index = Some(idx);
@@ -559,6 +579,38 @@ async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Resul
         return Err(errors.join("; "));
     }
 
+    // Final filter to ensure no alerts from disabled addresses/cities slip through
+    if let Some(ref s) = settings_orig {
+        all_alerts.retain(|alert| {
+            if let Some(idx) = alert.address_index {
+                if idx < s.addresses.len() {
+                    return s.addresses[idx].is_active;
+                }
+            }
+            
+            // For general city alerts
+            if alert.is_local == Some(false) {
+                if let Some(desc) = &alert.description {
+                    if desc.contains("Wrocław") {
+                        return s.addresses.iter().any(|a| a.is_active && is_wroclaw(a));
+                    }
+                    if desc.contains("Warszawa") {
+                        return s.addresses.iter().any(|a| a.is_active && is_warszawa(a));
+                    }
+                    // For other cities (dynamic check based on active addresses)
+                    for addr in s.addresses.iter().filter(|a| a.is_active) {
+                        if desc.contains(&addr.city_name) {
+                            return true;
+                        }
+                    }
+                    return false; // Skip if no active address in this city
+                }
+            }
+
+            true
+        });
+    }
+
     Ok(all_alerts)
 }
 
@@ -586,6 +638,16 @@ mod tests {
         let unified = kicin_items[0].to_unified();
         println!("Unified structure: {:?}", unified);
     }
+}
+
+fn is_wroclaw(addr: &AddressEntry) -> bool {
+    let name = addr.city_name.to_lowercase();
+    name == "wrocław" || name == "wroclaw" || addr.city_id == Some(969400)
+}
+
+fn is_warszawa(addr: &AddressEntry) -> bool {
+    let name = addr.city_name.to_lowercase();
+    name == "warszawa" || name == "warsaw" || addr.city_id == Some(918123)
 }
 
 #[command]

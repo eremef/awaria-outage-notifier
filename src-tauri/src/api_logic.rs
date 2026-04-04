@@ -86,6 +86,12 @@ pub struct AddressEntry {
     pub city_id: Option<u64>,
     #[serde(rename = "streetId", default)]
     pub street_id: Option<u64>,
+    #[serde(default = "default_true", rename = "isActive")]
+    pub is_active: bool,
+}
+
+fn default_true() -> bool {
+    true
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]

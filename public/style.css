@@ -526,10 +526,11 @@ h1 {
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--primary-color);
-    margin-bottom: 0.75rem;
+    margin-top: 0.75rem;
     border-bottom: 1px solid var(--message-border);
     padding-bottom: 0.4rem;
     padding-top: 0.4rem;
+    scroll-margin-top: calc(130px + var(--safe-area-inset-top));
 }
 
 .settings-field {
@@ -1064,6 +1065,20 @@ h1 {
     border-radius: 0.5rem;
 }
 
+.address-item.disabled {
+    opacity: 0.5;
+    filter: grayscale(0.5);
+    border-style: dashed;
+}
+
+.address-item.disabled .address-name {
+    color: var(--secondary-text);
+}
+
+.address-item.disabled .address-detail {
+    opacity: 0.7;
+}
+
 .address-info {
     flex: 1;
 }
@@ -1108,6 +1123,10 @@ h1 {
 
 .primary-badge {
     font-size: 1rem;
+}
+
+#location-settings-section {
+    scroll-margin-top: calc(130px + var(--safe-area-inset-top));
 }
 
 .no-addresses {
@@ -1207,8 +1226,19 @@ h1 {
     margin-top: 2px;
 }
 
-.settings-field {
-    position: relative;
+.settings-field.active-toggle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.active-toggle-row label {
+    margin-bottom: 0 !important;
 }
 
 /* ── Footer ───────────────────────────────── */
@@ -1536,8 +1566,15 @@ input[type="checkbox"]:checked+.notify-bell-icon {
 }
 
 @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
 }
 
 .empty-state-title {
@@ -1580,4 +1617,4 @@ input[type="checkbox"]:checked+.notify-bell-icon {
 
 .empty-state-cta:active {
     transform: scale(0.96) translateY(0);
-}
+}
