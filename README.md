@@ -14,13 +14,14 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
 
 ## Supported Sources
 
-- **⚡ Tauron (Power)**: Planned maintenance and emergency power outages.
-- **⚡ Energa (Power)**: Planned power outages (Northern Poland).
-- **⚡ Enea (Power)**: Planned maintenance (Western Poland).
-- **⚡ PGE (Power)**: Planned power outages (Eastern/Central Poland).
-- **⚡ Stoen (Power)**: Planned power outages (Warsaw area).
-- **🔥 Fortum (Heat)**: Planned and current heat/hot water outages.
-- **💧 MPWiK (Water)**: Water failures and maintenance work (currently Wrocław area).
+- **Power**
+    - **⚡ Tauron**: Planned maintenance and emergency power outages.
+    - **⚡ Energa**: Planned power outages (Northern Poland).
+    - **⚡ Enea**: Planned maintenance (Western Poland).
+    - **⚡ PGE**: Planned power outages (Eastern/Central Poland).
+    - **⚡ Stoen**: Planned power outages (Warsaw area).
+- **🔥 Heat - Fortum**: Planned and current heat/hot water outages.
+- **💧 Water - MPWiK**: Water failures and maintenance work (currently Wrocław area).
 
 ## Android app
 
