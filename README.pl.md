@@ -14,13 +14,14 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
 
 ## Wspierane Źródła
 
-- **⚡ Prąd (Tauron)**: Planowane konserwacje i awaryjne wyłączenia prądu.
-- **⚡ Prąd (Energa)**: Planowane wyłączenia prądu (Północna Polska).
-- **⚡ Prąd (Enea)**: Planowane konserwacje (Zachodnia Polska).
-- **⚡ Prąd (PGE)**: Planowane wyłączenia prądu (Wschodnia i Centralna Polska).
-- **⚡ Prąd (Stoen)**: Planowane wyłączenia prądu (Warszawa i okolice).
-- **🔥 Ciepło (Fortum)**: Planowane i bieżące wyłączenia ogrzewania oraz ciepłej wody.
-- **💧 Woda (MPWiK)**: Awarie wodociągowe i prace konserwacyjne (obecnie obszar Wrocławia).
+- **⚡ Prąd**
+    - **Tauron**: Planowane konserwacje i awaryjne wyłączenia prądu.
+    - **Energa**: Planowane wyłączenia prądu (Północna Polska).
+    - **Enea**: Planowane konserwacje (Zachodnia Polska).
+    - **PGE**: Planowane wyłączenia prądu (Wschodnia i Centralna Polska).
+    - **Stoen**: Planowane wyłączenia prądu (Warszawa i okolice).
+- **🔥 Ciepło - Fortum**: Planowane i bieżące wyłączenia ogrzewania oraz ciepłej wody.
+- **💧 Woda - MPWiK**: Awarie wodociągowe i prace konserwacyjne (obecnie obszar Wrocławia).
 
 ## Aplikacja Android
 
