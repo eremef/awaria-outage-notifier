@@ -456,26 +456,30 @@ function updateAddressFilter() {
     const allOpt = filter.querySelector('option[value="-1"]');
     const wasHidden = filter.classList.contains('hidden');
     filter.innerHTML = '';
-    filter.appendChild(allOpt);
+    if (allOpt) filter.appendChild(allOpt);
 
-    const addressCount = currentSettings && currentSettings.addresses ? currentSettings.addresses.length : 0;
+    const activeAddresses = (currentSettings && currentSettings.addresses) 
+        ? currentSettings.addresses.map((addr, idx) => ({ ...addr, originalIndex: idx })).filter(addr => addr.isActive !== false)
+        : [];
 
-    if (addressCount === 0) {
+    const activeCount = activeAddresses.length;
+
+    if (activeCount === 0) {
         filter.classList.add('hidden');
-    } else if (addressCount === 1) {
+    } else if (activeCount === 1) {
         filter.classList.add('hidden');
-        selectedAddressIndex = 0;
+        selectedAddressIndex = activeAddresses[0].originalIndex;
     } else {
         filter.classList.remove('hidden');
         if (wasHidden) {
             selectedAddressIndex = -1;
             filter.value = '-1';
         }
-        currentSettings.addresses.forEach((addr, idx) => {
+        activeAddresses.forEach((addr) => {
             const opt = document.createElement('option');
-            opt.value = idx;
+            opt.value = addr.originalIndex;
             opt.textContent = addr.name || `${addr.streetName} ${addr.houseNo}`;
-            if (idx === currentSettings.primaryAddressIndex) {
+            if (addr.originalIndex === currentSettings.primaryAddressIndex) {
                 opt.textContent += ' ⭐';
             }
             filter.appendChild(opt);
@@ -516,6 +520,7 @@ window.toggleAddressActive = async function (idx) {
     try {
         await window.__TAURI__.core.invoke('save_settings', { settings: currentSettings });
         renderAddressesList();
+        updateAddressFilter();
         fetchOutages();
     } catch (error) {
         console.error('Error toggling address status:', error);
@@ -1233,21 +1238,18 @@ function matchesStreetName(alert, addr) {
         if (wordMatch(compound)) return true;
     }
 
-    // Fallback: individual significant words (>= 3 chars)
-    const words1 = streetName1.split(/\s+/).filter(w => w.length >= 3);
-    if (words1.some(wordMatch)) return true;
+    // Secondary: match main streetName1 as a whole word
+    // (e.g. "Kościuszki" if address is "Tadeusza Kościuszki")
+    if (wordMatch(streetName1)) return true;
 
-    if (streetName2) {
-        const words2 = streetName2.split(/\s+/).filter(w => w.length >= 3);
-        if (words2.some(wordMatch)) return true;
-    }
+    return false;
 
     return false;
 }
 
 function matchesAddress(alert, addresses, addrIdx) {
     const addr = addresses[addrIdx];
-    if (!addr) return false;
+    if (!addr || addr.isActive === false) return false;
 
     if (alert.source === 'tauron' || alert.source === 'energa' || alert.source === 'enea' || alert.source === 'pge' || alert.source === 'stoen') {
         return alert.isLocal === true && alert.addressIndex === addrIdx;
@@ -1407,29 +1409,37 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
                     otherWater.push(item);
                 }
             } else if (item.source === 'fortum') {
-                const addr = addresses[selectedAddrIdx];
-                if (addr && matchesStreetName(item, addr)) {
-                    localFortum.push(item);
-                } else {
-                    otherFortum.push(item);
+                if (item.addressIndex === selectedAddrIdx) {
+                    const addr = addresses[selectedAddrIdx];
+                    if (addr && matchesStreetName(item, addr)) {
+                        localFortum.push(item);
+                    } else {
+                        otherFortum.push(item);
+                    }
                 }
             } else if (item.source === 'energa') {
-                if (item.addressIndex === selectedAddrIdx && item.isLocal === true) {
-                    localEnerga.push(item);
-                } else {
-                    otherEnerga.push(item);
+                if (item.addressIndex === selectedAddrIdx) {
+                    if (item.isLocal === true) {
+                        localEnerga.push(item);
+                    } else {
+                        otherEnerga.push(item);
+                    }
                 }
             } else if (item.source === 'enea') {
-                if (item.addressIndex === selectedAddrIdx && item.isLocal === true) {
-                    localEnea.push(item);
-                } else {
-                    otherEnea.push(item);
+                if (item.addressIndex === selectedAddrIdx) {
+                    if (item.isLocal === true) {
+                        localEnea.push(item);
+                    } else {
+                        otherEnea.push(item);
+                    }
                 }
             } else if (item.source === 'pge') {
-                if (item.addressIndex === selectedAddrIdx && item.isLocal === true) {
-                    localPge.push(item);
-                } else {
-                    otherPge.push(item);
+                if (item.addressIndex === selectedAddrIdx) {
+                    if (item.isLocal === true) {
+                        localPge.push(item);
+                    } else {
+                        otherPge.push(item);
+                    }
                 }
             } else if (item.source === 'stoen') {
                 const addr = addresses[selectedAddrIdx];
@@ -1443,49 +1453,49 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
     } else if (addresses.length > 0) {
         activeAlerts.forEach(item => {
             if (item.source === 'tauron') {
-                const isLocal = addresses.some((_, idx) => matchesAddress(item, addresses, idx));
+                const isLocal = addresses.some((addr, idx) => addr.isActive !== false && matchesAddress(item, addresses, idx));
                 if (isLocal) {
                     localTauron.push(item);
                 } else {
                     otherTauron.push(item);
                 }
             } else if (item.source === 'water') {
-                const isLocal = addresses.some((_, idx) => matchesAddress(item, addresses, idx));
+                const isLocal = addresses.some((addr, idx) => addr.isActive !== false && matchesAddress(item, addresses, idx));
                 if (isLocal) {
                     localWater.push(item);
                 } else if (hasAnyWroclaw) {
                     otherWater.push(item);
                 }
             } else if (item.source === 'fortum') {
-                const isLocal = addresses.some((_, idx) => matchesAddress(item, addresses, idx));
+                const isLocal = addresses.some((addr, idx) => addr.isActive !== false && matchesAddress(item, addresses, idx));
                 if (isLocal) {
                     localFortum.push(item);
                 } else {
                     otherFortum.push(item);
                 }
             } else if (item.source === 'energa') {
-                const isLocal = addresses.some((_, idx) => matchesAddress(item, addresses, idx));
+                const isLocal = addresses.some((addr, idx) => addr.isActive !== false && matchesAddress(item, addresses, idx));
                 if (isLocal) {
                     localEnerga.push(item);
                 } else {
                     otherEnerga.push(item);
                 }
             } else if (item.source === 'enea') {
-                const isLocal = addresses.some((_, idx) => matchesAddress(item, addresses, idx));
+                const isLocal = addresses.some((addr, idx) => addr.isActive !== false && matchesAddress(item, addresses, idx));
                 if (isLocal) {
                     localEnea.push(item);
                 } else {
                     otherEnea.push(item);
                 }
             } else if (item.source === 'pge') {
-                const isLocal = addresses.some((_, idx) => matchesAddress(item, addresses, idx));
+                const isLocal = addresses.some((addr, idx) => addr.isActive !== false && matchesAddress(item, addresses, idx));
                 if (isLocal) {
                     localPge.push(item);
                 } else {
                     otherPge.push(item);
                 }
             } else if (item.source === 'stoen') {
-                const isLocal = addresses.some((_, idx) => matchesAddress(item, addresses, idx));
+                const isLocal = addresses.some((addr, idx) => addr.isActive !== false && matchesAddress(item, addresses, idx));
                 if (isLocal) {
                     localStoen.push(item);
                 } else if (hasAnyWarszawa) {

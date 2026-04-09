@@ -109,7 +109,7 @@ pub fn get_enea_regions_for_district(district: &str) -> Vec<u32> {
         "międzychodzki" => vec![30],
         "myśliborski" => vec![31],
         "choszczeński" => vec![32],
-        _ => (1..=32).collect(),
+        _ => Vec::new(),
     }
 }
 

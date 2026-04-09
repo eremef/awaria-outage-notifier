@@ -237,7 +237,10 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             "pge" -> "PGE"
             "fortum" -> "Fortum"
             "water" -> "MPWiK"
-            else -> key.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+            else ->
+                    key.replaceFirstChar {
+                        if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+                    }
         }
     }
 
@@ -369,7 +372,12 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 )
 
         val clickPending =
-                if (count == "0" || count.startsWith("0 (") || count == "?" || count == "!" || count == "–") {
+                if (count == "0" ||
+                                count.startsWith("0 (") ||
+                                count == "?" ||
+                                count == "!" ||
+                                count == "–"
+                ) {
                     refreshPending
                 } else {
                     val launchIntent =
@@ -404,6 +412,37 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         views.setTextViewText(R.id.widget_updated, updatedAt)
 
         return views
+    }
+
+    protected fun isWroclaw(settings: WidgetSettings): Boolean {
+        val name = settings.cityName.lowercase()
+        return name == "wrocław" || name == "wroclaw" || settings.cityId == 969400L
+    }
+
+    protected fun isWarszawa(settings: WidgetSettings): Boolean {
+        val name = settings.cityName.lowercase()
+        return name == "warszawa" || name == "warsaw" || settings.cityId == 918123L
+    }
+
+    protected fun isInPgeRegion(settings: WidgetSettings): Boolean {
+        val v = settings.voivodeship.lowercase()
+        return v.contains("lubelskie") ||
+                v.contains("podlaskie") ||
+                v.contains("łódzkie") ||
+                v.contains("świętokrzyskie") ||
+                v.contains("mazowieckie") ||
+                v.contains("małopolskie") ||
+                v.contains("podkarpackie")
+    }
+
+    protected fun isInEnergaRegion(settings: WidgetSettings): Boolean {
+        val v = settings.voivodeship.lowercase()
+        return v.contains("pomorskie") ||
+                v.contains("warmińsko") ||
+                v.contains("zachodniopomorskie") ||
+                v.contains("wielkopolskie") ||
+                v.contains("kujawsko") ||
+                v.contains("mazowieckie")
     }
 
     protected fun fetchTauronAlertCount(settingsList: List<WidgetSettings>): Int {
@@ -562,6 +601,9 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     }
 
     protected fun fetchMpwikAlertCount(settingsList: List<WidgetSettings>): Int {
+        val relevantSettings = settingsList.filter { isWroclaw(it) }
+        if (relevantSettings.isEmpty()) return 0
+
         val url = URL("https://www.mpwik.wroc.pl/wp-admin/admin-ajax.php")
         val conn = url.openConnection() as HttpURLConnection
         conn.requestMethod = "POST"
@@ -586,9 +628,8 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         val response = conn.inputStream.bufferedReader().readText()
         conn.disconnect()
 
-        // Check against all addresses' street names
         var totalCount = 0
-        for (settings in settingsList) {
+        for (settings in relevantSettings) {
             totalCount += parseMpwikItems(response, settings)
         }
         return totalCount
@@ -751,6 +792,9 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     }
 
     protected fun fetchEnergaAlertCount(settingsList: List<WidgetSettings>): Int {
+        val relevantSettings = settingsList.filter { isInEnergaRegion(it) }
+        if (relevantSettings.isEmpty()) return 0
+
         var totalCount = 0
         try {
             val apiUrl = fetchEnergaApiUrl() ?: return 0
@@ -810,7 +854,9 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 }
                 totalCount += count
             }
-        } catch (e: Exception) {}
+        } catch (e: Exception) {
+            Log.e(TAG, "Energa sync failed", e)
+        }
         return totalCount
     }
 
@@ -865,11 +911,14 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             "międzychodzki" -> listOf(30)
             "myśliborski" -> listOf(31)
             "choszczeński" -> listOf(32)
-            else -> (1..32).toList()
+            else -> emptyList()
         }
     }
 
     protected suspend fun fetchPgeAlertCount(settingsList: List<WidgetSettings>): Int {
+        val relevantSettings = settingsList.filter { isInPgeRegion(it) }
+        if (relevantSettings.isEmpty()) return 0
+
         var totalCount = 0
         try {
             val now = Date()
@@ -878,36 +927,51 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             val future = Date(now.time + 90L * 24 * 60 * 60 * 1000) // 90 days
             val startAtTo = sdf.format(future).replace(" ", "+").replace(":", "%3A")
 
-            val urlString = "https://power-outage.gkpge.pl/api/power-outage?startAtTo=$startAtTo&stopAtFrom=$stopAtFrom&types[]=2"
+            val urlString =
+                    "https://power-outage.gkpge.pl/api/power-outage?startAtTo=$startAtTo&stopAtFrom=$stopAtFrom&types[]=2"
             val response = fetchJson(URL(urlString))
             val outages = org.json.JSONArray(response)
 
-            for (settings in settingsList) {
+            for (settings in relevantSettings) {
                 var count = 0
                 for (i in 0 until outages.length()) {
                     val outage = outages.getJSONObject(i)
                     val description = outage.optString("description", "")
-                    val cityMatchDesc = description.lowercase().contains(settings.cityName.lowercase())
+                    val cityMatchDesc =
+                            description.lowercase().contains(settings.cityName.lowercase())
                     val addresses = outage.optJSONArray("addresses") ?: continue
                     var matched = false
                     for (j in 0 until addresses.length()) {
                         val addr = addresses.getJSONObject(j)
                         val teryt = addr.optJSONObject("teryt")
                         if (teryt != null) {
-                            val vMatch = teryt.optString("voivodeshipName").uppercase() == settings.voivodeship.uppercase()
+                            val vMatch =
+                                    teryt.optString("voivodeshipName").uppercase() ==
+                                            settings.voivodeship.uppercase()
                             if (!vMatch) continue
 
-                            val dMatch = teryt.optString("countyName").lowercase() == settings.district.lowercase()
+                            val dMatch =
+                                    teryt.optString("countyName").lowercase() ==
+                                            settings.district.lowercase()
                             if (!dMatch) continue
 
-                            val cMatch = teryt.optString("communeName").lowercase() == settings.commune.lowercase()
+                            val cMatch =
+                                    teryt.optString("communeName").lowercase() ==
+                                            settings.commune.lowercase()
                             if (!cMatch) continue
 
-                            val cityMatch = teryt.optString("cityName").lowercase() == settings.cityName.lowercase()
+                            val cityMatch =
+                                    teryt.optString("cityName").lowercase() ==
+                                            settings.cityName.lowercase()
                             if (!cityMatch) continue
-                            
+
                             val streetQuery = settings.streetName1.lowercase()
-                            val streetMatch = if (streetQuery.isEmpty()) true else teryt.optString("streetName").lowercase().contains(streetQuery)
+                            val streetMatch =
+                                    if (streetQuery.isEmpty()) true
+                                    else
+                                            teryt.optString("streetName")
+                                                    .lowercase()
+                                                    .contains(streetQuery)
 
                             if (streetMatch) {
                                 matched = true
@@ -918,7 +982,8 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                                 matched = true
                                 break
                             }
-                            if (description.lowercase().contains(settings.streetName1.lowercase())) {
+                            if (description.lowercase().contains(settings.streetName1.lowercase())
+                            ) {
                                 matched = true
                                 break
                             }
@@ -1028,9 +1093,8 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             if (wordMatch(text, compound)) return true
         }
 
-        // Individual significant words from streetName1
-        val words1 = streetName1.split(Regex("\\s+")).filter { it.length >= 3 }
-        if (words1.any { wordMatch(text, it) }) return true
+        // Secondary: match main streetName1 as a whole word
+        if (wordMatch(text, streetName1)) return true
 
         return false
     }
@@ -1053,9 +1117,8 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             if (wordMatch(text, compound)) return true
         }
 
-        // Individual significant words from streetName1
-        val words1 = streetName1.split(Regex("\\s+")).filter { it.length >= 3 }
-        if (words1.any { wordMatch(text, it) }) return true
+        // Secondary: match main streetName1 as a whole word
+        if (wordMatch(text, streetName1)) return true
 
         return false
     }
@@ -1067,28 +1130,41 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     }
 
     protected suspend fun fetchStoenAlertCount(settingsList: List<WidgetSettings>): Int {
+        val relevantSettings = settingsList.filter { isWarszawa(it) }
+        if (relevantSettings.isEmpty()) return 0
+
         var totalCount = 0
         try {
-            val url = URL("https://awaria.stoen.pl/public/api/planned-outage/search/compressed-report")
+            val url =
+                    URL(
+                            "https://awaria.stoen.pl/public/api/planned-outage/search/compressed-report"
+                    )
             val conn = url.openConnection() as HttpURLConnection
             conn.requestMethod = "POST"
             conn.doOutput = true
             conn.setRequestProperty("Content-Type", "application/json")
-            conn.setRequestProperty("Referer", "https://awaria.stoen.pl/public/planned?pagelimit=9999")
+            conn.setRequestProperty(
+                    "Referer",
+                    "https://awaria.stoen.pl/public/planned?pagelimit=9999"
+            )
             conn.setRequestProperty("Origin", "https://awaria.stoen.pl")
             conn.connectTimeout = 15000
             conn.readTimeout = 15000
 
-            val payload = JSONObject().apply {
-                put("id", null)
-                put("area", null)
-                put("outageStart", null)
-                put("outageEnd", null)
-                put("page", JSONObject().apply {
-                    put("limit", 9999)
-                    put("offset", 0)
-                })
-            }
+            val payload =
+                    JSONObject().apply {
+                        put("id", null)
+                        put("area", null)
+                        put("outageStart", null)
+                        put("outageEnd", null)
+                        put(
+                                "page",
+                                JSONObject().apply {
+                                    put("limit", 9999)
+                                    put("offset", 0)
+                                }
+                        )
+                    }
 
             conn.outputStream.use { it.write(payload.toString().toByteArray(Charsets.UTF_8)) }
 
@@ -1103,16 +1179,12 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             val outages = org.json.JSONArray(response)
             val now = Date()
             val stoenFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
-            
-            for (settings in settingsList) {
-                val cityLower = settings.cityName.lowercase()
-                val isWarszawa = cityLower == "warszawa" || cityLower == "warsaw" || settings.cityId == 918123L
-                if (!isWarszawa) continue
 
+            for (settings in relevantSettings) {
                 var count = 0
                 for (i in 0 until outages.length()) {
                     val outage = outages.getJSONObject(i)
-                    
+
                     // Filter by date (End of outage must be in the future)
                     val endStr = outage.optString("outageEnd", "")
                     if (endStr.isNotEmpty()) {
@@ -1133,15 +1205,17 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                         val addr = addresses.getJSONObject(j)
                         val street = addr.optString("streetName", "")
                         if (street.isNotEmpty()) {
-                            val streetNorm = street.lowercase()
-                                .replace("ul. ", "")
-                                .replace("al. ", "")
-                                .replace("pl. ", "")
-                                .replace("os. ", "")
-                                .trim()
-                            
+                            val streetNorm =
+                                    street.lowercase()
+                                            .replace("ul. ", "")
+                                            .replace("al. ", "")
+                                            .replace("pl. ", "")
+                                            .replace("os. ", "")
+                                            .trim()
+
                             val query = settings.streetName1.lowercase()
-                            // If street names match, we count it (Stoen is matched by street only per user request)
+                            // If street names match, we count it (Stoen is matched by street only
+                            // per user request)
                             if (streetNorm.contains(query) || query.contains(streetNorm)) {
                                 streetMatched = true
                                 break
