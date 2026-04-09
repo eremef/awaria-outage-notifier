@@ -533,6 +533,12 @@ async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Resul
         for alert in &all_alerts {
             if alert.is_local == Some(true) {
                 let source_key = alert.source.to_string();
+                
+                // Only notify if source is enabled in settings
+                if !enabled_sources.contains(&source_key) {
+                    continue;
+                }
+
                 let notified_enabled = s
                     .notification_preferences
                     .get(&source_key)
@@ -541,6 +547,66 @@ async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Resul
 
                 if notified_enabled {
                     let hash = alert.to_hash();
+                    
+                    // --- UPCOMING NOTIFICATION ---
+                    if s.upcoming_notification_enabled {
+                        if let Some(start_str) = &alert.startDate {
+                            if let Some(start_dt) = utils::parse_date(start_str) {
+                                let now_utc = chrono::Utc::now();
+                                let diff_hours = (start_dt - now_utc).num_hours();
+                                
+                                if diff_hours >= 0 && diff_hours <= s.upcoming_notification_hours as i64 {
+                                    let upcoming_hash = format!("upcoming_{}", hash);
+                                    match state_db::is_alert_seen(&app, &source_key, &upcoming_hash) {
+                                        Ok(seen) => {
+                                            if !seen {
+                                                let title = match alert.source {
+                                                    AlertSource::Tauron
+                                                    | AlertSource::Energa
+                                                    | AlertSource::Enea
+                                                    | AlertSource::Pge
+                                                    | AlertSource::Stoen => "Nadchodząca awaria prądu",
+                                                    AlertSource::Water => "Nadchodząca awaria wody",
+                                                    AlertSource::Fortum => "Nadchodząca awaria ogrzewania",
+                                                };
+                                                let mut body = alert.message.clone().unwrap_or_default();
+                                                
+                                                // Prepend address info if available
+                                                if let Some(idx) = alert.address_index {
+                                                    if let Some(addr) = s.addresses.get(idx) {
+                                                        body = format!("{}: {}, {}\n{}", 
+                                                            addr.name, 
+                                                            addr.city_name, 
+                                                            addr.street_name_1,
+                                                            body
+                                                        );
+                                                    }
+                                                }
+
+                                                log::info!(
+                                                    "Triggering upcoming notification for {}: {}",
+                                                    source_key,
+                                                    body
+                                                );
+                                                app.notification()
+                                                    .builder()
+                                                    .title(title)
+                                                    .body(body)
+                                                    .icon("ic_notification")
+                                                    .show()
+                                                    .ok();
+
+                                                state_db::mark_alert_as_seen(&app, &source_key, &upcoming_hash).ok();
+                                            }
+                                        }
+                                        Err(e) => log::error!("Database error while checking upcoming alert status: {}", e),
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // --- NEW ALERT NOTIFICATION ---
                     match state_db::is_alert_seen(&app, &source_key, &hash) {
                         Ok(seen) => {
                             if !seen {
@@ -554,13 +620,26 @@ async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Resul
                                     AlertSource::Water => "Nowa awaria wody",
                                     AlertSource::Fortum => "Nowa awaria ogrzewania",
                                 };
-                                let body = alert.message.clone().unwrap_or_default();
+                                let mut body = alert.message.clone().unwrap_or_default();
+
+                                // Prepend address info if available
+                                if let Some(idx) = alert.address_index {
+                                    if let Some(addr) = s.addresses.get(idx) {
+                                        body = format!("{}: {}, {}\n{}", 
+                                            addr.name, 
+                                            addr.city_name, 
+                                            addr.street_name_1,
+                                            body
+                                        );
+                                    }
+                                }
 
                                 log::info!("Triggering notification for {}: {}", source_key, body);
                                 app.notification()
                                     .builder()
                                     .title(title)
                                     .body(body)
+                                    .icon("ic_notification")
                                     .show()
                                     .ok();
 

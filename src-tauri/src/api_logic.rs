@@ -108,6 +108,14 @@ pub struct Settings {
     pub enabled_sources: Option<Vec<String>>,
     #[serde(default, rename = "notificationPreferences")]
     pub notification_preferences: HashMap<String, bool>,
+    #[serde(default, rename = "upcomingNotificationEnabled")]
+    pub upcoming_notification_enabled: bool,
+    #[serde(default = "default_upcoming_hours", rename = "upcomingNotificationHours")]
+    pub upcoming_notification_hours: u32,
+}
+
+fn default_upcoming_hours() -> u32 {
+    24
 }
 
 impl Default for Settings {
@@ -119,6 +127,8 @@ impl Default for Settings {
             language: None,
             enabled_sources: Some(Vec::new()),
             notification_preferences: HashMap::new(),
+            upcoming_notification_enabled: false,
+            upcoming_notification_hours: 24,
         }
     }
 }

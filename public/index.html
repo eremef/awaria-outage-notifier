@@ -40,6 +40,9 @@
         </div>
 
         <div id="settings-panel" class="settings-panel hidden">
+            <div id="notification-permission-warning" class="permission-warning hidden" data-i18n="settings_notification_permission_warning">
+                System notifications are disabled. Please enable them in Android settings to receive alerts.
+            </div>
             <div class="settings-title" data-i18n="settings_appearance">Appearance</div>
             <div class="settings-field">
                 <label for="language-select" data-i18n="settings_language">Language</label>
@@ -148,6 +151,20 @@
                     <div class="notify-group checkbox-pair mini">
                         <input type="checkbox" id="notify-water-check">
                         <svg class="notify-bell-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+                    </div>
+                </div>
+            </div>
+
+            <div id="upcoming-settings-section">
+                <div class="settings-title" data-i18n="settings_upcoming_title">
+                    <span>Upcoming Outages</span>
+                </div>
+                <div id="upcoming-row-container" class="checkbox-pair upcoming-row" style="margin-top: 10px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="upcoming-notify-check">
+                    <div id="upcoming-adjust-container" style="display: flex; align-items: center; gap: 8px; transition: opacity 0.2s;">
+                        <label for="upcoming-notify-check" data-i18n="settings_upcoming_prefix" style="margin-bottom: 0;">Notify</label>
+                        <input type="number" id="upcoming-hours-input" min="1" max="168" value="24" style="width: 50px; padding: 4px; margin: 0; text-align: center;">
+                        <span data-i18n="settings_upcoming_suffix" style="font-size: 0.8rem; color: var(--secondary-text);">h before</span>
                     </div>
                 </div>
             </div>

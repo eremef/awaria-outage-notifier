@@ -72,6 +72,68 @@ let streetDebounceTimer = null;
 let cityHasNoStreets = false;
 let editingAddressIndex = null;
 
+async function checkAndRequestNotificationPermission() {
+    if (!window.__TAURI__) return;
+    
+    try {
+        let granted = await window.__TAURI__.core.invoke('plugin:notification|is_permission_granted');
+        
+        // On Android, if not granted, try to request it if it's the first time
+        // or just if we are trying to enable notifications.
+        if (!granted) {
+            const permission = await window.__TAURI__.core.invoke('plugin:notification|request_permission');
+            granted = (permission === 'granted');
+        }
+        
+        const warning = document.getElementById('notification-permission-warning');
+        if (warning) {
+            if (granted) {
+                warning.classList.add('hidden');
+            } else {
+                warning.classList.remove('hidden');
+            }
+        }
+    } catch (error) {
+        console.error('Failed to check notification permission:', error);
+    }
+}
+
+function updateUpcomingStatus() {
+    const upcomingNotifyCheck = document.getElementById('upcoming-notify-check');
+    const upcomingHoursInput = document.getElementById('upcoming-hours-input');
+    const adjustContainer = document.getElementById('upcoming-adjust-container');
+    const rowContainer = document.getElementById('upcoming-row-container');
+    
+    const notifyIds = [
+        'notify-tauron-check', 'notify-water-check', 'notify-fortum-check', 
+        'notify-energa-check', 'notify-enea-check', 'notify-pge-check', 'notify-stoen-check'
+    ];
+    const anyNotifyChecked = notifyIds.some(id => {
+        const cb = document.getElementById(id);
+        return cb && cb.checked && !cb.disabled;
+    });
+
+    if (upcomingNotifyCheck && adjustContainer && upcomingHoursInput && rowContainer) {
+        if (!anyNotifyChecked) {
+            rowContainer.classList.add('notify-disabled');
+            upcomingNotifyCheck.disabled = true;
+            adjustContainer.classList.add('notify-disabled');
+            upcomingHoursInput.disabled = true;
+        } else {
+            rowContainer.classList.remove('notify-disabled');
+            upcomingNotifyCheck.disabled = false;
+            
+            if (upcomingNotifyCheck.checked) {
+                adjustContainer.classList.remove('notify-disabled');
+                upcomingHoursInput.disabled = false;
+            } else {
+                adjustContainer.classList.add('notify-disabled');
+                upcomingHoursInput.disabled = true;
+            }
+        }
+    }
+}
+
 function initSettings() {
     const btn = document.getElementById('settings-btn');
     const panel = document.getElementById('settings-panel');
@@ -84,6 +146,7 @@ function initSettings() {
         if (!panel.classList.contains('hidden')) {
             window.scrollTo({ top: 0, behavior: 'instant' });
             panel.scrollTop = 0;
+            checkAndRequestNotificationPermission(); // Update permission warning state
         }
     });
 
@@ -309,6 +372,7 @@ function initSettings() {
             });
             currentSettings.enabledSources = enabledSources;
             updateNotifyStatus(pair.source, pair.notify);
+            updateUpcomingStatus();
             await autoSaveSettings();
             if (sourceCheckbox.checked) {
                 const srcName = pair.source.split('-')[1];
@@ -337,9 +401,45 @@ function initSettings() {
             }
             const prefKey = id.split('-')[1]; // tauron, water, etc.
             currentSettings.notificationPreferences[prefKey] = checkbox.checked;
+            
+            // Check for any enabled notifications to trigger permission reminder
+            if (checkbox.checked) {
+                await checkAndRequestNotificationPermission();
+            }
+            
+            updateUpcomingStatus();
             await autoSaveSettings();
         });
     });
+
+    const upcomingNotifyCheck = document.getElementById('upcoming-notify-check');
+    const upcomingHoursInput = document.getElementById('upcoming-hours-input');
+
+
+
+    if (upcomingNotifyCheck) {
+        upcomingNotifyCheck.addEventListener('change', async () => {
+            updateUpcomingStatus();
+            if (upcomingNotifyCheck.checked) {
+                await checkAndRequestNotificationPermission();
+            }
+            if (currentSettings) {
+                currentSettings.upcomingNotificationEnabled = upcomingNotifyCheck.checked;
+                await autoSaveSettings();
+            }
+        });
+    }
+
+    if (upcomingHoursInput) {
+        upcomingHoursInput.addEventListener('change', async () => {
+            if (currentSettings) {
+                let val = parseInt(upcomingHoursInput.value, 10);
+                if (isNaN(val) || val < 1) val = 24;
+                currentSettings.upcomingNotificationHours = val;
+                await autoSaveSettings();
+            }
+        });
+    }
 }
 
 function initAddressFilter() {
@@ -779,6 +879,23 @@ async function loadSettingsAndFetch() {
                     }
                 }
             });
+
+            if (document.getElementById('upcoming-notify-check')) {
+                document.getElementById('upcoming-notify-check').checked = !!settings.upcomingNotificationEnabled;
+            }
+            if (document.getElementById('upcoming-hours-input')) {
+                document.getElementById('upcoming-hours-input').value = settings.upcomingNotificationHours !== undefined ? settings.upcomingNotificationHours : 24;
+            }
+            
+            if (typeof updateUpcomingStatus === 'function') {
+                updateUpcomingStatus();
+            }
+
+            // Also check permissions on load if notifications are enabled
+            const hasAnyNotify = Object.values(notifyPrefs).some(v => v === true) || !!settings.upcomingNotificationEnabled;
+            if (hasAnyNotify) {
+                checkAndRequestNotificationPermission();
+            }
 
             updateAddressFilter();
             renderAddressesList();

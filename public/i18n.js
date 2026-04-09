@@ -5,7 +5,7 @@ const translations = {
     en: {
         "title": "Awaria",
         "settings_appearance": "General settings",
-        "notify": "Notify",
+        "notify": "New alerts notifications",
         "source_name": "Provider",
         "settings_language": "Language",
         "lang_system": "System Default",
@@ -110,12 +110,16 @@ const translations = {
         "disabled_state_subtitle": "All your saved locations are currently disabled. Enable them in settings to see outages.",
         "disabled_state_cta": "Open Settings",
         "sources_disabled_state_title": "Alerts Disabled",
-        "sources_disabled_state_subtitle": "No alert sources are enabled. Enable them in settings to see outages."
+        "sources_disabled_state_subtitle": "No alert sources are enabled. Enable them in settings to see outages.",
+        "settings_upcoming_title": "Upcoming Outages - additional notifications",
+        "settings_upcoming_prefix": "Notify",
+        "settings_upcoming_suffix": "h before outage start",
+        "settings_notification_permission_warning": "System notifications are disabled. Please enable them in Android settings to receive alerts."
     },
     pl: {
         "title": "Awaria",
         "settings_appearance": "Ustawienia ogólne",
-        "notify": "Powiadomienia",
+        "notify": "Powiadomienia o nowych alertach ",
         "source_name": "Dostawca",
         "settings_language": "Język",
         "lang_system": "Domyślny systemowy",
@@ -143,7 +147,7 @@ const translations = {
         "settings_save": "Zapisz",
         "refresh_pull": "↻ Puść, aby odświeżyć",
         "refresh_loading": "↻ Odświeżanie...",
-        "loading_data": "Ładowanie danych o awariach...",
+        "loading_data": "Ładowanie danych o wyłączeniach i awariach...",
         "last_updated": "Ostatnia aktualizacja",
         "checking_updates": "Sprawdzanie aktualizacji...",
         "not_configured": "Skonfiguruj ustawienia",
@@ -156,7 +160,7 @@ const translations = {
         "msg_saved": "✅ Zapisano!",
         "err_city_not_found": "❌ Nie znaleziono miasta. Czy chodziło ci o: ",
         "err_street_not_found": "❌ Nie znaleziono ulicy. Czy chodziło ci o: ",
-        "err_load_failed": "Nie udało się pobrać danych o awariach. Błąd: ",
+        "err_load_failed": "Nie udało się pobrać danych o wyłączeniach i awariach. Błąd: ",
         "lbl_your_location": "Twoja lokalizacja",
         "lbl_other_outages": "Pozostałe wyłączenia",
         "msg_no_outages_local": "Brak alertów dla twojej lokalizacji.",
@@ -177,7 +181,7 @@ const translations = {
         "lbl_section_stoen": "Prąd (Stoen)",
         "msg_no_alerts": "Brak aktywnych alertów.",
         "all_clear_title": "Wszystko gra!",
-        "all_clear_subtitle": "Nie wykryto żadnych awarii w monitorowanych obszarach.",
+        "all_clear_subtitle": "Nie wykryto żadnych wyłączeń i awarii w monitorowanych obszarach.",
         "monitored_providers": "Monitorowani dostawcy",
         "status_operational": "Działa",
         "refresh_now": "Odśwież teraz",
@@ -217,10 +221,14 @@ const translations = {
         "empty_state_subtitle": "Zacznij od dodania pierwszej lokalizacji, aby monitorować przerwy w dostawie prądu, wody i ciepła.",
         "empty_state_cta": "Dodaj adres",
         "disabled_state_title": "Monitoring wstrzymany",
-        "disabled_state_subtitle": "Wszystkie Twoje lokalizacje są obecnie wyłączone. Włącz je w ustawieniach, aby zobaczyć awarie.",
+        "disabled_state_subtitle": "Wszystkie Twoje lokalizacje są obecnie wyłączone. Włącz je w ustawieniach, aby zobaczyć wyłączenia i awarie.",
         "disabled_state_cta": "Otwórz ustawienia",
         "sources_disabled_state_title": "Alerty wyłączone",
-        "sources_disabled_state_subtitle": "Brak włączonych źródeł alertów. Włącz je w ustawieniach, aby zobaczyć awarie."
+        "sources_disabled_state_subtitle": "Brak włączonych źródeł alertów. Włącz je w ustawieniach, aby zobaczyć wyłączenia i awarie.",
+        "settings_upcoming_title": "Nadchodzące wyłączenia - dodatkowe powiadomienia",
+        "settings_upcoming_prefix": "Powiadamiaj",
+        "settings_upcoming_suffix": "h przed startem wyłączenia",
+        "settings_notification_permission_warning": "Powiadomienia systemowe są wyłączone. Włącz je w ustawieniach Androida, aby otrzymywać powiadomienia."
     }
 };
 

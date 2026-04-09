@@ -12,3 +12,4 @@ src-tauri/gen/android/rebuild*.txt
 plans/
 *.jks
 *.keystore
+src-tauri/gen/android/.idea/

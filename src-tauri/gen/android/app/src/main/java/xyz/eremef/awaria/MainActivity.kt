@@ -3,11 +3,13 @@ package xyz.eremef.awaria
 import android.os.Bundle
 import android.view.ViewGroup
 import android.webkit.WebView
+import androidx.activity.enableEdgeToEdge
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 
 class MainActivity : TauriActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
+    enableEdgeToEdge()
     super.onCreate(savedInstanceState)
 
     val decorView = this.window.decorView

@@ -13,6 +13,39 @@ pub fn build_client_http1() -> Result<Client, String> {
         .map_err(|e| e.to_string())
 }
 
+pub fn parse_date(date_str: &str) -> Option<chrono::DateTime<chrono::Utc>> {
+    use chrono::{DateTime, TimeZone, Utc, NaiveDateTime};
+    
+    DateTime::parse_from_rfc3339(date_str)
+        .map(|dt| dt.with_timezone(&Utc))
+        .ok()
+        .or_else(|| {
+            NaiveDateTime::parse_from_str(date_str, "%Y-%m-%dT%H:%M:%S%.f")
+                .ok()
+                .map(|nd| Utc.from_utc_datetime(&nd))
+        })
+        .or_else(|| {
+            NaiveDateTime::parse_from_str(date_str, "%Y-%m-%dT%H:%M:%S")
+                .ok()
+                .map(|nd| Utc.from_utc_datetime(&nd))
+        })
+        .or_else(|| {
+            NaiveDateTime::parse_from_str(date_str, "%Y-%m-%d %H:%M:%S")
+                .ok()
+                .map(|nd| Utc.from_utc_datetime(&nd))
+        })
+        .or_else(|| {
+            NaiveDateTime::parse_from_str(date_str, "%Y-%m-%d %H:%M")
+                .ok()
+                .map(|nd| Utc.from_utc_datetime(&nd))
+        })
+        .or_else(|| {
+            NaiveDateTime::parse_from_str(date_str, "%d-%m-%Y %H:%M")
+                .ok()
+                .map(|nd| Utc.from_utc_datetime(&nd))
+        })
+}
+
 pub async fn retry<T, E, F, Fut>(mut f: F, max_retries: usize) -> Result<T, E>
 
 where
