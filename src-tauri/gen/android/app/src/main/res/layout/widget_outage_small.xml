@@ -15,8 +15,8 @@
 
     <ImageView
       android:id="@+id/widget_icon"
-      android:layout_width="24dp"
-      android:layout_height="24dp"
+      android:layout_width="18dp"
+      android:layout_height="18dp"
       android:layout_gravity="center"
       android:contentDescription="icon"
       android:src="@drawable/ic_electricity" />
@@ -28,7 +28,7 @@
       android:layout_gravity="center"
       android:text="Provider"
       android:textColor="#6D6D6D"
-      android:textSize="8sp"
+      android:textSize="9sp"
       android:textStyle="bold" />
   </LinearLayout>
 
