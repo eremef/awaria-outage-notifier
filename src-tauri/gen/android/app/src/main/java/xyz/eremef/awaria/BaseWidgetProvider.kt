@@ -225,6 +225,20 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             views.setInt(R.id.widget_icon, "setColorFilter", Color.parseColor(lightPrimary))
         }
         views.setImageViewResource(R.id.widget_icon, iconResId)
+        views.setTextViewText(R.id.widget_source, getSourceName(sourceKey))
+    }
+
+    private fun getSourceName(key: String): String {
+        return when (key) {
+            "tauron" -> "Tauron"
+            "stoen" -> "Stoen"
+            "enea" -> "Enea"
+            "energa" -> "Energa"
+            "pge" -> "PGE"
+            "fortum" -> "Fortum"
+            "water" -> "MPWiK"
+            else -> key.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+        }
     }
 
     private fun getTranslation(key: String, lang: String): String {

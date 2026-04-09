@@ -8,13 +8,29 @@
     android:orientation="vertical"
     android:padding="4dp">
 
+  <LinearLayout
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="2dp">
+
     <ImageView
-        android:id="@+id/widget_icon"
-        android:layout_width="14dp"
-        android:layout_height="14dp"
-        android:layout_marginBottom="1dp"
-        android:src="@drawable/ic_electricity"
-        android:contentDescription="icon" />
+      android:id="@+id/widget_icon"
+      android:layout_width="24dp"
+      android:layout_height="24dp"
+      android:layout_gravity="center"
+      android:contentDescription="icon"
+      android:src="@drawable/ic_electricity" />
+
+    <TextView
+      android:id="@+id/widget_source"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="center"
+      android:text="Provider"
+      android:textColor="#6D6D6D"
+      android:textSize="12sp"
+      android:textStyle="bold" />
+  </LinearLayout>
 
     <TextView
         android:id="@+id/widget_count"
