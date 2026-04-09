@@ -28,7 +28,7 @@
       android:layout_gravity="center"
       android:text="Provider"
       android:textColor="#6D6D6D"
-      android:textSize="12sp"
+      android:textSize="8sp"
       android:textStyle="bold" />
   </LinearLayout>
 
