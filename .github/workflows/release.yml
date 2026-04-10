@@ -45,6 +45,18 @@ jobs:
 
       - name: Build Android
         run: npm run android:build -- --verbose
+
+      - name: Package Android Symbols
+        run: |
+          mkdir -p symbols/lib/arm64-v8a
+          mkdir -p symbols/lib/armeabi-v7a
+          mkdir -p symbols/lib/x86
+          mkdir -p symbols/lib/x86_64
+          cp src-tauri/target/aarch64-linux-android/release/libapp_lib.so symbols/lib/arm64-v8a/
+          cp src-tauri/target/armv7-linux-androideabi/release/libapp_lib.so symbols/lib/armeabi-v7a/
+          cp src-tauri/target/i686-linux-android/release/libapp_lib.so symbols/lib/x86/
+          cp src-tauri/target/x86_64-linux-android/release/libapp_lib.so symbols/lib/x86_64/
+          cd symbols && zip -r ../awaria-android-symbols-${{ github.ref_name }}.zip lib
         
       - name: Rename Artifacts
         run: |
@@ -59,6 +71,7 @@ jobs:
           files: |
             awaria-android-${{ github.ref_name }}.apk
             awaria-android-${{ github.ref_name }}.aab
+            awaria-android-symbols-${{ github.ref_name }}.zip
 
       # - name: Upload to Google Play
       #   uses: r0adkll/upload-google-play@v1
