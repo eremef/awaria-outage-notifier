@@ -28,6 +28,8 @@ pub struct UnifiedAlert {
     pub address_index: Option<usize>,
     #[serde(default, rename = "isLocal")]
     pub is_local: Option<bool>,
+    #[serde(default)]
+    pub hash: Option<String>,
 }
 
 impl UnifiedAlert {

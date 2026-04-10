@@ -162,6 +162,7 @@ impl PgeOutage {
             description: self.description.clone().or_else(|| self.regionName.clone()),
             address_index: None,
             is_local: None,
+            hash: None,
         }
     }
 }

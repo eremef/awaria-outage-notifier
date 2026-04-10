@@ -40,6 +40,7 @@ impl EnergaShutdown {
             description: None,
             address_index: None,
             is_local: None,
+            hash: None,
         }
     }
 

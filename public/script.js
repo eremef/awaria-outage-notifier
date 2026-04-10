@@ -1713,7 +1713,7 @@ function renderCards(alerts, source) {
                             : ((typeof t !== 'undefined' ? t('source_tauron') : null) || '⚡ Power Outage');
 
     return alerts.map(item => `
-        <div class="card source-${source}">
+        <div class="card source-${source}" ${item.hash ? `data-hash="${item.hash}"` : ''}>
             <span class="outage-type">${escapeHtml(sourceLabel)}</span>
             <div class="outage-time">
                 ${formatDate(item.startDate)} – ${formatDate(item.endDate)}
@@ -1744,5 +1744,50 @@ if (typeof module !== 'undefined' && module.exports) {
         filterAlerts,
         formatDate
     };
+}
+
+// Listen for notification actions
+if (window.__TAURI__) {
+    const { listen } = window.__TAURI__.event;
+
+    listen('tauri://notification-action', (event) => {
+        console.log('Notification action received:', event);
+        const hash = event.payload.notification.extra?.hash;
+        if (hash) {
+            highlightAlert(hash);
+        }
+    });
+}
+
+async function highlightAlert(hash) {
+    console.log('Highlighting alert with hash:', hash);
+    
+    // Ensure data is loaded
+    if (!lastAlerts || lastAlerts.length === 0) {
+        await fetchOutages();
+    }
+
+    // Give UI time to render
+    setTimeout(() => {
+        const element = document.querySelector(`.card[data-hash="${hash}"]`);
+        if (element) {
+            // Expand parent if it's a collapsible
+            let parent = element.closest('.collapsible');
+            if (parent) {
+                parent.classList.remove('collapsed');
+            }
+
+            // Scroll into view
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // Highlight effect
+            element.classList.add('highlight-pulse');
+            setTimeout(() => {
+                element.classList.remove('highlight-pulse');
+            }, 3000);
+        } else {
+            console.warn('Alert element not found for hash:', hash);
+        }
+    }, 500);
 }
 

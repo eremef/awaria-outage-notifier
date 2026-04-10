@@ -521,11 +521,14 @@ async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Resul
         let results = join_all(tasks).await;
         for res in results {
             match res {
-                Ok((alerts, errs)) => {
+                Ok((mut alerts, errs)) => {
+                    for alert in &mut alerts {
+                        alert.hash = Some(alert.to_hash());
+                    }
                     all_alerts.extend(alerts);
                     errors.extend(errs);
                 }
-                Err(e) => errors.push(format!("Task panic: {}", e)),
+                Err(e) => errors.push(format!("Task execution error: {}", e)),
             }
         }
 
@@ -560,39 +563,22 @@ async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Resul
                                     match state_db::is_alert_seen(&app, &source_key, &upcoming_hash) {
                                         Ok(seen) => {
                                             if !seen {
-                                                let title = match alert.source {
-                                                    AlertSource::Tauron
-                                                    | AlertSource::Energa
-                                                    | AlertSource::Enea
-                                                    | AlertSource::Pge
-                                                    | AlertSource::Stoen => "Nadchodząca awaria prądu",
-                                                    AlertSource::Water => "Nadchodząca awaria wody",
-                                                    AlertSource::Fortum => "Nadchodząca awaria ogrzewania",
-                                                };
-                                                let mut body = alert.message.clone().unwrap_or_default();
-                                                
-                                                // Prepend address info if available
-                                                if let Some(idx) = alert.address_index {
-                                                    if let Some(addr) = s.addresses.get(idx) {
-                                                        body = format!("{}: {}, {}\n{}", 
-                                                            addr.name, 
-                                                            addr.city_name, 
-                                                            addr.street_name_1,
-                                                            body
-                                                        );
-                                                    }
-                                                }
+                                                let title = format_notification_title(&alert, &s, true);
+                                                let body = format_notification_body(&alert);
 
                                                 log::info!(
-                                                    "Triggering upcoming notification for {}: {}",
+                                                    "Triggering upcoming notification for {}. Title: '{}', Body: '{}'",
                                                     source_key,
+                                                    title,
                                                     body
                                                 );
                                                 app.notification()
                                                     .builder()
                                                     .title(title)
-                                                    .body(body)
+                                                    .body(body.clone())
+                                                    .large_body(body)
                                                     .icon("ic_notification")
+                                                    .extra("hash", hash.clone())
                                                     .show()
                                                     .ok();
 
@@ -611,35 +597,17 @@ async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Resul
                         Ok(seen) => {
                             if !seen {
                                 // Trigger notification
-                                let title = match alert.source {
-                                    AlertSource::Tauron
-                                    | AlertSource::Energa
-                                    | AlertSource::Enea
-                                    | AlertSource::Pge
-                                    | AlertSource::Stoen => "Nowa awaria prądu",
-                                    AlertSource::Water => "Nowa awaria wody",
-                                    AlertSource::Fortum => "Nowa awaria ogrzewania",
-                                };
-                                let mut body = alert.message.clone().unwrap_or_default();
+                                let title = format_notification_title(&alert, &s, false);
+                                let body = format_notification_body(&alert);
 
-                                // Prepend address info if available
-                                if let Some(idx) = alert.address_index {
-                                    if let Some(addr) = s.addresses.get(idx) {
-                                        body = format!("{}: {}, {}\n{}", 
-                                            addr.name, 
-                                            addr.city_name, 
-                                            addr.street_name_1,
-                                            body
-                                        );
-                                    }
-                                }
-
-                                log::info!("Triggering notification for {}: {}", source_key, body);
+                                log::info!("Triggering notification for {}. Title: '{}', Body: '{}'", source_key, title, body);
                                 app.notification()
                                     .builder()
                                     .title(title)
-                                    .body(body)
+                                    .body(body.clone())
+                                    .large_body(body)
                                     .icon("ic_notification")
+                                    .extra("hash", hash.clone())
                                     .show()
                                     .ok();
 
@@ -732,6 +700,64 @@ fn is_warszawa(addr: &AddressEntry) -> bool {
 #[command]
 async fn teryt_city_has_streets(app: AppHandle, city_id: u64) -> Result<bool, String> {
     teryt::city_has_streets(&app, city_id)
+}
+
+fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_upcoming: bool) -> String {
+    let is_pl = settings.language.as_ref().map(|l| l.contains("pl")).unwrap_or(true);
+    let label = match alert.source {
+        AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea | AlertSource::Pge | AlertSource::Stoen => {
+            if is_pl { "awaria prądu" } else { "power outage" }
+        }
+        AlertSource::Water => {
+            if is_pl { "awaria wody" } else { "water outage" }
+        }
+        AlertSource::Fortum => {
+            if is_pl { "awaria ogrzewania" } else { "heat outage" }
+        }
+    };
+    
+    let prefix = if is_upcoming {
+        if is_pl { "Nadchodząca" } else { "Upcoming" }
+    } else {
+        if is_pl { "Nowa" } else { "New" }
+    };
+    
+    let title = format!("{} {}", prefix, label);
+    
+    if let Some(idx) = alert.address_index {
+        if let Some(addr) = settings.addresses.get(idx) {
+            return format!("{}: {}", addr.name, title);
+        }
+    }
+    title
+}
+
+fn format_notification_body(alert: &UnifiedAlert) -> String {
+    let mut body = alert.message.clone().unwrap_or_default();
+    
+    let mut time_info = Vec::new();
+    if let Some(start) = &alert.startDate {
+        if let Some(dt) = utils::parse_date(start) {
+            time_info.push(utils::format_date(dt));
+        }
+    }
+    if let Some(end) = &alert.endDate {
+        if let Some(dt) = utils::parse_date(end) {
+            time_info.push(utils::format_date(dt));
+        }
+    }
+    
+    if !time_info.is_empty() {
+        let times = time_info.join(" - ");
+        // Only append if it's not already in the message (simple check)
+        if !body.contains(&times) {
+            if !body.is_empty() {
+                body.push_str("\n");
+            }
+            body.push_str(&times);
+        }
+    }
+    body
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

@@ -1654,3 +1654,15 @@ input[type="checkbox"]:checked+.notify-bell-icon {
 .empty-state-cta:active {
     transform: scale(0.96) translateY(0);
 }
+
+@keyframes pulse-highlight {
+    0% { background-color: var(--card-background); }
+    30% { background-color: color-mix(in srgb, var(--primary-color), transparent 70%); }
+    100% { background-color: var(--card-background); }
+}
+
+.highlight-pulse {
+    animation: pulse-highlight 3s ease-in-out;
+    border: 2px solid var(--primary-color) !important;
+    z-index: 10;
+}

@@ -42,6 +42,7 @@ impl OutageItem {
             description: self.Description.clone(),
             address_index: None,
             is_local: None,
+            hash: None,
         }
     }
 }
