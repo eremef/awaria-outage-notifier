@@ -20,12 +20,16 @@ class MainActivity : TauriActivity() {
       val bottom = safeInsets.bottom / density
 
       findWebView(decorView as ViewGroup)?.let { webView ->
-        webView.post {
-          webView.evaluateJavascript(
-            "document.documentElement.style.setProperty('--native-safe-area-inset-top', '${top}px');" +
-            "document.documentElement.style.setProperty('--native-safe-area-inset-bottom', '${bottom}px');",
-            null
-          )
+        if (!this.isFinishing && !this.isDestroyed) {
+          webView.post {
+            if (!this.isFinishing && !this.isDestroyed) {
+              webView.evaluateJavascript(
+                "document.documentElement.style.setProperty('--native-safe-area-inset-top', '${top}px');" +
+                "document.documentElement.style.setProperty('--native-safe-area-inset-bottom', '${bottom}px');",
+                null
+              )
+            }
+          }
         }
       }
       insets

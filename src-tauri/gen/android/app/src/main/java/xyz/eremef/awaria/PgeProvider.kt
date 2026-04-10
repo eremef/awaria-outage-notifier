@@ -30,72 +30,59 @@ class PgeProvider : IOutageProvider {
             val response = WidgetUtils.fetchJson(URL(urlString))
             val outages = org.json.JSONArray(response)
 
-            for (settings in relevantSettings) {
-                var count = 0
-                for (i in 0 until outages.length()) {
-                    val outage = outages.getJSONObject(i)
-                    
-                    // Redundant local check for safety
-                    val stopAtStr = outage.optString("stopAt", "")
-                    if (!DateUtils.isOutageActive(stopAtStr)) continue
+            val matchers = relevantSettings.map { it to WidgetUtils.CompiledMatcher(it) }
+            val counts = IntArray(relevantSettings.size) { 0 }
 
-                    val description = outage.optString("description", "")
-                    val cityMatchDesc =
-                        description.lowercase().contains(settings.cityName.lowercase())
-                    val addresses = outage.optJSONArray("addresses") ?: continue
+            for (i in 0 until outages.length()) {
+                val outage = outages.getJSONObject(i)
+                
+                // Redundant local check for safety
+                val stopAtStr = outage.optString("stopAt", "")
+                if (!DateUtils.isOutageActive(stopAtStr, "yyyy-MM-dd HH:mm:ss")) continue
+
+                val description = outage.optString("description", "")
+                val addresses = outage.optJSONArray("addresses") ?: continue
+
+                for (idx in matchers.indices) {
+                    val (settings, matcher) = matchers[idx]
                     var matched = false
+                    
                     for (j in 0 until addresses.length()) {
                         val addr = addresses.getJSONObject(j)
                         val teryt = addr.optJSONObject("teryt")
                         if (teryt != null) {
-                            val vMatch =
-                                teryt.optString("voivodeshipName").uppercase() ==
-                                        settings.voivodeship.uppercase()
+                            val vMatch = teryt.optString("voivodeshipName").uppercase() == settings.voivodeship.uppercase()
                             if (!vMatch) continue
 
-                            val dMatch =
-                                teryt.optString("countyName").lowercase() ==
-                                        settings.district.lowercase()
+                            val dMatch = teryt.optString("countyName").lowercase() == settings.district.lowercase()
                             if (!dMatch) continue
 
-                            val cMatch =
-                                teryt.optString("communeName").lowercase() ==
-                                        settings.commune.lowercase()
+                            val cMatch = teryt.optString("communeName").lowercase() == settings.commune.lowercase()
                             if (!cMatch) continue
 
-                            val cityMatch =
-                                teryt.optString("cityName").lowercase() ==
-                                        settings.cityName.lowercase()
+                            val cityMatch = teryt.optString("cityName").lowercase() == settings.cityName.lowercase()
                             if (!cityMatch) continue
 
                             val streetQuery = settings.streetName1.lowercase()
-                            val streetMatch =
-                                if (streetQuery.isEmpty()) true
-                                else
-                                    teryt.optString("streetName")
-                                        .lowercase()
-                                        .contains(streetQuery)
+                            val streetMatch = if (streetQuery.isEmpty()) true
+                            else teryt.optString("streetName").lowercase().contains(streetQuery)
 
                             if (streetMatch) {
                                 matched = true
                                 break
                             }
-                        } else if (cityMatchDesc) {
-                            if (settings.streetName1.isEmpty()) {
-                                matched = true
-                                break
-                            }
-                            if (description.lowercase().contains(settings.streetName1.lowercase())
-                            ) {
+                        } else {
+                            // Fallback to description-based matching
+                            if (matcher.matchesCity(description) && matcher.matchesStreet(description)) {
                                 matched = true
                                 break
                             }
                         }
                     }
-                    if (matched) count++
+                    if (matched) counts[idx]++
                 }
-                totalCount += count
             }
+            totalCount = counts.sum()
         } catch (e: Exception) {
             Log.e(TAG, "PGE sync failed", e)
         }

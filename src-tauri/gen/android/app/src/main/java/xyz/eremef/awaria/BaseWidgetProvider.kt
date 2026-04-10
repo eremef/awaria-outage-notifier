@@ -20,7 +20,10 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.json.JSONObject
 
 data class WidgetSettings(
@@ -40,18 +43,46 @@ data class WidgetSettings(
     val sourceEnabled: Boolean
 )
 
+/**
+ * Global cache to share fetch results between different widgets during the same update cycle.
+ */
+object ProviderCache {
+    private val cache = ConcurrentHashMap<String, Deferred<Int>>()
+    private val mutex = Mutex()
+    private var lastClearTime = 0L
+    private const val CACHE_TTL_MS = 30000L // 30 seconds
+
+    suspend fun getOrFetch(providerId: String, hash: String, fetch: suspend () -> Int): Int {
+        val now = System.currentTimeMillis()
+        val key = "$providerId:$hash"
+
+        return mutex.withLock {
+            // Clear cache if stale
+            if (now - lastClearTime > CACHE_TTL_MS) {
+                cache.clear()
+                lastClearTime = now
+            }
+
+            val deferred = cache.getOrPut(key) {
+                CoroutineScope(Dispatchers.IO).async {
+                    fetch()
+                }
+            }
+            deferred.await()
+        }
+    }
+}
+
 abstract class BaseWidgetProvider : AppWidgetProvider() {
 
     companion object {
         const val WORK_NAME = "xyz.eremef.awaria.WIDGET_UPDATE_WORK"
         const val TAG = "AwariaWidget"
 
-        // Light theme colors (from style.css :root)
         private const val LIGHT_PRIMARY = "#D9006C"
         private const val LIGHT_LABEL = "#666666"
         private const val LIGHT_UPDATED = "#999999"
 
-        // Dark theme colors (from style.css [data-theme="dark"])
         private const val DARK_PRIMARY = "#FF4DA6"
         private const val DARK_LABEL = "#A0A0A0"
         private const val DARK_UPDATED = "#777777"
@@ -82,9 +113,12 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         val pendingResult = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                for (appWidgetId in appWidgetIds) {
-                    updateWidget(context, appWidgetManager, appWidgetId)
-                }
+                // Parallelize widget updates
+                appWidgetIds.map { appWidgetId ->
+                    async {
+                        updateWidget(context, appWidgetManager, appWidgetId)
+                    }
+                }.awaitAll()
             } finally {
                 pendingResult.finish()
             }
@@ -139,7 +173,8 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     private fun loadSettings(context: Context): List<WidgetSettings>? {
         val settingsFile = findSettingsFile(context) ?: return null
         return try {
-            val json = JSONObject(settingsFile.readText())
+            val jsonString = settingsFile.readText(Charsets.UTF_8)
+            val json = JSONObject(jsonString)
             val addresses = json.optJSONArray("addresses")
             val enabledSources = json.optJSONArray("enabledSources")
 
@@ -154,7 +189,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                     }
                     found
                 } else {
-                    true // Default to enabled if field missing
+                    true
                 }
 
             if (addresses != null && addresses.length() > 0) {
@@ -169,7 +204,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                         streetName1 = addr.optString("streetName1", ""),
                         streetName2 =
                         addr.optString("streetName2", "").let {
-                            if (it.isEmpty()) null else it
+                            if (it.isEmpty() || it == "null") null else it
                         },
                         houseNo = addr.optString("houseNo", ""),
                         cityId = addr.optLong("cityId", 0),
@@ -202,11 +237,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
     private fun applyTheme(views: RemoteViews, dark: Boolean) {
         if (dark) {
-            views.setInt(
-                R.id.widget_root,
-                "setBackgroundResource",
-                R.drawable.widget_background_dark
-            )
+            views.setInt(R.id.widget_root, "setBackgroundResource", R.drawable.widget_background_dark)
             views.setTextColor(R.id.widget_count, Color.parseColor(darkPrimary))
             views.setTextColor(R.id.widget_label, Color.parseColor(DARK_LABEL))
             views.setTextColor(R.id.widget_updated, Color.parseColor(DARK_UPDATED))
@@ -231,17 +262,12 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             "pge" -> "PGE"
             "fortum" -> "Fortum"
             "water" -> "MPWiK"
-            else ->
-                key.replaceFirstChar {
-                    if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-                }
+            else -> key.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
         }
     }
 
     private fun getTranslation(key: String, lang: String): String {
-        val isPl =
-            if (lang == "pl") true
-            else if (lang == "en") false else Locale.getDefault().language.startsWith("pl")
+        val isPl = if (lang == "pl") true else if (lang == "en") false else Locale.getDefault().language.startsWith("pl")
         return when (key) {
             "outages" -> if (isPl) "wyłączeń" else "outages"
             "setup" -> if (isPl) "Skonfiguruj" else "Setup needed"
@@ -252,6 +278,10 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     }
 
     abstract suspend fun fetchCount(context:Context, settings: List<WidgetSettings>): Int
+
+    private fun calculateHash(settingsList: List<WidgetSettings>): String {
+        return settingsList.joinToString("|") { "${it.cityId}-${it.streetId}-${it.houseNo}" }.hashCode().toString()
+    }
 
     internal suspend fun updateWidget(
         context: Context,
@@ -278,7 +308,11 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             statusMessage = getTranslation("setup", language)
         } else {
             try {
-                val total = fetchCount(context, activeSettings)
+                // Shared fetch result between widgets
+                val hash = calculateHash(activeSettings)
+                val total = ProviderCache.getOrFetch(sourceKey, hash) {
+                    fetchCount(context, activeSettings)
+                }
                 count = if (addressCount > 1) "$total ($addressCount)" else total.toString()
             } catch (e: Exception) {
                 count = "!"
@@ -286,125 +320,50 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             }
         }
 
-        val updatedAt =
-            statusMessage
-                ?: run {
-                    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-                    timeFormat.format(Date())
-                }
+        val updatedAt = statusMessage ?: run {
+            val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+            timeFormat.format(Date())
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val viewMapping =
-                mapOf(
-                    SizeF(40f, 40f) to
-                            createRemoteViews(
-                                context,
-                                R.layout.widget_outage_small,
-                                count,
-                                updatedAt,
-                                language,
-                                dark
-                            ),
-                    SizeF(100f, 100f) to
-                            createRemoteViews(
-                                context,
-                                R.layout.widget_outage,
-                                count,
-                                updatedAt,
-                                language,
-                                dark
-                            ),
-                    SizeF(200f, 200f) to
-                            createRemoteViews(
-                                context,
-                                R.layout.widget_outage_large,
-                                count,
-                                updatedAt,
-                                language,
-                                dark
-                            )
-                )
+            val viewMapping = mapOf(
+                SizeF(40f, 40f) to createRemoteViews(context, R.layout.widget_outage_small, count, updatedAt, language, dark),
+                SizeF(100f, 100f) to createRemoteViews(context, R.layout.widget_outage, count, updatedAt, language, dark),
+                SizeF(200f, 200f) to createRemoteViews(context, R.layout.widget_outage_large, count, updatedAt, language, dark)
+            )
             val views = RemoteViews(viewMapping)
             appWidgetManager.updateAppWidget(appWidgetId, views)
         } else {
-            // Legacy: pick best layout based on current options
             val options = appWidgetManager.getAppWidgetOptions(appWidgetId)
             val minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
             val minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT)
-
-            val layoutId =
-                if (minWidth < 100 || minHeight < 100) {
-                    R.layout.widget_outage_small
-                } else if (minWidth < 200 || minHeight < 200) {
-                    R.layout.widget_outage
-                } else {
-                    R.layout.widget_outage_large
-                }
-
+            val layoutId = if (minWidth < 100 || minHeight < 100) R.layout.widget_outage_small
+                           else if (minWidth < 200 || minHeight < 200) R.layout.widget_outage
+                           else R.layout.widget_outage_large
             val views = createRemoteViews(context, layoutId, count, updatedAt, language, dark)
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
     }
 
-    private fun createRemoteViews(
-        context: Context,
-        layoutId: Int,
-        count: String,
-        updatedAt: String,
-        language: String,
-        dark: Boolean
-    ): RemoteViews {
+    private fun createRemoteViews(context: Context, layoutId: Int, count: String, updatedAt: String, language: String, dark: Boolean): RemoteViews {
         val views = RemoteViews(context.packageName, layoutId)
-
         val refreshIntent = Intent(context, this::class.java).apply { action = refreshAction }
-        val refreshPending =
-            PendingIntent.getBroadcast(
-                context,
-                0,
-                refreshIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-
-        val clickPending =
-            if (count == "0" ||
-                count.startsWith("0 (") ||
-                count == "?" ||
-                count == "!" ||
-                count == "–"
-            ) {
-                refreshPending
-            } else {
-                val launchIntent =
-                    context.packageManager.getLaunchIntentForPackage(context.packageName)
-                        ?.apply {
-                            flags =
-                                Intent.FLAG_ACTIVITY_NEW_TASK or
-                                        Intent.FLAG_ACTIVITY_CLEAR_TOP
-                        }
-                if (launchIntent != null) {
-                    PendingIntent.getActivity(
-                        context,
-                        0,
-                        launchIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                    )
-                } else {
-                    refreshPending
-                }
-            }
-
-        // Always refresh when clicking the background
+        val refreshPending = PendingIntent.getBroadcast(context, 0, refreshIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val clickPending = if (count == "0" || count.startsWith("0 (") || count == "?" || count == "!" || count == "–") refreshPending
+                           else {
+                               val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
+                                   flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                               }
+                               if (launchIntent != null) PendingIntent.getActivity(context, 0, launchIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                               else refreshPending
+                           }
         views.setOnClickPendingIntent(R.id.widget_root, refreshPending)
-
-        // If there are outages, clicking the icon or the count will open the app
         views.setOnClickPendingIntent(R.id.widget_icon, clickPending)
         views.setOnClickPendingIntent(R.id.widget_count, clickPending)
-
         applyTheme(views, dark)
         views.setTextViewText(R.id.widget_label, getTranslation(labelKey, language))
         views.setTextViewText(R.id.widget_count, count)
         views.setTextViewText(R.id.widget_updated, updatedAt)
-
         return views
     }
 }

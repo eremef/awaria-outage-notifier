@@ -64,47 +64,38 @@ class StoenProvider : IOutageProvider {
 
             val outages = org.json.JSONArray(response)
 
-            for (settings in relevantSettings) {
-                var count = 0
-                for (i in 0 until outages.length()) {
-                    val outage = outages.getJSONObject(i)
+            val matchers = relevantSettings.map { it to WidgetUtils.CompiledMatcher(it) }
+            val counts = IntArray(relevantSettings.size) { 0 }
 
-                    // Filter by date (End of outage must be in the future)
-                    val endStr = outage.optString("outageEnd", "")
-                    if (!DateUtils.isOutageActive(endStr)) continue
+            for (i in 0 until outages.length()) {
+                val outage = outages.getJSONObject(i)
 
+                // Filter by date (End of outage must be in the future)
+                val endStr = outage.optString("outageEnd", "")
+                if (!DateUtils.isOutageActive(endStr, "yyyy-MM-dd HH:mm:ss")) continue
+
+                val addresses = outage.optJSONArray("addresses") ?: continue
+                
+                for (adIdx in matchers.indices) {
+                    val (settings, matcher) = matchers[adIdx]
                     if (settings.streetName1.isEmpty()) {
-                        count++
+                        counts[adIdx]++
                         continue
                     }
 
-                    val addresses = outage.optJSONArray("addresses") ?: continue
                     var streetMatched = false
                     for (j in 0 until addresses.length()) {
                         val addr = addresses.getJSONObject(j)
                         val street = addr.optString("streetName", "")
-                        if (street.isNotEmpty()) {
-                            val streetNorm =
-                                street.lowercase()
-                                    .replace("ul. ", "")
-                                    .replace("al. ", "")
-                                    .replace("pl. ", "")
-                                    .replace("os. ", "")
-                                    .trim()
-
-                            val query = settings.streetName1.lowercase()
-                            // If street names match, we count it (Stoen is matched by street only
-                            // per user request)
-                            if (streetNorm.contains(query) || query.contains(streetNorm)) {
-                                streetMatched = true
-                                break
-                            }
+                        if (matcher.matchesStreet(street)) {
+                            streetMatched = true
+                            break
                         }
                     }
-                    if (streetMatched) count++
+                    if (streetMatched) counts[adIdx]++
                 }
-                totalCount += count
             }
+            totalCount = counts.sum()
         } catch (e: Exception) {
             Log.e(TAG, "STOEN fetch error", e)
         }

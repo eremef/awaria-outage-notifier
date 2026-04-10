@@ -10,6 +10,7 @@ import java.util.*
 class EnergaProvider : IOutageProvider {
     companion object {
         private const val TAG = "AwariaEnerga"
+        private const val URL_CACHE_TTL = 3600000L // 1 hour
     }
 
     override val id: String = "energa"
@@ -20,7 +21,7 @@ class EnergaProvider : IOutageProvider {
 
         var totalCount = 0
         try {
-            val apiUrl = fetchEnergaApiUrl() ?: return 0
+            val apiUrl = getOrFetchApiUrl(context) ?: return 0
             val response = WidgetUtils.fetchJson(URL(apiUrl))
             val json = JSONObject(response)
             val shutdowns =
@@ -29,54 +30,59 @@ class EnergaProvider : IOutageProvider {
                     ?.optJSONArray("shutdowns")
                     ?: return 0
 
-            for (settings in settingsList) {
-                var count = 0
-                for (i in 0 until shutdowns.length()) {
-                    val s = shutdowns.getJSONObject(i)
-                    val endStr = s.optString("endDate", "")
-                    if (!DateUtils.isOutageActive(endStr)) continue
-                    val message = s.optString("message", "")
-                    val areas = s.optJSONArray("areas")
+            // Pre-compile matchers for all relevant settings
+            val matchers = relevantSettings.map { it to WidgetUtils.CompiledMatcher(it) }
+            val counts = IntArray(relevantSettings.size) { 0 }
 
-                    val cityMatch = WidgetUtils.wordMatch(message, settings.cityName)
-                    var communeMatch = false
-                    if (areas != null) {
-                        for (j in 0 until areas.length()) {
-                            if (WidgetUtils.wordMatch(areas.getString(j), settings.commune)) {
-                                communeMatch = true
-                                break
-                            }
-                        }
+            // Energa provides a global list, so we fetch once and filter locally for all addresses
+            for (i in 0 until shutdowns.length()) {
+                val s = shutdowns.getJSONObject(i)
+                val endStr = s.optString("endDate", "")
+                if (!DateUtils.isOutageActive(endStr, "yyyy-MM-dd HH:mm:ss")) continue
+                
+                val message = s.optString("message", "")
+                val areasArray = s.optJSONArray("areas")
+                val areas = if (areasArray != null) {
+                    List(areasArray.length()) { areasArray.getString(it) }
+                } else null
+
+                for (idx in matchers.indices) {
+                    if (matchers[idx].second.matchesFull(message, areas)) {
+                        counts[idx]++
                     }
-
-                    if (cityMatch &&
-                        communeMatch &&
-                        WidgetUtils.matchesStreetOnly(
-                            message,
-                            settings.streetName1,
-                            settings.streetName2
-                        )
-                    )
-                        count++
                 }
-                totalCount += count
             }
+            totalCount = counts.sum()
         } catch (e: Exception) {
             Log.e(TAG, "Energa sync failed", e)
         }
         return totalCount
     }
 
-    private fun fetchEnergaApiUrl(): String? {
+    private fun getOrFetchApiUrl(context: Context): String? {
+        val prefs = context.getSharedPreferences("awaria_cache", Context.MODE_PRIVATE)
+        val cachedUrl = prefs.getString("energa_api_url", null)
+        val lastFetch = prefs.getLong("energa_url_fetch_time", 0L)
+        val now = System.currentTimeMillis()
+
+        if (cachedUrl != null && (now - lastFetch < URL_CACHE_TTL)) {
+            return cachedUrl
+        }
+
         return try {
-            val url =
-                URL(
-                    "https://www.energa-operator.pl/uslugi/awarie-i-wylaczenia/wylaczenia-planowane"
-                )
-            val html = URL(url.toString()).readText()
+            val url = URL("https://www.energa-operator.pl/uslugi/awarie-i-wylaczenia/wylaczenia-planowane")
+            val html = url.readText()
             val regex = Regex("""data-shutdowns="([^"]+)"""")
             val match = regex.find(html)
-            match?.groupValues?.get(1)?.let { "https://energa-operator.pl$it" }
+            match?.groupValues?.get(1)?.let { 
+                val fullUrl = "https://energa-operator.pl$it"
+                prefs.edit().apply {
+                    putString("energa_api_url", fullUrl)
+                    putLong("energa_url_fetch_time", now)
+                    apply()
+                }
+                fullUrl
+            }
         } catch (e: Exception) {
             null
         }
