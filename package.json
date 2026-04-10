@@ -14,6 +14,7 @@
     "test": "npm run test:frontend && npm run test:backend && npm run test:android",
     "test:frontend": "vitest run",
     "test:backend": "cd src-tauri && cargo test",
+    "rust:check": "cd src-tauri && cargo check",
     "test:android": "cd src-tauri/gen/android && gradlew.bat :app:testUniversalDebugUnitTest",
     "load:teryt": "node scripts/load-teryt.mjs"
   },

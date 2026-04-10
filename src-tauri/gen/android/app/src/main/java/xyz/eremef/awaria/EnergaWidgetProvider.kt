@@ -1,6 +1,5 @@
 package xyz.eremef.awaria
 
-import xyz.eremef.awaria.R
 import android.content.Context
 
 class EnergaWidgetProvider : BaseWidgetProvider() {
@@ -11,7 +10,7 @@ class EnergaWidgetProvider : BaseWidgetProvider() {
     override val labelKey: String = "outages"
     override val sourceKey: String = "energa"
 
-    override suspend fun fetchCount(settings: List<WidgetSettings>): Int {
-        return fetchEnergaAlertCount(settings)
+    override suspend fun fetchCount(context: Context, settings: List<WidgetSettings>): Int {
+        return EnergaProvider().fetchCount(context, settings)
     }
 }

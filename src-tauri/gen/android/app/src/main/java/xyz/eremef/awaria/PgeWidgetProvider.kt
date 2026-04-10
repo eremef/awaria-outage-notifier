@@ -1,6 +1,5 @@
 package xyz.eremef.awaria
 
-import xyz.eremef.awaria.R
 import android.content.Context
 
 class PgeWidgetProvider : BaseWidgetProvider() {
@@ -11,7 +10,7 @@ class PgeWidgetProvider : BaseWidgetProvider() {
     override val labelKey: String = "outages"
     override val sourceKey: String = "pge"
 
-    override suspend fun fetchCount(settings: List<WidgetSettings>): Int {
-        return fetchPgeAlertCount(settings)
+    override suspend fun fetchCount(context: Context, settings: List<WidgetSettings>): Int {
+        return PgeProvider().fetchCount(context, settings)
     }
 }

@@ -1,6 +1,7 @@
-use crate::api_logic::{AddressEntry, AlertSource, UnifiedAlert};
-use crate::utils::build_client;
+use crate::api_logic::{AddressEntry, AlertSource, UnifiedAlert, AlertProvider, Settings, is_warszawa};
+use crate::utils::{build_client, retry};
 use serde::{Deserialize, Serialize};
+use async_trait::async_trait;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[allow(non_snake_case)]
@@ -68,12 +69,53 @@ pub async fn fetch_stoen_outages() -> Result<Vec<StoenOutage>, String> {
     Ok(data)
 }
 
+pub struct StoenProvider;
+
+#[async_trait]
+impl AlertProvider for StoenProvider {
+    fn id(&self) -> String {
+        "stoen".to_string()
+    }
+
+    async fn fetch(&self, settings: &Settings) -> (Vec<UnifiedAlert>, Vec<String>) {
+        if !settings.addresses.iter().any(|a| a.is_active && is_warszawa(a)) {
+            return (Vec::new(), Vec::new());
+        }
+
+        match retry(|| fetch_stoen_outages(), 3).await {
+            Ok(outages) => {
+                let mut alerts = Vec::new();
+                for outage in outages {
+                    let mut local_match = None;
+                    for (idx, addr) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
+                        if matches_address(&outage, addr) {
+                            local_match = Some((idx, addr.clone()));
+                            break;
+                        }
+                    }
+
+                    if let Some((idx, addr)) = local_match {
+                        let mut alert = outage.to_unified();
+                        alert.address_index = Some(idx);
+                        alert.is_local = Some(true);
+                        alert.description = Some(format!("Miejscowość: {}", addr.city_name));
+                        alerts.push(alert);
+                    } else {
+                        let mut alert = outage.to_unified();
+                        alert.is_local = Some(false);
+                        alert.description = Some("Miejscowość: Warszawa".to_string());
+                        alerts.push(alert);
+                    }
+                }
+                (alerts, Vec::new())
+            }
+            Err(e) => (Vec::new(), vec![format!("STOEN: {}", e)]),
+        }
+    }
+}
+
 pub fn matches_address(outage: &StoenOutage, address: &AddressEntry) -> bool {
-    // STOEN is strictly for Warszawa
-    let city_lower = address.city_name.to_lowercase();
-    let is_warszawa = city_lower == "warszawa" || city_lower == "warsaw" || address.city_id == Some(918123);
-    
-    if !is_warszawa {
+    if !is_warszawa(address) {
         return false;
     }
 

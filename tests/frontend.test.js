@@ -1,51 +1,50 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect } from 'vitest';
-const { filterOutages, filterAlerts, formatDate } = require('../public/script.js');
-
+const { filterAlerts, formatDate } = require('../public/script.js');
 describe('Frontend Logic', () => {
-    describe('filterOutages (legacy)', () => {
-        const mockOutages = [
-            { Message: 'Planned outage at Henryka Probusa 12, Wrocław', GAID: 100 },
-            { Message: 'Awaria na Probusa 5', GAID: 101 },
-            { Message: 'Maintenance on Legnicka 5, Wrocław', GAID: 102 },
-            { Message: 'Prace na Jana Pawła II', GAID: 103 },
-            { Message: 'Utrudnienia na Pawła', GAID: 104 },
-            { Message: 'Wrocław Probusa..', GAID: 105 }
+    describe('filtering logic', () => {
+        const mockAlerts = [
+            { message: 'Planned outage at Henryka Probusa 12, Wrocław', id: 100 },
+            { message: 'Awaria na Probusa 5', id: 101 },
+            { message: 'Maintenance on Legnicka 5, Wrocław', id: 102 },
+            { message: 'Prace na Jana Pawła II', id: 103 },
+            { message: 'Utrudnienia na Pawła', id: 104 },
+            { message: 'Wrocław Probusa..', id: 105 }
         ];
 
         it('finds outages matching the full street name', () => {
-            const filtered = filterOutages(mockOutages, 'Henryka Probusa');
-            expect(filtered.some(o => o.Message.includes('Henryka Probusa'))).toBe(true);
+            const filtered = filterAlerts(mockAlerts, 'Henryka Probusa');
+            expect(filtered.some(o => o.message.includes('Henryka Probusa'))).toBe(true);
         });
 
         it('finds outages matching the short street name (last part)', () => {
-            const filtered = filterOutages(mockOutages, 'Henryka Probusa');
-            expect(filtered.some(o => o.Message.includes('Awaria na Probusa'))).toBe(true);
+            const filtered = filterAlerts(mockAlerts, 'Henryka Probusa');
+            expect(filtered.some(o => o.message.includes('Awaria na Probusa'))).toBe(true);
         });
 
         it('finds outages matching significant parts (ignoring short words)', () => {
-            const filtered = filterOutages(mockOutages, 'Jana Pawła II');
-            expect(filtered.some(o => o.Message.includes('Pawła'))).toBe(true);
+            const filtered = filterAlerts(mockAlerts, 'Jana Pawła II');
+            expect(filtered.some(o => o.message.includes('Pawła'))).toBe(true);
         });
 
-        it('does not match when text does not match (GAID matching is backend-only)', () => {
-            const filtered = filterOutages(mockOutages, 'Kuźnicza');
+        it('does not match when text does not match', () => {
+            const filtered = filterAlerts(mockAlerts, 'Kuźnicza');
             expect(filtered).toHaveLength(0);
         });
 
         it('returns empty array when no match found', () => {
-            const filtered = filterOutages(mockOutages, 'Main Street');
+            const filtered = filterAlerts(mockAlerts, 'Main Street');
             expect(filtered).toHaveLength(0);
         });
 
         it('returns empty array when street name is empty', () => {
-            const filtered = filterOutages(mockOutages, '');
+            const filtered = filterAlerts(mockAlerts, '');
             expect(filtered).toHaveLength(0);
         });
 
         it('handles case-insensitivity and "ul." prefix', () => {
-            const filtered = filterOutages(mockOutages, 'UL. PROBUSA');
-            expect(filtered.some(o => o.Message.toLowerCase().includes('probusa'))).toBe(true);
+            const filtered = filterAlerts(mockAlerts, 'UL. PROBUSA');
+            expect(filtered.some(o => o.message.toLowerCase().includes('probusa'))).toBe(true);
         });
     });
 
@@ -111,6 +110,22 @@ describe('Frontend Logic', () => {
         it('returns empty string for null input', () => {
             expect(formatDate(null)).toBe('');
             expect(formatDate('')).toBe('');
+        });
+    });
+    describe('Deduplication logic (conceptual/manual)', () => {
+        it('identifies duplicates by hash', () => {
+             const alerts = [
+                 { hash: 'abc', source: 'tauron', message: 'Alert' },
+                 { hash: 'abc', source: 'tauron', message: 'Alert' },
+                 { hash: 'def', source: 'tauron', message: 'Other' }
+             ];
+             const seen = new Set();
+             const deduplicated = alerts.filter(a => {
+                 if (seen.has(a.hash)) return false;
+                 seen.add(a.hash);
+                 return true;
+             });
+             expect(deduplicated).toHaveLength(2);
         });
     });
 });

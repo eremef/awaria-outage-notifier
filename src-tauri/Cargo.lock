@@ -91,6 +91,7 @@ checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 name = "app"
 version = "1.0.27"
 dependencies = [
+ "async-trait",
  "chrono",
  "chrono-tz",
  "dirs 5.0.1",

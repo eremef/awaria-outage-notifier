@@ -1,5 +1,7 @@
 package xyz.eremef.awaria
 
+import android.content.Context
+
 class MpwikWidgetProvider : BaseWidgetProvider() {
     override val refreshAction: String = "xyz.eremef.awaria.ACTION_REFRESH_MPWIK"
     override val lightPrimary: String = "#0077D9" // Water Blue
@@ -8,7 +10,7 @@ class MpwikWidgetProvider : BaseWidgetProvider() {
     override val labelKey: String = "outages"
     override val sourceKey: String = "water"
 
-    override suspend fun fetchCount(settings: List<WidgetSettings>): Int {
-        return fetchMpwikAlertCount(settings)
+    override suspend fun fetchCount(context: Context, settings: List<WidgetSettings>): Int {
+        return MpwikProvider().fetchCount(context, settings)
     }
 }

@@ -1,6 +1,5 @@
 package xyz.eremef.awaria
 
-import xyz.eremef.awaria.R
 import android.content.Context
 
 class StoenWidgetProvider : BaseWidgetProvider() {
@@ -11,7 +10,7 @@ class StoenWidgetProvider : BaseWidgetProvider() {
     override val labelKey: String = "outages"
     override val sourceKey: String = "stoen"
 
-    override suspend fun fetchCount(settings: List<WidgetSettings>): Int {
-        return fetchStoenAlertCount(settings)
+    override suspend fun fetchCount(context: Context, settings: List<WidgetSettings>): Int {
+        return StoenProvider().fetchCount(context, settings)
     }
 }

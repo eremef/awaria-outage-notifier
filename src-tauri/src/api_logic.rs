@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use sha2::{Sha256, Digest};
+use async_trait::async_trait;
 
 // ── Alert source abstraction ──────────────────────────────
 
@@ -61,14 +62,30 @@ impl std::fmt::Display for AlertSource {
     }
 }
 
+#[async_trait]
+pub trait AlertProvider: Send + Sync {
+    fn id(&self) -> String;
+    async fn fetch(&self, settings: &Settings) -> (Vec<UnifiedAlert>, Vec<String>);
+}
+
+pub fn is_wroclaw(addr: &AddressEntry) -> bool {
+    let name = addr.city_name.to_lowercase();
+    name == "wrocław" || name == "wroclaw" || addr.city_id == Some(969400)
+}
+
+pub fn is_warszawa(addr: &AddressEntry) -> bool {
+    let name = addr.city_name.to_lowercase();
+    name == "warszawa" || name == "warsaw" || addr.city_id == Some(918123)
+}
+
 
 
 // ── Address & Settings ────────────────────────────────────
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct AddressEntry {
     pub name: String,
-    #[serde(rename = "cityName")]
     pub city_name: String,
     #[serde(default)]
     pub voivodeship: String,
@@ -76,19 +93,17 @@ pub struct AddressEntry {
     pub district: String,
     #[serde(default)]
     pub commune: String,
-    #[serde(rename = "streetName")]
     pub street_name: String,
-    #[serde(rename = "streetName1", default)]
+    #[serde(default)]
     pub street_name_1: String,
-    #[serde(rename = "streetName2", default)]
+    #[serde(default)]
     pub street_name_2: Option<String>,
-    #[serde(rename = "houseNo")]
     pub house_no: String,
-    #[serde(rename = "cityId", default)]
+    #[serde(default)]
     pub city_id: Option<u64>,
-    #[serde(rename = "streetId", default)]
+    #[serde(default)]
     pub street_id: Option<u64>,
-    #[serde(default = "default_true", rename = "isActive")]
+    #[serde(default = "default_true")]
     pub is_active: bool,
 }
 
@@ -97,22 +112,22 @@ fn default_true() -> bool {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
 pub struct Settings {
     #[serde(default)]
     pub addresses: Vec<AddressEntry>,
-    #[serde(default, rename = "primaryAddressIndex")]
     pub primary_address_index: Option<usize>,
     #[serde(default)]
     pub theme: Option<String>,
     #[serde(default)]
     pub language: Option<String>,
-    #[serde(default, rename = "enabledSources")]
+    #[serde(default)]
     pub enabled_sources: Option<Vec<String>>,
-    #[serde(default, rename = "notificationPreferences")]
+    #[serde(default)]
     pub notification_preferences: HashMap<String, bool>,
-    #[serde(default, rename = "upcomingNotificationEnabled")]
+    #[serde(default)]
     pub upcoming_notification_enabled: bool,
-    #[serde(default = "default_upcoming_hours", rename = "upcomingNotificationHours")]
+    #[serde(default = "default_upcoming_hours")]
     pub upcoming_notification_hours: u32,
 }
 

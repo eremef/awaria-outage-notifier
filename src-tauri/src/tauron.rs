@@ -1,5 +1,7 @@
-use crate::api_logic::{AlertSource, UnifiedAlert};
-use crate::utils::build_client;
+use crate::api_logic::{AlertSource, UnifiedAlert, AlertProvider, Settings};
+use crate::utils::{build_client, retry};
+use async_trait::async_trait;
+use futures::future::join_all;
 use chrono::{SecondsFormat, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -317,6 +319,68 @@ pub fn matches_address(
     }
 
     candidates.iter().any(|c| word_match(message, c))
+}
+
+pub struct TauronProvider;
+
+#[async_trait]
+impl AlertProvider for TauronProvider {
+    fn id(&self) -> String {
+        "tauron".to_string()
+    }
+
+    async fn fetch(&self, settings: &Settings) -> (Vec<UnifiedAlert>, Vec<String>) {
+        let mut tasks = Vec::new();
+
+        for (idx, addr) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
+            let addr = addr.clone();
+            tasks.push(tokio::spawn(async move {
+                match retry(|| fetch_tauron_outages(&addr), 3).await {
+                    Ok(response) => {
+                        let alerts: Vec<UnifiedAlert> = response
+                            .OutageItems
+                            .unwrap_or_default()
+                            .into_iter()
+                            .map(|item| {
+                                let mut alert = item.to_unified();
+                                alert.address_index = Some(idx);
+                                let city_prefix = format!("Miejscowość: {}", addr.city_name);
+                                alert.description = Some(match alert.description {
+                                    Some(d) if !d.is_empty() => format!("{}. {}", city_prefix, d),
+                                    _ => city_prefix,
+                                });
+                                alert.is_local = Some(matches_address(
+                                    &item.Message,
+                                    &addr.city_name,
+                                    &addr.street_name_1,
+                                    &addr.street_name_2,
+                                ));
+                                alert
+                            })
+                            .collect();
+                        (alerts, Vec::<String>::new())
+                    }
+                    Err(e) => (Vec::new(), vec![format!("Tauron[{}]: {}", idx, e)]),
+                }
+            }));
+        }
+
+        let results = join_all(tasks).await;
+        let mut all_alerts = Vec::new();
+        let mut all_errors = Vec::new();
+
+        for res in results {
+            match res {
+                Ok((alerts, errs)) => {
+                    all_alerts.extend(alerts);
+                    all_errors.extend(errs);
+                }
+                Err(e) => all_errors.push(format!("Tauron task execution error: {}", e)),
+            }
+        }
+
+        (all_alerts, all_errors)
+    }
 }
 
 #[cfg(test)]

@@ -1,6 +1,7 @@
-use crate::api_logic::{AlertSource, UnifiedAlert};
-use crate::utils::build_client;
+use crate::api_logic::{AlertSource, UnifiedAlert, AlertProvider, Settings};
+use crate::utils::{build_client, retry};
 use serde::{Deserialize, Serialize};
+use async_trait::async_trait;
 
 pub const FORTUM_URL: &str = "https://formularz.fortum.pl/api/v1/switchoffs";
 pub const FORTUM_CITIES_URL: &str = "https://formularz.fortum.pl/api/v1/teryt/cities";
@@ -108,6 +109,85 @@ pub async fn fetch_fortum_alerts(city_guid: &str, region_id: u32) -> Result<Vec<
         .collect();
 
     Ok(alerts)
+}
+
+pub struct FortumProvider;
+
+#[async_trait]
+impl AlertProvider for FortumProvider {
+    fn id(&self) -> String {
+        "fortum".to_string()
+    }
+
+    async fn fetch(&self, settings: &Settings) -> (Vec<UnifiedAlert>, Vec<String>) {
+        let active_addresses = settings.addresses.iter().filter(|a| a.is_active).collect::<Vec<_>>();
+        if active_addresses.is_empty() {
+            return (Vec::new(), Vec::new());
+        }
+
+        match retry(|| fetch_fortum_cities(), 3).await {
+            Ok(cities) => {
+                let mut city_map = std::collections::HashMap::new();
+                for (idx, addr) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
+                    if let Some(fc) = cities.iter().find(|c| {
+                        c.city_name.to_lowercase() == addr.city_name.to_lowercase()
+                    }) {
+                        city_map
+                            .entry((fc.city_guid.clone(), fc.region_id, fc.city_name.clone()))
+                            .or_insert_with(Vec::new)
+                            .push((idx, addr));
+                    }
+                }
+
+                let mut fortum_alerts = Vec::new();
+                let mut fortum_errors = Vec::new();
+
+                for ((guid, rid, city_name), addrs) in city_map {
+                    match retry(|| fetch_fortum_alerts(&guid, rid), 3).await {
+                        Ok(alerts) => {
+                            for a in alerts {
+                                let mut matched_any = false;
+                                for (idx, addr) in &addrs {
+                                    if matches_street_only(
+                                        &a.message,
+                                        &addr.street_name_1,
+                                        &addr.street_name_2,
+                                    ) {
+                                        let mut alert = a.clone();
+                                        alert.address_index = Some(*idx);
+                                        alert.is_local = Some(true);
+                                        let city_prefix = format!("Miejscowość: {}", addr.city_name);
+                                        alert.description = Some(match alert.description {
+                                            Some(d) if !d.is_empty() => format!("{}. {}", city_prefix, d),
+                                            _ => city_prefix,
+                                        });
+                                        fortum_alerts.push(alert);
+                                        matched_any = true;
+                                    }
+                                }
+                                if !matched_any {
+                                    if let Some((idx, addr)) = addrs.first() {
+                                        let mut alert = a.clone();
+                                        alert.address_index = Some(*idx);
+                                        alert.is_local = Some(false);
+                                        let city_prefix = format!("Miejscowość: {}", addr.city_name);
+                                        alert.description = Some(match alert.description {
+                                            Some(d) if !d.is_empty() => format!("{}. {}", city_prefix, d),
+                                            _ => city_prefix,
+                                        });
+                                        fortum_alerts.push(alert);
+                                    }
+                                }
+                            }
+                        }
+                        Err(e) => fortum_errors.push(format!("Fortum ({}): {}", city_name, e)),
+                    }
+                }
+                (fortum_alerts, fortum_errors)
+            }
+            Err(e) => (Vec::new(), vec![format!("Fortum cities: {}", e)]),
+        }
+    }
 }
 
 pub fn matches_street_only(

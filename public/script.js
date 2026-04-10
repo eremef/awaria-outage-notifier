@@ -70,6 +70,52 @@ let selectedStreetName2 = null;
 let cityDebounceTimer = null;
 let streetDebounceTimer = null;
 let cityHasNoStreets = false;
+const SOURCES = [
+    { id: 'tauron', label: 'Tauron', category: 'power', defaultNotify: true, i18nLabel: 'source_tauron_name', i18nShort: 'source_tauron_short' },
+    { id: 'energa', label: 'Energa', category: 'power', defaultNotify: true, i18nLabel: 'source_energa_name', i18nShort: 'source_energa_short' },
+    { id: 'enea', label: 'Enea', category: 'power', defaultNotify: true, i18nLabel: 'source_enea_name', i18nShort: 'source_enea_short' },
+    { id: 'pge', label: 'PGE', category: 'power', defaultNotify: true, i18nLabel: 'source_pge_name', i18nShort: 'source_pge_short' },
+    { id: 'stoen', label: 'Stoen', category: 'power', defaultNotify: true, i18nLabel: 'source_stoen_name', i18nShort: 'source_stoen_short' },
+    { id: 'fortum', label: 'Fortum', category: 'heating', defaultNotify: true, i18nLabel: 'source_fortum_name', i18nShort: 'source_fortum_short' },
+    { id: 'water', label: 'MPWiK', category: 'water', defaultNotify: true, i18nLabel: 'source_water_short', i18nShort: 'source_water_short' },
+];
+
+function renderSourcesUI() {
+    const container = document.getElementById('sources-container');
+    if (!container) return;
+
+    const categories = {
+        power: { label: 'Power', i18n: 'source_power' },
+        heating: { label: 'Heat', i18n: 'source_heating' },
+        water: { label: 'Water', i18n: 'source_water_name' }
+    };
+
+    let html = '';
+    for (const [catId, catInfo] of Object.entries(categories)) {
+        const catSources = SOURCES.filter(s => s.category === catId);
+        if (catSources.length === 0) continue;
+
+        html += `
+            <div class="settings-field-group">
+                <div class="settings-group-label" data-i18n="${catInfo.i18n}">${catInfo.label}</div>
+                ${catSources.map(s => `
+                    <div class="settings-field-row indent">
+                        <div class="source-group checkbox-pair">
+                            <input type="checkbox" id="source-${s.id}-check">
+                            <label for="source-${s.id}-check" ${s.i18nLabel ? `data-i18n="${s.i18nLabel}"` : ''}>${s.label}</label>
+                        </div>
+                        <div class="notify-group checkbox-pair mini">
+                            <input type="checkbox" id="notify-${s.id}-check">
+                            <svg class="notify-bell-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    container.innerHTML = html;
+}
+
 let editingAddressIndex = null;
 
 async function checkAndRequestNotificationPermission() {
@@ -104,12 +150,8 @@ function updateUpcomingStatus() {
     const adjustContainer = document.getElementById('upcoming-adjust-container');
     const rowContainer = document.getElementById('upcoming-row-container');
     
-    const notifyIds = [
-        'notify-tauron-check', 'notify-water-check', 'notify-fortum-check', 
-        'notify-energa-check', 'notify-enea-check', 'notify-pge-check', 'notify-stoen-check'
-    ];
-    const anyNotifyChecked = notifyIds.some(id => {
-        const cb = document.getElementById(id);
+    const anyNotifyChecked = SOURCES.some(s => {
+        const cb = document.getElementById(`notify-${s.id}-check`);
         return cb && cb.checked && !cb.disabled;
     });
 
@@ -134,7 +176,24 @@ function updateUpcomingStatus() {
     }
 }
 
+function updateNotifyStatus(sourceId, notifyId) {
+    const sourceCheck = document.getElementById(sourceId);
+    const notifyCheck = document.getElementById(notifyId);
+    if (sourceCheck && notifyCheck) {
+        notifyCheck.disabled = !sourceCheck.checked;
+        const notifyGroup = notifyCheck.closest('.notify-group');
+        if (notifyGroup) {
+            if (notifyCheck.disabled) {
+                notifyGroup.classList.add('notify-disabled');
+            } else {
+                notifyGroup.classList.remove('notify-disabled');
+            }
+        }
+    }
+}
+
 function initSettings() {
+    renderSourcesUI();
     const btn = document.getElementById('settings-btn');
     const panel = document.getElementById('settings-panel');
     const saveBtn = document.getElementById('save-settings-btn');
@@ -330,86 +389,51 @@ function initSettings() {
     });
 
 
-    const sourceNotifyPairs = [
-        { source: 'source-tauron-check', notify: 'notify-tauron-check' },
-        { source: 'source-water-check', notify: 'notify-water-check' },
-        { source: 'source-fortum-check', notify: 'notify-fortum-check' },
-        { source: 'source-energa-check', notify: 'notify-energa-check' },
-        { source: 'source-enea-check', notify: 'notify-enea-check' },
-        { source: 'source-pge-check', notify: 'notify-pge-check' },
-        { source: 'source-stoen-check', notify: 'notify-stoen-check' }
-    ];
 
-    function updateNotifyStatus(sourceId, notifyId) {
-        const sourceCheck = document.getElementById(sourceId);
-        const notifyCheck = document.getElementById(notifyId);
-        if (sourceCheck && notifyCheck) {
-            notifyCheck.disabled = !sourceCheck.checked;
-            // Add a class only to the notification group for visual feedback
-            const notifyGroup = notifyCheck.closest('.notify-group');
-            if (notifyGroup) {
-                if (notifyCheck.disabled) {
-                    notifyGroup.classList.add('notify-disabled');
+    SOURCES.forEach(s => {
+        const sourceId = `source-${s.id}-check`;
+        const notifyId = `notify-${s.id}-check`;
+        const sourceCheckbox = document.getElementById(sourceId);
+        if (sourceCheckbox) {
+            sourceCheckbox.addEventListener('change', async () => {
+                if (!currentSettings) return;
+                const enabledSources = SOURCES
+                    .filter(src => {
+                        const cb = document.getElementById(`source-${src.id}-check`);
+                        return cb && cb.checked;
+                    })
+                    .map(src => src.id);
+                
+                currentSettings.enabledSources = enabledSources;
+                updateNotifyStatus(sourceId, notifyId);
+                updateUpcomingStatus();
+                await autoSaveSettings();
+                if (sourceCheckbox.checked) {
+                    fetchOutages(s.id);
                 } else {
-                    notifyGroup.classList.remove('notify-disabled');
-                }
-            }
-        }
-    }
-
-    sourceNotifyPairs.forEach(pair => {
-        const sourceCheckbox = document.getElementById(pair.source);
-        if (!sourceCheckbox) return;
-        sourceCheckbox.addEventListener('change', async () => {
-            if (!currentSettings) return;
-            const enabledSources = [];
-            sourceNotifyPairs.forEach(p => {
-                const cb = document.getElementById(p.source);
-                if (cb && cb.checked) {
-                    const srcName = p.source.split('-')[1]; // tauron, water, etc.
-                    enabledSources.push(srcName);
+                    const container = document.getElementById('outages-container');
+                    renderAlerts(lastAlerts || [], container, currentSettings, selectedAddressIndex);
                 }
             });
-            currentSettings.enabledSources = enabledSources;
-            updateNotifyStatus(pair.source, pair.notify);
-            updateUpcomingStatus();
-            await autoSaveSettings();
-            if (sourceCheckbox.checked) {
-                const srcName = pair.source.split('-')[1];
-                fetchOutages(srcName);
-            } else {
-                const container = document.getElementById('outages-container');
-                renderAlerts(lastAlerts || [], container, currentSettings, selectedAddressIndex);
-            }
-        });
-    });
+        }
 
-    ['notify-tauron-check', 'notify-water-check', 'notify-fortum-check', 'notify-energa-check', 'notify-enea-check', 'notify-pge-check', 'notify-stoen-check'].forEach(id => {
-        const checkbox = document.getElementById(id);
-        if (!checkbox) return;
-        checkbox.addEventListener('change', async () => {
-            if (!currentSettings) return;
-            if (!currentSettings.notificationPreferences) {
-                currentSettings.notificationPreferences = {
-                    tauron: false,
-                    water: false,
-                    fortum: false,
-                    energa: false,
-                    enea: false,
-                    pge: false
-                };
-            }
-            const prefKey = id.split('-')[1]; // tauron, water, etc.
-            currentSettings.notificationPreferences[prefKey] = checkbox.checked;
-            
-            // Check for any enabled notifications to trigger permission reminder
-            if (checkbox.checked) {
-                await checkAndRequestNotificationPermission();
-            }
-            
-            updateUpcomingStatus();
-            await autoSaveSettings();
-        });
+        const notifyCheckbox = document.getElementById(notifyId);
+        if (notifyCheckbox) {
+            notifyCheckbox.addEventListener('change', async () => {
+                if (!currentSettings) return;
+                if (!currentSettings.notificationPreferences) {
+                    currentSettings.notificationPreferences = {};
+                }
+                currentSettings.notificationPreferences[s.id] = notifyCheckbox.checked;
+                
+                if (notifyCheckbox.checked) {
+                    await checkAndRequestNotificationPermission();
+                }
+                
+                updateUpcomingStatus();
+                await autoSaveSettings();
+            });
+        }
     });
 
     const upcomingNotifyCheck = document.getElementById('upcoming-notify-check');
@@ -458,11 +482,12 @@ function updateAddressFilter() {
     filter.innerHTML = '';
     if (allOpt) filter.appendChild(allOpt);
 
-    const activeAddresses = (currentSettings && currentSettings.addresses) 
-        ? currentSettings.addresses.map((addr, idx) => ({ ...addr, originalIndex: idx })).filter(addr => addr.isActive !== false)
+    const activeAddresses = (currentSettings && Array.isArray(currentSettings.addresses)) 
+        ? currentSettings.addresses.map((addr, idx) => ({ ...addr, originalIndex: idx })).filter(addr => addr && addr.isActive !== false)
         : [];
 
     const activeCount = activeAddresses.length;
+    console.log('updateAddressFilter: activeCount=', activeCount);
 
     if (activeCount === 0) {
         filter.classList.add('hidden');
@@ -488,8 +513,11 @@ function updateAddressFilter() {
 }
 
 function renderAddressesList() {
+    console.log('renderAddressesList: currentSettings=', currentSettings);
     const list = document.getElementById('addresses-list');
-    if (!currentSettings || !currentSettings.addresses || currentSettings.addresses.length === 0) {
+    if (!list) return;
+
+    if (!currentSettings || !Array.isArray(currentSettings.addresses) || currentSettings.addresses.length === 0) {
         list.innerHTML = `<div class="no-addresses">${typeof t !== 'undefined' ? t('no_addresses') : 'No addresses configured. Add one below.'}</div>`;
         return;
     }
@@ -817,8 +845,10 @@ async function loadSettingsAndFetch() {
     try {
         const container = document.getElementById('outages-container');
         const settings = await window.__TAURI__.core.invoke('load_settings');
+        console.log('loadSettingsAndFetch: received settings:', settings);
         if (settings) {
             currentSettings = settings;
+            console.log('loadSettingsAndFetch: addresses count:', settings.addresses ? settings.addresses.length : 'undefined');
 
             if (settings.language && document.getElementById('language-select')) {
                 document.getElementById('language-select').value = settings.language;
@@ -837,52 +867,22 @@ async function loadSettingsAndFetch() {
             // The fallback below handles the case where it's entirely missing.
 
             const sources = settings.enabledSources || [];
-            document.getElementById('source-tauron-check').checked = sources.includes('tauron');
-            document.getElementById('source-water-check').checked = sources.includes('water');
-            document.getElementById('source-fortum-check').checked = sources.includes('fortum');
-            if (document.getElementById('source-energa-check')) {
-                document.getElementById('source-energa-check').checked = sources.includes('energa');
-            }
-            if (document.getElementById('source-enea-check')) {
-                document.getElementById('source-enea-check').checked = sources.includes('enea');
-            }
-            if (document.getElementById('source-pge-check')) {
-                document.getElementById('source-pge-check').checked = sources.includes('pge');
-            }
-            if (document.getElementById('source-stoen-check')) {
-                document.getElementById('source-stoen-check').checked = sources.includes('stoen');
-            }
+            SOURCES.forEach(s => {
+                const cb = document.getElementById(`source-${s.id}-check`);
+                if (cb) cb.checked = sources.includes(s.id);
+            });
 
             const notifyPrefs = settings.notificationPreferences || {};
-            if (document.getElementById('notify-tauron-check')) document.getElementById('notify-tauron-check').checked = !!notifyPrefs.tauron;
-            if (document.getElementById('notify-water-check')) document.getElementById('notify-water-check').checked = !!notifyPrefs.water;
-            if (document.getElementById('notify-fortum-check')) document.getElementById('notify-fortum-check').checked = !!notifyPrefs.fortum;
-            if (document.getElementById('notify-energa-check')) document.getElementById('notify-energa-check').checked = !!notifyPrefs.energa;
-            if (document.getElementById('notify-enea-check')) document.getElementById('notify-enea-check').checked = !!notifyPrefs.enea;
-            if (document.getElementById('notify-pge-check')) document.getElementById('notify-pge-check').checked = !!notifyPrefs.pge;
-            if (document.getElementById('notify-stoen-check')) document.getElementById('notify-stoen-check').checked = !!notifyPrefs.stoen;
+            SOURCES.forEach(s => {
+                const cb = document.getElementById(`notify-${s.id}-check`);
+                if (cb) cb.checked = !!notifyPrefs[s.id];
+            });
 
             // Update disabled status for all notify checkboxes
-            const pairs = [
-                { source: 'source-tauron-check', notify: 'notify-tauron-check' },
-                { source: 'source-water-check', notify: 'notify-water-check' },
-                { source: 'source-fortum-check', notify: 'notify-fortum-check' },
-                { source: 'source-energa-check', notify: 'notify-energa-check' },
-                { source: 'source-enea-check', notify: 'notify-enea-check' },
-                { source: 'source-pge-check', notify: 'notify-pge-check' },
-                { source: 'source-stoen-check', notify: 'notify-stoen-check' }
-            ];
-            pairs.forEach(p => {
-                const sourceCheck = document.getElementById(p.source);
-                const notifyCheck = document.getElementById(p.notify);
-                if (sourceCheck && notifyCheck) {
-                    notifyCheck.disabled = !sourceCheck.checked;
-                    const notifyGroup = notifyCheck.closest('.notify-group');
-                    if (notifyGroup) {
-                        if (notifyCheck.disabled) notifyGroup.classList.add('notify-disabled');
-                        else notifyGroup.classList.remove('notify-disabled');
-                    }
-                }
+            SOURCES.forEach(s => {
+                const sourceId = `source-${s.id}-check`;
+                const notifyId = `notify-${s.id}-check`;
+                updateNotifyStatus(sourceId, notifyId);
             });
 
             if (document.getElementById('upcoming-notify-check')) {
@@ -927,23 +927,14 @@ async function loadSettingsAndFetch() {
             };
 
             // Explicitly uncheck and disable all source/notify pairs on first run
-            const pairs = [
-                { source: 'source-tauron-check', notify: 'notify-tauron-check' },
-                { source: 'source-water-check', notify: 'notify-water-check' },
-                { source: 'source-fortum-check', notify: 'notify-fortum-check' },
-                { source: 'source-energa-check', notify: 'notify-energa-check' },
-                { source: 'source-enea-check', notify: 'notify-enea-check' },
-                { source: 'source-pge-check', notify: 'notify-pge-check' },
-                { source: 'source-stoen-check', notify: 'notify-stoen-check' }
-            ];
-            pairs.forEach(p => {
-                const s = document.getElementById(p.source);
-                const n = document.getElementById(p.notify);
-                if (s) s.checked = false;
-                if (n) {
-                    n.checked = false;
-                    n.disabled = true;
-                    const notifyGroup = n.closest('.notify-group');
+            SOURCES.forEach(s => {
+                const sc = document.getElementById(`source-${s.id}-check`);
+                const nc = document.getElementById(`notify-${s.id}-check`);
+                if (sc) sc.checked = false;
+                if (nc) {
+                    nc.checked = false;
+                    nc.disabled = true;
+                    const notifyGroup = nc.closest('.notify-group');
                     if (notifyGroup) notifyGroup.classList.add('notify-disabled');
                 }
             });
@@ -1125,7 +1116,17 @@ async function fetchOutages(specificSource = null) {
     const container = document.getElementById('outages-container');
     try {
         const invokeArgs = specificSource ? { sources: [specificSource] } : { sources: null };
-        const newAlerts = await window.__TAURI__.core.invoke('fetch_all_alerts', invokeArgs);
+        let newAlerts = await window.__TAURI__.core.invoke('fetch_all_alerts', invokeArgs);
+
+        if (Array.isArray(newAlerts)) {
+            const seen = new Set();
+            newAlerts = newAlerts.filter(a => {
+                if (!a.hash) return true;
+                if (seen.has(a.hash)) return false;
+                seen.add(a.hash);
+                return true;
+            });
+        }
 
         if (specificSource) {
             // Merge new alerts for this source into lastAlerts
@@ -1188,27 +1189,19 @@ function filterAlerts(alerts, streetName) {
     });
 }
 
-// Legacy wrapper — used by old filterOutages tests
-function filterOutages(allOutages, streetName, settings) {
-    if (!allOutages) return [];
+function matchesAddress(alert, addresses, addrIdx) {
+    const addr = addresses[addrIdx];
+    if (!addr || addr.isActive === false) return false;
 
-    const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const wordMatch = (text, word) => {
-        const regex = new RegExp(`(^|[^\\p{L}])${escapeRegExp(word)}([^\\p{L}]|$)`, 'iu');
-        return regex.test(text);
-    };
+    // Sources that provide addressIndex and isLocal from backend
+    if (['tauron', 'energa', 'enea', 'pge', 'stoen'].includes(alert.source)) {
+        return alert.isLocal === true && alert.addressIndex === addrIdx;
+    }
 
-    const normalize = (name) => name.replace(/^(ul\.|al\.|pl\.|os\.|rondo)\s*/i, '').trim();
-    const fullStreet = normalize(streetName);
-    const significantWords = fullStreet.split(/\s+/).filter(w => w.length >= 3);
-
-    return allOutages.filter(item => {
-        if (!item.Message && !item.message) return false;
-        if (!streetName) return false;
-
-        const message = item.Message || item.message || '';
-        return significantWords.some(word => wordMatch(message, word));
-    });
+    // Sources that might need frontend matching (e.g. if backend doesn't provide enough detail)
+    // or legacy behavior.
+    if (!alert.message) return false;
+    return matchesStreetName(alert, addr);
 }
 
 function matchesStreetName(alert, addr) {
@@ -1247,18 +1240,6 @@ function matchesStreetName(alert, addr) {
     return false;
 }
 
-function matchesAddress(alert, addresses, addrIdx) {
-    const addr = addresses[addrIdx];
-    if (!addr || addr.isActive === false) return false;
-
-    if (alert.source === 'tauron' || alert.source === 'energa' || alert.source === 'enea' || alert.source === 'pge' || alert.source === 'stoen') {
-        return alert.isLocal === true && alert.addressIndex === addrIdx;
-    }
-
-    // For Water and Fortum, use street name matching
-    if (!alert.message) return false;
-    return matchesStreetName(alert, addr);
-}
 
 function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
     const now = new Date();
@@ -1381,140 +1362,48 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
     const hasAnyWarszawa = addresses.some(isWarszawa);
     const hasAnyWroclaw = addresses.some(isWroclaw);
 
-    let localTauron = [], otherTauron = [];
-    let localWater = [], otherWater = [];
-    let localFortum = [], otherFortum = [];
-    let localEnerga = [], otherEnerga = [];
-    let localEnea = [], otherEnea = [];
-    let localPge = [], otherPge = [];
-    let localStoen = [], otherStoen = [];
+    const localLists = {};
+    const otherLists = {};
+    SOURCES.forEach(s => {
+        localLists[s.id] = [];
+        otherLists[s.id] = [];
+    });
 
-    if (selectedAddrIdx >= 0 && addresses[selectedAddrIdx]) {
-        activeAlerts.forEach(item => {
-            if (item.source === 'tauron') {
-                // Only show alerts from the selected address
-                if (item.addressIndex === selectedAddrIdx) {
-                    if (item.isLocal === true) {
-                        localTauron.push(item);
-                    } else {
-                        otherTauron.push(item);
-                    }
-                }
-                // Skip alerts from other addresses - don't show them at all when filtered by specific address
-            } else if (item.source === 'water') {
-                const addr = addresses[selectedAddrIdx];
-                if (addr && matchesStreetName(item, addr)) {
-                    localWater.push(item);
-                } else if (isWroclaw(addr)) {
-                    otherWater.push(item);
-                }
-            } else if (item.source === 'fortum') {
-                if (item.addressIndex === selectedAddrIdx) {
-                    const addr = addresses[selectedAddrIdx];
-                    if (addr && matchesStreetName(item, addr)) {
-                        localFortum.push(item);
-                    } else {
-                        otherFortum.push(item);
-                    }
-                }
-            } else if (item.source === 'energa') {
-                if (item.addressIndex === selectedAddrIdx) {
-                    if (item.isLocal === true) {
-                        localEnerga.push(item);
-                    } else {
-                        otherEnerga.push(item);
-                    }
-                }
-            } else if (item.source === 'enea') {
-                if (item.addressIndex === selectedAddrIdx) {
-                    if (item.isLocal === true) {
-                        localEnea.push(item);
-                    } else {
-                        otherEnea.push(item);
-                    }
-                }
-            } else if (item.source === 'pge') {
-                if (item.addressIndex === selectedAddrIdx) {
-                    if (item.isLocal === true) {
-                        localPge.push(item);
-                    } else {
-                        otherPge.push(item);
-                    }
-                }
-            } else if (item.source === 'stoen') {
-                const addr = addresses[selectedAddrIdx];
-                if (item.addressIndex === selectedAddrIdx && item.isLocal === true) {
-                    localStoen.push(item);
-                } else if (isWarszawa(addr)) {
-                    otherStoen.push(item);
+    activeAlerts.forEach(item => {
+        if (!localLists[item.source]) return;
+
+        if (selectedAddrIdx >= 0) {
+            const addr = addresses[selectedAddrIdx];
+            if (!addr) return;
+            if (matchesAddress(item, addresses, selectedAddrIdx)) {
+                localLists[item.source].push(item);
+            } else {
+                if (item.source === 'water') {
+                    if (isWroclaw(addr)) otherLists[item.source].push(item);
+                } else if (item.source === 'stoen') {
+                    if (isWarszawa(addr)) otherLists[item.source].push(item);
+                } else if (item.addressIndex === selectedAddrIdx) {
+                    otherLists[item.source].push(item);
                 }
             }
-        });
-    } else if (addresses.length > 0) {
-        activeAlerts.forEach(item => {
-            if (item.source === 'tauron') {
-                const isLocal = addresses.some((addr, idx) => addr.isActive !== false && matchesAddress(item, addresses, idx));
-                if (isLocal) {
-                    localTauron.push(item);
+        } else {
+            const isLocal = addresses.some((addr, idx) => addr.isActive !== false && matchesAddress(item, addresses, idx));
+            if (isLocal) {
+                localLists[item.source].push(item);
+            } else {
+                if (item.source === 'water') {
+                    if (hasAnyWroclaw) otherLists[item.source].push(item);
+                } else if (item.source === 'stoen') {
+                    if (hasAnyWarszawa) otherLists[item.source].push(item);
                 } else {
-                    otherTauron.push(item);
-                }
-            } else if (item.source === 'water') {
-                const isLocal = addresses.some((addr, idx) => addr.isActive !== false && matchesAddress(item, addresses, idx));
-                if (isLocal) {
-                    localWater.push(item);
-                } else if (hasAnyWroclaw) {
-                    otherWater.push(item);
-                }
-            } else if (item.source === 'fortum') {
-                const isLocal = addresses.some((addr, idx) => addr.isActive !== false && matchesAddress(item, addresses, idx));
-                if (isLocal) {
-                    localFortum.push(item);
-                } else {
-                    otherFortum.push(item);
-                }
-            } else if (item.source === 'energa') {
-                const isLocal = addresses.some((addr, idx) => addr.isActive !== false && matchesAddress(item, addresses, idx));
-                if (isLocal) {
-                    localEnerga.push(item);
-                } else {
-                    otherEnerga.push(item);
-                }
-            } else if (item.source === 'enea') {
-                const isLocal = addresses.some((addr, idx) => addr.isActive !== false && matchesAddress(item, addresses, idx));
-                if (isLocal) {
-                    localEnea.push(item);
-                } else {
-                    otherEnea.push(item);
-                }
-            } else if (item.source === 'pge') {
-                const isLocal = addresses.some((addr, idx) => addr.isActive !== false && matchesAddress(item, addresses, idx));
-                if (isLocal) {
-                    localPge.push(item);
-                } else {
-                    otherPge.push(item);
-                }
-            } else if (item.source === 'stoen') {
-                const isLocal = addresses.some((addr, idx) => addr.isActive !== false && matchesAddress(item, addresses, idx));
-                if (isLocal) {
-                    localStoen.push(item);
-                } else if (hasAnyWarszawa) {
-                    otherStoen.push(item);
+                    otherLists[item.source].push(item);
                 }
             }
-        });
-    } else {
-        otherTauron = activeAlerts.filter(a => a.source === 'tauron');
-        otherWater = activeAlerts.filter(a => a.source === 'water');
-        otherFortum = activeAlerts.filter(a => a.source === 'fortum');
-        otherEnerga = activeAlerts.filter(a => a.source === 'energa');
-        otherEnea = activeAlerts.filter(a => a.source === 'enea');
-        otherPge = activeAlerts.filter(a => a.source === 'pge');
-        otherStoen = activeAlerts.filter(a => a.source === 'stoen');
-    }
+        }
+    });
 
-    const hasLocalAlerts = localTauron.length > 0 || localWater.length > 0 || localFortum.length > 0 || localEnerga.length > 0 || localEnea.length > 0 || localPge.length > 0 || localStoen.length > 0;
-    const hasOtherAlerts = otherTauron.length > 0 || otherWater.length > 0 || otherFortum.length > 0 || otherEnerga.length > 0 || otherEnea.length > 0 || otherPge.length > 0 || otherStoen.length > 0;
+    const hasLocalAlerts = Object.values(localLists).some(l => l.length > 0);
+    const hasOtherAlerts = Object.values(otherLists).some(l => l.length > 0);
     const hasAnyAlerts = hasLocalAlerts || hasOtherAlerts;
 
     let html = '';
@@ -1525,8 +1414,9 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         const operationalLbl = typeof t !== 'undefined' ? t('status_operational') : 'Operational';
         const refreshLbl = typeof t !== 'undefined' ? t('refresh_now') : 'Refresh Now';
 
-        const statusItems = enabledSources.map(src => {
-            const name = typeof t !== 'undefined' ? t(`source_${src}_short`) : src;
+        const statusItems = enabledSources.map(srcId => {
+            const s = SOURCES.find(s => s.id === srcId);
+            const name = s ? (typeof t !== 'undefined' ? t(s.i18nShort) : s.label) : srcId;
             return `
                 <div class="status-item">
                     <div class="status-dot"></div>
@@ -1549,7 +1439,7 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
                 <div class="status-dashboard">
                     ${statusItems}
                 </div>
-
+ 
                 <button class="big-refresh-btn" onclick="fetchOutages()" id="btn-dashboard-refresh">
                     ${escapeHtml(refreshLbl)}
                 </button>
@@ -1559,161 +1449,56 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
     }
 
     if (hasLocalAlerts) {
-        const totalLocal = localTauron.length + localWater.length + localFortum.length + localEnerga.length + localEnea.length + localPge.length + localStoen.length;
+        const totalLocal = Object.values(localLists).reduce((sum, l) => sum + l.length, 0);
         const lblYourLoc = typeof t !== 'undefined' ? t('lbl_your_location') : 'Your location';
         html += `<div class="section-label">${escapeHtml(lblYourLoc)} (${totalLocal})</div>`;
 
-        // Order: Power (Tauron, Energa, Enea, PGE, Stoen) -> Heat (Fortum) -> Water (MPWiK)
-        if (localTauron.length > 0) {
-            html += renderCards(localTauron, 'tauron');
-        }
-        if (localEnerga.length > 0) {
-            html += renderCards(localEnerga, 'energa');
-        }
-        if (localEnea.length > 0) {
-            html += renderCards(localEnea, 'enea');
-        }
-        if (localPge.length > 0) {
-            html += renderCards(localPge, 'pge');
-        }
-        if (localStoen.length > 0) {
-            html += renderCards(localStoen, 'stoen');
-        }
-        if (localFortum.length > 0) {
-            html += renderCards(localFortum, 'fortum');
-        }
-        if (localWater.length > 0) {
-            html += renderCards(localWater, 'water');
-        }
+        // Iterative render based on fixed order of SOURCES
+        SOURCES.forEach(s => {
+            const list = localLists[s.id];
+            if (list && list.length > 0) {
+                html += renderCards(list, s.id);
+            }
+        });
     }
 
     if (hasOtherAlerts) {
         const lblDivider = typeof t !== 'undefined' ? t('lbl_other_alerts_divider') : 'Other alerts';
         html += `<div class="other-divider"><span>${escapeHtml(lblDivider)}</span></div>`;
 
-        // Order: Power (Tauron, Energa, Enea, PGE, Stoen) -> Heat (Fortum) -> Water (MPWiK)
-        if (otherTauron.length > 0) {
-            const lblSection = typeof t !== 'undefined' ? t('lbl_section_tauron') : 'Power (Tauron)';
-            html += `
-                <div class="collapsible source-tauron collapsed">
-                    <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
-                        <span>${escapeHtml(lblSection)} (${otherTauron.length})</span>
-                        <span class="toggle-icon">▼</span>
+        SOURCES.forEach(s => {
+            const list = otherLists[s.id];
+            if (list && list.length > 0) {
+                const lblSection = (typeof t !== 'undefined' ? t(`lbl_section_${s.id}`) : null) || `${s.category} (${s.label})`;
+                html += `
+                    <div class="collapsible source-${s.id} collapsed">
+                        <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
+                            <span>${escapeHtml(lblSection)} (${list.length})</span>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div class="collapsible-content">
+                            ${renderCards(list, s.id)}
+                        </div>
                     </div>
-                    <div class="collapsible-content">
-                        ${renderCards(otherTauron, 'tauron')}
-                    </div>
-                </div>
-            `;
-        }
-
-        if (otherEnerga.length > 0) {
-            const lblSection = (typeof t !== 'undefined' ? t('lbl_section_energa') : null) || 'Power (Energa)';
-            html += `
-                <div class="collapsible source-energa collapsed">
-                    <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
-                        <span>${escapeHtml(lblSection)} (${otherEnerga.length})</span>
-                        <span class="toggle-icon">▼</span>
-                    </div>
-                    <div class="collapsible-content">
-                        ${renderCards(otherEnerga, 'energa')}
-                    </div>
-                </div>
-            `;
-        }
-        if (otherEnea.length > 0) {
-            const lblSection = (typeof t !== 'undefined' ? t('lbl_section_enea') : null) || 'Power (Enea)';
-            html += `
-                <div class="collapsible source-enea collapsed">
-                    <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
-                        <span>${escapeHtml(lblSection)} (${otherEnea.length})</span>
-                        <span class="toggle-icon">▼</span>
-                    </div>
-                    <div class="collapsible-content">
-                        ${renderCards(otherEnea, 'enea')}
-                    </div>
-                </div>
-            `;
-        }
-        if (otherPge.length > 0) {
-            const lblSection = (typeof t !== 'undefined' ? t('lbl_section_pge') : null) || 'Power (PGE)';
-            html += `
-                <div class="collapsible source-pge collapsed">
-                    <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
-                        <span>${escapeHtml(lblSection)} (${otherPge.length})</span>
-                        <span class="toggle-icon">▼</span>
-                    </div>
-                    <div class="collapsible-content">
-                        ${renderCards(otherPge, 'pge')}
-                    </div>
-                </div>
-            `;
-        }
-        if (otherStoen.length > 0) {
-            const lblSection = (typeof t !== 'undefined' ? t('lbl_section_stoen') : null) || 'Power (Stoen)';
-            html += `
-                <div class="collapsible source-stoen collapsed">
-                    <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
-                        <span>${escapeHtml(lblSection)} (${otherStoen.length})</span>
-                        <span class="toggle-icon">▼</span>
-                    </div>
-                    <div class="collapsible-content">
-                        ${renderCards(otherStoen, 'stoen')}
-                    </div>
-                </div>
-            `;
-        }
-
-        if (otherFortum.length > 0) {
-            const lblSection = typeof t !== 'undefined' ? t('lbl_section_fortum') : 'Heat (Fortum)';
-            html += `
-                <div class="collapsible source-fortum collapsed">
-                    <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
-                        <span>${escapeHtml(lblSection)} (${otherFortum.length})</span>
-                        <span class="toggle-icon">▼</span>
-                    </div>
-                    <div class="collapsible-content">
-                        ${renderCards(otherFortum, 'fortum')}
-                    </div>
-                </div>
-            `;
-        }
-
-        if (otherWater.length > 0) {
-            const lblSection = typeof t !== 'undefined' ? t('lbl_section_water') : 'Water (MPWiK)';
-            html += `
-                <div class="collapsible source-water collapsed">
-                    <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
-                        <span>${escapeHtml(lblSection)} (${otherWater.length})</span>
-                        <span class="toggle-icon">▼</span>
-                    </div>
-                    <div class="collapsible-content">
-                        ${renderCards(otherWater, 'water')}
-                    </div>
-                </div>
-            `;
-        }
+                `;
+            }
+        });
     }
     container.innerHTML = html;
 }
 
-function renderCards(alerts, source) {
-    const sourceLabel = source === 'water'
-        ? ((typeof t !== 'undefined' ? t('source_water') : null) || '💧 Water Outage')
-        : source === 'fortum'
-            ? ((typeof t !== 'undefined' ? t('source_fortum') : null) || '🔥 Heat Outage (Fortum)')
-            : source === 'energa'
-                ? ((typeof t !== 'undefined' ? t('source_energa') : null) || '⚡ Energa Outage')
-                : source === 'enea'
-                    ? ((typeof t !== 'undefined' ? t('source_enea') : null) || '⚡ Enea Outage')
-                    : source === 'pge'
-                        ? ((typeof t !== 'undefined' ? t('source_pge') : null) || '⚡ PGE Outage')
-                        : source === 'stoen'
-                            ? ((typeof t !== 'undefined' ? t('source_stoen') : null) || '⚡ Stoen Outage')
-                            : ((typeof t !== 'undefined' ? t('source_tauron') : null) || '⚡ Power Outage');
+function renderCards(alerts, sourceId) {
+    const s = SOURCES.find(src => src.id === sourceId);
+    let sourceLabel = sourceId;
+    if (s) {
+        sourceLabel = (typeof t !== 'undefined' ? t(s.i18nLabel) : null) || s.label;
+        if (s.category === 'water') sourceLabel = '💧 ' + sourceLabel;
+        else if (s.category === 'heating') sourceLabel = '🔥 ' + sourceLabel;
+        else sourceLabel = '⚡ ' + sourceLabel;
+    }
 
     return alerts.map(item => `
-        <div class="card source-${source}" ${item.hash ? `data-hash="${item.hash}"` : ''}>
+        <div class="card source-${item.source}" ${item.hash ? `data-hash="${item.hash}"` : ''}>
             <span class="outage-type">${escapeHtml(sourceLabel)}</span>
             <div class="outage-time">
                 ${formatDate(item.startDate)} – ${formatDate(item.endDate)}
@@ -1740,7 +1525,6 @@ function formatDate(dateString) {
 // Export for tests
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
-        filterOutages,
         filterAlerts,
         formatDate
     };

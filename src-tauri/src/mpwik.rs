@@ -1,5 +1,6 @@
-use crate::api_logic::{AddressEntry, AlertSource, UnifiedAlert};
-use crate::utils::build_client_http1;
+use crate::api_logic::{AddressEntry, AlertSource, UnifiedAlert, AlertProvider, Settings, is_wroclaw};
+use crate::utils::{build_client_http1, retry};
+use async_trait::async_trait;
 
 use serde::{Deserialize, Serialize};
 
@@ -38,12 +39,7 @@ pub fn matches_address(message: &Option<String>, address: &AddressEntry) -> bool
         return false;
     };
 
-    // City check: Wrocław (ID 969400)
-    let city_lower = address.city_name.to_lowercase();
-    let is_wroclaw =
-        city_lower == "wrocław" || city_lower == "wroclaw" || address.city_id == Some(969400);
-
-    if !is_wroclaw {
+    if !is_wroclaw(address) {
         return false;
     }
 
@@ -119,6 +115,51 @@ pub async fn fetch_water_alerts() -> Result<Vec<MpwikFailureItem>, String> {
 
     let data: MpwikResponse = res.json().await.map_err(|e| e.to_string())?;
     Ok(data.failures.unwrap_or_default())
+}
+
+pub struct MpwikProvider;
+
+#[async_trait]
+impl AlertProvider for MpwikProvider {
+    fn id(&self) -> String {
+        "water".to_string()
+    }
+
+    async fn fetch(&self, settings: &Settings) -> (Vec<UnifiedAlert>, Vec<String>) {
+        if !settings.addresses.iter().any(|a| a.is_active && is_wroclaw(a)) {
+            return (Vec::new(), Vec::new());
+        }
+
+        match retry(|| fetch_water_alerts(), 3).await {
+            Ok(items) => {
+                let mut alerts = Vec::new();
+                for item in items {
+                    let mut local_match = None;
+                    for (idx, addr) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
+                        if matches_address(&item.content, addr) {
+                            local_match = Some((idx, addr.clone()));
+                            break;
+                        }
+                    }
+
+                    if let Some((idx, addr)) = local_match {
+                        let mut alert = item.to_unified();
+                        alert.address_index = Some(idx);
+                        alert.is_local = Some(true);
+                        alert.description = Some(format!("Miejscowość: {}", addr.city_name));
+                        alerts.push(alert);
+                    } else {
+                        let mut alert = item.to_unified();
+                        alert.is_local = Some(false);
+                        alert.description = Some("Miejscowość: Wrocław".to_string());
+                        alerts.push(alert);
+                    }
+                }
+                (alerts, Vec::new())
+            }
+            Err(e) => (Vec::new(), vec![format!("MPWiK: {}", e)]),
+        }
+    }
 }
 
 #[cfg(test)]

@@ -1,6 +1,8 @@
-use crate::api_logic::{AlertSource, UnifiedAlert};
+use crate::api_logic::{AlertSource, UnifiedAlert, AlertProvider, Settings};
+use crate::utils::{build_client, retry};
 use regex::Regex;
 use serde::Deserialize;
+use async_trait::async_trait;
 
 pub const ENERGA_BASE_URL: &str = "https://energa-operator.pl";
 pub const ENERGA_PAGE_URL: &str =
@@ -132,6 +134,76 @@ pub async fn extract_energa_api_url(client: &reqwest::Client) -> Result<String, 
     }
 
     Err("Could not extract data-shutdowns URL suffix from Energa page HTML".to_string())
+}
+
+pub async fn fetch_energa_alerts() -> Result<Vec<EnergaShutdown>, String> {
+    let client = build_client()?;
+    let url = extract_energa_api_url(&client).await?;
+    log::info!("Energa API calculated URL: {}", url);
+
+    let res = client
+        .get(&url)
+        .header("accept", "application/json")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if !res.status().is_success() {
+        return Err(format!("Energa HTTP error: {}", res.status()));
+    }
+
+    let data: EnergaResponse = res.json().await.map_err(|e| e.to_string())?;
+    Ok(data.document.payload.shutdowns)
+}
+
+pub struct EnergaProvider;
+
+#[async_trait]
+impl AlertProvider for EnergaProvider {
+    fn id(&self) -> String {
+        "energa".to_string()
+    }
+
+    async fn fetch(&self, settings: &Settings) -> (Vec<UnifiedAlert>, Vec<String>) {
+        fn is_in_energa_region(addr: &crate::api_logic::AddressEntry) -> bool {
+            let v = addr.voivodeship.to_lowercase();
+            v.contains("pomorskie") || v.contains("warmińsko") || v.contains("zachodniopomorskie") || 
+            v.contains("wielkopolskie") || v.contains("kujawsko") || v.contains("mazowieckie")
+        }
+
+        if !settings.addresses.iter().any(|a| a.is_active && is_in_energa_region(a)) {
+            return (Vec::new(), Vec::new());
+        }
+
+        match retry(|| fetch_energa_alerts(), 3).await {
+            Ok(shutdowns) => {
+                let mut alerts = Vec::new();
+                for (idx, addr) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
+                    let local_shutdowns: Vec<UnifiedAlert> = shutdowns
+                        .iter()
+                        .filter(|sd| {
+                            sd.matches_address(
+                                &addr.city_name,
+                                &addr.commune,
+                                &addr.street_name_1,
+                                &addr.street_name_2,
+                            )
+                        })
+                        .map(|sd| {
+                            let mut alert = sd.to_unified();
+                            alert.address_index = Some(idx);
+                            alert.is_local = Some(true);
+                            alert.description = Some(format!("Miejscowość: {}", addr.city_name));
+                            alert
+                        })
+                        .collect();
+                    alerts.extend(local_shutdowns);
+                }
+                (alerts, Vec::new())
+            }
+            Err(e) => (Vec::new(), vec![format!("Energa: {}", e)]),
+        }
+    }
 }
 
 #[cfg(test)]

@@ -1,9 +1,10 @@
-use crate::api_logic::{AddressEntry, AlertSource, UnifiedAlert};
-use crate::utils::build_client;
+use crate::api_logic::{AddressEntry, AlertSource, UnifiedAlert, AlertProvider, Settings};
+use crate::utils::{build_client, retry};
 
 use chrono::{Duration, Utc};
 use chrono_tz::Europe::Warsaw;
 use serde::{Deserialize, Serialize};
+use async_trait::async_trait;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[allow(non_snake_case)]
@@ -59,6 +60,50 @@ pub async fn fetch_pge_outages() -> Result<Vec<PgeOutage>, String> {
 
     let data: Vec<PgeOutage> = res.json().await.map_err(|e| e.to_string())?;
     Ok(data)
+}
+
+pub struct PgeProvider;
+
+#[async_trait]
+impl AlertProvider for PgeProvider {
+    fn id(&self) -> String {
+        "pge".to_string()
+    }
+
+    async fn fetch(&self, settings: &Settings) -> (Vec<UnifiedAlert>, Vec<String>) {
+        fn is_in_pge_region(addr: &crate::api_logic::AddressEntry) -> bool {
+            let v = addr.voivodeship.to_lowercase();
+            v.contains("lubelskie") || v.contains("podlaskie") || v.contains("łódzkie") || 
+            v.contains("świętokrzyskie") || v.contains("mazowieckie") || v.contains("małopolskie") || 
+            v.contains("podkarpackie")
+        }
+
+        if !settings.addresses.iter().any(|a| a.is_active && is_in_pge_region(a)) {
+            return (Vec::new(), Vec::new());
+        }
+
+        match retry(|| fetch_pge_outages(), 3).await {
+            Ok(outages) => {
+                let mut alerts = Vec::new();
+                for (idx, addr) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
+                    let local_outages: Vec<UnifiedAlert> = outages
+                        .iter()
+                        .filter(|po| matches_address(po, addr))
+                        .map(|po| {
+                            let mut alert = po.to_unified();
+                            alert.address_index = Some(idx);
+                            alert.is_local = Some(true);
+                            alert.description = Some(format!("Miejscowość: {}", addr.city_name));
+                            alert
+                        })
+                        .collect();
+                    alerts.extend(local_outages);
+                }
+                (alerts, Vec::new())
+            }
+            Err(e) => (Vec::new(), vec![format!("PGE: {}", e)]),
+        }
+    }
 }
 
 pub fn matches_address(

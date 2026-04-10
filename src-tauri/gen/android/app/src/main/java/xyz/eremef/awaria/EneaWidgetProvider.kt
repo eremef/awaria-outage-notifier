@@ -1,6 +1,5 @@
 package xyz.eremef.awaria
 
-import xyz.eremef.awaria.R
 import android.content.Context
 
 class EneaWidgetProvider : BaseWidgetProvider() {
@@ -11,7 +10,7 @@ class EneaWidgetProvider : BaseWidgetProvider() {
     override val labelKey: String = "outages"
     override val sourceKey: String = "enea"
 
-    override suspend fun fetchCount(settings: List<WidgetSettings>): Int {
-        return fetchEneaAlertCount(settings)
+    override suspend fun fetchCount(context: Context, settings: List<WidgetSettings>): Int {
+        return EneaProvider().fetchCount(context, settings)
     }
 }
