@@ -9,6 +9,7 @@ mod stoen;
 mod tauron;
 mod teryt;
 mod utils;
+mod cache;
 
 use api_logic::{
     load_settings_from_path, save_settings_to_path,
@@ -22,8 +23,9 @@ use tauri_plugin_notification::NotificationExt;
 
 use std::fs;
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use tokio::sync::Semaphore;
+use crate::state_db::DbState;
 use futures::future::join_all;
 use teryt::{TerytCity, TerytStreet};
 
@@ -57,9 +59,15 @@ async fn teryt_lookup_street(
 // ── Settings persistence ──────────────────────────────────
 
 #[command]
-async fn save_settings(app: AppHandle, settings: Settings) -> Result<(), String> {
+async fn save_settings(
+    app: AppHandle,
+    cache_state: tauri::State<'_, cache::CacheState>,
+    settings: Settings,
+) -> Result<(), String> {
     let path = settings_path(&app)?;
-    save_settings_to_path(&path, &settings)
+    save_settings_to_path(&path, &settings)?;
+    cache_state.clear();
+    Ok(())
 }
 
 #[command]
@@ -74,7 +82,11 @@ async fn load_settings(app: AppHandle) -> Result<Option<Settings>, String> {
 }
 
 #[command]
-async fn add_address(app: AppHandle, address: AddressEntry) -> Result<Settings, String> {
+async fn add_address(
+    app: AppHandle,
+    cache_state: tauri::State<'_, cache::CacheState>,
+    address: AddressEntry,
+) -> Result<Settings, String> {
     let path = settings_path(&app)?;
     let mut settings = load_settings_from_path(&path)?.unwrap_or_default();
 
@@ -88,11 +100,16 @@ async fn add_address(app: AppHandle, address: AddressEntry) -> Result<Settings, 
     }
 
     save_settings_to_path(&path, &settings)?;
+    cache_state.clear();
     Ok(settings)
 }
 
 #[command]
-async fn remove_address(app: AppHandle, index: usize) -> Result<Settings, String> {
+async fn remove_address(
+    app: AppHandle,
+    cache_state: tauri::State<'_, cache::CacheState>,
+    index: usize,
+) -> Result<Settings, String> {
     let path = settings_path(&app)?;
     let mut settings = load_settings_from_path(&path)?.unwrap_or_default();
 
@@ -115,11 +132,16 @@ async fn remove_address(app: AppHandle, index: usize) -> Result<Settings, String
     }
 
     save_settings_to_path(&path, &settings)?;
+    cache_state.clear();
     Ok(settings)
 }
 
 #[command]
-async fn set_primary_address(app: AppHandle, index: usize) -> Result<Settings, String> {
+async fn set_primary_address(
+    app: AppHandle,
+    cache_state: tauri::State<'_, cache::CacheState>,
+    index: usize,
+) -> Result<Settings, String> {
     let path = settings_path(&app)?;
     let mut settings = load_settings_from_path(&path)?.unwrap_or_default();
 
@@ -129,12 +151,14 @@ async fn set_primary_address(app: AppHandle, index: usize) -> Result<Settings, S
 
     settings.primary_address_index = Some(index);
     save_settings_to_path(&path, &settings)?;
+    cache_state.clear();
     Ok(settings)
 }
 
 #[command]
 async fn update_address(
     app: AppHandle,
+    cache_state: tauri::State<'_, cache::CacheState>,
     index: usize,
     address: AddressEntry,
 ) -> Result<Settings, String> {
@@ -147,6 +171,7 @@ async fn update_address(
 
     settings.addresses[index] = address;
     save_settings_to_path(&path, &settings)?;
+    cache_state.clear();
     Ok(settings)
 }
 
@@ -164,7 +189,19 @@ fn get_providers() -> Vec<Box<dyn AlertProvider>> {
 }
 
 #[command]
-async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Result<Vec<UnifiedAlert>, String> {
+async fn fetch_all_alerts(
+    app: AppHandle,
+    db_state: tauri::State<'_, DbState>,
+    cache_state: tauri::State<'_, cache::CacheState>,
+    sources: Option<Vec<String>>,
+) -> Result<Vec<UnifiedAlert>, String> {
+    // 1. Check Cache (only on full refresh)
+    if sources.is_none() {
+        if let Some(cached) = cache_state.get() {
+            log::info!("Serving fetch_all_alerts from cache ({} items)", cached.len());
+            return Ok(cached);
+        }
+    }
     let path = settings_path(&app)?;
     let settings = load_settings_from_path(&path)?;
     let settings_orig = settings.clone();
@@ -177,7 +214,7 @@ async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Resul
         .and_then(|s| s.enabled_sources.clone())
         .unwrap_or_default();
 
-    if let Some(requested) = sources {
+    if let Some(ref requested) = sources {
         enabled_sources.retain(|s| requested.contains(s));
     }
 
@@ -271,7 +308,8 @@ async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Resul
                                 
                                 if diff_hours >= 0 && diff_hours <= s.upcoming_notification_hours as i64 {
                                     let upcoming_hash = format!("upcoming_{}", hash);
-                                    match state_db::is_alert_seen(&app, &source_key, &upcoming_hash) {
+                                 let db_conn = db_state.conn.lock().unwrap();
+                                 match state_db::is_alert_seen(&db_conn, &source_key, &upcoming_hash) {
                                         Ok(seen) => {
                                             if !seen {
                                                 let title = format_notification_title(&alert, &s, true);
@@ -293,7 +331,7 @@ async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Resul
                                                     .show()
                                                     .ok();
 
-                                                state_db::mark_alert_as_seen(&app, &source_key, &upcoming_hash).ok();
+                                                state_db::mark_alert_as_seen(&db_conn, &source_key, &upcoming_hash).ok();
                                             }
                                         }
                                         Err(e) => log::error!("Database error while checking upcoming alert status: {}", e),
@@ -303,8 +341,9 @@ async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Resul
                         }
                     }
                     
-                    // --- NEW ALERT NOTIFICATION ---
-                    match state_db::is_alert_seen(&app, &source_key, &hash) {
+                     // --- NEW ALERT NOTIFICATION ---
+                    let db_conn = db_state.conn.lock().unwrap();
+                    match state_db::is_alert_seen(&db_conn, &source_key, &hash) {
                         Ok(seen) => {
                             if !seen {
                                 // Trigger notification
@@ -323,7 +362,7 @@ async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Resul
                                     .ok();
 
                                 // Mark as seen
-                                state_db::mark_alert_as_seen(&app, &source_key, &hash).ok();
+                                state_db::mark_alert_as_seen(&db_conn, &source_key, &hash).ok();
                             }
                         }
                         Err(e) => log::error!("Database error while checking alert status: {}", e),
@@ -367,6 +406,10 @@ async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Resul
 
             true
         });
+    }
+
+    if sources.is_none() {
+        cache_state.set(all_alerts.clone());
     }
 
     Ok(all_alerts)
@@ -470,8 +513,11 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_notification::init())
         .setup(|app| {
-            state_db::init_db(app.handle())?;
-            state_db::prune_old_alerts(app.handle(), 30)?;
+            let conn = state_db::init_db(app.handle())?;
+            state_db::prune_old_alerts(&conn, 30)?;
+            app.manage(DbState { conn: Mutex::new(conn) });
+            app.manage(cache::CacheState::new());
+
             if cfg!(debug_assertions) {
                 app.handle().plugin(
                     tauri_plugin_log::Builder::default()

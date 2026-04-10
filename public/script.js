@@ -57,6 +57,8 @@ let isFetching = false;
 let fetchingSources = new Set();
 let isSearchingCities = false;
 let isSearchingStreets = false;
+let dateCache = {};
+let sourceLabelCache = {};
 
 let selectedCityId = null;
 let selectedCityName = '';
@@ -1411,6 +1413,7 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
 
     let html = '';
     if (!hasAnyAlerts) {
+        // ... (existing all-clear rendering) ...
         const title = typeof t !== 'undefined' ? t('all_clear_title') : 'Everything looks good!';
         const subtitle = typeof t !== 'undefined' ? t('all_clear_subtitle') : 'No outages detected.';
         const providersLbl = typeof t !== 'undefined' ? t('monitored_providers') : 'Monitored Providers';
@@ -1436,7 +1439,7 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
                 <div class="all-clear-title">${escapeHtml(title)}</div>
                 <div class="all-clear-subtitle">${escapeHtml(subtitle)}</div>
                 
-                <div class="section-label" style="width: 100%; max-width: 450px; margin-bottom: 1rem; text-align: left;">
+                <div class="section-label" style="width:100%; max-width:450px; margin-bottom:1rem; text-align:left;">
                     ${escapeHtml(providersLbl)}
                 </div>
                 <div class="status-dashboard">
@@ -1451,12 +1454,12 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         return;
     }
 
+    // Step 1: Render Local Alerts immediately
     if (hasLocalAlerts) {
         const totalLocal = Object.values(localLists).reduce((sum, l) => sum + l.length, 0);
         const lblYourLoc = typeof t !== 'undefined' ? t('lbl_your_location') : 'Your location';
         html += `<div class="section-label">${escapeHtml(lblYourLoc)} (${totalLocal})</div>`;
 
-        // Iterative render based on fixed order of SOURCES
         SOURCES.forEach(s => {
             const list = localLists[s.id];
             if (list && list.length > 0) {
@@ -1465,39 +1468,49 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         });
     }
 
-    if (hasOtherAlerts) {
-        const lblDivider = typeof t !== 'undefined' ? t('lbl_other_alerts_divider') : 'Other alerts';
-        html += `<div class="other-divider"><span>${escapeHtml(lblDivider)}</span></div>`;
-
-        SOURCES.forEach(s => {
-            const list = otherLists[s.id];
-            if (list && list.length > 0) {
-                const lblSection = (typeof t !== 'undefined' ? t(`lbl_section_${s.id}`) : null) || `${s.category} (${s.label})`;
-                html += `
-                    <div class="collapsible source-${s.id} collapsed">
-                        <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
-                            <span>${escapeHtml(lblSection)} (${list.length})</span>
-                            <span class="toggle-icon">▼</span>
-                        </div>
-                        <div class="collapsible-content">
-                            ${renderCards(list, s.id)}
-                        </div>
-                    </div>
-                `;
-            }
-        });
-    }
     container.innerHTML = html;
+
+    // Step 2: Defer "Other Alerts" to keep UI interactive
+    if (hasOtherAlerts) {
+        setTimeout(() => {
+            let otherHtml = '';
+            const lblDivider = typeof t !== 'undefined' ? t('lbl_other_alerts_divider') : 'Other alerts';
+            otherHtml += `<div class="other-divider"><span>${escapeHtml(lblDivider)}</span></div>`;
+
+            SOURCES.forEach(s => {
+                const list = otherLists[s.id];
+                if (list && list.length > 0) {
+                    const lblSection = (typeof t !== 'undefined' ? t(`lbl_section_${s.id}`) : null) || `${s.category} (${s.label})`;
+                    otherHtml += `
+                        <div class="collapsible source-${s.id} collapsed">
+                            <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
+                                <span>${escapeHtml(lblSection)} (${list.length})</span>
+                                <span class="toggle-icon">▼</span>
+                            </div>
+                            <div class="collapsible-content">
+                                ${renderCards(list, s.id)}
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            container.insertAdjacentHTML('beforeend', otherHtml);
+        }, 0);
+    }
 }
 
 function renderCards(alerts, sourceId) {
-    const s = SOURCES.find(src => src.id === sourceId);
-    let sourceLabel = sourceId;
-    if (s) {
-        sourceLabel = (typeof t !== 'undefined' ? t(s.i18nLabel) : null) || s.label;
-        if (s.category === 'water') sourceLabel = '💧 ' + sourceLabel;
-        else if (s.category === 'heating') sourceLabel = '🔥 ' + sourceLabel;
-        else sourceLabel = '⚡ ' + sourceLabel;
+    let sourceLabel = sourceLabelCache[sourceId];
+    if (!sourceLabel) {
+        const s = SOURCES.find(src => src.id === sourceId);
+        sourceLabel = sourceId;
+        if (s) {
+            sourceLabel = (typeof t !== 'undefined' ? t(s.i18nLabel) : null) || s.label;
+            if (s.category === 'water') sourceLabel = '💧 ' + sourceLabel;
+            else if (s.category === 'heating') sourceLabel = '🔥 ' + sourceLabel;
+            else sourceLabel = '⚡ ' + sourceLabel;
+        }
+        sourceLabelCache[sourceId] = sourceLabel;
     }
 
     return alerts.map(item => `
@@ -1514,15 +1527,19 @@ function renderCards(alerts, sourceId) {
 
 function formatDate(dateString) {
     if (!dateString) return '';
+    if (dateCache[dateString]) return dateCache[dateString];
+
     const date = new Date(dateString);
     const localeStr = typeof getLocaleString !== 'undefined' ? getLocaleString() : 'pl-PL';
-    return date.toLocaleString(localeStr, {
+    const formatted = date.toLocaleString(localeStr, {
         weekday: 'short',
         day: 'numeric',
         month: 'short',
         hour: '2-digit',
         minute: '2-digit'
     });
+    dateCache[dateString] = formatted;
+    return formatted;
 }
 
 // Export for tests

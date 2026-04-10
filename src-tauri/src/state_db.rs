@@ -1,7 +1,12 @@
 use rusqlite::{params, Connection};
 use std::path::PathBuf;
+use std::sync::Mutex;
 use tauri::AppHandle;
 use tauri::Manager;
+
+pub struct DbState {
+    pub conn: Mutex<Connection>,
+}
 
 pub fn get_state_db_path(app: &AppHandle) -> Result<PathBuf, String> {
     let app_data = app
@@ -12,10 +17,11 @@ pub fn get_state_db_path(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(app_data.join("state.db"))
 }
 
-pub fn init_db(app: &AppHandle) -> Result<(), String> {
+pub fn init_db(app: &AppHandle) -> Result<Connection, String> {
     let path = get_state_db_path(app)?;
     let mut conn = Connection::open(path).map_err(|e| e.to_string())?;
-    _init_db(&mut conn)
+    _init_db(&mut conn)?;
+    Ok(conn)
 }
 
 fn _init_db(conn: &mut Connection) -> Result<(), String> {
@@ -33,10 +39,8 @@ fn _init_db(conn: &mut Connection) -> Result<(), String> {
     Ok(())
 }
 
-pub fn is_alert_seen(app: &AppHandle, provider: &str, hash: &str) -> Result<bool, String> {
-    let path = get_state_db_path(app)?;
-    let conn = Connection::open(path).map_err(|e| e.to_string())?;
-    _is_alert_seen(&conn, provider, hash)
+pub fn is_alert_seen(conn: &Connection, provider: &str, hash: &str) -> Result<bool, String> {
+    _is_alert_seen(conn, provider, hash)
 }
 
 fn _is_alert_seen(conn: &Connection, provider: &str, hash: &str) -> Result<bool, String> {
@@ -48,10 +52,12 @@ fn _is_alert_seen(conn: &Connection, provider: &str, hash: &str) -> Result<bool,
     Ok(exists)
 }
 
-pub fn mark_alert_as_seen(app: &AppHandle, provider: &str, hash: &str) -> Result<(), String> {
-    let path = get_state_db_path(app)?;
-    let mut conn = Connection::open(path).map_err(|e| e.to_string())?;
-    _mark_alert_as_seen(&mut conn, provider, hash)
+pub fn mark_alert_as_seen(conn: &Connection, provider: &str, hash: &str) -> Result<(), String> {
+    let mut stmt = conn
+        .prepare("INSERT OR IGNORE INTO seen_alerts (provider, alert_hash) VALUES (?1, ?2)")
+        .map_err(|e| e.to_string())?;
+    stmt.execute(params![provider, hash]).map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 fn _mark_alert_as_seen(conn: &mut Connection, provider: &str, hash: &str) -> Result<(), String> {
@@ -64,13 +70,11 @@ fn _mark_alert_as_seen(conn: &mut Connection, provider: &str, hash: &str) -> Res
     Ok(())
 }
 
-pub fn prune_old_alerts(app: &AppHandle, days: i32) -> Result<(), String> {
-    let path = get_state_db_path(app)?;
-    let mut conn = Connection::open(path).map_err(|e| e.to_string())?;
-    _prune_old_alerts(&mut conn, days)
+pub fn prune_old_alerts(conn: &Connection, days: i32) -> Result<(), String> {
+    _prune_old_alerts(conn, days)
 }
 
-fn _prune_old_alerts(conn: &mut Connection, days: i32) -> Result<(), String> {
+fn _prune_old_alerts(conn: &Connection, days: i32) -> Result<(), String> {
     conn.execute(
         "DELETE FROM seen_alerts WHERE created_at < datetime('now', '-' || ?1 || ' days')",
         params![days],
