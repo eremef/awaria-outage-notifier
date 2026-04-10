@@ -1382,8 +1382,11 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
                     if (isWroclaw(addr)) otherLists[item.source].push(item);
                 } else if (item.source === 'stoen') {
                     if (isWarszawa(addr)) otherLists[item.source].push(item);
-                } else if (item.addressIndex === selectedAddrIdx) {
-                    otherLists[item.source].push(item);
+                } else {
+                    const itemAddr = (item.addressIndex !== undefined && item.addressIndex !== null) ? addresses[item.addressIndex] : null;
+                    if (!itemAddr || itemAddr.cityName === addr.cityName) {
+                        otherLists[item.source].push(item);
+                    }
                 }
             }
         } else {

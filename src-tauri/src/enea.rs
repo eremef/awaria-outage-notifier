@@ -138,55 +138,70 @@ impl EneaItem {
             hash: None,
         }
     }
+}
 
-    pub fn matches_address(
-        &self,
-        city: &str,
-        _commune: &str,
-        street_name_1: &str,
-        street_name_2: &Option<String>,
-    ) -> bool {
-        let Some(message) = &self.description else {
-            return false;
-        };
+pub struct CompiledEneaRegex {
+    pub city: regex::Regex,
+    pub street_candidates: Vec<regex::Regex>,
+}
 
-        fn word_match(text: &str, word: &str) -> bool {
-            let pattern = format!(r"(?i)\b{}\b", regex::escape(word));
-            regex::Regex::new(&pattern)
-                .map(|r| r.is_match(text))
-                .unwrap_or(false)
-        }
+impl CompiledEneaRegex {
+    pub fn new(city: &str, street_name_1: &str, street_name_2: &Option<String>) -> Self {
+        let city_pattern = format!(r"(?i)(?:^|[^\p{{L}}]){}(?:[^\p{{L}}]|$)", regex::escape(city));
+        let city_regex = regex::Regex::new(&city_pattern).unwrap_or_else(|_| regex::Regex::new("").unwrap());
 
-        // Match city in description
-        if !word_match(message, city) {
-            return false;
-        }
+        let mut street_candidates = Vec::new();
+        let mut words = Vec::new();
 
-        let mut candidates: Vec<String> = Vec::new();
-
-        if let Some(n2) = street_name_2 {
-            let compound = format!("{} {}", n2.trim(), street_name_1.trim());
-            candidates.push(compound);
-        }
-
-        for word in street_name_1.split_whitespace() {
-            if word.len() >= 3 {
-                candidates.push(word.to_string());
+        if !street_name_1.is_empty() {
+            if let Some(n2) = street_name_2 {
+                words.push(format!("{} {}", n2.trim(), street_name_1.trim()));
             }
-        }
-        if let Some(n2) = street_name_2 {
-            for word in n2.split_whitespace() {
+
+            for word in street_name_1.split_whitespace() {
                 if word.len() >= 3 {
-                    candidates.push(word.to_string());
+                    words.push(word.to_string());
+                }
+            }
+            if let Some(n2) = street_name_2 {
+                for word in n2.split_whitespace() {
+                    if word.len() >= 3 {
+                        words.push(word.to_string());
+                    }
                 }
             }
         }
 
-        if candidates.is_empty() {
-            return true;
+        for word in words {
+            let p = format!(r"(?i)(?:^|[^\p{{L}}]){}(?:[^\p{{L}}]|$)", regex::escape(&word));
+            if let Ok(r) = regex::Regex::new(&p) {
+                street_candidates.push(r);
+            }
         }
 
-        candidates.iter().any(|c| word_match(message, c))
+        Self {
+            city: city_regex,
+            street_candidates,
+        }
+    }
+
+    pub fn is_match(&self, text: &str) -> bool {
+        if !self.city.is_match(text) {
+            return false;
+        }
+        if self.street_candidates.is_empty() {
+            return true;
+        }
+        self.street_candidates.iter().any(|r| r.is_match(text))
+    }
+}
+
+impl EneaItem {
+    pub fn matches_address_compiled(&self, compiled: &CompiledEneaRegex) -> bool {
+        let Some(message) = &self.description else {
+            return false;
+        };
+        compiled.is_match(message)
     }
 }
 
@@ -278,22 +293,25 @@ impl AlertProvider for EneaProvider {
             Ok(client) => match retry(|| fetch_all_enea_outages(&client, &target_regions), 3).await {
                 Ok(items) => {
                     let mut alerts = Vec::new();
-                    for (idx, addr) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
+                    let active_addresses: Vec<(usize, Arc<CompiledEneaRegex>, String)> = settings
+                        .addresses
+                        .iter()
+                        .enumerate()
+                        .filter(|(_, a)| a.is_active)
+                        .map(|(idx, a)| {
+                            (idx, Arc::new(CompiledEneaRegex::new(&a.city_name, &a.street_name_1, &a.street_name_2)), a.city_name.clone())
+                        })
+                        .collect();
+
+                    for (idx, compiled, city_name) in active_addresses {
                         let local_items: Vec<UnifiedAlert> = items
                             .iter()
-                            .filter(|item| {
-                                item.matches_address(
-                                    &addr.city_name,
-                                    &addr.commune,
-                                    &addr.street_name_1,
-                                    &addr.street_name_2,
-                                )
-                            })
+                            .filter(|item| item.matches_address_compiled(&compiled))
                             .map(|item| {
                                 let mut alert = item.to_unified();
                                 alert.address_index = Some(idx);
                                 alert.is_local = Some(true);
-                                alert.description = Some(format!("Miejscowość: {}", addr.city_name));
+                                alert.description = Some(format!("Miejscowość: {}", city_name));
                                 alert
                             })
                             .collect();

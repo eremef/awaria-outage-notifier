@@ -271,6 +271,7 @@ mod tests {
             house_no: "25".to_string(),
             city_id: Some(969400),
             street_id: Some(13900),
+            is_active: true,
         };
 
         let outage = PgeOutage {

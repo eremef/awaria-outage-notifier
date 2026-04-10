@@ -222,15 +222,26 @@ async fn fetch_all_alerts(app: AppHandle, sources: Option<Vec<String>>) -> Resul
             }
         }
 
-        // --- DEDUPLICATE BY HASH ---
-        let mut seen_hashes = std::collections::HashSet::new();
-        all_alerts.retain(|alert| {
+        // --- DEDUPLICATE BY HASH (Smart Merging) ---
+        let mut grouped_alerts: std::collections::HashMap<String, UnifiedAlert> = std::collections::HashMap::new();
+        for alert in all_alerts {
             if let Some(h) = &alert.hash {
-                seen_hashes.insert(h.clone())
+                if let Some(existing) = grouped_alerts.get_mut(h) {
+                    // Merge logic: prioritize local alerts
+                    if alert.is_local == Some(true) && existing.is_local != Some(true) {
+                        existing.is_local = Some(true);
+                        existing.address_index = alert.address_index;
+                        existing.description = alert.description;
+                    }
+                } else {
+                    grouped_alerts.insert(h.clone(), alert);
+                }
             } else {
-                true // Keep if no hash (shouldn't happen)
+                let pseudo_hash = format!("{}-{:?}", alert.source, alert.message);
+                grouped_alerts.insert(pseudo_hash, alert);
             }
-        });
+        }
+        all_alerts = grouped_alerts.into_values().collect();
 
         // --- PROCESS NEW ALERTS AND NOTIFY ---
         for alert in &all_alerts {
@@ -369,6 +380,7 @@ fn get_app_version() -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::utils::build_client;
 
     #[tokio::test]
     async fn test_fetch_enea_outages_real_backend() {

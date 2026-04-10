@@ -3,6 +3,8 @@ use crate::utils::{build_client_http1, retry};
 use async_trait::async_trait;
 
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use regex::Regex;
 
 pub const MPWIK_URL: &str = "https://www.mpwik.wroc.pl/wp-admin/admin-ajax.php";
 
@@ -34,48 +36,56 @@ pub fn parse_mpwik_date(date_str: &str) -> Option<String> {
     ))
 }
 
-pub fn matches_address(message: &Option<String>, address: &AddressEntry) -> bool {
-    let Some(message) = message else {
-        return false;
-    };
+pub struct CompiledMpwikRegex {
+    pub street_candidates: Vec<Regex>,
+    pub has_street: bool,
+}
 
-    if !is_wroclaw(address) {
-        return false;
-    }
+impl CompiledMpwikRegex {
+    pub fn new(address: &AddressEntry) -> Self {
+        let mut street_candidates = Vec::new();
+        let has_street = !address.street_name_1.is_empty();
 
-    if address.street_name_1.is_empty() {
-        return true;
-    }
+        if has_street {
+            let mut words = Vec::new();
+            if let Some(n2) = &address.street_name_2 {
+                let compound = format!("{} {}", n2.trim(), address.street_name_1.trim());
+                words.push(compound);
+            }
+            for word in address.street_name_1.split_whitespace() {
+                if word.len() >= 3 {
+                    words.push(word.to_string());
+                }
+            }
+            if let Some(n2) = &address.street_name_2 {
+                for word in n2.split_whitespace() {
+                    if word.len() >= 3 {
+                        words.push(word.to_string());
+                    }
+                }
+            }
 
-    fn word_match(text: &str, word: &str) -> bool {
-        let pattern = format!(r"(?i)\b{}\b", regex::escape(word));
-        regex::Regex::new(&pattern)
-            .map(|r| r.is_match(text))
-            .unwrap_or(false)
-    }
-
-    // Street matching logic similar to Tauron
-    let mut candidates: Vec<String> = Vec::new();
-    if let Some(n2) = &address.street_name_2 {
-        let compound = format!("{} {}", n2.trim(), address.street_name_1.trim());
-        candidates.push(compound);
-    }
-
-    for word in address.street_name_1.split_whitespace() {
-        if word.len() >= 3 {
-            candidates.push(word.to_string());
-        }
-    }
-    if let Some(n2) = &address.street_name_2 {
-        for word in n2.split_whitespace() {
-            if word.len() >= 3 {
-                candidates.push(word.to_string());
+            for word in words {
+                let p = format!(r"(?i)(?:^|[^\p{{L}}]){}(?:[^\p{{L}}]|$)", regex::escape(&word));
+                if let Ok(r) = Regex::new(&p) {
+                    street_candidates.push(r);
+                }
             }
         }
+        Self {
+            street_candidates,
+            has_street,
+        }
     }
 
-    candidates.iter().any(|c| word_match(message, c))
+    pub fn is_match(&self, message: &str) -> bool {
+        if !self.has_street {
+            return true;
+        }
+        self.street_candidates.iter().any(|r| r.is_match(message))
+    }
 }
+
 
 impl MpwikFailureItem {
     pub fn to_unified(&self) -> UnifiedAlert {
@@ -133,27 +143,34 @@ impl AlertProvider for MpwikProvider {
         match retry(|| fetch_water_alerts(), 3).await {
             Ok(items) => {
                 let mut alerts = Vec::new();
+                let active_addresses: Vec<(usize, Arc<CompiledMpwikRegex>)> = settings
+                    .addresses
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, a)| a.is_active && is_wroclaw(a))
+                    .map(|(idx, a)| (idx, Arc::new(CompiledMpwikRegex::new(a))))
+                    .collect();
+
                 for item in items {
-                    let mut local_match = None;
-                    for (idx, addr) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
-                        if matches_address(&item.content, addr) {
-                            local_match = Some((idx, addr.clone()));
-                            break;
+                    let mut local_match_idx = None;
+                    if let Some(content) = &item.content {
+                        for (idx, compiled) in &active_addresses {
+                            if compiled.is_match(content) {
+                                local_match_idx = Some(*idx);
+                                break;
+                            }
                         }
                     }
 
-                    if let Some((idx, addr)) = local_match {
-                        let mut alert = item.to_unified();
+                    let mut alert = item.to_unified();
+                    alert.description = Some("Miejscowość: Wrocław".to_string());
+                    if let Some(idx) = local_match_idx {
                         alert.address_index = Some(idx);
                         alert.is_local = Some(true);
-                        alert.description = Some(format!("Miejscowość: {}", addr.city_name));
-                        alerts.push(alert);
                     } else {
-                        let mut alert = item.to_unified();
                         alert.is_local = Some(false);
-                        alert.description = Some("Miejscowość: Wrocław".to_string());
-                        alerts.push(alert);
                     }
+                    alerts.push(alert);
                 }
                 (alerts, Vec::new())
             }
@@ -204,6 +221,7 @@ mod tests {
             house_no: "25".to_string(),
             city_id: Some(969400),
             street_id: Some(13900),
+            is_active: true,
         };
 
         let msg = Some("Awaria na ul. Kuźnicza".to_string());

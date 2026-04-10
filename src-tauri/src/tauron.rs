@@ -2,6 +2,7 @@ use crate::api_logic::{AlertSource, UnifiedAlert, AlertProvider, Settings};
 use crate::utils::{build_client, retry};
 use async_trait::async_trait;
 use futures::future::join_all;
+use std::sync::Arc;
 use chrono::{SecondsFormat, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -271,55 +272,61 @@ pub async fn fetch_tauron_outages(address: &crate::api_logic::AddressEntry) -> R
     Ok(data)
 }
 
-pub fn matches_address(
-    message: &Option<String>,
-    city_name: &str,
-    street_name_1: &str,
-    street_name_2: &Option<String>,
-) -> bool {
-    let Some(message) = message else {
-        return false;
-    };
+pub struct CompiledTauronRegex {
+    pub city: regex::Regex,
+    pub street_candidates: Vec<regex::Regex>,
+    pub has_street: bool,
+}
 
-    fn word_match(text: &str, word: &str) -> bool {
-        let pattern = format!(r"(?i)\b{}\b", regex::escape(word));
-        regex::Regex::new(&pattern)
-            .map(|r| r.is_match(text))
-            .unwrap_or(false)
-    }
+impl CompiledTauronRegex {
+    pub fn new(city_name: &str, street_name_1: &str, street_name_2: &Option<String>) -> Self {
+        let city_pattern = format!(r"(?i)(?:^|[^\p{{L}}]){}(?:[^\p{{L}}]|$)", regex::escape(city_name));
+        let city = regex::Regex::new(&city_pattern).unwrap_or_else(|_| regex::Regex::new("").unwrap());
 
-    // City must match
-    if !word_match(message, city_name) {
-        return false;
-    }
+        let mut street_candidates = Vec::new();
+        let has_street = !street_name_1.is_empty();
+        
+        if has_street {
+            let mut words = Vec::new();
+            if let Some(n2) = street_name_2 {
+                let compound = format!("{} {}", n2.trim(), street_name_1.trim());
+                words.push(compound);
+            }
+            for word in street_name_1.split_whitespace() {
+                if word.len() >= 3 {
+                    words.push(word.to_string());
+                }
+            }
+            if let Some(n2) = street_name_2 {
+                for word in n2.split_whitespace() {
+                    if word.len() >= 3 {
+                        words.push(word.to_string());
+                    }
+                }
+            }
 
-    if street_name_1.is_empty() {
-        return true;
-    }
-
-    // Build priority list: compound name first (if nazwa_2 exists), then individual words
-    let mut candidates: Vec<String> = Vec::new();
-    if let Some(n2) = street_name_2 {
-        let compound = format!("{} {}", n2.trim(), street_name_1.trim());
-        candidates.push(compound);
-    }
-
-    // Add significant individual words (>= 3 chars)
-    for word in street_name_1.split_whitespace() {
-        if word.len() >= 3 {
-            candidates.push(word.to_string());
-        }
-    }
-    if let Some(n2) = street_name_2 {
-        for word in n2.split_whitespace() {
-            if word.len() >= 3 {
-                candidates.push(word.to_string());
+            for word in words {
+                let p = format!(r"(?i)(?:^|[^\p{{L}}]){}(?:[^\p{{L}}]|$)", regex::escape(&word));
+                if let Ok(r) = regex::Regex::new(&p) {
+                    street_candidates.push(r);
+                }
             }
         }
+
+        Self { city, street_candidates, has_street }
     }
 
-    candidates.iter().any(|c| word_match(message, c))
+    pub fn is_match(&self, message: &str) -> bool {
+        if !self.city.is_match(message) {
+            return false;
+        }
+        if !self.has_street {
+            return true;
+        }
+        self.street_candidates.iter().any(|r| r.is_match(message))
+    }
 }
+
 
 pub struct TauronProvider;
 
@@ -334,6 +341,7 @@ impl AlertProvider for TauronProvider {
 
         for (idx, addr) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
             let addr = addr.clone();
+            let compiled = Arc::new(CompiledTauronRegex::new(&addr.city_name, &addr.street_name_1, &addr.street_name_2));
             tasks.push(tokio::spawn(async move {
                 match retry(|| fetch_tauron_outages(&addr), 3).await {
                     Ok(response) => {
@@ -349,12 +357,11 @@ impl AlertProvider for TauronProvider {
                                     Some(d) if !d.is_empty() => format!("{}. {}", city_prefix, d),
                                     _ => city_prefix,
                                 });
-                                alert.is_local = Some(matches_address(
-                                    &item.Message,
-                                    &addr.city_name,
-                                    &addr.street_name_1,
-                                    &addr.street_name_2,
-                                ));
+                                alert.is_local = Some(if let Some(msg) = &item.Message {
+                                    compiled.is_match(msg)
+                                } else {
+                                    false
+                                });
                                 alert
                             })
                             .collect();
@@ -466,6 +473,22 @@ mod tests {
             "Wrocław",
             "Pawła",
             &Some("Jana".to_string())
+        ));
+
+        // Specific case reported by user (Polish characters)
+        assert!(matches_address(
+            &Some("Wrocław, ul. Wieniawskiego 12".to_string()),
+            "Wrocław",
+            "Wieniawskiego",
+            &None
+        ));
+
+        // Ensure we don't match substrings (like Wroc in Wrocław)
+        assert!(!matches_address(
+            &Some("Wrocław, ul. Wieniawskiego 12".to_string()),
+            "Wroc",
+            "Wieniawskie",
+            &None
         ));
     }
 }

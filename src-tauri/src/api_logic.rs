@@ -199,6 +199,7 @@ mod tests {
             house_no: "25".to_string(),
             city_id: Some(969400),
             street_id: Some(13900),
+            is_active: true,
         };
         let json = serde_json::to_string(&addr).unwrap();
         let deserialized: AddressEntry = serde_json::from_str(&json).unwrap();
@@ -240,6 +241,7 @@ mod tests {
             description: None,
             address_index: None,
             is_local: None,
+            hash: None,
         };
 
         let alert2 = UnifiedAlert {
@@ -250,6 +252,7 @@ mod tests {
             description: Some("Different desc".to_string()),
             address_index: Some(1),
             is_local: Some(true),
+            hash: None,
         };
 
         // Hashes should match if source, message, and startDate match (ignoring desc/endDate etc.)

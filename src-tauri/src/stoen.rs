@@ -197,6 +197,7 @@ mod tests {
             house_no: "10".to_string(),
             city_id: Some(918123),
             street_id: None,
+            is_active: true,
         };
 
         let outage = StoenOutage {

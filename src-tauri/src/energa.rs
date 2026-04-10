@@ -3,6 +3,7 @@ use crate::utils::{build_client, retry};
 use regex::Regex;
 use serde::Deserialize;
 use async_trait::async_trait;
+use std::sync::Arc;
 
 pub const ENERGA_BASE_URL: &str = "https://energa-operator.pl";
 pub const ENERGA_PAGE_URL: &str =
@@ -45,64 +46,80 @@ impl EnergaShutdown {
             hash: None,
         }
     }
+}
 
-    pub fn matches_address(
-        &self,
-        city: &str,
-        commune: &str,
-        street_name_1: &str,
-        street_name_2: &Option<String>,
-    ) -> bool {
-        let Some(message) = &self.message else {
+pub struct CompiledEnergaRegex {
+    pub city: Regex,
+    pub commune: Regex,
+    pub street_candidates: Vec<Regex>,
+}
+
+impl CompiledEnergaRegex {
+    pub fn new(city: &str, commune: &str, street_name_1: &str, street_name_2: &Option<String>) -> Self {
+        let city_pattern = format!(r"(?i)(?:^|[^\p{{L}}]){}(?:[^\p{{L}}]|$)", regex::escape(city));
+        let city_regex = Regex::new(&city_pattern).unwrap_or_else(|_| Regex::new("").unwrap());
+
+        let commune_pattern = format!(r"(?i)(?:^|[^\p{{L}}]){}(?:[^\p{{L}}]|$)", regex::escape(commune));
+        let commune_regex = Regex::new(&commune_pattern).unwrap_or_else(|_| Regex::new("").unwrap());
+
+        let mut street_candidates = Vec::new();
+        if !street_name_1.is_empty() {
+            let mut words = Vec::new();
+            if let Some(n2) = street_name_2 {
+                words.push(format!("{} {}", n2.trim(), street_name_1.trim()));
+            }
+            for word in street_name_1.split_whitespace() {
+                if word.len() >= 3 {
+                    words.push(word.to_string());
+                }
+            }
+            if let Some(n2) = street_name_2 {
+                for word in n2.split_whitespace() {
+                    if word.len() >= 3 {
+                        words.push(word.to_string());
+                    }
+                }
+            }
+
+            for word in words {
+                let p = format!(r"(?i)(?:^|[^\p{{L}}]){}(?:[^\p{{L}}]|$)", regex::escape(&word));
+                if let Ok(r) = Regex::new(&p) {
+                    street_candidates.push(r);
+                }
+            }
+        }
+        Self {
+            city: city_regex,
+            commune: commune_regex,
+            street_candidates,
+        }
+    }
+
+    pub fn is_match(&self, outage: &EnergaShutdown) -> bool {
+        let Some(message) = &outage.message else {
             return false;
         };
 
-        fn word_match(text: &str, word: &str) -> bool {
-            let pattern = format!(r"(?i)\b{}\b", regex::escape(word));
-            regex::Regex::new(&pattern)
-                .map(|r| r.is_match(text))
-                .unwrap_or(false)
-        }
-
-        // Match city in message
-        if !word_match(message, city) {
+        if !self.city.is_match(message) {
             return false;
         }
 
-        // Match commune in areas (if areas are provided)
-        if let Some(areas) = &self.areas {
-            if !areas.iter().any(|a| word_match(a, commune)) {
+        if let Some(areas) = &outage.areas {
+            if !areas.iter().any(|a| self.commune.is_match(a)) {
                 return false;
             }
         }
 
-        // Match street logic
-        let mut candidates: Vec<String> = Vec::new();
-
-        if let Some(n2) = street_name_2 {
-            let compound = format!("{} {}", n2.trim(), street_name_1.trim());
-            candidates.push(compound);
-        }
-
-        // Add significant individual words (>= 3 chars)
-        for word in street_name_1.split_whitespace() {
-            if word.len() >= 3 {
-                candidates.push(word.to_string());
-            }
-        }
-        if let Some(n2) = street_name_2 {
-            for word in n2.split_whitespace() {
-                if word.len() >= 3 {
-                    candidates.push(word.to_string());
-                }
-            }
-        }
-
-        if candidates.is_empty() {
+        if self.street_candidates.is_empty() {
             return true;
         }
+        self.street_candidates.iter().any(|r| r.is_match(message))
+    }
+}
 
-        candidates.iter().any(|c| word_match(message, c))
+impl EnergaShutdown {
+    pub fn matches_address_compiled(&self, compiled: &CompiledEnergaRegex) -> bool {
+        compiled.is_match(self)
     }
 }
 
@@ -176,31 +193,34 @@ impl AlertProvider for EnergaProvider {
         }
 
         match retry(|| fetch_energa_alerts(), 3).await {
-            Ok(shutdowns) => {
-                let mut alerts = Vec::new();
-                for (idx, addr) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
-                    let local_shutdowns: Vec<UnifiedAlert> = shutdowns
+                Ok(shutdowns) => {
+                    let mut alerts = Vec::new();
+                    let active_addresses: Vec<(usize, Arc<CompiledEnergaRegex>, String)> = settings
+                        .addresses
                         .iter()
-                        .filter(|sd| {
-                            sd.matches_address(
-                                &addr.city_name,
-                                &addr.commune,
-                                &addr.street_name_1,
-                                &addr.street_name_2,
-                            )
-                        })
-                        .map(|sd| {
-                            let mut alert = sd.to_unified();
-                            alert.address_index = Some(idx);
-                            alert.is_local = Some(true);
-                            alert.description = Some(format!("Miejscowość: {}", addr.city_name));
-                            alert
+                        .enumerate()
+                        .filter(|(_, a)| a.is_active)
+                        .map(|(idx, a)| {
+                            (idx, Arc::new(CompiledEnergaRegex::new(&a.city_name, &a.commune, &a.street_name_1, &a.street_name_2)), a.city_name.clone())
                         })
                         .collect();
-                    alerts.extend(local_shutdowns);
+
+                    for (idx, compiled, city_name) in active_addresses {
+                        let local_shutdowns: Vec<UnifiedAlert> = shutdowns
+                            .iter()
+                            .filter(|sd| sd.matches_address_compiled(&compiled))
+                            .map(|sd| {
+                                let mut alert = sd.to_unified();
+                                alert.address_index = Some(idx);
+                                alert.is_local = Some(true);
+                                alert.description = Some(format!("Miejscowość: {}", city_name));
+                                alert
+                            })
+                            .collect();
+                        alerts.extend(local_shutdowns);
+                    }
+                    (alerts, Vec::new())
                 }
-                (alerts, Vec::new())
-            }
             Err(e) => (Vec::new(), vec![format!("Energa: {}", e)]),
         }
     }
