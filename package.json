@@ -1,6 +1,6 @@
 {
   "name": "awaria",
-  "version": "1.0.31",
+  "version": "1.0.32-alpha",
   "description": "Outage notifier — Tauri desktop & Android app",
   "scripts": {
     "tauri": "tauri",
