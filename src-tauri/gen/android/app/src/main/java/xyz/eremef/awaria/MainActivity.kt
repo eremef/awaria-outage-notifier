@@ -36,6 +36,25 @@ class MainActivity : TauriActivity() {
     }
   }
 
+  override fun onDestroy() {
+    // Stop and destroy WebView to prevent native crashes (SIGABRT/SIGSEGV)
+    // especially when the logger plugin is destroyed while the WebView is still active.
+    val decorView = this.window.decorView
+    if (decorView is ViewGroup) {
+      findWebView(decorView)?.let { webView ->
+        try {
+          webView.stopLoading()
+          webView.clearHistory()
+          webView.removeAllViews()
+          webView.destroy()
+        } catch (e: Exception) {
+          // Ignore destruction errors
+        }
+      }
+    }
+    super.onDestroy()
+  }
+
   private fun findWebView(view: ViewGroup): WebView? {
     for (i in 0 until view.childCount) {
       val child = view.getChildAt(i)
