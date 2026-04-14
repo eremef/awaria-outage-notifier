@@ -70,6 +70,14 @@ class WidgetUpdateWorker(
             stoenProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        // Update Tri-Status widgets
+        val triName = ComponentName(context, TriWidgetProvider::class.java)
+        val triIds = appWidgetManager.getAppWidgetIds(triName)
+        val triProvider = TriWidgetProvider()
+        for (id in triIds) {
+            triProvider.updateWidget(context, appWidgetManager, id)
+        }
+
         return androidx.work.ListenableWorker.Result.success()
     }
 }

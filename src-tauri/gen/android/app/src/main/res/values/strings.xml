@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">awaria</string>
     <string name="main_activity_title">awaria</string>
+    <string name="config_select_address">Wybierz adres dla widżetu</string>
+    <string name="config_primary_address">Podążaj za głównym adresem</string>
+    <string name="config_confirm">Zatwierdź</string>
 </resources>

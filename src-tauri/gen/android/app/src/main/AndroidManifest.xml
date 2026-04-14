@@ -24,6 +24,15 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
+        
+        <activity
+            android:name=".WidgetConfigActivity"
+            android:exported="true"
+            android:label="@string/config_select_address">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
 
         <receiver
             android:name=".TauronWidgetProvider"
@@ -128,6 +137,21 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_stoen_info" />
+        </receiver>
+
+        <receiver
+            android:name=".TriWidgetProvider"
+            android:exported="true"
+            android:label="Status">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_TRI" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_tri_info" />
         </receiver>
 
         <provider

@@ -10,8 +10,7 @@
 
   <LinearLayout
     android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_marginBottom="2dp">
+    android:layout_height="wrap_content">
 
     <ImageView
       android:id="@+id/widget_icon"
@@ -38,7 +37,7 @@
         android:layout_height="wrap_content"
         android:text="–"
         android:textColor="#D9006C"
-        android:textSize="12sp"
+        android:textSize="14sp"
         android:textStyle="bold" />
 
     <TextView
