@@ -122,17 +122,17 @@ let editingAddressIndex = null;
 
 async function checkAndRequestNotificationPermission() {
     if (!window.__TAURI__) return;
-    
+
     try {
         let granted = await window.__TAURI__.core.invoke('plugin:notification|is_permission_granted');
-        
+
         // On Android, if not granted, try to request it if it's the first time
         // or just if we are trying to enable notifications.
         if (!granted) {
             const permission = await window.__TAURI__.core.invoke('plugin:notification|request_permission');
             granted = (permission === 'granted');
         }
-        
+
         const warning = document.getElementById('notification-permission-warning');
         if (warning) {
             if (granted) {
@@ -151,7 +151,7 @@ function updateUpcomingStatus() {
     const upcomingHoursInput = document.getElementById('upcoming-hours-input');
     const adjustContainer = document.getElementById('upcoming-adjust-container');
     const rowContainer = document.getElementById('upcoming-row-container');
-    
+
     const anyNotifyChecked = SOURCES.some(s => {
         const cb = document.getElementById(`notify-${s.id}-check`);
         return cb && cb.checked && !cb.disabled;
@@ -166,7 +166,7 @@ function updateUpcomingStatus() {
         } else {
             rowContainer.classList.remove('notify-disabled');
             upcomingNotifyCheck.disabled = false;
-            
+
             if (upcomingNotifyCheck.checked) {
                 adjustContainer.classList.remove('notify-disabled');
                 upcomingHoursInput.disabled = false;
@@ -273,7 +273,7 @@ function initSettings() {
         document.getElementById('street-input').parentElement.classList.remove('valid');
         hideSuggestions('city-suggestions');
         hideSuggestions('street-suggestions');
-        
+
         // Scroll to form
         document.getElementById('address-form').scrollIntoView({ behavior: 'smooth' });
     });
@@ -440,7 +440,7 @@ function initSettings() {
                         return cb && cb.checked;
                     })
                     .map(src => src.id);
-                
+
                 currentSettings.enabledSources = enabledSources;
                 updateNotifyStatus(sourceId, notifyId);
                 updateUpcomingStatus();
@@ -462,11 +462,11 @@ function initSettings() {
                     currentSettings.notificationPreferences = {};
                 }
                 currentSettings.notificationPreferences[s.id] = notifyCheckbox.checked;
-                
+
                 if (notifyCheckbox.checked) {
                     await checkAndRequestNotificationPermission();
                 }
-                
+
                 updateUpcomingStatus();
                 await autoSaveSettings();
             });
@@ -519,7 +519,7 @@ function updateAddressFilter() {
     filter.innerHTML = '';
     if (allOpt) filter.appendChild(allOpt);
 
-    const activeAddresses = (currentSettings && Array.isArray(currentSettings.addresses)) 
+    const activeAddresses = (currentSettings && Array.isArray(currentSettings.addresses))
         ? currentSettings.addresses.map((addr, idx) => ({ ...addr, originalIndex: idx })).filter(addr => addr && addr.isActive !== false)
         : [];
 
@@ -733,7 +733,7 @@ function renderCitySuggestions(cities) {
 
     const cityQueryValue = document.getElementById('city-input').value.trim().toLowerCase();
     const exactMatches = cities.filter(c => c.city.toLowerCase() === cityQueryValue);
-    
+
     // Only auto-select if there is exactly ONE exact name match.
     // If there are multiple cities with the same name, the user must choose manually.
     if (exactMatches.length === 1 && !selectedCityId) {
@@ -747,7 +747,7 @@ function selectCity(c) {
     selectedVoivodeship = c.voivodeship;
     selectedDistrict = c.district;
     selectedCommune = c.commune;
-    
+
     const cityInput = document.getElementById('city-input');
     cityInput.value = selectedCityName;
     cityInput.parentElement.classList.add('valid');
@@ -854,7 +854,7 @@ function selectStreet(s) {
     selectedStreetName = s.full_street_name;
     selectedStreetName1 = s.street_name_1;
     selectedStreetName2 = s.street_name_2;
-    
+
     const streetInput = document.getElementById('street-input');
     streetInput.value = selectedStreetName;
     streetInput.parentElement.classList.add('valid');
@@ -934,7 +934,7 @@ async function loadSettingsAndFetch() {
             if (document.getElementById('upcoming-hours-input')) {
                 document.getElementById('upcoming-hours-input').value = settings.upcomingNotificationHours !== undefined ? settings.upcomingNotificationHours : 24;
             }
-            
+
             if (typeof updateUpcomingStatus === 'function') {
                 updateUpcomingStatus();
             }
@@ -1008,7 +1008,7 @@ async function saveNewAddress() {
 
         status.textContent = typeof t !== 'undefined' ? t('err_fields_required') : '⚠️ Please select a city and street from the lists.';
         status.className = 'settings-status error';
-        
+
         // Remove invalid class after animation
         setTimeout(() => {
             cityField.classList.remove('invalid');
@@ -1499,14 +1499,32 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
     if (hasLocalAlerts) {
         const totalLocal = Object.values(localLists).reduce((sum, l) => sum + l.length, 0);
         const lblYourLoc = typeof t !== 'undefined' ? t('lbl_your_location') : 'Your location';
-        html += `<div class="section-label">${escapeHtml(lblYourLoc)} (${totalLocal})</div>`;
+        html += `<div class="section-your-location"><span>${escapeHtml(lblYourLoc)} (${totalLocal})</span></div>`;
 
         SOURCES.forEach(s => {
             const list = localLists[s.id];
             if (list && list.length > 0) {
-                html += renderCards(list, s.id);
+                const lblSection = (typeof t !== 'undefined' ? t(`lbl_section_${s.id}`) : null) || `${s.category} (${s.label})`;
+                html += `
+                    <div class="collapsible source-${s.id}">
+                        <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
+                            <span>${escapeHtml(lblSection)} (${list.length})</span>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div class="collapsible-content">
+                            ${renderCards(list, s.id)}
+                        </div>
+                    </div>
+                `;
             }
         });
+    } else if (hasOtherAlerts) {
+        const lblYourLoc = typeof t !== 'undefined' ? t('lbl_your_location') : 'Your location';
+        const msgNoLocal = typeof t !== 'undefined' ? t('msg_no_outages_local') : 'No local alerts found.';
+        html += `
+            <div class="section-your-location"><span>${escapeHtml(lblYourLoc)} (0)</span></div>
+            <div class="no-outages">${escapeHtml(msgNoLocal)}</div>
+        `;
     }
 
     container.innerHTML = html;
@@ -1606,7 +1624,7 @@ if (window.__TAURI__) {
 
 async function highlightAlert(hash) {
     console.log('Highlighting alert with hash:', hash);
-    
+
     // Ensure data is loaded
     if (!lastAlerts || lastAlerts.length === 0) {
         await fetchOutages();

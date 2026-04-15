@@ -1,5 +1,6 @@
 use crate::api_logic::{AlertSource, UnifiedAlert, AlertProvider, Settings};
-use crate::utils::{build_client, retry};
+use reqwest::Client;
+use crate::utils::retry;
 use async_trait::async_trait;
 use futures::future::join_all;
 use std::sync::Arc;
@@ -51,12 +52,12 @@ impl OutageItem {
 }
 
 pub async fn lookup_city(
+    client: &Client,
     city_name: &str,
     voivodeship: &str,
     district: &str,
     commune: &str,
 ) -> Result<Vec<GeoItem>, String> {
-    let client = build_client()?;
     let cache_bust = Utc::now().timestamp_millis().to_string();
     let encoded_name = city_name.replace(' ', "%20");
     let url = format!(
@@ -111,8 +112,11 @@ pub async fn lookup_city(
     Ok(filtered)
 }
 
-pub async fn lookup_street(street_name: &str, city_gaid: u64) -> Result<Vec<GeoItem>, String> {
-    let client = build_client()?;
+pub async fn lookup_street(
+    client: &Client,
+    street_name: &str,
+    city_gaid: u64,
+) -> Result<Vec<GeoItem>, String> {
     let cache_bust = Utc::now().timestamp_millis().to_string();
     let encoded_name = street_name.replace(' ', "%20");
     let url = format!(
@@ -138,8 +142,7 @@ pub async fn lookup_street(street_name: &str, city_gaid: u64) -> Result<Vec<GeoI
     res.json().await.map_err(|e| e.to_string())
 }
 
-pub async fn lookup_only_one_street(city_gaid: u64) -> Result<Vec<GeoItem>, String> {
-    let client = build_client()?;
+pub async fn lookup_only_one_street(client: &Client, city_gaid: u64) -> Result<Vec<GeoItem>, String> {
     let cache_bust = Utc::now().timestamp_millis().to_string();
     let url = format!(
         "{}/enum/geo/onlyonestreet?ownerGAID={}&_={}",
@@ -164,7 +167,10 @@ pub async fn lookup_only_one_street(city_gaid: u64) -> Result<Vec<GeoItem>, Stri
     res.json().await.map_err(|e| e.to_string())
 }
 
-pub async fn fetch_tauron_outages(address: &crate::api_logic::AddressEntry) -> Result<OutageResponse, String> {
+pub async fn fetch_tauron_outages(
+    client: &Client,
+    address: &crate::api_logic::AddressEntry,
+) -> Result<OutageResponse, String> {
     let street_query = match &address.street_name_2 {
         Some(n2) => format!("{} {}", n2.trim(), address.street_name_1.trim()),
         None => address.street_name_1.clone(),
@@ -181,6 +187,7 @@ pub async fn fetch_tauron_outages(address: &crate::api_logic::AddressEntry) -> R
 
     // Look up Tauron GAIDs dynamically from address names
     let cities = lookup_city(
+        client,
         &address.city_name,
         &address.voivodeship,
         &address.district,
@@ -195,21 +202,21 @@ pub async fn fetch_tauron_outages(address: &crate::api_logic::AddressEntry) -> R
     log::info!("Tauron: found city '{}' GAID={}", city.Name, city.GAID);
 
     let mut streets = if address.street_name_1.is_empty() {
-        lookup_only_one_street(city.GAID).await?
+        lookup_only_one_street(client, city.GAID).await?
     } else {
-        lookup_street(&street_query, city.GAID).await?
+        lookup_street(client, &street_query, city.GAID).await?
     };
 
     // Fallback 1: If full street_query failed, try just street_name_1 (the core name)
     if streets.is_empty() && !address.street_name_1.is_empty() && street_query != address.street_name_1 {
         log::info!("Tauron: street_query '{}' failed, trying fallback with '{}'", street_query, address.street_name_1);
-        streets = lookup_street(&address.street_name_1, city.GAID).await.unwrap_or_default();
+        streets = lookup_street(client, &address.street_name_1, city.GAID).await.unwrap_or_default();
     }
 
     // Fallback 2: Try the full street_name from TERYT dropdown if it's different
     if streets.is_empty() && !address.street_name.is_empty() && address.street_name != street_query && address.street_name != address.street_name_1 {
         log::info!("Tauron: previous fallbacks failed, trying full street_name '{}'", address.street_name);
-        streets = lookup_street(&address.street_name, city.GAID).await.unwrap_or_default();
+        streets = lookup_street(client, &address.street_name, city.GAID).await.unwrap_or_default();
     }
 
     if streets.is_empty() {
@@ -248,7 +255,6 @@ pub async fn fetch_tauron_outages(address: &crate::api_logic::AddressEntry) -> R
 
     log::info!("Tauron API (outages){}", url);
 
-    let client = build_client()?;
     let res = client
         .get(&url)
         .header("accept", "application/json")
@@ -336,14 +342,20 @@ impl AlertProvider for TauronProvider {
         "tauron".to_string()
     }
 
-    async fn fetch(&self, settings: &Settings) -> (Vec<UnifiedAlert>, Vec<String>) {
+    async fn fetch(
+        &self,
+        client: &reqwest::Client,
+        _client_http1: &reqwest::Client,
+        settings: &Settings,
+    ) -> (Vec<UnifiedAlert>, Vec<String>) {
         let mut tasks = Vec::new();
 
         for (idx, addr) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
             let addr = addr.clone();
             let compiled = Arc::new(CompiledTauronRegex::new(&addr.city_name, &addr.street_name_1, &addr.street_name_2));
+            let client_c = client.clone();
             tasks.push(tokio::spawn(async move {
-                match retry(|| fetch_tauron_outages(&addr), 3).await {
+                match retry(|| fetch_tauron_outages(&client_c, &addr), 3).await {
                     Ok(response) => {
                         let alerts: Vec<UnifiedAlert> = response
                             .OutageItems

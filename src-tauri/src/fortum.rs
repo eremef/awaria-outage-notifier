@@ -1,5 +1,6 @@
+use reqwest::Client;
 use crate::api_logic::{AlertSource, UnifiedAlert, AlertProvider, Settings};
-use crate::utils::{build_client, retry};
+use crate::utils::retry;
 use serde::{Deserialize, Serialize};
 use async_trait::async_trait;
 
@@ -44,8 +45,7 @@ impl FortumPoint {
     }
 }
 
-pub async fn fetch_fortum_cities() -> Result<Vec<FortumCity>, String> {
-    let client = build_client()?;
+pub async fn fetch_fortum_cities(client: &Client) -> Result<Vec<FortumCity>, String> {
     log::info!("Fortum: GET {}", FORTUM_CITIES_URL);
     let res = client
         .get(FORTUM_CITIES_URL)
@@ -61,9 +61,11 @@ pub async fn fetch_fortum_cities() -> Result<Vec<FortumCity>, String> {
     res.json().await.map_err(|e| e.to_string())
 }
 
-pub async fn fetch_fortum_alerts(city_guid: &str, region_id: u32) -> Result<Vec<UnifiedAlert>, String> {
-    let client = build_client()?;
-
+pub async fn fetch_fortum_alerts(
+    client: &Client,
+    city_guid: &str,
+    region_id: u32,
+) -> Result<Vec<UnifiedAlert>, String> {
     let planned_url = format!(
         "{}?cityGuid={}&regionId={}&current=false",
         FORTUM_URL, city_guid, region_id
@@ -119,13 +121,18 @@ impl AlertProvider for FortumProvider {
         "fortum".to_string()
     }
 
-    async fn fetch(&self, settings: &Settings) -> (Vec<UnifiedAlert>, Vec<String>) {
+    async fn fetch(
+        &self,
+        client: &reqwest::Client,
+        _client_http1: &reqwest::Client,
+        settings: &Settings,
+    ) -> (Vec<UnifiedAlert>, Vec<String>) {
         let active_addresses = settings.addresses.iter().filter(|a| a.is_active).collect::<Vec<_>>();
         if active_addresses.is_empty() {
             return (Vec::new(), Vec::new());
         }
 
-        match retry(|| fetch_fortum_cities(), 3).await {
+        match retry(|| fetch_fortum_cities(client), 3).await {
             Ok(cities) => {
                 let mut city_map = std::collections::HashMap::new();
                 for (idx, addr) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
@@ -143,7 +150,7 @@ impl AlertProvider for FortumProvider {
                 let mut fortum_errors = Vec::new();
 
                 for ((guid, rid, city_name), addrs) in city_map {
-                    match retry(|| fetch_fortum_alerts(&guid, rid), 3).await {
+                    match retry(|| fetch_fortum_alerts(client, &guid, rid), 3).await {
                         Ok(alerts) => {
                             for a in alerts {
                                 let mut matched_any = false;

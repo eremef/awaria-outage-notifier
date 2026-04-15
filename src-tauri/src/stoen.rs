@@ -1,5 +1,6 @@
+use reqwest::Client;
 use crate::api_logic::{AddressEntry, AlertSource, UnifiedAlert, AlertProvider, Settings, is_warszawa};
-use crate::utils::{build_client, retry};
+use crate::utils::retry;
 use serde::{Deserialize, Serialize};
 use async_trait::async_trait;
 
@@ -36,8 +37,7 @@ struct StoenPayload {
     page: StoenPayloadPage,
 }
 
-pub async fn fetch_stoen_outages() -> Result<Vec<StoenOutage>, String> {
-    let client = build_client()?;
+pub async fn fetch_stoen_outages(client: &Client) -> Result<Vec<StoenOutage>, String> {
     let url = "https://awaria.stoen.pl/public/api/planned-outage/search/compressed-report";
 
     let payload = StoenPayload {
@@ -77,12 +77,17 @@ impl AlertProvider for StoenProvider {
         "stoen".to_string()
     }
 
-    async fn fetch(&self, settings: &Settings) -> (Vec<UnifiedAlert>, Vec<String>) {
+    async fn fetch(
+        &self,
+        client: &reqwest::Client,
+        _client_http1: &reqwest::Client,
+        settings: &Settings,
+    ) -> (Vec<UnifiedAlert>, Vec<String>) {
         if !settings.addresses.iter().any(|a| a.is_active && is_warszawa(a)) {
             return (Vec::new(), Vec::new());
         }
 
-        match retry(|| fetch_stoen_outages(), 3).await {
+        match retry(|| fetch_stoen_outages(client), 3).await {
             Ok(outages) => {
                 let mut alerts = Vec::new();
                 for outage in outages {

@@ -1,5 +1,6 @@
+use reqwest::Client;
 use crate::api_logic::{AlertSource, UnifiedAlert, AlertProvider, Settings};
-use crate::utils::{build_client, retry};
+use crate::utils::retry;
 use regex::Regex;
 use serde::Deserialize;
 use async_trait::async_trait;
@@ -153,9 +154,8 @@ pub async fn extract_energa_api_url(client: &reqwest::Client) -> Result<String, 
     Err("Could not extract data-shutdowns URL suffix from Energa page HTML".to_string())
 }
 
-pub async fn fetch_energa_alerts() -> Result<Vec<EnergaShutdown>, String> {
-    let client = build_client()?;
-    let url = extract_energa_api_url(&client).await?;
+pub async fn fetch_energa_alerts(client: &Client) -> Result<Vec<EnergaShutdown>, String> {
+    let url = extract_energa_api_url(client).await?;
     log::info!("Energa API calculated URL: {}", url);
 
     let res = client
@@ -181,7 +181,12 @@ impl AlertProvider for EnergaProvider {
         "energa".to_string()
     }
 
-    async fn fetch(&self, settings: &Settings) -> (Vec<UnifiedAlert>, Vec<String>) {
+    async fn fetch(
+        &self,
+        client: &reqwest::Client,
+        _client_http1: &reqwest::Client,
+        settings: &Settings,
+    ) -> (Vec<UnifiedAlert>, Vec<String>) {
         fn is_in_energa_region(addr: &crate::api_logic::AddressEntry) -> bool {
             let v = addr.voivodeship.to_lowercase();
             v.contains("pomorskie") || v.contains("warmińsko") || v.contains("zachodniopomorskie") || 
@@ -192,7 +197,7 @@ impl AlertProvider for EnergaProvider {
             return (Vec::new(), Vec::new());
         }
 
-        match retry(|| fetch_energa_alerts(), 3).await {
+        match retry(|| fetch_energa_alerts(client), 3).await {
                 Ok(shutdowns) => {
                     let mut alerts = Vec::new();
                     let active_addresses: Vec<(usize, Arc<CompiledEnergaRegex>, String)> = settings

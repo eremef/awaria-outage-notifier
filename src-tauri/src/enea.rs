@@ -3,7 +3,7 @@ use reqwest::Client;
 use serde::Deserialize;
 use std::sync::{Arc, OnceLock};
 use tokio::sync::Semaphore;
-use crate::utils::{retry, build_client};
+use crate::utils::retry;
 use async_trait::async_trait;
 
 pub const ENEA_BASE_URL: &str = "https://www.wylaczenia-eneaoperator.pl/rss/rss_unpl_";
@@ -277,7 +277,12 @@ impl AlertProvider for EneaProvider {
         "enea".to_string()
     }
 
-    async fn fetch(&self, settings: &Settings) -> (Vec<UnifiedAlert>, Vec<String>) {
+    async fn fetch(
+        &self,
+        client: &reqwest::Client,
+        _client_http1: &reqwest::Client,
+        settings: &Settings,
+    ) -> (Vec<UnifiedAlert>, Vec<String>) {
         let mut target_regions = Vec::new();
         for addr in settings.addresses.iter().filter(|a| a.is_active) {
             target_regions.extend(get_enea_regions_for_district(&addr.district));
@@ -289,39 +294,36 @@ impl AlertProvider for EneaProvider {
             return (Vec::new(), Vec::new());
         }
 
-        match build_client() {
-            Ok(client) => match retry(|| fetch_all_enea_outages(&client, &target_regions), 3).await {
-                Ok(items) => {
-                    let mut alerts = Vec::new();
-                    let active_addresses: Vec<(usize, Arc<CompiledEneaRegex>, String)> = settings
-                        .addresses
+        match retry(|| fetch_all_enea_outages(client, &target_regions), 3).await {
+            Ok(items) => {
+                let mut alerts = Vec::new();
+                let active_addresses: Vec<(usize, Arc<CompiledEneaRegex>, String)> = settings
+                    .addresses
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, a)| a.is_active)
+                    .map(|(idx, a)| {
+                        (idx, Arc::new(CompiledEneaRegex::new(&a.city_name, &a.street_name_1, &a.street_name_2)), a.city_name.clone())
+                    })
+                    .collect();
+
+                for (idx, compiled, city_name) in active_addresses {
+                    let local_items: Vec<UnifiedAlert> = items
                         .iter()
-                        .enumerate()
-                        .filter(|(_, a)| a.is_active)
-                        .map(|(idx, a)| {
-                            (idx, Arc::new(CompiledEneaRegex::new(&a.city_name, &a.street_name_1, &a.street_name_2)), a.city_name.clone())
+                        .filter(|item| item.matches_address_compiled(&compiled))
+                        .map(|item| {
+                            let mut alert = item.to_unified();
+                            alert.address_index = Some(idx);
+                            alert.is_local = Some(true);
+                            alert.description = Some(format!("Miejscowość: {}", city_name));
+                            alert
                         })
                         .collect();
-
-                    for (idx, compiled, city_name) in active_addresses {
-                        let local_items: Vec<UnifiedAlert> = items
-                            .iter()
-                            .filter(|item| item.matches_address_compiled(&compiled))
-                            .map(|item| {
-                                let mut alert = item.to_unified();
-                                alert.address_index = Some(idx);
-                                alert.is_local = Some(true);
-                                alert.description = Some(format!("Miejscowość: {}", city_name));
-                                alert
-                            })
-                            .collect();
-                        alerts.extend(local_items);
-                    }
-                    (alerts, Vec::new())
+                    alerts.extend(local_items);
                 }
-                Err(e) => (Vec::new(), vec![format!("Enea API Error: {}", e)]),
-            },
-            Err(e) => (Vec::new(), vec![format!("Enea Client Error: {}", e)]),
+                (alerts, Vec::new())
+            }
+            Err(e) => (Vec::new(), vec![format!("Enea API Error: {}", e)]),
         }
     }
 }

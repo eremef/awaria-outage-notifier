@@ -65,7 +65,12 @@ impl std::fmt::Display for AlertSource {
 #[async_trait]
 pub trait AlertProvider: Send + Sync {
     fn id(&self) -> String;
-    async fn fetch(&self, settings: &Settings) -> (Vec<UnifiedAlert>, Vec<String>);
+    async fn fetch(
+        &self,
+        client: &reqwest::Client,
+        client_http1: &reqwest::Client,
+        settings: &Settings,
+    ) -> (Vec<UnifiedAlert>, Vec<String>);
 }
 
 pub fn is_wroclaw(addr: &AddressEntry) -> bool {

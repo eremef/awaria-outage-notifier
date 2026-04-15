@@ -1,5 +1,6 @@
+use reqwest::Client;
 use crate::api_logic::{AddressEntry, AlertSource, UnifiedAlert, AlertProvider, Settings, is_wroclaw};
-use crate::utils::{build_client_http1, retry};
+use crate::utils::retry;
 use async_trait::async_trait;
 
 use serde::{Deserialize, Serialize};
@@ -102,8 +103,7 @@ impl MpwikFailureItem {
     }
 }
 
-pub async fn fetch_water_alerts() -> Result<Vec<MpwikFailureItem>, String> {
-    let client = build_client_http1()?;
+pub async fn fetch_water_alerts(client: &Client) -> Result<Vec<MpwikFailureItem>, String> {
     let res = client
         .post(MPWIK_URL)
         .header(
@@ -135,12 +135,17 @@ impl AlertProvider for MpwikProvider {
         "water".to_string()
     }
 
-    async fn fetch(&self, settings: &Settings) -> (Vec<UnifiedAlert>, Vec<String>) {
+    async fn fetch(
+        &self,
+        _client: &reqwest::Client,
+        client_http1: &reqwest::Client,
+        settings: &Settings,
+    ) -> (Vec<UnifiedAlert>, Vec<String>) {
         if !settings.addresses.iter().any(|a| a.is_active && is_wroclaw(a)) {
             return (Vec::new(), Vec::new());
         }
 
-        match retry(|| fetch_water_alerts(), 3).await {
+        match retry(|| fetch_water_alerts(client_http1), 3).await {
             Ok(items) => {
                 let mut alerts = Vec::new();
                 let active_addresses: Vec<(usize, Arc<CompiledMpwikRegex>)> = settings

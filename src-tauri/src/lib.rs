@@ -4,6 +4,8 @@ mod energa;
 mod fortum;
 mod mpwik;
 mod pge;
+mod network_state;
+use crate::network_state::NetworkState;
 mod state_db;
 mod stoen;
 mod tauron;
@@ -230,6 +232,9 @@ async fn fetch_all_alerts(
     if let Some(s) = settings {
         let s_arc = Arc::new(s.clone());
         let providers = get_providers();
+        let net_state = app.state::<NetworkState>();
+        let client = net_state.client.clone();
+        let client_http1 = net_state.client_http1.clone();
 
         for provider in providers {
             if !enabled_sources.contains(&provider.id()) {
@@ -238,9 +243,11 @@ async fn fetch_all_alerts(
 
             let s_p = Arc::clone(&s_arc);
             let sem = semaphore.clone();
+            let c = client.clone();
+            let c_h1 = client_http1.clone();
             tasks.push(tokio::spawn(async move {
                 let _permit = sem.acquire().await.ok();
-                provider.fetch(&s_p).await
+                provider.fetch(&c, &c_h1, &s_p).await
             }));
         }
 
@@ -517,6 +524,7 @@ pub fn run() {
             state_db::prune_old_alerts(&conn, 30)?;
             app.manage(DbState { conn: Mutex::new(conn) });
             app.manage(cache::CacheState::new());
+            app.manage(network_state::NetworkState::new()?);
 
             #[cfg(target_os = "android")]
             {

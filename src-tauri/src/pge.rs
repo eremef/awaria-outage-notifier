@@ -1,5 +1,6 @@
+use reqwest::Client;
 use crate::api_logic::{AddressEntry, AlertSource, UnifiedAlert, AlertProvider, Settings};
-use crate::utils::{build_client, retry};
+use crate::utils::retry;
 
 use chrono::{Duration, Utc};
 use chrono_tz::Europe::Warsaw;
@@ -33,8 +34,7 @@ pub struct PgeOutage {
     pub addresses: Vec<PgeAddress>,
 }
 
-pub async fn fetch_pge_outages() -> Result<Vec<PgeOutage>, String> {
-    let client = build_client()?;
+pub async fn fetch_pge_outages(client: &Client) -> Result<Vec<PgeOutage>, String> {
     let now = Utc::now().with_timezone(&Warsaw);
     let start_at_to = (now + Duration::days(90)).format("%Y-%m-%d %H:%M:%S").to_string();
     let stop_at_from = now.format("%Y-%m-%d %H:%M:%S").to_string();
@@ -70,7 +70,12 @@ impl AlertProvider for PgeProvider {
         "pge".to_string()
     }
 
-    async fn fetch(&self, settings: &Settings) -> (Vec<UnifiedAlert>, Vec<String>) {
+    async fn fetch(
+        &self,
+        client: &reqwest::Client,
+        _client_http1: &reqwest::Client,
+        settings: &Settings,
+    ) -> (Vec<UnifiedAlert>, Vec<String>) {
         fn is_in_pge_region(addr: &crate::api_logic::AddressEntry) -> bool {
             let v = addr.voivodeship.to_lowercase();
             v.contains("lubelskie") || v.contains("podlaskie") || v.contains("łódzkie") || 
@@ -82,7 +87,7 @@ impl AlertProvider for PgeProvider {
             return (Vec::new(), Vec::new());
         }
 
-        match retry(|| fetch_pge_outages(), 3).await {
+        match retry(|| fetch_pge_outages(client), 3).await {
             Ok(outages) => {
                 let mut alerts = Vec::new();
                 for (idx, addr) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
