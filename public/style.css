@@ -922,7 +922,7 @@ h1 {
 
 .no-outages {
     text-align: center;
-    padding: 1.5rem;
+    padding: 0.75rem;
     background-color: var(--card-background);
     color: var(--secondary-text);
     border-radius: 12px;
