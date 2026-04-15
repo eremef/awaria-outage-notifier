@@ -414,13 +414,13 @@ body::after {
 .container {
     width: 100%;
     max-width: 600px;
-    /* margin: 0.5rem; */
+    padding: 0.5rem;
 }
 
 header {
     text-align: center;
-    margin-top: 0.5rem;
-    margin-bottom: 0px;
+    margin-top: 0;
+    margin-bottom: 0;
     position: relative;
     padding: 0;
 }
