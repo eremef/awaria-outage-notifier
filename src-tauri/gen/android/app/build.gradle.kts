@@ -1,4 +1,5 @@
 import java.util.Properties
+import groovy.json.JsonSlurper
 
 plugins {
     id("com.android.application")
@@ -18,6 +19,27 @@ val keystoreProperties = Properties().apply {
     if (propFile.exists()) {
         propFile.inputStream().use { load(it) }
     }
+}
+
+fun findRustlsPlatformVerifierAndroidMavenRepo(): String {
+    try {
+        val process = ProcessBuilder("cargo", "metadata", "--format-version", "1")
+            .directory(projectDir.parentFile.parentFile.parentFile)
+            .start()
+        val output = process.inputStream.bufferedReader().readText()
+        process.waitFor()
+        
+        val json = JsonSlurper().parseText(output) as Map<String, Any>
+        val packages = json["packages"] as List<Map<String, Any>>
+        val pkg = packages.find { it["name"] == "rustls-platform-verifier-android" }
+        if (pkg != null) {
+            val manifestPath = pkg["manifest_path"] as String
+            return File(File(manifestPath).parentFile, "maven").absolutePath
+        }
+    } catch (e: Exception) {
+        println("Warning: Could not find rustls-platform-verifier-android via cargo metadata: ${e.message}")
+    }
+    return ""
 }
 
 android {
@@ -83,8 +105,11 @@ rust {
 repositories {
     google()
     mavenCentral()
-    maven {
-        url = uri("C:/Users/eremef/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-platform-verifier-android-0.1.1/maven")
+    val localMavenRepo = findRustlsPlatformVerifierAndroidMavenRepo()
+    if (localMavenRepo.isNotEmpty()) {
+        maven {
+            url = uri(localMavenRepo)
+        }
     }
 }
 
