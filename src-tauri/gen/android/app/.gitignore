@@ -4,3 +4,6 @@
 /tauri.build.gradle.kts
 /proguard-tauri.pro
 /tauri.properties
+/gradlew
+/gradlew.bat
+/gradle
