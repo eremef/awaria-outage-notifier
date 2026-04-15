@@ -319,8 +319,8 @@ async fn fetch_all_alerts(
                                  match state_db::is_alert_seen(&db_conn, &source_key, &upcoming_hash) {
                                         Ok(seen) => {
                                             if !seen {
-                                                let title = format_notification_title(&alert, &s, true);
-                                                let body = format_notification_body(&alert);
+                                                let title = format_notification_title(alert, &s, true);
+                                                let body = format_notification_body(alert);
 
                                                 log::info!(
                                                     "Triggering upcoming notification for {}. Title: '{}', Body: '{}'",
@@ -354,8 +354,8 @@ async fn fetch_all_alerts(
                         Ok(seen) => {
                             if !seen {
                                 // Trigger notification
-                                let title = format_notification_title(&alert, &s, false);
-                                let body = format_notification_body(&alert);
+                                let title = format_notification_title(alert, &s, false);
+                                let body = format_notification_body(alert);
 
                                 log::info!("Triggering notification for {}. Title: '{}', Body: '{}'", source_key, title, body);
                                 app.notification()
@@ -471,9 +471,7 @@ fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_upcom
     
     let prefix = if is_upcoming {
         if is_pl { "Nadchodząca" } else { "Upcoming" }
-    } else {
-        if is_pl { "Nowa" } else { "New" }
-    };
+    } else if is_pl { "Nowa" } else { "New" };
     
     let title = format!("{} {}", prefix, label);
     
@@ -505,7 +503,7 @@ fn format_notification_body(alert: &UnifiedAlert) -> String {
         // Only append if it's not already in the message (simple check)
         if !body.contains(&times) {
             if !body.is_empty() {
-                body.push_str("\n");
+                body.push('\n');
             }
             body.push_str(&times);
         }
