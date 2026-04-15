@@ -19,3 +19,6 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Keep rustls-platform-verifier classes that are called via JNI
+-keep,includedescriptorclasses class org.rustls.platformverifier.** { *; }
