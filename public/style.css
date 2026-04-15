@@ -549,7 +549,7 @@ h1 {
 .settings-panel.open {
     max-height: 5000px;
     opacity: 1;
-    padding: 1rem;
+    padding: 0.75rem;
     margin-bottom: 1rem;
     border-color: var(--message-border);
 }
@@ -560,10 +560,7 @@ h1 {
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--primary-color);
-    margin-top: 0.75rem;
     border-bottom: 1px solid var(--message-border);
-    padding-bottom: 0.4rem;
-    padding-top: 0.4rem;
     scroll-margin-top: calc(130px + var(--safe-area-inset-top));
 }
 
