@@ -17,7 +17,7 @@
       android:layout_width="16dp"
       android:layout_height="16dp"
       android:layout_gravity="center"
-      android:contentDescription="icon"
+      android:contentDescription="@string/icon_description"
       android:src="@drawable/ic_electricity" />
 
     <TextView
@@ -25,7 +25,7 @@
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:layout_gravity="center"
-      android:text="Provider"
+      android:text="@string/label_provider"
       android:textColor="#6D6D6D"
       android:textSize="9sp"
       android:textStyle="bold" />
@@ -44,7 +44,7 @@
         android:id="@+id/widget_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="outages"
+        android:text="@string/label_outages"
         android:textColor="#666666"
         android:textSize="8sp" />
 

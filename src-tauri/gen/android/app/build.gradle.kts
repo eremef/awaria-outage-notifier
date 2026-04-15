@@ -80,6 +80,14 @@ rust {
     rootDirRel = "../../../"
 }
 
+repositories {
+    google()
+    mavenCentral()
+    maven {
+        url = uri("C:/Users/eremef/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-platform-verifier-android-0.1.1/maven")
+    }
+}
+
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.webkit:webkit:1.12.1")
@@ -88,6 +96,7 @@ dependencies {
     implementation("com.google.android.material:material:1.13.0")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("rustls:rustls-platform-verifier:0.1.1")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.4")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.0")

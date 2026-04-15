@@ -11,14 +11,21 @@
 <body>
     <div class="container">
         <div class="sticky-nav">
-            <button id="settings-btn" class="settings-btn" title="Settings"><svg xmlns="http://www.w3.org/2000/svg"
-                    width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
+            <button id="settings-btn" class="settings-btn" title="Settings" data-i18n-title="settings">
+                <svg class="icon-settings" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="3"></circle>
                     <path
                         d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
                     </path>
-                </svg></button>
+                </svg>
+                <svg class="icon-close hidden" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
             <header>
                 <h1 data-i18n="title">Outage Alerts</h1>
                 <p class="last-updated-row">
@@ -39,7 +46,7 @@
             </header>
         </div>
 
-        <div id="settings-panel" class="settings-panel hidden">
+        <div id="settings-panel" class="settings-panel">
             <div id="notification-permission-warning" class="permission-warning hidden"
                 data-i18n="settings_notification_permission_warning">
                 System notifications are disabled. Please enable them in Android settings to receive alerts.
@@ -140,6 +147,7 @@
                     </div>
                 </div>
             </div>
+            <button id="close-settings-btn" class="settings-close-btn" data-i18n="settings_close">Close settings</button>
         </div>
 
         <div id="pull-indicator" class="pull-indicator" data-i18n="refresh_pull">↻ Release to refresh</div>

@@ -90,7 +90,7 @@ class TriWidgetProvider : BaseWidgetProvider() {
             if (selectedAddress.name.isNotEmpty()) selectedAddress.name 
             else "${selectedAddress.cityName}, ${selectedAddress.streetName} ${selectedAddress.houseNo}"
         } else {
-            getTranslation("no_address", language)
+            getTranslation(context, "no_address")
         }
 
         val views = RemoteViews(context.packageName, R.layout.widget_tri_outage)
@@ -122,9 +122,9 @@ class TriWidgetProvider : BaseWidgetProvider() {
         views.setTextViewText(R.id.count_water, waterCount)
 
         // Labels
-        views.setTextViewText(R.id.label_power, getTranslation("power", language))
-        views.setTextViewText(R.id.label_heat, getTranslation("heat", language))
-        views.setTextViewText(R.id.label_water, getTranslation("water", language))
+        views.setTextViewText(R.id.label_power, getTranslation(context, "power"))
+        views.setTextViewText(R.id.label_heat, getTranslation(context, "heat"))
+        views.setTextViewText(R.id.label_water, getTranslation(context, "water"))
 
         // Theme
         applyTriTheme(views, dark)

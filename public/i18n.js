@@ -8,6 +8,7 @@ const translations = {
         "notify": "New alerts notifications",
         "source_name": "Provider",
         "settings_language": "Language",
+        "settings": "Settings",
         "lang_system": "System Default",
         "lang_en": "English",
         "lang_pl": "Polski",
@@ -115,7 +116,11 @@ const translations = {
         "settings_upcoming_title": "Upcoming Outages - additional notifications",
         "settings_upcoming_prefix": "Notify",
         "settings_upcoming_suffix": "h before outage start",
-        "settings_notification_permission_warning": "System notifications are disabled. Please enable them in Android settings to receive alerts."
+        "settings_notification_permission_warning": "System notifications are disabled. Please enable them in Android settings to receive alerts.",
+        "widget_config_title": "Select address for widget",
+        "widget_config_primary": "Follow primary address",
+        "widget_config_confirm": "Confirm",
+        "settings_close": "Close settings"
     },
     pl: {
         "title": "Awaria",
@@ -123,6 +128,7 @@ const translations = {
         "notify": "Powiadomienia o nowych alertach ",
         "source_name": "Dostawca",
         "settings_language": "Język",
+        "settings": "Ustawienia",
         "lang_system": "Domyślny systemowy",
         "lang_en": "English",
         "lang_pl": "Polski",
@@ -230,7 +236,11 @@ const translations = {
         "settings_upcoming_title": "Nadchodzące wyłączenia - dodatkowe powiadomienia",
         "settings_upcoming_prefix": "Powiadamiaj",
         "settings_upcoming_suffix": "h przed startem wyłączenia",
-        "settings_notification_permission_warning": "Powiadomienia systemowe są wyłączone. Włącz je w ustawieniach Androida, aby otrzymywać powiadomienia."
+        "settings_notification_permission_warning": "Powiadomienia systemowe są wyłączone. Włącz je w ustawieniach Androida, aby otrzymywać powiadomienia.",
+        "widget_config_title": "Wybierz adres dla widżetu",
+        "widget_config_primary": "Używaj adresu głównego",
+        "widget_config_confirm": "Zatwierdź",
+        "settings_close": "Zamknij ustawienia"
     }
 };
 

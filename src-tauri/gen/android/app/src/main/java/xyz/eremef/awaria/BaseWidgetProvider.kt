@@ -286,18 +286,17 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         if (iconResId != 0) {
             views.setImageViewResource(R.id.widget_icon, iconResId)
         }
-        views.setTextViewText(R.id.widget_source, getSourceName(sourceKey))
     }
 
-    private fun getSourceName(key: String): String {
+    private fun getSourceName(context: Context, key: String): String {
         return when (key) {
-            "tauron" -> "Tauron"
-            "stoen" -> "Stoen"
-            "enea" -> "Enea"
-            "energa" -> "Energa"
-            "pge" -> "PGE"
-            "fortum" -> "Fortum"
-            "water" -> "MPWiK"
+            "tauron" -> context.getString(R.string.provider_tauron)
+            "stoen" -> context.getString(R.string.provider_stoen)
+            "enea" -> context.getString(R.string.provider_enea)
+            "energa" -> context.getString(R.string.provider_energa)
+            "pge" -> context.getString(R.string.provider_pge)
+            "fortum" -> context.getString(R.string.provider_fortum)
+            "water" -> context.getString(R.string.provider_water)
             else ->
                     key.replaceFirstChar {
                         if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
@@ -305,19 +304,18 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    protected fun getTranslation(key: String, lang: String): String {
-        val isPl =
-                if (lang == "pl") true
-                else if (lang == "en") false else Locale.getDefault().language.startsWith("pl")
+    protected fun getTranslation(context: Context, key: String): String {
         return when (key) {
-            "outages" -> if (isPl) "wyłączeń" else "outages"
-            "setup" -> if (isPl) "Skonfiguruj" else "Setup needed"
-            "updating" -> if (isPl) "Aktualizacja..." else "Updating..."
-            "inactive" -> if (isPl) "Nieaktywne" else "Inactive"
-            "power" -> if (isPl) "Prąd" else "Power"
-            "heat" -> if (isPl) "Ciepło" else "Heat"
-            "water" -> if (isPl) "Woda" else "Water"
-            "no_address" -> if (isPl) "Brak adresu" else "No Address"
+            "outages" -> context.getString(R.string.label_outages)
+            "status" -> context.getString(R.string.widget_label_tri)
+            "setup" -> context.getString(R.string.msg_setup_needed)
+            "updating" -> context.getString(R.string.msg_updating)
+            "inactive" -> context.getString(R.string.msg_inactive)
+            "power" -> context.getString(R.string.label_power)
+            "heat" -> context.getString(R.string.label_heat)
+            "water" -> context.getString(R.string.label_water)
+            "no_address" -> context.getString(R.string.msg_no_address)
+            "error" -> context.getString(R.string.msg_error)
             else -> key
         }
     }
@@ -348,10 +346,10 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
         if (!sourceEnabled) {
             count = "–"
-            statusMessage = getTranslation("inactive", language)
+            statusMessage = getTranslation(context, "inactive")
         } else if (settingsList == null || activeSettings.isEmpty()) {
             count = "?"
-            statusMessage = getTranslation("setup", language)
+            statusMessage = getTranslation(context, "setup")
         } else {
             try {
                 // Shared fetch result between widgets
@@ -363,7 +361,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 count = total.toString()
             } catch (e: Exception) {
                 count = "!"
-                statusMessage = "Error"
+                statusMessage = getTranslation(context, "error")
             }
         }
 
@@ -461,7 +459,8 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         views.setOnClickPendingIntent(R.id.widget_icon, clickPending)
         views.setOnClickPendingIntent(R.id.widget_count, clickPending)
         applyTheme(views, dark)
-        views.setTextViewText(R.id.widget_label, getTranslation(labelKey, language))
+        views.setTextViewText(R.id.widget_source, getSourceName(context, sourceKey))
+        views.setTextViewText(R.id.widget_label, getTranslation(context, labelKey))
         views.setTextViewText(R.id.widget_count, count)
         views.setTextViewText(R.id.widget_updated, updatedAt)
         return views

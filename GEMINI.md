@@ -21,7 +21,7 @@
 
 ## Development Commands
 
-- `npm run tauri dev`: Start desktop development server.
+- `npm run tauri dev`: Start desktop development server (usually on http://localhost:1430).
 - `npm run android:dev`: Start Android development server.
 - `npm run build`: Build web assets and desktop application.
 - `npm run android:build`: Build Android application.

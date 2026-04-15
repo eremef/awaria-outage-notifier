@@ -37,7 +37,7 @@
         <receiver
             android:name=".TauronWidgetProvider"
             android:exported="true"
-            android:label="Tauron">
+            android:label="@string/widget_label_tauron">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -52,7 +52,7 @@
         <receiver
             android:name=".MpwikWidgetProvider"
             android:exported="true"
-            android:label="MPWiK">
+            android:label="@string/widget_label_mpwik">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -67,7 +67,7 @@
         <receiver
             android:name=".FortumWidgetProvider"
             android:exported="true"
-            android:label="Fortum">
+            android:label="@string/widget_label_fortum">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -82,7 +82,7 @@
         <receiver
             android:name=".EnergaWidgetProvider"
             android:exported="true"
-            android:label="Energa">
+            android:label="@string/widget_label_energa">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -97,7 +97,7 @@
         <receiver
             android:name=".EneaWidgetProvider"
             android:exported="true"
-            android:label="Enea">
+            android:label="@string/widget_label_enea">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -112,7 +112,7 @@
         <receiver
             android:name=".PgeWidgetProvider"
             android:exported="true"
-            android:label="PGE">
+            android:label="@string/widget_label_pge">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -127,7 +127,7 @@
         <receiver
             android:name=".StoenWidgetProvider"
             android:exported="true"
-            android:label="Stoen">
+            android:label="@string/widget_label_stoen">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -142,7 +142,7 @@
         <receiver
             android:name=".TriWidgetProvider"
             android:exported="true"
-            android:label="Status">
+            android:label="@string/widget_label_tri">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

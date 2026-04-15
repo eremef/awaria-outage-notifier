@@ -518,6 +518,37 @@ pub fn run() {
             app.manage(DbState { conn: Mutex::new(conn) });
             app.manage(cache::CacheState::new());
 
+            #[cfg(target_os = "android")]
+            {
+                use tauri::Manager;
+                log::info!("Checking for webview windows to initialize rustls-platform-verifier...");
+                let windows = app.webview_windows();
+                if windows.is_empty() {
+                    log::warn!("No webview windows found during setup! Certification initialization might fail.");
+                }
+                
+                for (label, window) in windows {
+                    log::info!("Initializing verifier for window: {}", label);
+                    let _ = window.with_webview(|webview| {
+                        webview.jni_handle().exec(|env, context, _webview| {
+                            log::info!("Accessing JNI context for verifier initialization...");
+                            let loader = env
+                                .call_method(context, "getClassLoader", "()Ljava/lang/ClassLoader;", &[])
+                                .expect("Failed to get ClassLoader")
+                                .l()
+                                .unwrap();
+
+                            rustls_platform_verifier::android::init_with_refs(
+                                env.get_java_vm().expect("Failed to get JavaVM"),
+                                env.new_global_ref(context).expect("Failed to create global ref for context"),
+                                env.new_global_ref(loader).expect("Failed to create global ref for loader"),
+                            );
+                            log::info!("rustls-platform-verifier initialized successfully on Android.");
+                        });
+                    });
+                }
+            }
+
             if cfg!(debug_assertions) {
                 app.handle().plugin(
                     tauri_plugin_log::Builder::default()

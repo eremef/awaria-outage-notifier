@@ -1,0 +1,35 @@
+<resources>
+    <string name="app_name">awaria</string>
+    <string name="main_activity_title">awaria</string>
+    <string name="config_select_address">Select address for widget</string>
+    <string name="config_primary_address">Follow primary address</string>
+    <string name="config_confirm">Confirm</string>
+    <string name="label_power">Power</string>
+    <string name="label_heat">Heat</string>
+    <string name="label_water">Water</string>
+    <string name="label_provider">Provider</string>
+    <string name="label_outages">outages</string>
+    <string name="icon_description">icon</string>
+    <string name="widget_label_tauron">Tauron</string>
+    <string name="widget_label_mpwik">MPWiK</string>
+    <string name="widget_label_fortum">Fortum</string>
+    <string name="widget_label_energa">Energa</string>
+    <string name="widget_label_enea">Enea</string>
+    <string name="widget_label_pge">PGE</string>
+    <string name="widget_label_stoen">Stoen</string>
+    <string name="widget_label_tri">Status</string>
+    <string name="msg_setup_needed">Setup needed</string>
+    <string name="msg_updating">Updating...</string>
+    <string name="msg_inactive">Inactive</string>
+    <string name="msg_no_address">No Address</string>
+    <string name="msg_error">Error</string>
+    <string name="provider_tauron">Tauron</string>
+    <string name="provider_stoen">Stoen</string>
+    <string name="provider_enea">Enea</string>
+    <string name="provider_energa">Energa</string>
+    <string name="provider_pge">PGE</string>
+    <string name="provider_fortum">Fortum</string>
+    <string name="provider_water">MPWiK</string>
+    <string name="notif_channel_name">Outage Alerts</string>
+    <string name="notif_channel_desc">Notifications about new and upcoming power, water, and heat outages.</string>
+</resources>

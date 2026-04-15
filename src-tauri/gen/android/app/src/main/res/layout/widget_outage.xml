@@ -12,7 +12,7 @@
         android:id="@+id/widget_source"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Provider"
+        android:text="@string/label_provider"
         android:textColor="#999999"
         android:textSize="12sp"
         android:textStyle="bold"
@@ -24,7 +24,7 @@
         android:layout_height="32dp"
         android:layout_marginBottom="4dp"
         android:src="@drawable/ic_electricity"
-        android:contentDescription="icon" />
+        android:contentDescription="@string/icon_description" />
 
     <TextView
         android:id="@+id/widget_count"
@@ -39,7 +39,7 @@
         android:id="@+id/widget_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="outages"
+        android:text="@string/label_outages"
         android:textColor="#666666"
         android:textSize="14sp" />
 

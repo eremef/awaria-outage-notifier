@@ -3,14 +3,14 @@ use reqwest::Client;
 pub fn build_client() -> Result<Client, String> {
     reqwest::Client::builder()
         .build()
-        .map_err(|e| e.to_string())
+        .map_err(|e| format!("{:?}", e))
 }
 
 pub fn build_client_http1() -> Result<Client, String> {
     reqwest::Client::builder()
         .http1_only()
         .build()
-        .map_err(|e| e.to_string())
+        .map_err(|e| format!("{:?}", e))
 }
 
 pub fn parse_date(date_str: &str) -> Option<chrono::DateTime<chrono::Utc>> {

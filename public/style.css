@@ -415,7 +415,7 @@ body::after {
 .container {
     width: 100%;
     max-width: 600px;
-    padding: 0.5rem;
+    margin: 0.5rem;
 }
 
 header {
@@ -512,6 +512,19 @@ h1 {
     width: 24px;
     height: 24px;
     stroke: currentColor;
+    transition: transform 0.3s ease;
+}
+
+.settings-btn.open svg {
+    transform: rotate(90deg);
+}
+
+.settings-btn.open .icon-settings {
+    display: none;
+}
+
+.settings-btn:not(.open) .icon-close {
+    display: none !important;
 }
 
 .settings-btn:hover {
@@ -521,16 +534,24 @@ h1 {
 .settings-panel {
     background: var(--card-background);
     border-radius: 12px;
-    padding: 1rem;
-    margin-bottom: 1rem;
+    padding: 0;
+    margin-bottom: 0;
     box-shadow: var(--shadow);
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     z-index: 1100;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    border: 1px solid transparent;
 }
 
-.settings-panel.hidden {
-    display: none;
+.settings-panel.open {
+    max-height: 5000px;
+    opacity: 1;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-color: var(--message-border);
 }
 
 .settings-title {
@@ -784,6 +805,31 @@ h1 {
 
 .settings-status.success {
     color: var(--success-text);
+}
+
+.settings-close-btn {
+    width: 100%;
+    padding: 0.9rem;
+    background: var(--input-border);
+    color: var(--text-color);
+    border: none;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid var(--message-border);
+}
+
+.settings-close-btn:hover {
+    background: var(--card-background);
+    border-color: var(--primary-color);
+}
+
+.settings-close-btn:active {
+    transform: scale(0.98);
 }
 
 /* ── Cards ─────────────────────────────────── */
@@ -1656,9 +1702,17 @@ input[type="checkbox"]:checked+.notify-bell-icon {
 }
 
 @keyframes pulse-highlight {
-    0% { background-color: var(--card-background); }
-    30% { background-color: color-mix(in srgb, var(--primary-color), transparent 70%); }
-    100% { background-color: var(--card-background); }
+    0% {
+        background-color: var(--card-background);
+    }
+
+    30% {
+        background-color: color-mix(in srgb, var(--primary-color), transparent 70%);
+    }
+
+    100% {
+        background-color: var(--card-background);
+    }
 }
 
 .highlight-pulse {

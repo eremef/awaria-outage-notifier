@@ -202,14 +202,49 @@ function initSettings() {
     const themeSelect = document.getElementById('theme-select');
     const langSelect = document.getElementById('language-select');
     const addAddressBtn = document.getElementById('add-address-btn');
-    btn.addEventListener('click', () => {
-        panel.classList.toggle('hidden');
-        if (!panel.classList.contains('hidden')) {
-            window.scrollTo({ top: 0, behavior: 'instant' });
+    const toggleSettings = () => {
+        panel.classList.toggle('open');
+        btn.classList.toggle('open');
+        const isOpen = panel.classList.contains('open');
+
+        // Update icons
+        const iconSettings = btn.querySelector('.icon-settings');
+        const iconClose = btn.querySelector('.icon-close');
+        if (iconSettings && iconClose) {
+            if (isOpen) {
+                iconSettings.classList.add('hidden');
+                iconClose.classList.remove('hidden');
+            } else {
+                iconSettings.classList.remove('hidden');
+                iconClose.classList.add('hidden');
+            }
+        }
+
+        // Update tooltip/title manually or re-run applyTranslations if needed
+        // Since we have data-i18n-title, we can toggle it
+        if (isOpen) {
+            btn.setAttribute('data-i18n-title', 'settings_close');
+        } else {
+            btn.setAttribute('data-i18n-title', 'settings');
+        }
+
+        if (typeof applyTranslations === 'function') {
+            applyTranslations();
+        }
+
+        if (isOpen) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             panel.scrollTop = 0;
             checkAndRequestNotificationPermission(); // Update permission warning state
         }
-    });
+    };
+
+    btn.addEventListener('click', toggleSettings);
+
+    const bottomCloseBtn = document.getElementById('close-settings-btn');
+    if (bottomCloseBtn) {
+        bottomCloseBtn.addEventListener('click', toggleSettings);
+    }
 
     saveBtn.addEventListener('click', saveNewAddress);
 
@@ -846,6 +881,12 @@ function escapeHtml(str) {
 async function loadSettingsAndFetch() {
     try {
         const container = document.getElementById('outages-container');
+        if (!window.__TAURI__) {
+            console.warn('Tauri API not found, skipping setting load');
+            initLanguage('system');
+            applyTranslations();
+            return;
+        }
         const settings = await window.__TAURI__.core.invoke('load_settings');
         console.log('loadSettingsAndFetch: received settings:', settings);
         if (settings) {
