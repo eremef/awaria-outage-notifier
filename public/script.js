@@ -194,6 +194,57 @@ function updateNotifyStatus(sourceId, notifyId) {
     }
 }
 
+function toggleSettings(forceState = null) {
+    const btn = document.getElementById('settings-btn');
+    const panel = document.getElementById('settings-panel');
+    if (!btn || !panel) return;
+
+    if (forceState === true) {
+        panel.classList.add('open');
+        btn.classList.add('open');
+    } else if (forceState === false) {
+        panel.classList.remove('open');
+        btn.classList.remove('open');
+    } else {
+        panel.classList.toggle('open');
+        btn.classList.toggle('open');
+    }
+
+    const isOpen = panel.classList.contains('open');
+
+    // Update icons
+    const iconSettings = btn.querySelector('.icon-settings');
+    const iconClose = btn.querySelector('.icon-close');
+    if (iconSettings && iconClose) {
+        if (isOpen) {
+            iconSettings.classList.add('hidden');
+            iconClose.classList.remove('hidden');
+        } else {
+            iconSettings.classList.remove('hidden');
+            iconClose.classList.add('hidden');
+        }
+    }
+
+    // Update tooltip/title
+    if (isOpen) {
+        btn.setAttribute('data-i18n-title', 'settings_close');
+    } else {
+        btn.setAttribute('data-i18n-title', 'settings');
+    }
+
+    if (typeof applyTranslations === 'function') {
+        applyTranslations();
+    }
+
+    if (isOpen) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        panel.scrollTop = 0;
+        checkAndRequestNotificationPermission(); // Update permission warning state
+    }
+}
+
+window.toggleSettings = toggleSettings;
+
 function initSettings() {
     renderSourcesUI();
     const btn = document.getElementById('settings-btn');
@@ -202,44 +253,8 @@ function initSettings() {
     const themeSelect = document.getElementById('theme-select');
     const langSelect = document.getElementById('language-select');
     const addAddressBtn = document.getElementById('add-address-btn');
-    const toggleSettings = () => {
-        panel.classList.toggle('open');
-        btn.classList.toggle('open');
-        const isOpen = panel.classList.contains('open');
 
-        // Update icons
-        const iconSettings = btn.querySelector('.icon-settings');
-        const iconClose = btn.querySelector('.icon-close');
-        if (iconSettings && iconClose) {
-            if (isOpen) {
-                iconSettings.classList.add('hidden');
-                iconClose.classList.remove('hidden');
-            } else {
-                iconSettings.classList.remove('hidden');
-                iconClose.classList.add('hidden');
-            }
-        }
-
-        // Update tooltip/title manually or re-run applyTranslations if needed
-        // Since we have data-i18n-title, we can toggle it
-        if (isOpen) {
-            btn.setAttribute('data-i18n-title', 'settings_close');
-        } else {
-            btn.setAttribute('data-i18n-title', 'settings');
-        }
-
-        if (typeof applyTranslations === 'function') {
-            applyTranslations();
-        }
-
-        if (isOpen) {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            panel.scrollTop = 0;
-            checkAndRequestNotificationPermission(); // Update permission warning state
-        }
-    };
-
-    btn.addEventListener('click', toggleSettings);
+    btn.addEventListener('click', () => toggleSettings());
 
     const bottomCloseBtn = document.getElementById('close-settings-btn');
     if (bottomCloseBtn) {
@@ -956,7 +971,7 @@ async function loadSettingsAndFetch() {
             } else {
                 renderAlerts([], container, currentSettings, selectedAddressIndex);
                 document.getElementById('last-updated').textContent = typeof t !== 'undefined' ? t('not_configured') : 'Not configured';
-                document.getElementById('settings-panel').classList.remove('hidden');
+                toggleSettings(true);
             }
         } else {
             initLanguage('system');
@@ -986,7 +1001,7 @@ async function loadSettingsAndFetch() {
             renderAddressesList();
             renderAlerts([], container, currentSettings, selectedAddressIndex);
             document.getElementById('last-updated').textContent = typeof t !== 'undefined' ? t('not_configured') : 'Not configured';
-            document.getElementById('settings-panel').classList.remove('hidden');
+            toggleSettings(true);
         }
     } catch (error) {
         console.error('Error loading settings:', error);
@@ -1319,8 +1334,7 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         const ctaBtn = document.getElementById('btn-empty-state-cta');
         if (ctaBtn) {
             ctaBtn.addEventListener('click', () => {
-                const panel = document.getElementById('settings-panel');
-                panel.classList.remove('hidden');
+                toggleSettings(true);
                 const addBtn = document.getElementById('add-address-btn');
                 if (addBtn) addBtn.click();
             });
@@ -1347,12 +1361,13 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         const ctaBtn = document.getElementById('btn-disabled-state-cta');
         if (ctaBtn) {
             ctaBtn.addEventListener('click', () => {
-                const panel = document.getElementById('settings-panel');
-                panel.classList.remove('hidden');
-                const section = document.getElementById('location-settings-section');
-                if (section) {
-                    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
+                toggleSettings(true);
+                setTimeout(() => {
+                    const section = document.getElementById('location-settings-section');
+                    if (section) {
+                        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }, 100);
             });
         }
         return;
@@ -1377,15 +1392,17 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         const ctaBtn = document.getElementById('btn-sources-disabled-cta');
         if (ctaBtn) {
             ctaBtn.addEventListener('click', () => {
-                const panel = document.getElementById('settings-panel');
-                panel.classList.remove('hidden');
-                // Target the "Alert Sources" title
-                const sourcesTitle = [...panel.querySelectorAll('.settings-title')].find(el => el.getAttribute('data-i18n') === 'settings_sources');
-                if (sourcesTitle) {
-                    sourcesTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                } else {
-                    panel.scrollTo({ top: 0, behavior: 'smooth' });
-                }
+                toggleSettings(true);
+                setTimeout(() => {
+                    const panel = document.getElementById('settings-panel');
+                    // Target the "Alert Sources" title
+                    const sourcesTitle = [...panel.querySelectorAll('.settings-title')].find(el => el.getAttribute('data-i18n') === 'settings_sources');
+                    if (sourcesTitle) {
+                        sourcesTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } else {
+                        panel.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                }, 100);
             });
         }
         return;

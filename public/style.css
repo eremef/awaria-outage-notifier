@@ -2,15 +2,20 @@
     position: sticky;
     top: 0;
     z-index: 1200;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(16px);
-    border-radius: 0.5rem;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-radius: 0.3rem;
     margin-left: -0.5rem;
     margin-right: -0.5rem;
     padding-left: 0.5rem;
     padding-right: 0.5rem;
     padding-top: var(--safe-area-inset-top);
     transition: background-color 0.3s ease;
+    /* Hardware acceleration to fix scroll jitter */
+    transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
 }
 
 :root {
@@ -377,6 +382,7 @@
 
 html {
     background-color: #000;
+    overscroll-behavior: none;
 }
 
 body {
@@ -391,6 +397,7 @@ body {
     min-height: 100vh;
     overflow-y: auto;
     overflow-x: hidden;
+    overscroll-behavior: none;
     padding-top: 0;
     padding-bottom: calc(1rem + var(--safe-area-inset-bottom));
     padding-left: var(--safe-area-inset-left);
@@ -414,15 +421,13 @@ body::after {
 .container {
     width: 100%;
     max-width: 600px;
-    padding: 0.5rem;
+    padding: 0 0.5rem 0.5rem;
 }
 
 header {
     text-align: center;
-    margin-top: 0;
-    margin-bottom: 0;
     position: relative;
-    padding: 0;
+    padding-top: 0.25rem;
 }
 
 h1 {
@@ -496,7 +501,7 @@ h1 {
     background: none;
     border: none;
     cursor: pointer;
-    padding: 8px;
+    padding: 5px;
     opacity: 0.7;
     transition: opacity 0.2s, color 0.3s;
     z-index: 1300;
@@ -556,10 +561,11 @@ h1 {
 
 .settings-title {
     font-weight: 700;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--primary-color);
+    margin-bottom: 0.2rem;
     border-bottom: 1px solid var(--message-border);
     scroll-margin-top: calc(130px + var(--safe-area-inset-top));
 }
@@ -589,7 +595,7 @@ h1 {
 
 .settings-field-row {
     display: grid;
-    grid-template-columns: 1fr 110px;
+    grid-template-columns: 1fr 250px;
     align-items: center;
     gap: 10px;
 }
@@ -621,6 +627,14 @@ h1 {
 }
 
 .checkbox-pair {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#upcoming-row-container {
+    margin-top: 5px;
+    margin-bottom: 10px;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -815,8 +829,7 @@ h1 {
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s ease;
-    margin-top: 1.5rem;
-    margin-bottom: 0.5rem;
+    margin-top: 0.5rem;
     border: 1px solid var(--message-border);
 }
 
