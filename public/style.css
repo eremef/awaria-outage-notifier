@@ -596,10 +596,17 @@ h1 {
 
 .settings-field-row {
     display: grid;
-    grid-template-columns: 1fr 250px;
+    /* 3-column grid ensures header and indented rows share the SAME baseline for the right columns.
+       Col 1: Indent spacer
+       Col 2: Main content (Source name)
+       Col 3: Notify controls (locked to 230px, wide enough for Polish text) */
+    grid-template-columns: 100px 1fr;
     align-items: center;
     gap: 10px;
+    box-sizing: border-box;
+    width: 100%;
 }
+
 
 .settings-field-row.header {
     margin-bottom: 0.25rem;
@@ -612,7 +619,7 @@ h1 {
 
 .notify-group.header-label {
     text-align: end;
-    ;
+    white-space: nowrap;
 }
 
 .source-group {
