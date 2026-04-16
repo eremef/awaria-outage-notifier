@@ -1,13 +1,12 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
-    android:orientation="vertical"
     android:padding="3dp">
 
     <RelativeLayout
+        android:id="@+id/widget_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="1dp"
@@ -15,66 +14,73 @@
         
         <TextView
             android:id="@+id/widget_address_name"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
+            android:layout_alignParentStart="true"
+            android:layout_toStartOf="@+id/widget_updated"
+            android:layout_centerVertical="true"
+            android:gravity="center"
             android:text=""
             android:textColor="#999999"
-            android:textSize="10sp"
+            android:textSize="11sp"
             android:textStyle="bold"
             android:singleLine="true"
-            android:ellipsize="end"
-            android:maxWidth="100dp" />
+            android:ellipsize="end" />
 
         <TextView
             android:id="@+id/widget_updated"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
-            android:text="--:--"
-            android:textColor="#999999"
             android:paddingTop="1dp"
+            android:text="@string/placeholder_time"
+            android:textColor="#757575"
             android:textSize="8sp" />
     </RelativeLayout>
 
     <LinearLayout
+        android:id="@+id/widget_content_container"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="match_parent"
+        android:layout_below="@id/widget_header"
+        android:baselineAligned="false"
         android:orientation="horizontal"
         android:weightSum="3">
 
         <!-- Power -->
-        <LinearLayout
-            android:id="@+id/section_power"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:orientation="vertical">
-            <ImageView
-                android:id="@+id/icon_power"
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:src="@drawable/ic_electricity"
-                android:contentDescription="@null" />
-            <TextView
-                android:id="@+id/count_power"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="–"
-                android:textColor="#D9006C"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-            <TextView
-                android:id="@+id/label_power"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/label_power"
-                android:textColor="#666666"
-                android:textSize="10sp" />
-        </LinearLayout>
+      <LinearLayout
+        android:id="@+id/section_power"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+          android:id="@+id/icon_power"
+          android:layout_width="14dp"
+          android:layout_height="14dp"
+          android:contentDescription="@null"
+          android:src="@drawable/ic_electricity" />
+
+        <TextView
+          android:id="@+id/count_power"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/placeholder_dash"
+          android:textColor="#D9006C"
+          android:textSize="13sp"
+          android:textStyle="bold" />
+
+        <TextView
+          android:id="@+id/label_power"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/label_power"
+          android:textColor="#666666"
+          android:textSize="11sp" />
+      </LinearLayout>
 
         <!-- Heat -->
         <LinearLayout
@@ -86,17 +92,17 @@
             android:orientation="vertical">
             <ImageView
                 android:id="@+id/icon_heat"
-                android:layout_width="16dp"
-                android:layout_height="16dp"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
                 android:src="@drawable/ic_heating"
                 android:contentDescription="@null" />
             <TextView
                 android:id="@+id/count_heat"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="–"
+                android:text="@string/placeholder_dash"
                 android:textColor="#00A859"
-                android:textSize="14sp"
+                android:textSize="13sp"
                 android:textStyle="bold" />
             <TextView
                 android:id="@+id/label_heat"
@@ -104,7 +110,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/label_heat"
                 android:textColor="#666666"
-                android:textSize="10sp" />
+                android:textSize="11sp" />
         </LinearLayout>
 
         <!-- Water -->
@@ -117,17 +123,17 @@
             android:orientation="vertical">
             <ImageView
                 android:id="@+id/icon_water"
-                android:layout_width="16dp"
-                android:layout_height="16dp"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
                 android:src="@drawable/ic_water"
                 android:contentDescription="@null" />
             <TextView
                 android:id="@+id/count_water"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="–"
+                android:text="@string/placeholder_dash"
                 android:textColor="#0077D9"
-                android:textSize="14sp"
+                android:textSize="13sp"
                 android:textStyle="bold" />
             <TextView
                 android:id="@+id/label_water"
@@ -135,9 +141,9 @@
                 android:layout_height="wrap_content"
                 android:text="@string/label_water"
                 android:textColor="#666666"
-                android:textSize="10sp" />
+                android:textSize="11sp" />
         </LinearLayout>
 
     </LinearLayout>
 
-</LinearLayout>
+</RelativeLayout>

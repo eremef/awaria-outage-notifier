@@ -32,4 +32,7 @@
     <string name="provider_water">MPWiK</string>
     <string name="notif_channel_name">Alerty o wyłączeniach</string>
     <string name="notif_channel_desc">Powiadomienia o nowych i nadchodzących awariach oraz wyłączeniach.</string>
+    <string name="placeholder_time">--:--</string>
+    <string name="placeholder_dash">–</string>
+    <string name="config_cancel">Anuluj</string>
 </resources>

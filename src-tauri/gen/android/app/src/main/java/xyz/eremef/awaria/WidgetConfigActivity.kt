@@ -43,10 +43,35 @@ class WidgetConfigActivity : Activity() {
         listView.adapter = adapter
 
         val btnConfirm = findViewById<Button>(R.id.btn_confirm)
+        val btnCancel = findViewById<Button>(R.id.btn_cancel)
         val progressBar = findViewById<ProgressBar>(R.id.config_progress)
+
+        // Pre-select current address if editing
+        val currentAddressId = BaseWidgetProvider.getStoredAddressId(this, appWidgetId)
+        if (currentAddressId == null) {
+            // No custom address means "Follow Primary" (index 0)
+            listView.setItemChecked(0, true)
+            btnConfirm.isEnabled = true
+        } else {
+            // Find which address matches the stored ID
+            for (i in fullAddresses.indices) {
+                val addr = fullAddresses[i]
+                val id = "${addr.cityId}-${addr.streetId}-${addr.houseNo}"
+                if (id == currentAddressId) {
+                    listView.setItemChecked(i + 1, true)
+                    btnConfirm.isEnabled = true
+                    listView.setSelection(i + 1)
+                    break
+                }
+            }
+        }
 
         listView.setOnItemClickListener { _, _, _, _ ->
             btnConfirm.isEnabled = true
+        }
+
+        btnCancel.setOnClickListener {
+            finish()
         }
 
         btnConfirm.setOnClickListener {
