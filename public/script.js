@@ -50,6 +50,7 @@ if (typeof document !== 'undefined') {
 // ── Settings ──────────────────────────────────────────────
 
 let currentSettings = null;
+let savedScrollY = 0;
 let lastAlerts = [];
 let lastFetchDate = null;
 let selectedAddressIndex = -1; // -1 means "all addresses"
@@ -202,34 +203,51 @@ function updateNotifyStatus(sourceId, notifyId) {
 
 function toggleSettings(forceState = null) {
     const btn = document.getElementById('settings-btn');
-    const panel = document.getElementById('settings-panel');
-    if (!btn || !panel) return;
+    const settingsView = document.getElementById('settings-view');
+    const mainView = document.getElementById('main-view');
+    if (!btn || !settingsView || !mainView) return;
 
-    if (forceState === true) {
-        panel.classList.add('open');
-        btn.classList.add('open');
-    } else if (forceState === false) {
-        panel.classList.remove('open');
-        btn.classList.remove('open');
+    let shouldOpen;
+    if (forceState !== null) {
+        shouldOpen = forceState;
     } else {
-        panel.classList.toggle('open');
-        btn.classList.toggle('open');
+        shouldOpen = !settingsView.classList.contains('open');
     }
 
-    const isOpen = panel.classList.contains('open');
+    if (shouldOpen) {
+        // Prepare for opening transition
+        savedScrollY = window.scrollY;
+        settingsView.style.display = 'flex';
+        // Force reflow for transition
+        settingsView.offsetHeight;
+        settingsView.classList.add('open');
 
-    // Update icons
-    const iconSettings = btn.querySelector('.icon-settings');
-    const iconClose = btn.querySelector('.icon-close');
-    if (iconSettings && iconClose) {
-        if (isOpen) {
-            iconSettings.classList.add('hidden');
-            iconClose.classList.remove('hidden');
-        } else {
-            iconSettings.classList.remove('hidden');
-            iconClose.classList.add('hidden');
-        }
+        // After transition, switch surfaces
+        setTimeout(() => {
+            if (settingsView.classList.contains('open')) {
+                mainView.classList.add('hidden');
+                settingsView.style.position = 'relative';
+                window.scrollTo(0, 0);
+            }
+        }, 400); // Match CSS transition time
+    } else {
+        // Switch surfaces before closing transition
+        settingsView.style.position = 'absolute';
+        mainView.classList.remove('hidden');
+        window.scrollTo(0, savedScrollY);
+
+        // Start closing transition
+        settingsView.classList.remove('open');
+
+        // After closing transition, clean up layout
+        setTimeout(() => {
+            if (!settingsView.classList.contains('open')) {
+                settingsView.style.display = 'none';
+            }
+        }, 400);
     }
+
+    const isOpen = settingsView.classList.contains('open');
 
     // Update tooltip/title
     if (isOpen) {
@@ -243,28 +261,39 @@ function toggleSettings(forceState = null) {
     }
 
     if (isOpen) {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        panel.scrollTop = 0;
+        // No need to reset settingsView.scrollTop as main window handles it now
         checkAndRequestNotificationPermission(); // Update permission warning state
     }
 }
 
 window.toggleSettings = toggleSettings;
 
+function openSettingsTo(targetId) {
+    toggleSettings(true);
+    // Wait for the transition (400ms) + surface swap (relative position)
+    setTimeout(() => {
+        const target = document.getElementById(targetId);
+        if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, 600);
+}
+
 function initSettings() {
     renderSourcesUI();
     const btn = document.getElementById('settings-btn');
-    const panel = document.getElementById('settings-panel');
+    const closeBtn = document.getElementById('settings-close-x');
     const saveBtn = document.getElementById('save-settings-btn');
     const themeSelect = document.getElementById('theme-select');
     const langSelect = document.getElementById('language-select');
     const addAddressBtn = document.getElementById('add-address-btn');
 
-    btn.addEventListener('click', () => toggleSettings());
+    if (btn) btn.addEventListener('click', () => toggleSettings());
+    if (closeBtn) closeBtn.addEventListener('click', () => toggleSettings(false));
 
     const bottomCloseBtn = document.getElementById('close-settings-btn');
     if (bottomCloseBtn) {
-        bottomCloseBtn.addEventListener('click', toggleSettings);
+        bottomCloseBtn.addEventListener('click', () => toggleSettings(false));
     }
 
     saveBtn.addEventListener('click', saveNewAddress);
@@ -1341,8 +1370,14 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         if (ctaBtn) {
             ctaBtn.addEventListener('click', () => {
                 toggleSettings(true);
-                const addBtn = document.getElementById('add-address-btn');
-                if (addBtn) addBtn.click();
+                setTimeout(() => {
+                    const section = document.getElementById('location-settings-section');
+                    const addBtn = document.getElementById('add-address-btn');
+                    if (section && addBtn) {
+                        addBtn.click();
+                        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }, 600);
             });
         }
         return;
@@ -1367,13 +1402,7 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         const ctaBtn = document.getElementById('btn-disabled-state-cta');
         if (ctaBtn) {
             ctaBtn.addEventListener('click', () => {
-                toggleSettings(true);
-                setTimeout(() => {
-                    const section = document.getElementById('location-settings-section');
-                    if (section) {
-                        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                }, 100);
+                openSettingsTo('location-settings-section');
             });
         }
         return;
@@ -1398,17 +1427,7 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         const ctaBtn = document.getElementById('btn-sources-disabled-cta');
         if (ctaBtn) {
             ctaBtn.addEventListener('click', () => {
-                toggleSettings(true);
-                setTimeout(() => {
-                    const panel = document.getElementById('settings-panel');
-                    // Target the "Alert Sources" title
-                    const sourcesTitle = [...panel.querySelectorAll('.settings-title')].find(el => el.getAttribute('data-i18n') === 'settings_sources');
-                    if (sourcesTitle) {
-                        sourcesTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    } else {
-                        panel.scrollTo({ top: 0, behavior: 'smooth' });
-                    }
-                }, 100);
+                openSettingsTo('sources-settings-title');
             });
         }
         return;

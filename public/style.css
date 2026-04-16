@@ -403,6 +403,8 @@ body {
     padding-left: var(--safe-area-inset-left);
     padding-right: var(--safe-area-inset-right);
     transition: background-color 0.3s ease, color 0.3s ease;
+    scroll-padding-top: 80px;
+    /* Offset for sticky header */
 }
 
 body::after {
@@ -420,14 +422,14 @@ body::after {
 
 .container {
     width: 100%;
-    max-width: 600px;
     padding: 0 0.5rem 0.5rem;
+
 }
 
 header {
     text-align: center;
     position: relative;
-    padding-top: 0.4rem;
+    padding-top: 0.6rem;
 }
 
 h1 {
@@ -450,6 +452,12 @@ h1 {
     color: inherit;
     font-size: inherit;
     margin: 0;
+}
+
+#outages-container {
+    margin: 0 auto;
+    width: 100%;
+    max-width: 600px;
 }
 
 .refresh-btn {
@@ -537,27 +545,47 @@ h1 {
     opacity: 1;
 }
 
-.settings-panel {
-    background: var(--card-background);
-    border-radius: 12px;
-    padding: 0;
-    margin-bottom: 0;
-    box-shadow: var(--shadow);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    z-index: 1100;
-    max-height: 0;
-    overflow: hidden;
-    opacity: 0;
-    border: 1px solid transparent;
+.view {
+    width: 100%;
+    min-height: 85vh;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
 }
 
-.settings-panel.open {
-    max-height: 5000px;
+#main-view.hidden {
+    display: none !important;
+}
+
+.settings-view {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    min-height: 100vh;
+    background: var(--background-color);
+    z-index: 2000;
+    transform: translateX(100%);
+    opacity: 0;
+    visibility: hidden;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+}
+
+.settings-view.open {
+    transform: translateX(0);
     opacity: 1;
-    padding: 0.75rem;
-    margin-bottom: 1rem;
-    border-color: var(--message-border);
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.settings-scroll-content {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    padding-bottom: 90vh;
+    /* Large padding to allow scrolling last section to top */
 }
 
 .settings-title {
@@ -566,9 +594,13 @@ h1 {
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--primary-color);
-    margin-bottom: 0.2rem;
+    margin: 1rem 0 0.5rem;
+    padding-bottom: 0.2rem;
     border-bottom: 1px solid var(--message-border);
-    scroll-margin-top: calc(130px + var(--safe-area-inset-top));
+}
+
+.settings-title:first-child {
+    margin-top: 0;
 }
 
 .settings-field {
@@ -1241,8 +1273,9 @@ h1 {
     font-size: 1rem;
 }
 
-#location-settings-section {
-    scroll-margin-top: calc(130px + var(--safe-area-inset-top));
+#location-settings-section,
+#sources-settings-title {
+    scroll-margin-top: calc(48px + var(--safe-area-inset-top));
 }
 
 .no-addresses {
