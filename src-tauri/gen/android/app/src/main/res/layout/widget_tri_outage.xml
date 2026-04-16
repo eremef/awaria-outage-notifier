@@ -59,8 +59,8 @@
 
         <ImageView
           android:id="@+id/icon_power"
-          android:layout_width="14dp"
-          android:layout_height="14dp"
+          android:layout_width="12dp"
+          android:layout_height="12dp"
           android:contentDescription="@null"
           android:src="@drawable/ic_electricity" />
 
@@ -92,8 +92,8 @@
             android:orientation="vertical">
             <ImageView
                 android:id="@+id/icon_heat"
-                android:layout_width="14dp"
-                android:layout_height="14dp"
+                android:layout_width="12dp"
+                android:layout_height="12dp"
                 android:src="@drawable/ic_heating"
                 android:contentDescription="@null" />
             <TextView
@@ -123,8 +123,8 @@
             android:orientation="vertical">
             <ImageView
                 android:id="@+id/icon_water"
-                android:layout_width="14dp"
-                android:layout_height="14dp"
+                android:layout_width="12dp"
+                android:layout_height="12dp"
                 android:src="@drawable/ic_water"
                 android:contentDescription="@null" />
             <TextView
