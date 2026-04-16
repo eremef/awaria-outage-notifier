@@ -88,8 +88,26 @@ object WidgetUtils {
         return false
     }
 
-    fun fetchJson(url: URL): String {
-// ... existing fetchJson, isWroclaw, isWarszawa ...
+    fun fetchJson(url: URL, maxRetries: Int = 3): String {
+        var lastException: Exception? = null
+        var delay = 1000L
+
+        for (attempt in 1..maxRetries) {
+            try {
+                return fetchJsonInternal(url)
+            } catch (e: Exception) {
+                lastException = e
+                Log.w(TAG, "Fetch attempt $attempt failed for $url: ${e.message}")
+                if (attempt < maxRetries) {
+                    Thread.sleep(delay)
+                    delay *= 2
+                }
+            }
+        }
+        throw lastException ?: Exception("Unknown fetch error")
+    }
+
+    private fun fetchJsonInternal(url: URL): String {
         val conn = url.openConnection() as HttpURLConnection
         conn.requestMethod = "GET"
         conn.setRequestProperty("accept", "application/json")
@@ -102,7 +120,7 @@ object WidgetUtils {
             throw Exception("HTTP error: $responseCode at $url")
         }
 
-        val response = conn.inputStream.bufferedReader().readText()
+        val response = conn.inputStream.bufferedReader().use { it.readText() }
         conn.disconnect()
         return response
     }

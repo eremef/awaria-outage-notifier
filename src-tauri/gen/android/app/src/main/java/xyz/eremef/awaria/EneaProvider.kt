@@ -39,7 +39,7 @@ class EneaProvider : IOutageProvider {
                                 conn.connectTimeout = 10000
                                 conn.readTimeout = 10000
                                 if (conn.responseCode in 200..299) {
-                                    conn.inputStream.bufferedReader().readText()
+                                    conn.inputStream.bufferedReader().use { it.readText() }
                                 } else null
                             } catch (e: Exception) {
                                 null

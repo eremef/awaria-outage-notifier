@@ -60,7 +60,7 @@ class TauronProvider : IOutageProvider {
                 conn.disconnect()
                 return null
             }
-            val res = conn.inputStream.bufferedReader().readText()
+            val res = conn.inputStream.bufferedReader().use { it.readText() }
             conn.disconnect()
             res
         } catch (e: Exception) {

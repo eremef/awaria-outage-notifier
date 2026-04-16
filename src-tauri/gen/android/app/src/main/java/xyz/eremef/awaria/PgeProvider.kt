@@ -26,7 +26,7 @@ class PgeProvider : IOutageProvider {
             val startAtTo = sdf.format(future).replace(" ", "+").replace(":", "%3A")
 
             val urlString =
-                "https://power-outage.gkpge.pl/api/power-outage?startAtTo=$startAtTo&stopAtFrom=$stopAtFrom&types[]=2"
+                "https://power-outage.gkpge.pl/api/power-outage?startAtTo=$startAtTo&stopAtFrom=$stopAtFrom"
             val response = WidgetUtils.fetchJson(URL(urlString))
             val outages = org.json.JSONArray(response)
 

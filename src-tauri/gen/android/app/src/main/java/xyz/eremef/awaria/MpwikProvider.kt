@@ -34,7 +34,7 @@ class MpwikProvider : IOutageProvider {
             throw Exception("MPWiK HTTP error: $responseCode")
         }
 
-        val response = conn.inputStream.bufferedReader(Charsets.UTF_8).readText()
+        val response = conn.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
         conn.disconnect()
 
         var totalCount = 0

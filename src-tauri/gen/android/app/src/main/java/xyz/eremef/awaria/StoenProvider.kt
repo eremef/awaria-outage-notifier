@@ -59,7 +59,7 @@ class StoenProvider : IOutageProvider {
                 return 0
             }
 
-            val response = conn.inputStream.bufferedReader().readText()
+            val response = conn.inputStream.bufferedReader().use { it.readText() }
             conn.disconnect()
 
             val outages = org.json.JSONArray(response)

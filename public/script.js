@@ -123,6 +123,12 @@ let editingAddressIndex = null;
 async function checkAndRequestNotificationPermission() {
     if (!window.__TAURI__) return;
 
+    // Guard against about:blank origin which causes Tauri capability errors on startup
+    if (window.location.href === 'about:blank') {
+        setTimeout(checkAndRequestNotificationPermission, 100);
+        return;
+    }
+
     try {
         let granted = await window.__TAURI__.core.invoke('plugin:notification|is_permission_granted');
 
