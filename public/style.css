@@ -547,7 +547,7 @@ h1 {
 
 .view {
     width: 100%;
-    min-height: 85vh;
+    min-height: 75vh;
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
 }
 
@@ -584,8 +584,7 @@ h1 {
     max-width: 600px;
     margin: 0 auto;
     padding: 0 1rem;
-    padding-bottom: 90vh;
-    /* Large padding to allow scrolling last section to top */
+    padding-bottom: calc(var(--safe-area-inset-bottom) + 4rem);
 }
 
 .settings-title {
@@ -1189,6 +1188,7 @@ h1 {
 
 .address-filter {
     width: 100%;
+    max-width: 600px;
     padding: 0.5rem;
     margin: 0.5rem 0;
     border: 1px solid var(--input-border);
