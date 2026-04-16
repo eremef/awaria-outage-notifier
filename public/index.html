@@ -6,6 +6,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title data-i18n="title">Outage Alerts</title>
     <link rel="stylesheet" href="style.css">
+    <script>
+        (function () {
+            try {
+                const theme = localStorage.getItem('app-theme') || 'system';
+                const root = document.documentElement;
+                if (theme === 'system') {
+                    const dark = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                    root.setAttribute('data-theme', dark ? 'dark' : 'light');
+                } else {
+                    root.setAttribute('data-theme', theme);
+                }
+            } catch (e) { }
+        })();
+    </script>
+
 </head>
 
 <body>

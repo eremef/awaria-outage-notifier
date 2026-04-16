@@ -1,5 +1,8 @@
 if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {
+        // Initial theme pick from localStorage or system (prevents flash)
+        applyTheme(localStorage.getItem('app-theme') || 'system');
+
         initSettings();
         initPullToRefresh();
         initRefreshButton();
@@ -232,12 +235,16 @@ function toggleSettings(forceState = null) {
         }, 400); // Match CSS transition time
     } else {
         // Switch surfaces before closing transition
-        settingsView.style.position = 'absolute';
+        // We first show mainView so it populates the layout height
         mainView.classList.remove('hidden');
-        window.scrollTo(0, savedScrollY);
-
-        // Start closing transition
-        settingsView.classList.remove('open');
+        
+        // Next frame: Restore scroll and change settingsView back to absolute
+        // This ensures the body height is stable before we scroll
+        requestAnimationFrame(() => {
+            window.scrollTo(0, savedScrollY);
+            settingsView.style.position = 'absolute';
+            settingsView.classList.remove('open');
+        });
 
         // After closing transition, clean up layout
         setTimeout(() => {
@@ -1036,6 +1043,10 @@ async function loadSettingsAndFetch() {
             renderAddressesList();
             renderAlerts([], container, currentSettings, selectedAddressIndex);
             document.getElementById('last-updated').textContent = typeof t !== 'undefined' ? t('not_configured') : 'Not configured';
+            
+            // Apply the default 'system' theme on first run
+            applyTheme('system');
+            
             toggleSettings(true);
         }
     } catch (error) {
@@ -1127,11 +1138,15 @@ async function saveNewAddress() {
 
 function applyTheme(theme) {
     const root = document.documentElement;
+    let effectiveTheme = theme;
+
     if (!theme || theme === 'system') {
-        const sysTheme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
-        root.setAttribute('data-theme', sysTheme);
+        effectiveTheme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        root.setAttribute('data-theme', effectiveTheme);
+        localStorage.setItem('app-theme', 'system');
     } else {
         root.setAttribute('data-theme', theme);
+        localStorage.setItem('app-theme', theme);
     }
 }
 
