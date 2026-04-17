@@ -60,21 +60,6 @@ class EneaProvider : IOutageProvider {
                     for (xml in xmls) {
                         val items = xml.split("<item>").drop(1)
                         for (itemXml in items) {
-                            // Extract dates from title
-                            var endDateValid = true 
-                            val titleMatch = titleRegex.find(itemXml)
-                            if (titleMatch != null) {
-                                val title = titleMatch.groupValues[1]
-                                val dateMatch = dateRangeRegex.find(title)
-                                if (dateMatch != null) {
-                                    val endDateStr = dateMatch.groupValues[2]
-                                    if (!DateUtils.isOutageActive(endDateStr, "yyyy-MM-dd HH:mm")) {
-                                        endDateValid = false
-                                    }
-                                }
-                            }
-                            if (!endDateValid) continue
-
                             val descMatch = descriptionRegex.find(itemXml)
                             if (descMatch != null) {
                                 var description = descMatch.groupValues[1]

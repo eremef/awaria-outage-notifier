@@ -11,17 +11,18 @@ object WidgetUtils {
     fun wordMatch(text: String, word: String): Boolean {
         if (text.isEmpty() || word.isEmpty()) return false
         val escapedWord = Pattern.quote(word)
-        val regex = Regex("(?ui)\\b$escapedWord\\b")
-        return regex.containsMatchIn(text)
+        // Use manual boundaries [^\p{L}] instead of \b to better support Polish characters across Android versions
+        val pattern = "(?ui)(?:^|[^\\p{L}])$escapedWord(?:[^\\p{L}]|$)"
+        return Regex(pattern).containsMatchIn(text)
     }
 
     class CompiledMatcher(settings: WidgetSettings) {
         private val cityRegex = if (settings.cityName.isNotEmpty()) {
-            Regex("(?ui)\\b${Pattern.quote(settings.cityName)}\\b")
+            Regex("(?ui)(?:^|[^\\p{L}])${Pattern.quote(settings.cityName)}(?:[^\\p{L}]|$)")
         } else null
 
         private val communeRegex = if (settings.commune.isNotEmpty()) {
-            Regex("(?ui)\\b${Pattern.quote(settings.commune)}\\b")
+            Regex("(?ui)(?:^|[^\\p{L}])${Pattern.quote(settings.commune)}(?:[^\\p{L}]|$)")
         } else null
 
         private val streetRegexes: List<Regex>
@@ -42,7 +43,7 @@ object WidgetUtils {
                 // 3. Full streetName (fallback)
                 if (!candidates.contains(settings.streetName1)) candidates.add(settings.streetName1)
             }
-            streetRegexes = candidates.map { Regex("(?ui)\\b${Pattern.quote(it)}\\b") }
+            streetRegexes = candidates.map { Regex("(?ui)(?:^|[^\\p{L}])${Pattern.quote(it)}(?:[^\\p{L}]|$)") }
         }
 
         fun matchesCity(text: String): Boolean = cityRegex?.containsMatchIn(text) ?: true

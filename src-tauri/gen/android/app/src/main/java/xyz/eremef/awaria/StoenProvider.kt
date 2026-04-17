@@ -70,10 +70,6 @@ class StoenProvider : IOutageProvider {
             for (i in 0 until outages.length()) {
                 val outage = outages.getJSONObject(i)
 
-                // Filter by date (End of outage must be in the future)
-                val endStr = outage.optString("outageEnd", "")
-                if (!DateUtils.isOutageActive(endStr, "yyyy-MM-dd HH:mm:ss")) continue
-
                 val addresses = outage.optJSONArray("addresses") ?: continue
                 
                 for (adIdx in matchers.indices) {

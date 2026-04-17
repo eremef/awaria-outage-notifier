@@ -30,7 +30,7 @@ class TauronProvider : IOutageProvider {
                     val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
                     dateFormat.timeZone = TimeZone.getTimeZone("UTC")
                     val now = dateFormat.format(Date())
-                    val safeHouseNo = java.net.URLEncoder.encode(settings.houseNo, "utf-8").replace("+", "%20")
+                    val safeHouseNo = settings.houseNo.replace(" ", "%20")
                     
                     val url = URL("https://www.tauron-dystrybucja.pl/waapi/outages/address" +
                             "?cityGAID=$cityGAID&streetGAID=$streetGAID&houseNo=$safeHouseNo" +
@@ -75,11 +75,25 @@ class TauronProvider : IOutageProvider {
         
         return try {
             val items = org.json.JSONArray(response)
+            
+            fun normalize(name: String): String {
+                return name.lowercase()
+                    .replace(" (miasto)", "")
+                    .replace(" m.", "")
+                    .replace("powiat ", "")
+                    .trim()
+            }
+
             for (i in 0 until items.length()) {
                 val item = items.getJSONObject(i)
-                if (item.optString("ProvinceName", "").equals(settings.voivodeship, ignoreCase = true) &&
-                    item.optString("DistrictName", "").equals(settings.district, ignoreCase = true) &&
-                    item.optString("CommuneName", "").equals(settings.commune, ignoreCase = true)) {
+                val p1 = normalize(item.optString("ProvinceName", ""))
+                val p2 = normalize(settings.voivodeship)
+                val d1 = normalize(item.optString("DistrictName", ""))
+                val d2 = normalize(settings.district)
+                val c1 = normalize(item.optString("CommuneName", ""))
+                val c2 = normalize(settings.commune)
+
+                if (p1 == p2 && d1 == d2 && c1 == c2) {
                     return item.getLong("GAID")
                 }
             }
@@ -120,8 +134,8 @@ class TauronProvider : IOutageProvider {
         var count = 0
         for (i in 0 until items.length()) {
             val item = items.getJSONObject(i)
-            val endDateStr = item.optString("EndDate", "")
-            if (!DateUtils.isOutageActive(endDateStr, "yyyy-MM-dd'T'HH:mm:ss")) continue
+            // We removed isOutageActive check to match Rust backend behavior.
+            // API result set from /address endpoint for 'fromDate=now' is already filtered by server.
             val message = item.optString("Message", "")
             if (matcher.matchesStreet(message)) count++
         }

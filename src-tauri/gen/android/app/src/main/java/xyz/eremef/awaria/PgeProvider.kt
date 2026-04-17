@@ -35,11 +35,6 @@ class PgeProvider : IOutageProvider {
 
             for (i in 0 until outages.length()) {
                 val outage = outages.getJSONObject(i)
-                
-                // Redundant local check for safety
-                val stopAtStr = outage.optString("stopAt", "")
-                if (!DateUtils.isOutageActive(stopAtStr, "yyyy-MM-dd HH:mm:ss")) continue
-
                 val description = outage.optString("description", "")
                 val addresses = outage.optJSONArray("addresses") ?: continue
 

@@ -57,11 +57,6 @@ class MpwikProvider : IOutageProvider {
         var count = 0
         for (i in 0 until items.length()) {
             val item = items.getJSONObject(i)
-            val endDateStr = item.optString("date_end", "")
-            
-            // MPWiK format: dd-MM-yyyy HH:mm
-            if (!DateUtils.isOutageActive(endDateStr, "dd-MM-yyyy HH:mm")) continue
-            
             val content = item.optString("content", "")
             if (matcher.matchesStreet(content)) {
                 count++

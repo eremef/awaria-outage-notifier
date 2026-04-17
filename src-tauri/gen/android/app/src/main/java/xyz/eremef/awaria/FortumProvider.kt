@@ -82,9 +82,6 @@ class FortumProvider : IOutageProvider {
             if (switchOffId in seenIds) continue
             seenIds.add(switchOffId)
 
-            val endDateStr = item.optString("endDate", "")
-            if (!DateUtils.isOutageActive(endDateStr)) continue
-
             val message = item.optString("message", "")
             if (WidgetUtils.matchesStreetOnly(message, settings.streetName1, settings.streetName2)) count++
         }

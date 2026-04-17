@@ -37,9 +37,6 @@ class EnergaProvider : IOutageProvider {
             // Energa provides a global list, so we fetch once and filter locally for all addresses
             for (i in 0 until shutdowns.length()) {
                 val s = shutdowns.getJSONObject(i)
-                val endStr = s.optString("endDate", "")
-                if (!DateUtils.isOutageActive(endStr, "yyyy-MM-dd HH:mm:ss")) continue
-                
                 val message = s.optString("message", "")
                 val areasArray = s.optJSONArray("areas")
                 val areas = if (areasArray != null) {

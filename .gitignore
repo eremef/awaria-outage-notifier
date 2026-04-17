@@ -14,3 +14,4 @@ plans/
 *.keystore
 src-tauri/gen/android/.idea/
 src-tauri/gen/android/buildSrc/.kotlin/sessions/
+src-tauri/gen/android/keystore.properties

@@ -220,36 +220,54 @@ function toggleSettings(forceState = null) {
     if (shouldOpen) {
         // Prepare for opening transition
         savedScrollY = window.scrollY;
+        
+        // Use 'fixed' during transition to isolate from document scroll/height changes.
+        // This prevents Android safe-area flickering and 'edge-to-edge' jumps.
+        settingsView.style.position = 'fixed';
+        settingsView.style.top = '0';
         settingsView.style.display = 'flex';
-        // Force reflow for transition
-        settingsView.offsetHeight;
-        settingsView.classList.add('open');
+        
+        // Use requestAnimationFrame to ensure layout is ready before we start the transition
+        requestAnimationFrame(() => {
+            settingsView.classList.add('open');
+        });
 
         // After transition, switch surfaces
         setTimeout(() => {
             if (settingsView.classList.contains('open')) {
                 mainView.classList.add('hidden');
+                // Switch back to relative so the view can scroll naturally with the main window
                 settingsView.style.position = 'relative';
                 window.scrollTo(0, 0);
             }
         }, 400); // Match CSS transition time
     } else {
         // Switch surfaces before closing transition
-        // We first show mainView so it populates the layout height
         mainView.classList.remove('hidden');
         
-        // Next frame: Restore scroll and change settingsView back to absolute
-        // This ensures the body height is stable before we scroll
+        // Keep settingsView fixed at the top while we restore the background scroll.
+        // This hides the background jump from the user.
+        settingsView.style.position = 'fixed';
+        settingsView.style.top = '0';
+        
+        // On some Android WebViews, we need a small delay to ensure layout height is recalculated
         requestAnimationFrame(() => {
-            window.scrollTo(0, savedScrollY);
-            settingsView.style.position = 'absolute';
-            settingsView.classList.remove('open');
+            requestAnimationFrame(() => {
+                window.scrollTo({
+                    top: savedScrollY,
+                    behavior: 'auto'
+                });
+
+                // Now that the background is restored under the opaque foreground, slide it out
+                settingsView.classList.remove('open');
+            });
         });
 
         // After closing transition, clean up layout
         setTimeout(() => {
             if (!settingsView.classList.contains('open')) {
                 settingsView.style.display = 'none';
+                settingsView.style.position = 'absolute'; // Reset for next time
             }
         }, 400);
     }
