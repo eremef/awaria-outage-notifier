@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Awaria",
-  "version": "1.0.36",
+  "version": "1.0.37",
   "identifier": "xyz.eremef.awaria",
   "build": {
     "frontendDist": "../public"
@@ -44,7 +44,7 @@
       "entitlements": null
     },
     "android": {
-      "versionCode": 10036
+      "versionCode": 10037
     }
   }
 }

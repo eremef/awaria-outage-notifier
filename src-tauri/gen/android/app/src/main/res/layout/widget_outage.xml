@@ -13,7 +13,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/label_provider"
-        android:textColor="#999999"
+        android:textColor="@color/widget_text_updated"
         android:textSize="12sp"
         android:textStyle="bold"
         android:layout_marginBottom="2dp" />
@@ -31,7 +31,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="–"
-        android:textColor="#D9006C"
+        android:textColor="@color/widget_text_primary"
         android:textSize="28sp"
         android:textStyle="bold" />
 
@@ -40,7 +40,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/label_outages"
-        android:textColor="#666666"
+        android:textColor="@color/widget_text_label"
         android:textSize="14sp" />
 
     <TextView
@@ -48,7 +48,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text=""
-        android:textColor="#999999"
+        android:textColor="@color/widget_text_updated"
         android:textSize="12sp" />
 
 </LinearLayout>

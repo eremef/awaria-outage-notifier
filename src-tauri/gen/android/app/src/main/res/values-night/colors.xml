@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- General Widget Colors (Dark) -->
+    <color name="widget_background">#1A1A1A</color>
+    <color name="widget_text_primary">#FF4DA6</color>
+    <color name="widget_text_label">#A0A0A0</color>
+    <color name="widget_text_updated">#777777</color>
+    
+    <!-- Utility Specific Colors (Dark - General) -->
+    <color name="utility_power">#F8C32D</color>
+    <color name="utility_heat">#FF645B</color>
+    <color name="utility_water">#4DA6FF</color>
+
+    <!-- Provider Specific Brand Colors (Dark) -->
+    <color name="brand_tauron">#FF4DA6</color>
+    <color name="brand_stoen">#f87171</color>
+    <color name="brand_enea">#60a5fa</color>
+    <color name="brand_energa">#0180ff</color>
+    <color name="brand_pge">#60a5fa</color>
+    <color name="brand_fortum">#00C86B</color>
+    <color name="brand_mpwik">#4DA6FF</color>
+</resources>

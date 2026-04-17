@@ -104,8 +104,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     }
 
     abstract val refreshAction: String
-    abstract val lightPrimary: String
-    abstract val darkPrimary: String
+    protected abstract val primaryColorRes: Int
     abstract val iconResId: Int
     abstract val labelKey: String
     abstract val sourceKey: String
@@ -261,28 +260,24 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    private fun applyTheme(views: RemoteViews, dark: Boolean) {
-        if (dark) {
-            val bgRes =
-                    if (dark) R.drawable.widget_background_dark else R.drawable.widget_background
-            if (bgRes != 0) {
-                views.setInt(R.id.widget_root, "setBackgroundResource", bgRes)
-            }
-            views.setTextColor(R.id.widget_count, Color.parseColor(darkPrimary))
-            views.setTextColor(R.id.widget_label, Color.parseColor(DARK_LABEL))
-            views.setTextColor(R.id.widget_updated, Color.parseColor(DARK_UPDATED))
-            views.setInt(R.id.widget_icon, "setColorFilter", Color.parseColor(darkPrimary))
-        } else {
-            val bgRes =
-                    if (dark) R.drawable.widget_background_dark else R.drawable.widget_background
-            if (bgRes != 0) {
-                views.setInt(R.id.widget_root, "setBackgroundResource", bgRes)
-            }
-            views.setTextColor(R.id.widget_count, Color.parseColor(lightPrimary))
-            views.setTextColor(R.id.widget_label, Color.parseColor(LIGHT_LABEL))
-            views.setTextColor(R.id.widget_updated, Color.parseColor(LIGHT_UPDATED))
-            views.setInt(R.id.widget_icon, "setColorFilter", Color.parseColor(lightPrimary))
+    private fun applyTheme(context: Context, views: RemoteViews, dark: Boolean) {
+        // If system theme is selected, the XML handles background and text colors automatically.
+        // We only explicitly set them here to support manual theme overrides and to tint icons.
+        
+        val bgRes = if (dark) R.drawable.widget_background_dark else R.drawable.widget_background
+        if (bgRes != 0) {
+            views.setInt(R.id.widget_root, "setBackgroundResource", bgRes)
         }
+        
+        val primary = context.getColor(primaryColorRes)
+        val label = context.getColor(if (dark) R.color.widget_text_label else R.color.widget_text_label)
+        val updated = context.getColor(if (dark) R.color.widget_text_updated else R.color.widget_text_updated)
+
+        views.setTextColor(R.id.widget_count, primary)
+        views.setTextColor(R.id.widget_label, label)
+        views.setTextColor(R.id.widget_updated, updated)
+        views.setInt(R.id.widget_icon, "setColorFilter", primary)
+
         if (iconResId != 0) {
             views.setImageViewResource(R.id.widget_icon, iconResId)
         }
@@ -458,7 +453,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         views.setOnClickPendingIntent(R.id.widget_root, refreshPending)
         views.setOnClickPendingIntent(R.id.widget_icon, clickPending)
         views.setOnClickPendingIntent(R.id.widget_count, clickPending)
-        applyTheme(views, dark)
+        applyTheme(context, views, dark)
         views.setTextViewText(R.id.widget_source, getSourceName(context, sourceKey))
         views.setTextViewText(R.id.widget_label, getTranslation(context, labelKey))
         views.setTextViewText(R.id.widget_count, count)

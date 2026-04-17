@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="1dp"
-        android:paddingHorizontal="4dp">
+        android:paddingHorizontal="2dp">
         
         <TextView
             android:id="@+id/widget_address_name"
@@ -21,7 +21,7 @@
             android:layout_centerVertical="true"
             android:gravity="center"
             android:text=""
-            android:textColor="#999999"
+            android:textColor="@color/widget_text_updated"
             android:textSize="11sp"
             android:textStyle="bold"
             android:singleLine="true"
@@ -35,7 +35,7 @@
             android:layout_centerVertical="true"
             android:paddingTop="1dp"
             android:text="@string/placeholder_time"
-            android:textColor="#757575"
+            android:textColor="@color/widget_text_updated"
             android:textSize="8sp" />
     </RelativeLayout>
 
@@ -57,29 +57,38 @@
         android:gravity="center"
         android:orientation="vertical">
 
-        <ImageView
-          android:id="@+id/icon_power"
-          android:layout_width="14dp"
-          android:layout_height="14dp"
-          android:contentDescription="@null"
-          android:src="@drawable/ic_electricity" />
+        <LinearLayout
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:orientation="horizontal"
+          android:gravity="center_vertical"
+          android:layout_marginBottom="1dp">
+          <ImageView
+            android:id="@+id/icon_power"
+            android:layout_width="10dp"
+            android:layout_height="14dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_electricity" />
+
+          <TextView
+            android:id="@+id/label_power"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="0dp"
+            android:text="@string/label_power"
+            android:textColor="@color/widget_text_label"
+            android:textSize="10sp"
+            android:typeface="normal" />
+        </LinearLayout>
 
         <TextView
           android:id="@+id/count_power"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
           android:text="@string/placeholder_dash"
-          android:textColor="#D9006C"
-          android:textSize="13sp"
+          android:textColor="@color/utility_power"
+          android:textSize="14sp"
           android:textStyle="bold" />
-
-        <TextView
-          android:id="@+id/label_power"
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:text="@string/label_power"
-          android:textColor="#666666"
-          android:textSize="11sp" />
       </LinearLayout>
 
         <!-- Heat -->
@@ -90,27 +99,36 @@
             android:layout_weight="1"
             android:gravity="center"
             android:orientation="vertical">
-            <ImageView
-                android:id="@+id/icon_heat"
-                android:layout_width="12dp"
-                android:layout_height="12dp"
-                android:src="@drawable/ic_heating"
-                android:contentDescription="@null" />
-            <TextView
-                android:id="@+id/count_heat"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/placeholder_dash"
-                android:textColor="#00A859"
-                android:textSize="13sp"
-                android:textStyle="bold" />
-            <TextView
-                android:id="@+id/label_heat"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/label_heat"
-                android:textColor="#666666"
-                android:textSize="11sp" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="1dp">
+                <ImageView
+                    android:id="@+id/icon_heat"
+                    android:layout_width="12dp"
+                    android:layout_height="14dp"
+                    android:src="@drawable/ic_heating"
+                    android:contentDescription="@null" />
+                <TextView
+                    android:id="@+id/label_heat"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="0dp"
+                    android:text="@string/label_heat"
+                    android:textColor="@color/widget_text_label"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+          <TextView
+            android:id="@+id/count_heat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/placeholder_dash"
+            android:textColor="@color/utility_heat"
+            android:textSize="14sp"
+            android:textStyle="bold" />
         </LinearLayout>
 
         <!-- Water -->
@@ -121,27 +139,37 @@
             android:layout_weight="1"
             android:gravity="center"
             android:orientation="vertical">
-            <ImageView
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="1dp">
+
+              <ImageView
                 android:id="@+id/icon_water"
-                android:layout_width="14dp"
+                android:layout_width="10dp"
                 android:layout_height="14dp"
-                android:src="@drawable/ic_water"
-                android:contentDescription="@null" />
+                android:contentDescription="@null"
+                android:src="@drawable/ic_water" />
+
+              <TextView
+                android:id="@+id/label_water"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginStart="0dp"
+                android:text="@string/label_water"
+                android:textColor="@color/widget_text_label"
+                android:textSize="10sp" />
+            </LinearLayout>
             <TextView
                 android:id="@+id/count_water"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/placeholder_dash"
-                android:textColor="#0077D9"
-                android:textSize="13sp"
+                android:textColor="@color/utility_water"
+                android:textSize="14sp"
                 android:textStyle="bold" />
-            <TextView
-                android:id="@+id/label_water"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/label_water"
-                android:textColor="#666666"
-                android:textSize="11sp" />
         </LinearLayout>
 
     </LinearLayout>
