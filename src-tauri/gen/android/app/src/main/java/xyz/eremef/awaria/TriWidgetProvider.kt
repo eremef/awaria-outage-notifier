@@ -209,39 +209,37 @@ class TriWidgetProvider : BaseWidgetProvider() {
         views.setTextViewText(R.id.label_water, getTranslation(context, "water"))
 
         // Theme
-        applyTriTheme(context, views, dark)
+        applyTriTheme(context, views, theme, dark)
 
         appWidgetManager.updateAppWidget(appWidgetId, views)
     }
 
-    private fun applyTriTheme(context: Context, views: RemoteViews, dark: Boolean) {
-        // If system theme is selected, the XML handles background and text colors automatically.
-        // We only explicitly set them here to support manual theme overrides and to tint icons.
+    private fun applyTriTheme(context: Context, views: RemoteViews, themeSetting: String, dark: Boolean) {
+        // If system theme is selected, the XML handles background and generic label colors automatically.
+        // We only explicitly set them here to support manual theme overrides.
 
-        val bgRes = if (dark) R.drawable.widget_background_dark else R.drawable.widget_background
-        if (bgRes != 0) {
-            views.setInt(R.id.widget_root, "setBackgroundResource", bgRes)
+        if (themeSetting != "system") {
+            val bgRes = if (dark) R.drawable.widget_background_dark else R.drawable.widget_background
+            if (bgRes != 0) {
+                views.setInt(R.id.widget_root, "setBackgroundResource", bgRes)
+            }
+
+            val labelColor = context.getColor(R.color.widget_text_label)
+            val updatedColor = context.getColor(R.color.widget_text_updated)
+
+            views.setTextColor(R.id.widget_address_name, updatedColor)
+            views.setTextColor(R.id.widget_updated, updatedColor)
+            views.setTextColor(R.id.label_power, labelColor)
+            views.setTextColor(R.id.label_heat, labelColor)
+            views.setTextColor(R.id.label_water, labelColor)
         }
 
-        val labelColor =
-                context.getColor(if (dark) R.color.widget_text_label else R.color.widget_text_label)
-        val updatedColor =
-                context.getColor(
-                        if (dark) R.color.widget_text_updated else R.color.widget_text_updated
-                )
-
-        views.setTextColor(R.id.widget_address_name, updatedColor)
-        views.setTextColor(R.id.widget_updated, updatedColor)
-        views.setTextColor(R.id.label_power, labelColor)
-        views.setTextColor(R.id.label_heat, labelColor)
-        views.setTextColor(R.id.label_water, labelColor)
-
-        // Utility Colors Pull from theme-aware resources
-        val colorPower =
-                context.getColor(if (dark) R.color.utility_power else R.color.utility_power)
-        val colorHeat = context.getColor(if (dark) R.color.utility_heat else R.color.utility_heat)
-        val colorWater =
-                context.getColor(if (dark) R.color.utility_water else R.color.utility_water)
+        // Utility Colors Pull from theme-aware resources. 
+        // We set these in code because they can be tinted/forced per address logic, 
+        // but we use the resource ID to let context resolve it.
+        val colorPower = context.getColor(R.color.utility_power)
+        val colorHeat = context.getColor(R.color.utility_heat)
+        val colorWater = context.getColor(R.color.utility_water)
 
         views.setTextColor(R.id.count_power, colorPower)
         views.setTextColor(R.id.count_heat, colorHeat)

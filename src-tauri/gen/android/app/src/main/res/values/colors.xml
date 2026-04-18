@@ -5,7 +5,8 @@
     <color name="widget_text_primary">#D9006C</color>
     <color name="widget_text_label">#666666</color>
     <color name="widget_text_updated">#999999</color>
-    
+    <color name="widget_border">#999999</color>
+  
     <!-- Utility Specific Colors (Light - General) -->
     <color name="utility_power">#EFB406</color>
     <color name="utility_heat">#F44336</color>

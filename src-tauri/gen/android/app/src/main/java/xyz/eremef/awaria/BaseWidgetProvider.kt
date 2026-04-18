@@ -110,10 +110,15 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     abstract val sourceKey: String
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == refreshAction || intent.action == Intent.ACTION_BOOT_COMPLETED) {
+        if (intent.action == refreshAction || 
+            intent.action == Intent.ACTION_BOOT_COMPLETED ||
+            intent.action == Intent.ACTION_CONFIGURATION_CHANGED) {
+            
             val mgr = AppWidgetManager.getInstance(context)
             val ids = mgr.getAppWidgetIds(ComponentName(context, this::class.java))
-            onUpdate(context, mgr, ids)
+            if (ids.isNotEmpty()) {
+                onUpdate(context, mgr, ids)
+            }
         }
         super.onReceive(context, intent)
     }
@@ -260,22 +265,27 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    private fun applyTheme(context: Context, views: RemoteViews, dark: Boolean) {
-        // If system theme is selected, the XML handles background and text colors automatically.
-        // We only explicitly set them here to support manual theme overrides and to tint icons.
+    private fun applyTheme(context: Context, views: RemoteViews, themeSetting: String, dark: Boolean) {
+        // If system theme is selected, the XML handles background and text colors automatically
+        // via resource qualifiers (values/ vs values-night/). We only explicitly set them here
+        // to support manual theme overrides (forcing dark/light) and to tint brand-specific elements.
         
-        val bgRes = if (dark) R.drawable.widget_background_dark else R.drawable.widget_background
-        if (bgRes != 0) {
-            views.setInt(R.id.widget_root, "setBackgroundResource", bgRes)
+        if (themeSetting != "system") {
+            val bgRes = if (dark) R.drawable.widget_background_dark else R.drawable.widget_background
+            if (bgRes != 0) {
+                views.setInt(R.id.widget_root, "setBackgroundResource", bgRes)
+            }
+            
+            val label = context.getColor(if (dark) R.color.widget_text_label else R.color.widget_text_label)
+            val updated = context.getColor(if (dark) R.color.widget_text_updated else R.color.widget_text_updated)
+            
+            views.setTextColor(R.id.widget_label, label)
+            views.setTextColor(R.id.widget_updated, updated)
         }
         
+        // Brand color and icon tinting always need programmatic application since they differ per provider
         val primary = context.getColor(primaryColorRes)
-        val label = context.getColor(if (dark) R.color.widget_text_label else R.color.widget_text_label)
-        val updated = context.getColor(if (dark) R.color.widget_text_updated else R.color.widget_text_updated)
-
         views.setTextColor(R.id.widget_count, primary)
-        views.setTextColor(R.id.widget_label, label)
-        views.setTextColor(R.id.widget_updated, updated)
         views.setInt(R.id.widget_icon, "setColorFilter", primary)
 
         if (iconResId != 0) {
@@ -377,6 +387,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                                             count,
                                             updatedAt,
                                             language,
+                                            theme,
                                             dark
                                     ),
                             SizeF(100f, 100f) to
@@ -386,6 +397,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                                             count,
                                             updatedAt,
                                             language,
+                                            theme,
                                             dark
                                     ),
                             SizeF(200f, 200f) to
@@ -395,6 +407,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                                             count,
                                             updatedAt,
                                             language,
+                                            theme,
                                             dark
                                     )
                     )
@@ -408,7 +421,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                     if (minWidth < 100 || minHeight < 100) R.layout.widget_outage_small
                     else if (minWidth < 200 || minHeight < 200) R.layout.widget_outage
                     else R.layout.widget_outage_large
-            val views = createRemoteViews(context, layoutId, count, updatedAt, language, dark)
+            val views = createRemoteViews(context, layoutId, count, updatedAt, language, theme, dark)
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
     }
@@ -419,6 +432,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             count: String,
             updatedAt: String,
             language: String,
+            themeSetting: String,
             dark: Boolean
     ): RemoteViews {
         val views = RemoteViews(context.packageName, layoutId)
@@ -453,7 +467,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         views.setOnClickPendingIntent(R.id.widget_root, refreshPending)
         views.setOnClickPendingIntent(R.id.widget_icon, clickPending)
         views.setOnClickPendingIntent(R.id.widget_count, clickPending)
-        applyTheme(context, views, dark)
+        applyTheme(context, views, themeSetting, dark)
         views.setTextViewText(R.id.widget_source, getSourceName(context, sourceKey))
         views.setTextViewText(R.id.widget_label, getTranslation(context, labelKey))
         views.setTextViewText(R.id.widget_count, count)

@@ -8,7 +8,7 @@
     <string name="label_heat">Ciepło</string>
     <string name="label_water">Woda</string>
     <string name="label_provider">Dostawca</string>
-    <string name="label_outages">wyłączenia</string>
+    <string name="label_outages">wyłączeń.</string>
     <string name="icon_description">ikona</string>
     <string name="widget_label_tauron">Tauron</string>
     <string name="widget_label_mpwik">MPWiK</string>
