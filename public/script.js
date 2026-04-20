@@ -567,10 +567,28 @@ function initSettings() {
     }
 
     if (upcomingHoursInput) {
+        // Prevent manual typing of negative sign, scientific notation, or decimals
+        upcomingHoursInput.addEventListener('keydown', (e) => {
+            if (e.key === '-' || e.key === 'e' || e.key === '+' || e.key === '.') {
+                e.preventDefault();
+            }
+        });
+
+        // Clamp values in real-time during typing
+        upcomingHoursInput.addEventListener('input', () => {
+            if (upcomingHoursInput.value !== '') {
+                const val = parseInt(upcomingHoursInput.value, 10);
+                if (val < 1) upcomingHoursInput.value = 1;
+                if (val > 168) upcomingHoursInput.value = 168;
+            }
+        });
+
         upcomingHoursInput.addEventListener('change', async () => {
             if (currentSettings) {
                 let val = parseInt(upcomingHoursInput.value, 10);
                 if (isNaN(val) || val < 1) val = 24;
+                if (val > 168) val = 168;
+                upcomingHoursInput.value = val;
                 currentSettings.upcomingNotificationHours = val;
                 await autoSaveSettings();
             }

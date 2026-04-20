@@ -131,14 +131,10 @@
                     </div>
                     <div id="upcoming-row-container" class="checkbox-pair upcoming-row">
                         <input type="checkbox" id="upcoming-notify-check">
-                        <div id="upcoming-adjust-container"
-                            style="display: flex; align-items: center; gap: 8px; transition: opacity 0.2s;">
-                            <label for="upcoming-notify-check" data-i18n="settings_upcoming_prefix"
-                                style="margin-bottom: 0;">Notify</label>
-                            <input type="number" id="upcoming-hours-input" min="1" max="168" value="24"
-                                style="width: 50px; padding: 4px; margin: 0; text-align: center;">
-                            <span data-i18n="settings_upcoming_suffix"
-                                style="font-size: 0.8rem; color: var(--secondary-text);">h before</span>
+                        <div id="upcoming-adjust-container" class="upcoming-adjust-container">
+                            <label for="upcoming-notify-check" data-i18n="settings_upcoming_prefix" class="upcoming-notify-label">Notify</label>
+                            <input type="number" id="upcoming-hours-input" min="1" max="168" value="24" class="upcoming-hours-input">
+                            <span data-i18n="settings_upcoming_suffix" class="upcoming-suffix">h before</span>
                         </div>
                     </div>
                 </div>

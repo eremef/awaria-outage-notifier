@@ -676,7 +676,7 @@ h1 {
 }
 
 #upcoming-row-container {
-    margin-top: 5px;
+    margin-top: 0;
     margin-bottom: 10px;
     display: flex;
     align-items: center;
@@ -1669,6 +1669,40 @@ h1 {
 
 .big-refresh-btn:active {
     transform: scale(0.96) translateY(2px);
+}
+
+/* ── Upcoming Outages ────────────────────── */
+.upcoming-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.upcoming-adjust-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: opacity 0.2s;
+}
+
+.upcoming-notify-label {
+    margin-bottom: 0 !important;
+}
+
+.upcoming-hours-input {
+    width: 50px;
+    padding: 4px;
+    margin: 0;
+    text-align: center;
+    border: 1px solid var(--input-border);
+    border-radius: 4px;
+    background: var(--card-background);
+    color: var(--text-color);
+}
+
+.upcoming-suffix {
+    font-size: 0.8rem;
+    color: var(--secondary-text);
 }
 
 /* ── Disabled States ───────────────────────── */
