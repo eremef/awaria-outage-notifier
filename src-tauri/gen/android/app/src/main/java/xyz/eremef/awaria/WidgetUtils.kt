@@ -1,12 +1,24 @@
 package xyz.eremef.awaria
 
 import android.util.Log
+import android.content.Context
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.regex.Pattern
 
 object WidgetUtils {
     private const val TAG = "AwariaWidgetUtils"
+
+    @JvmStatic
+    external fun fetchCountFromRust(context: Context, providerId: String, settingsJson: String): Int
+
+    init {
+        try {
+            System.loadLibrary("app_lib")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to load app_lib: ${e.message}")
+        }
+    }
 
     fun wordMatch(text: String, word: String): Boolean {
         if (text.isEmpty() || word.isEmpty()) return false
@@ -134,5 +146,33 @@ object WidgetUtils {
     fun isWarszawa(settings: WidgetSettings): Boolean {
         val name = settings.cityName.lowercase()
         return name == "warszawa" || name == "warsaw" || settings.cityId == 918123L
+    }
+
+    fun serializeSettingsForRust(settingsList: List<WidgetSettings>): String {
+        val root = org.json.JSONObject()
+        val addresses = org.json.JSONArray()
+        
+        for (s in settingsList) {
+            val addr = org.json.JSONObject()
+            addr.put("name", s.name)
+            addr.put("cityName", s.cityName)
+            addr.put("voivodeship", s.voivodeship)
+            addr.put("district", s.district)
+            addr.put("commune", s.commune)
+            addr.put("streetName", s.streetName)
+            addr.put("streetName1", s.streetName1)
+            addr.put("streetName2", if (s.streetName2 == null) org.json.JSONObject.NULL else s.streetName2)
+            addr.put("houseNo", s.houseNo)
+            addr.put("cityId", if (s.cityId == 0L) org.json.JSONObject.NULL else s.cityId)
+            addr.put("streetId", if (s.streetId == 0L) org.json.JSONObject.NULL else s.streetId)
+            addr.put("isActive", s.isActive)
+            addresses.put(addr)
+        }
+        
+        root.put("addresses", addresses)
+        root.put("upcomingNotificationEnabled", false)
+        root.put("upcomingNotificationHours", 24)
+        
+        return root.toString()
     }
 }

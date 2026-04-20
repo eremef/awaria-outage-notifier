@@ -1,5 +1,7 @@
 package xyz.eremef.awaria
 
+import android.util.Log
+
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
@@ -325,7 +327,6 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    abstract suspend fun fetchCount(context: Context, settings: List<WidgetSettings>): Int
 
     protected fun calculateHash(settingsList: List<WidgetSettings>): String {
         return settingsList
@@ -361,10 +362,12 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 val hash = calculateHash(activeSettings)
                 val total =
                         ProviderCache.getOrFetch(sourceKey, hash) {
-                            fetchCount(context, activeSettings)
+                            val settingsJson = WidgetUtils.serializeSettingsForRust(activeSettings)
+                            WidgetUtils.fetchCountFromRust(context, sourceKey, settingsJson)
                         }
                 count = total.toString()
             } catch (e: Exception) {
+                Log.e(TAG, "Error fetching count from Rust for $sourceKey: ${e.message}", e)
                 count = "!"
                 statusMessage = getTranslation(context, "error")
             }

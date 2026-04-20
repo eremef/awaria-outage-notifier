@@ -23,6 +23,13 @@ use tauri::AppHandle;
 use tauri::Manager;
 use tauri_plugin_notification::NotificationExt;
 
+#[cfg(target_os = "android")]
+use jni::{
+    objects::{JClass, JString, JObject},
+    sys::jint,
+    JNIEnv,
+};
+
 use std::fs;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -286,6 +293,21 @@ async fn fetch_all_alerts(
             }
         }
         all_alerts = grouped_alerts.into_values().collect();
+
+        // --- SORT BY DATE (ASCENDING) ---
+        all_alerts.sort_by(|a, b| {
+            let date_cmp = match (&a.startDate, &b.startDate) {
+                (Some(da), Some(db)) => da.cmp(db),
+                (Some(_), None) => std::cmp::Ordering::Less,
+                (None, Some(_)) => std::cmp::Ordering::Greater,
+                (None, None) => std::cmp::Ordering::Equal,
+            };
+            if date_cmp != std::cmp::Ordering::Equal {
+                return date_cmp;
+            }
+            // Stability fallback: sort by source name
+            a.source.to_string().cmp(&b.source.to_string())
+        });
 
         // --- PROCESS NEW ALERTS AND NOTIFY ---
         for alert in &all_alerts {
@@ -579,4 +601,166 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+// ── Android JNI exports ───────────────────────────────────
+
+#[cfg(target_os = "android")]
+fn ensure_verifier_initialized(env: &mut JNIEnv, context: &JObject) {
+    static START: std::sync::Once = std::sync::Once::new();
+    START.call_once(|| {
+        log::info!("Initializing rustls-platform-verifier via JNI context...");
+        let class_loader = match env.call_method(context, "getClassLoader", "()Ljava/lang/ClassLoader;", &[]) {
+            Ok(r) => r.l().expect("ClassLoader is not an object"),
+            Err(e) => {
+                log::error!("Failed to get ClassLoader: {:?}", e);
+                return;
+            }
+        };
+
+        let vm = match env.get_java_vm() {
+            Ok(vm) => vm,
+            Err(e) => {
+                log::error!("Failed to get JavaVM: {:?}", e);
+                return;
+            }
+        };
+
+        let context_ref = match env.new_global_ref(context) {
+            Ok(r) => r,
+            Err(e) => {
+                log::error!("Failed to create global ref for context: {:?}", e);
+                return;
+            }
+        };
+
+        let loader_ref = match env.new_global_ref(class_loader) {
+            Ok(r) => r,
+            Err(e) => {
+                log::error!("Failed to create global ref for loader: {:?}", e);
+                return;
+            }
+        };
+
+        rustls_platform_verifier::android::init_with_refs(vm, context_ref, loader_ref);
+        log::info!("rustls-platform-verifier initialized successfully.");
+    });
+}
+
+#[cfg(target_os = "android")]
+#[allow(non_snake_case)]
+#[no_mangle]
+pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchCountFromRust(
+    mut env: JNIEnv,
+    _class: JClass,
+    context: JObject,
+    provider_id: JString,
+    settings_json: JString,
+) -> jint {
+    ensure_verifier_initialized(&mut env, &context);
+    let provider_id: String = match env.get_string(&provider_id) {
+        Ok(s) => s.into(),
+        Err(_) => {
+            let _ = env.throw_new("java/lang/IllegalArgumentException", "Invalid providerId");
+            return -1;
+        }
+    };
+
+    let settings_str: String = match env.get_string(&settings_json) {
+        Ok(s) => s.into(),
+        Err(_) => {
+            let _ = env.throw_new("java/lang/IllegalArgumentException", "Invalid settings JSON");
+            return -1;
+        }
+    };
+
+    let settings: Settings = match serde_json::from_str(&settings_str) {
+        Ok(s) => s,
+        Err(e) => {
+            let _ = env.throw_new("java/lang/IllegalArgumentException", format!("JSON parse error: {}", e));
+            return -1;
+        }
+    };
+
+    let rt = match tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build() {
+            Ok(rt) => rt,
+            Err(e) => {
+                let _ = env.throw_new("java/lang/RuntimeException", format!("Tokio runtime error: {}", e));
+                return -1;
+            }
+        };
+
+    rt.block_on(async {
+        let client = match network_state::NetworkState::build_client() {
+            Ok(c) => c,
+            Err(e) => {
+                let _ = env.throw_new("java/io/IOException", format!("Failed to build HTTP client: {}", e));
+                return -1;
+            }
+        };
+        let client_http1 = match network_state::NetworkState::build_client_http1() {
+            Ok(c) => c,
+            Err(e) => {
+                let _ = env.throw_new("java/io/IOException", format!("Failed to build HTTP/1.1 client: {}", e));
+                return -1;
+            }
+        };
+
+        let providers = get_providers();
+        let provider = providers.iter().find(|p| p.id() == provider_id);
+
+        match provider {
+            Some(p) => {
+                let (alerts, errors) = p.fetch(&client, &client_http1, &settings).await;
+                if alerts.is_empty() && !errors.is_empty() {
+                    let _ = env.throw_new("java/io/IOException", errors.join("; "));
+                    return -1;
+                }
+                
+                let now = chrono::Utc::now();
+                
+                // 1. Assign hashes and filter out expired (past) outages
+                // 2. Deduplicate by hash (smart merging)
+                let mut grouped_alerts: std::collections::HashMap<String, UnifiedAlert> = std::collections::HashMap::new();
+                for mut alert in alerts {
+                    // Exclude expired (past) outages
+                    if let Some(end_str) = &alert.endDate {
+                        if let Some(end_dt) = utils::parse_date(end_str) {
+                            if end_dt < now {
+                                continue;
+                            }
+                        }
+                    }
+
+                    let hash = alert.to_hash();
+                    alert.hash = Some(hash.clone());
+
+                    if let Some(existing) = grouped_alerts.get_mut(&hash) {
+                        // Merge logic: prioritize local alerts
+                        if alert.is_local == Some(true) && existing.is_local != Some(true) {
+                            existing.is_local = Some(true);
+                            existing.address_index = alert.address_index;
+                        }
+                    } else {
+                        grouped_alerts.insert(hash, alert);
+                    }
+                }
+
+                // --- COUNT LOCAL ALERTS ---
+                let mut count = 0;
+                for alert in grouped_alerts.values() {
+                    if alert.is_local == Some(true) {
+                        count += 1;
+                    }
+                }
+                count as jint
+            }
+            None => {
+                let _ = env.throw_new("java/lang/IllegalArgumentException", format!("Unknown provider: {}", provider_id));
+                -1
+            }
+        }
+    })
 }

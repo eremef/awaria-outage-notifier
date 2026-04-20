@@ -22,3 +22,9 @@
 
 # Keep rustls-platform-verifier classes that are called via JNI
 -keep,includedescriptorclasses class org.rustls.platformverifier.** { *; }
+
+# Keep WidgetUtils and its native methods for JNI
+-keep class xyz.eremef.awaria.WidgetUtils { *; }
+-keepclassmembers class xyz.eremef.awaria.WidgetUtils {
+    native <methods>;
+}

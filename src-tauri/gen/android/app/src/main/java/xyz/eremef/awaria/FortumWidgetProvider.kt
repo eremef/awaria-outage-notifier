@@ -9,7 +9,4 @@ class FortumWidgetProvider : BaseWidgetProvider() {
     override val labelKey: String = "outages"
     override val sourceKey: String = "fortum"
 
-    override suspend fun fetchCount(context: Context, settings: List<WidgetSettings>): Int {
-        return FortumProvider().fetchCount(context, settings)
-    }
 }

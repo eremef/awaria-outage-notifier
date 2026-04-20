@@ -9,7 +9,4 @@ class StoenWidgetProvider : BaseWidgetProvider() {
     override val labelKey: String = "outages"
     override val sourceKey: String = "stoen"
 
-    override suspend fun fetchCount(context: Context, settings: List<WidgetSettings>): Int {
-        return StoenProvider().fetchCount(context, settings)
-    }
 }

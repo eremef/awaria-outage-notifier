@@ -9,7 +9,4 @@ class EnergaWidgetProvider : BaseWidgetProvider() {
     override val labelKey: String = "outages"
     override val sourceKey: String = "energa"
 
-    override suspend fun fetchCount(context: Context, settings: List<WidgetSettings>): Int {
-        return EnergaProvider().fetchCount(context, settings)
-    }
 }

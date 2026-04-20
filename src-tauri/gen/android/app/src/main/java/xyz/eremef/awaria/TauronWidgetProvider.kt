@@ -11,7 +11,4 @@ class TauronWidgetProvider : BaseWidgetProvider() {
     override val labelKey: String = "outages"
     override val sourceKey: String = "tauron"
 
-    override suspend fun fetchCount(context: Context, settings: List<WidgetSettings>): Int {
-        return TauronProvider().fetchCount(context, settings)
-    }
 }

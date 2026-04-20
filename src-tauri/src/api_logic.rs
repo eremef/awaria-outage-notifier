@@ -275,4 +275,57 @@ mod tests {
         };
         assert_ne!(alert1.to_hash(), alert4.to_hash());
     }
+
+    #[test]
+    fn test_unified_alert_sorting() {
+        let mut alerts = vec![
+            UnifiedAlert {
+                source: AlertSource::Tauron,
+                startDate: Some("2024-05-20 12:00".to_string()),
+                endDate: None,
+                message: None,
+                description: None,
+                address_index: None,
+                is_local: None,
+                hash: None,
+            },
+            UnifiedAlert {
+                source: AlertSource::Energa,
+                startDate: Some("2024-05-20 10:00".to_string()),
+                endDate: None,
+                message: None,
+                description: None,
+                address_index: None,
+                is_local: None,
+                hash: None,
+            },
+            UnifiedAlert {
+                source: AlertSource::Water,
+                startDate: None,
+                endDate: None,
+                message: None,
+                description: None,
+                address_index: None,
+                is_local: None,
+                hash: None,
+            },
+        ];
+
+        alerts.sort_by(|a, b| {
+            let date_cmp = match (&a.startDate, &b.startDate) {
+                (Some(da), Some(db)) => da.cmp(db),
+                (Some(_), None) => std::cmp::Ordering::Less,
+                (None, Some(_)) => std::cmp::Ordering::Greater,
+                (None, None) => std::cmp::Ordering::Equal,
+            };
+            if date_cmp != std::cmp::Ordering::Equal {
+                return date_cmp;
+            }
+            a.source.to_string().cmp(&b.source.to_string())
+        });
+
+        assert_eq!(alerts[0].source, AlertSource::Energa); // 10:00
+        assert_eq!(alerts[1].source, AlertSource::Tauron); // 12:00
+        assert_eq!(alerts[2].source, AlertSource::Water);  // None
+    }
 }

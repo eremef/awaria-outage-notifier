@@ -9,7 +9,4 @@ class PgeWidgetProvider : BaseWidgetProvider() {
     override val labelKey: String = "outages"
     override val sourceKey: String = "pge"
 
-    override suspend fun fetchCount(context: Context, settings: List<WidgetSettings>): Int {
-        return PgeProvider().fetchCount(context, settings)
-    }
 }

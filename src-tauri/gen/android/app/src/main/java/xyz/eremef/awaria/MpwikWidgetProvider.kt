@@ -9,7 +9,4 @@ class MpwikWidgetProvider : BaseWidgetProvider() {
     override val labelKey: String = "outages"
     override val sourceKey: String = "water"
 
-    override suspend fun fetchCount(context: Context, settings: List<WidgetSettings>): Int {
-        return MpwikProvider().fetchCount(context, settings)
-    }
 }

@@ -17,10 +17,6 @@ class TriWidgetProvider : BaseWidgetProvider() {
     override val labelKey: String = "status"
     override val sourceKey: String = "tri_status"
 
-    override suspend fun fetchCount(context: Context, settings: List<WidgetSettings>): Int {
-        return 0
-    }
-
     override suspend fun updateWidget(
             context: Context,
             appWidgetManager: AppWidgetManager,
@@ -56,74 +52,35 @@ class TriWidgetProvider : BaseWidgetProvider() {
 
             try {
                 coroutineScope {
+                    val settingsJson = WidgetUtils.serializeSettingsForRust(settingsList)
                     val p = async {
-                        val counts =
-                                listOf(
-                                        async {
-                                            try {
-                                                ProviderCache.getOrFetch("tauron", hash) {
-                                                    TauronProvider()
-                                                            .fetchCount(context, settingsList)
-                                                }
-                                            } catch (e: Exception) {
-                                                0
-                                            }
-                                        },
-                                        async {
-                                            try {
-                                                ProviderCache.getOrFetch("stoen", hash) {
-                                                    StoenProvider()
-                                                            .fetchCount(context, settingsList)
-                                                }
-                                            } catch (e: Exception) {
-                                                0
-                                            }
-                                        },
-                                        async {
-                                            try {
-                                                ProviderCache.getOrFetch("energa", hash) {
-                                                    EnergaProvider()
-                                                            .fetchCount(context, settingsList)
-                                                }
-                                            } catch (e: Exception) {
-                                                0
-                                            }
-                                        },
-                                        async {
-                                            try {
-                                                ProviderCache.getOrFetch("enea", hash) {
-                                                    EneaProvider().fetchCount(context, settingsList)
-                                                }
-                                            } catch (e: Exception) {
-                                                0
-                                            }
-                                        },
-                                        async {
-                                            try {
-                                                ProviderCache.getOrFetch("pge", hash) {
-                                                    PgeProvider().fetchCount(context, settingsList)
-                                                }
-                                            } catch (e: Exception) {
-                                                0
-                                            }
-                                        }
-                                )
-                        counts.awaitAll().sum()
+                        val sources = listOf("tauron", "stoen", "energa", "enea", "pge")
+                        var total = 0
+                        for (source in sources) {
+                            try {
+                                total += ProviderCache.getOrFetch(source, hash) {
+                                    WidgetUtils.fetchCountFromRust(context, source, settingsJson)
+                                }
+                            } catch (e: Exception) {
+                                Log.w("TriWidget", "Failed to fetch $source: ${e.message}")
+                            }
+                        }
+                        total
                     }
                     val h = async {
                         try {
-                            ProviderCache.getOrFetch("fortum", hash) {
-                                FortumProvider().fetchCount(context, settingsList)
-                            }
+                                ProviderCache.getOrFetch("fortum", hash) {
+                                    WidgetUtils.fetchCountFromRust(context, "fortum", settingsJson)
+                                }
                         } catch (e: Exception) {
                             0
                         }
                     }
                     val w = async {
                         try {
-                            ProviderCache.getOrFetch("water", hash) {
-                                MpwikProvider().fetchCount(context, settingsList)
-                            }
+                                ProviderCache.getOrFetch("water", hash) {
+                                    WidgetUtils.fetchCountFromRust(context, "water", settingsJson)
+                                }
                         } catch (e: Exception) {
                             0
                         }

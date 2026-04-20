@@ -9,7 +9,4 @@ class EneaWidgetProvider : BaseWidgetProvider() {
     override val labelKey: String = "outages"
     override val sourceKey: String = "enea"
 
-    override suspend fun fetchCount(context: Context, settings: List<WidgetSettings>): Int {
-        return EneaProvider().fetchCount(context, settings)
-    }
 }
