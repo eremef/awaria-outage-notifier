@@ -55,17 +55,18 @@ class TriWidgetProvider : BaseWidgetProvider() {
                     val settingsJson = WidgetUtils.serializeSettingsForRust(settingsList)
                     val p = async {
                         val sources = listOf("tauron", "stoen", "energa", "enea", "pge")
-                        var total = 0
-                        for (source in sources) {
-                            try {
-                                total += ProviderCache.getOrFetch(source, hash) {
-                                    WidgetUtils.fetchCountFromRust(context, source, settingsJson)
+                        sources.map { source ->
+                            async {
+                                try {
+                                    ProviderCache.getOrFetch(source, hash) {
+                                        WidgetUtils.fetchCountFromRust(context, source, settingsJson)
+                                    }
+                                } catch (e: Exception) {
+                                    Log.w("TriWidget", "Failed to fetch $source: ${e.message}")
+                                    0
                                 }
-                            } catch (e: Exception) {
-                                Log.w("TriWidget", "Failed to fetch $source: ${e.message}")
                             }
-                        }
-                        total
+                        }.awaitAll().sum()
                     }
                     val h = async {
                         try {

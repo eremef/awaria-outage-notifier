@@ -4,8 +4,30 @@ use crate::utils::retry;
 use serde::{Deserialize, Serialize};
 use async_trait::async_trait;
 
-pub const FORTUM_URL: &str = "https://formularz.fortum.pl/api/v1/switchoffs";
-pub const FORTUM_CITIES_URL: &str = "https://formularz.fortum.pl/api/v1/teryt/cities";
+pub const FORTUM_URL_PRODUCTION: &str = "https://formularz.fortum.pl/api/v1/switchoffs";
+pub const FORTUM_CITIES_URL_PRODUCTION: &str = "https://formularz.fortum.pl/api/v1/teryt/cities";
+
+fn get_fortum_url() -> String {
+    #[cfg(test)]
+    {
+        std::env::var("FORTUM_BASE_URL").unwrap_or_else(|_| FORTUM_URL_PRODUCTION.to_string())
+    }
+    #[cfg(not(test))]
+    {
+        FORTUM_URL_PRODUCTION.to_string()
+    }
+}
+
+fn get_fortum_cities_url() -> String {
+    #[cfg(test)]
+    {
+        std::env::var("FORTUM_CITIES_URL").unwrap_or_else(|_| FORTUM_CITIES_URL_PRODUCTION.to_string())
+    }
+    #[cfg(not(test))]
+    {
+        FORTUM_CITIES_URL_PRODUCTION.to_string()
+    }
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -46,9 +68,9 @@ impl FortumPoint {
 }
 
 pub async fn fetch_fortum_cities(client: &Client) -> Result<Vec<FortumCity>, String> {
-    log::info!("Fortum: GET {}", FORTUM_CITIES_URL);
+    log::info!("Fortum: GET {}", get_fortum_cities_url());
     let res = client
-        .get(FORTUM_CITIES_URL)
+        .get(get_fortum_cities_url())
         .header("accept", "application/json")
         .send()
         .await
@@ -68,11 +90,11 @@ pub async fn fetch_fortum_alerts(
 ) -> Result<Vec<UnifiedAlert>, String> {
     let planned_url = format!(
         "{}?cityGuid={}&regionId={}&current=false",
-        FORTUM_URL, city_guid, region_id
+        get_fortum_url(), city_guid, region_id
     );
     let current_url = format!(
         "{}?cityGuid={}&regionId={}&current=true",
-        FORTUM_URL, city_guid, region_id
+        get_fortum_url(), city_guid, region_id
     );
 
     log::info!("Fortum API: planned={}, current={}", planned_url, current_url);
@@ -268,10 +290,12 @@ mod tests {
 
     #[tokio::test]
     async fn test_fetch_fortum_real() {
+        use crate::network_state::NetworkState;
+        let client = NetworkState::build_client().unwrap();
         // Wrocław GUID
         let test_guid = "9b6e8284-904d-45f1-8316-d98c2536c4b2";
         let test_region = 1421312;
-        let alerts = fetch_fortum_alerts(test_guid, test_region).await.unwrap();
+        let alerts = fetch_fortum_alerts(&client, test_guid, test_region).await.unwrap();
         println!("Fetched {} Fortum alerts for Wrocław", alerts.len());
         // Even if empty, we check it doesn't crash
     }

@@ -37,8 +37,21 @@ struct StoenPayload {
     page: StoenPayloadPage,
 }
 
+pub const STOEN_URL: &str = "https://awaria.stoen.pl/public/api/planned-outage/search/compressed-report";
+
+fn get_stoen_url() -> String {
+    #[cfg(test)]
+    {
+        std::env::var("STOEN_BASE_URL").unwrap_or_else(|_| STOEN_URL.to_string())
+    }
+    #[cfg(not(test))]
+    {
+        STOEN_URL.to_string()
+    }
+}
+
 pub async fn fetch_stoen_outages(client: &Client) -> Result<Vec<StoenOutage>, String> {
-    let url = "https://awaria.stoen.pl/public/api/planned-outage/search/compressed-report";
+    let url = get_stoen_url();
 
     let payload = StoenPayload {
         id: None,
@@ -230,7 +243,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_fetch_stoen_real() {
-        match fetch_stoen_outages().await {
+        use crate::network_state::NetworkState;
+        let client = NetworkState::build_client().unwrap();
+        match fetch_stoen_outages(&client).await {
             Ok(outages) => {
                 println!("Fetched {} STOEN outages", outages.len());
                 assert!(!outages.is_empty());

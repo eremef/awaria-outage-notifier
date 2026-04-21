@@ -6,9 +6,31 @@ use serde::Deserialize;
 use async_trait::async_trait;
 use std::sync::Arc;
 
-pub const ENERGA_BASE_URL: &str = "https://energa-operator.pl";
-pub const ENERGA_PAGE_URL: &str =
+pub const ENERGA_BASE_URL_PRODUCTION: &str = "https://energa-operator.pl";
+pub const ENERGA_PAGE_URL_PRODUCTION: &str =
     "https://energa-operator.pl/uslugi/awarie-i-wylaczenia/wylaczenia-planowane";
+
+fn get_energa_base_url() -> String {
+    #[cfg(test)]
+    {
+        std::env::var("ENERGA_BASE_URL").unwrap_or_else(|_| ENERGA_BASE_URL_PRODUCTION.to_string())
+    }
+    #[cfg(not(test))]
+    {
+        ENERGA_BASE_URL_PRODUCTION.to_string()
+    }
+}
+
+fn get_energa_page_url() -> String {
+    #[cfg(test)]
+    {
+        std::env::var("ENERGA_PAGE_URL").unwrap_or_else(|_| ENERGA_PAGE_URL_PRODUCTION.to_string())
+    }
+    #[cfg(not(test))]
+    {
+        ENERGA_PAGE_URL_PRODUCTION.to_string()
+    }
+}
 
 #[derive(Debug, Deserialize)]
 pub struct EnergaResponse {
@@ -126,7 +148,7 @@ impl EnergaShutdown {
 
 pub async fn extract_energa_api_url(client: &reqwest::Client) -> Result<String, String> {
     let res = client
-        .get(ENERGA_PAGE_URL)
+        .get(get_energa_page_url())
         .header("accept", "text/html")
         .send()
         .await
@@ -146,7 +168,7 @@ pub async fn extract_energa_api_url(client: &reqwest::Client) -> Result<String, 
 
     if let Some(caps) = re.captures(&html) {
         if let Some(suffix) = caps.get(1) {
-            let url = format!("{}{}", ENERGA_BASE_URL, suffix.as_str());
+            let url = format!("{}{}", get_energa_base_url(), suffix.as_str());
             return Ok(url);
         }
     }
@@ -245,22 +267,26 @@ mod tests {
         };
 
         // Complete match -> true
-        assert!(shutdown.matches_address("Tuliszków", "Tuliszków", "Długa", &None));
+        let compiled_tuliszkow = CompiledEnergaRegex::new("Tuliszków", "Tuliszków", "Długa", &None);
+        assert!(shutdown.matches_address_compiled(&compiled_tuliszkow));
 
         // Wrong commune -> false
-        assert!(!shutdown.matches_address("Tuliszków", "Wrocław", "Długa", &None));
+        let compiled_commune_fail = CompiledEnergaRegex::new("Tuliszków", "Wrocław", "Długa", &None);
+        assert!(!shutdown.matches_address_compiled(&compiled_commune_fail));
 
         // Wrong city -> false
-        assert!(!shutdown.matches_address("Gdańsk", "Tuliszków", "Długa", &None));
+        let compiled_city_fail = CompiledEnergaRegex::new("Gdańsk", "Tuliszków", "Długa", &None);
+        assert!(!shutdown.matches_address_compiled(&compiled_city_fail));
 
         // Matching city but completely wrong street -> should fail
-        assert!(!shutdown.matches_address("Tuliszków", "Tuliszków", "Króótka", &None));
+        let compiled_street_fail = CompiledEnergaRegex::new("Tuliszków", "Tuliszków", "Króótka", &None);
+        assert!(!shutdown.matches_address_compiled(&compiled_street_fail));
     }
 
     #[tokio::test]
     async fn test_fetch_energa_real() {
-        use crate::utils::build_client;
-        let client = build_client().unwrap();
+        use crate::network_state::NetworkState;
+        let client = NetworkState::build_client().unwrap();
         match extract_energa_api_url(&client).await {
             Ok(url) => {
                 println!("Extracted Energa URL: {}", url);

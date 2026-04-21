@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect } from 'vitest';
-const { filterAlerts, formatDate } = require('../public/script.js');
+const { filterAlerts, formatDate, matchesStreetName } = require('../public/script.js');
 describe('Frontend Logic', () => {
     describe('filtering logic', () => {
         const mockAlerts = [
@@ -9,7 +9,9 @@ describe('Frontend Logic', () => {
             { message: 'Maintenance on Legnicka 5, Wrocław', id: 102 },
             { message: 'Prace na Jana Pawła II', id: 103 },
             { message: 'Utrudnienia na Pawła', id: 104 },
-            { message: 'Wrocław Probusa..', id: 105 }
+            { message: 'Wrocław Probusa..', id: 105 },
+            { message: 'ul. Marszałkowska test', id: 106 },
+            { message: 'al. Jerozolimskie test', id: 107 }
         ];
 
         it('finds outages matching the full street name', () => {
@@ -25,6 +27,17 @@ describe('Frontend Logic', () => {
         it('finds outages matching significant parts (ignoring short words)', () => {
             const filtered = filterAlerts(mockAlerts, 'Jana Pawła II');
             expect(filtered.some(o => o.message.includes('Pawła'))).toBe(true);
+        });
+
+        it('handles normalization of prefixes in search query', () => {
+            const filtered = filterAlerts(mockAlerts, 'ul. Henryka Probusa');
+            expect(filtered.some(o => o.message.includes('Henryka Probusa'))).toBe(true);
+        });
+
+        it('matches prefixes in messages', () => {
+             const filtered = filterAlerts(mockAlerts, 'Marszałkowska');
+             expect(filtered).toHaveLength(1);
+             expect(filtered[0].message).toContain('Marszałkowska');
         });
 
         it('does not match when text does not match', () => {
@@ -45,6 +58,39 @@ describe('Frontend Logic', () => {
         it('handles case-insensitivity and "ul." prefix', () => {
             const filtered = filterAlerts(mockAlerts, 'UL. PROBUSA');
             expect(filtered.some(o => o.message.toLowerCase().includes('probusa'))).toBe(true);
+        });
+    });
+
+    describe('matchesStreetName', () => {
+        const mockAddr = {
+            cityName: 'Wrocław',
+            streetName1: 'Probusa',
+            streetName2: 'Henryka'
+        };
+
+        it('matches straight forward street name', () => {
+            const alert = { message: 'Awaria na ul. Henryka Probusa 12' };
+            expect(matchesStreetName(alert, mockAddr)).toBe(true);
+        });
+
+        it('matches without prefix', () => {
+            const alert = { message: 'Henryka Probusa 5' };
+            expect(matchesStreetName(alert, mockAddr)).toBe(true);
+        });
+
+        it('matches short name (last part)', () => {
+            const alert = { message: 'ul. Probusa 1' };
+            expect(matchesStreetName(alert, mockAddr)).toBe(true);
+        });
+
+        it('matches abbreviated prefix', () => {
+             const alert = { message: 'al. Henryka Probusa' };
+             expect(matchesStreetName(alert, mockAddr)).toBe(true);
+        });
+
+        it('does not match wrong street', () => {
+            const alert = { message: 'ul. Legnicka 1' };
+            expect(matchesStreetName(alert, mockAddr)).toBe(false);
         });
     });
 
@@ -126,6 +172,110 @@ describe('Frontend Logic', () => {
                  return true;
              });
              expect(deduplicated).toHaveLength(2);
+        });
+    });
+
+    describe('Notification Logic', () => {
+        it('updateNotifyStatus correctly disables/enables notification checkbox', () => {
+            document.body.innerHTML = `
+                <div class="settings-field-row">
+                    <input type="checkbox" id="source-tauron-check" checked>
+                    <div class="notify-group">
+                        <input type="checkbox" id="notify-tauron-check">
+                    </div>
+                </div>
+            `;
+            
+            const { updateNotifyStatus } = require('../public/script.js');
+            
+            // Initial state check
+            updateNotifyStatus('source-tauron-check', 'notify-tauron-check');
+            expect(document.getElementById('notify-tauron-check').disabled).toBe(false);
+            
+            // Uncheck source
+            document.getElementById('source-tauron-check').checked = false;
+            updateNotifyStatus('source-tauron-check', 'notify-tauron-check');
+            expect(document.getElementById('notify-tauron-check').disabled).toBe(true);
+            expect(document.querySelector('.notify-group').classList.contains('notify-disabled')).toBe(true);
+        });
+
+        it('updateUpcomingStatus handles source disabling correctly', () => {
+             document.body.innerHTML = `
+                <div id="upcoming-row-container">
+                    <input type="checkbox" id="upcoming-notify-check">
+                </div>
+                <div id="upcoming-adjust-container">
+                    <input type="number" id="upcoming-hours-input">
+                </div>
+                <input type="checkbox" id="notify-tauron-check" checked>
+            `;
+            
+            const { updateUpcomingStatus } = require('../public/script.js');
+            
+            // With enabled source notification
+            updateUpcomingStatus();
+            expect(document.getElementById('upcoming-notify-check').disabled).toBe(false);
+            
+            // Disable all source notifications
+            document.getElementById('notify-tauron-check').checked = false;
+            updateUpcomingStatus();
+            expect(document.getElementById('upcoming-notify-check').disabled).toBe(true);
+            expect(document.getElementById('upcoming-row-container').classList.contains('notify-disabled')).toBe(true);
+        });
+    });
+
+    describe('renderAlerts', () => {
+        const mockSettings = { 
+            addresses: [{ name: 'Home', isActive: true }], 
+            enabledSources: ['tauron'] 
+        };
+
+        it('renders "no outages" message when alert list is empty', () => {
+            document.body.innerHTML = '<div id="outages-container"></div>';
+            const container = document.getElementById('outages-container');
+            const { renderAlerts } = require('../public/script.js');
+            
+            renderAlerts([], container, mockSettings, -1);
+            
+            // Should show the "Everything looks good" dashboard with operational status
+            expect(container.innerHTML).toContain('Operational');
+        });
+
+        it('filters non-enabled sources', () => {
+            document.body.innerHTML = '<div id="outages-container"></div>';
+            const container = document.getElementById('outages-container');
+            const { renderAlerts } = require('../public/script.js');
+            
+            const alerts = [
+                { source: 'tauron', message: 'Tauron Alert', hash: '1', isLocal: true, addressIndex: 0 },
+                { source: 'water', message: 'Water Alert', hash: '2', isLocal: true, addressIndex: 0 }
+            ];
+            
+            // Only tauron enabled in mockSettings
+            renderAlerts(alerts, container, mockSettings, -1);
+            
+            expect(container.innerHTML).toContain('Tauron Alert');
+            expect(container.innerHTML).not.toContain('Water Alert');
+        });
+    });
+
+    describe('matchesAddress', () => {
+        const { matchesAddress } = require('../public/script.js');
+        const addresses = [
+            { name: 'Home', isActive: true, streetName1: 'Probusa', cityName: 'Wrocław' }
+        ];
+
+        it('respects backend matching for specific sources', () => {
+            const alert = { source: 'tauron', isLocal: true, addressIndex: 0 };
+            expect(matchesAddress(alert, addresses, 0)).toBe(true);
+            
+            const alert2 = { source: 'tauron', isLocal: true, addressIndex: 1 };
+            expect(matchesAddress(alert2, addresses, 0)).toBe(false);
+        });
+
+        it('falls back to street name matching for other sources', () => {
+            const alert = { source: 'water', message: 'Utrudnienia na Probusa' };
+            expect(matchesAddress(alert, addresses, 0)).toBe(true);
         });
     });
 });

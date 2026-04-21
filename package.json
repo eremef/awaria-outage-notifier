@@ -1,6 +1,6 @@
 {
   "name": "awaria",
-  "version": "1.0.39",
+  "version": "1.0.40",
   "description": "Outage notifier — Tauri desktop & Android app",
   "scripts": {
     "tauri": "tauri",
@@ -13,7 +13,7 @@
     "ios:init": "tauri ios init --ci",
     "test": "npm run test:frontend && npm run test:backend && npm run test:android",
     "test:frontend": "vitest run",
-    "test:backend": "cd src-tauri && cargo test",
+    "test:backend": "cd src-tauri && cargo test -- --test-threads=1",
     "rust:check": "cd src-tauri && cargo check",
     "test:android": "cd src-tauri/gen/android && gradlew.bat :app:testUniversalDebugUnitTest",
     "load:teryt": "node scripts/load-teryt.mjs"

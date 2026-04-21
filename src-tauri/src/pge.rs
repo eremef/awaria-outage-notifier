@@ -34,13 +34,27 @@ pub struct PgeOutage {
     pub addresses: Vec<PgeAddress>,
 }
 
+pub const PGE_URL: &str = "https://power-outage.gkpge.pl/api/power-outage";
+
+fn get_pge_url() -> String {
+    #[cfg(test)]
+    {
+        std::env::var("PGE_BASE_URL").unwrap_or_else(|_| PGE_URL.to_string())
+    }
+    #[cfg(not(test))]
+    {
+        PGE_URL.to_string()
+    }
+}
+
 pub async fn fetch_pge_outages(client: &Client) -> Result<Vec<PgeOutage>, String> {
     let now = Utc::now().with_timezone(&Warsaw);
     let start_at_to = (now + Duration::days(90)).format("%Y-%m-%d %H:%M:%S").to_string();
     let stop_at_from = now.format("%Y-%m-%d %H:%M:%S").to_string();
 
     let url = format!(
-        "https://power-outage.gkpge.pl/api/power-outage?startAtTo={}&stopAtFrom={}",
+        "{}?startAtTo={}&stopAtFrom={}",
+        get_pge_url(),
         start_at_to.replace(' ', "+").replace(':', "%3A"),
         stop_at_from.replace(' ', "+").replace(':', "%3A")
     );
@@ -306,7 +320,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_fetch_pge_real() {
-        let outages = fetch_pge_outages().await.unwrap();
+        use crate::network_state::NetworkState;
+        let client = NetworkState::build_client().unwrap();
+        let outages = fetch_pge_outages(&client).await.unwrap();
         println!("Fetched {} PGE outages", outages.len());
     }
 }

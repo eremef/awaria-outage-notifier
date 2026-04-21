@@ -6,7 +6,18 @@ use tokio::sync::Semaphore;
 use crate::utils::retry;
 use async_trait::async_trait;
 
-pub const ENEA_BASE_URL: &str = "https://www.wylaczenia-eneaoperator.pl/rss/rss_unpl_";
+pub const ENEA_BASE_URL_PRODUCTION: &str = "https://www.wylaczenia-eneaoperator.pl/rss/rss_unpl_";
+
+fn get_enea_base_url() -> String {
+    #[cfg(test)]
+    {
+        std::env::var("ENEA_BASE_URL").unwrap_or_else(|_| ENEA_BASE_URL_PRODUCTION.to_string())
+    }
+    #[cfg(not(test))]
+    {
+        ENEA_BASE_URL_PRODUCTION.to_string()
+    }
+}
 
 #[derive(Debug, Deserialize)]
 pub struct Rss {
@@ -213,7 +224,7 @@ pub async fn fetch_all_enea_outages(client: &Client, target_regions: &[u32]) -> 
         if !target_regions.contains(id) {
             continue;
         }
-        let url = format!("{}{}.xml", ENEA_BASE_URL, id);
+        let url = format!("{}{}.xml", get_enea_base_url(), id);
         let expected_name = (*expected_region).to_string();
         let sem = semaphore.clone();
         let client_c = client.clone();
@@ -339,30 +350,36 @@ mod tests {
             description: Some("Obszar Świdnica\nw dniach: 2026-03-30\nmiejscowości Piaski 45, 46, działki".to_string()),
         };
 
-        assert!(item.matches_address("Piaski", "", "Piaski", &None));
-        assert!(item.matches_address("Świdnica", "", "", &None));
-        assert!(!item.matches_address("Wrocław", "", "", &None));
+        let compiled_piaski = CompiledEneaRegex::new("Piaski", "Piaski", &None);
+        assert!(item.matches_address_compiled(&compiled_piaski));
+        
+        let compiled_swidnica = CompiledEneaRegex::new("Świdnica", "", &None);
+        assert!(item.matches_address_compiled(&compiled_swidnica));
+        
+        let compiled_wroclaw = CompiledEneaRegex::new("Wrocław", "", &None);
+        assert!(!item.matches_address_compiled(&compiled_wroclaw));
 
         let kicin = EneaItem {
             title: Some("Kicin, 2026-04-16".to_string()),
             description: Some("Obszar Kicin\nw dniach: 2026-04-16\nKicin: ul. Swarzędzka od 1 do 9, ul. Gwarna 2, 4, ,ul. Poznańska 43, 45, 47.".to_string()),
         };
 
-        let result = kicin.matches_address("Kicin", "", "Poznańska", &None);
-        println!("Kicin Poznańska matched: {}", result);
-        assert!(result);
+        let compiled_kicin = CompiledEneaRegex::new("Kicin", "Poznańska", &None);
+        assert!(kicin.matches_address_compiled(&compiled_kicin));
 
         // Case insensitivity
-        assert!(kicin.matches_address("kicin", "", "poznańska", &None));
+        let compiled_kicin_lower = CompiledEneaRegex::new("kicin", "poznańska", &None);
+        assert!(kicin.matches_address_compiled(&compiled_kicin_lower));
 
         // Wrong city
-        assert!(!kicin.matches_address("Wrocław", "", "Poznańska", &None));
+        let compiled_wrocl = CompiledEneaRegex::new("Wrocław", "Poznańska", &None);
+        assert!(!kicin.matches_address_compiled(&compiled_wrocl));
     }
 
     #[tokio::test]
     async fn test_fetch_enea_real() {
-        use crate::utils::build_client;
-        let client = build_client().unwrap();
+        use crate::network_state::NetworkState;
+        let client = NetworkState::build_client().unwrap();
         // Region 7 is Poznań
         match fetch_all_enea_outages(&client, &[7]).await {
             Ok(items) => {

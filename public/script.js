@@ -1698,7 +1698,15 @@ function formatDate(dateString) {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         filterAlerts,
-        formatDate
+        formatDate,
+        matchesStreetName,
+        renderAlerts,
+        updateNotifyStatus,
+        updateUpcomingStatus,
+        matchesAddress,
+        setCurrentSettings: (s) => { currentSettings = s; },
+        setLastAlerts: (a) => { lastAlerts = a; },
+        setSelectedAddressIndex: (i) => { selectedAddressIndex = i; }
     };
 }
 

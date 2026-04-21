@@ -2,12 +2,15 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use sha2::{Sha256, Digest};
 use async_trait::async_trait;
+#[cfg(test)]
+use mockall::{automock, predicate::*};
 
 // ── Alert source abstraction ──────────────────────────────
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum AlertSource {
+    #[default]
     Tauron,
     Water,
     Fortum,
@@ -17,7 +20,18 @@ pub enum AlertSource {
     Stoen,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+#[cfg_attr(test, automock)]
+pub trait DatabaseInterface {
+    fn is_alert_seen(&self, provider: &str, hash: &str) -> Result<bool, String>;
+    fn mark_alert_as_seen(&self, provider: &str, hash: &str) -> Result<(), String>;
+}
+
+#[cfg_attr(test, automock)]
+pub trait NotificationProvider {
+    fn show_notification(&self, title: String, body: String, hash: String);
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq)]
 #[allow(non_snake_case)]
 pub struct UnifiedAlert {
     pub source: AlertSource,
@@ -45,6 +59,149 @@ impl UnifiedAlert {
         }
         format!("{:x}", hasher.finalize())
     }
+}
+
+pub fn deduplicate_alerts(alerts: Vec<UnifiedAlert>) -> Vec<UnifiedAlert> {
+    let mut grouped_alerts: HashMap<String, UnifiedAlert> = HashMap::new();
+    for mut alert in alerts {
+        let hash = alert.hash.clone().unwrap_or_else(|| alert.to_hash());
+        alert.hash = Some(hash.clone());
+
+        if let Some(existing) = grouped_alerts.get_mut(&hash) {
+            // Merge logic: prioritize local alerts and preserve address_index
+            if alert.is_local == Some(true) && existing.is_local != Some(true) {
+                existing.is_local = Some(true);
+                existing.address_index = alert.address_index;
+                if alert.description.is_some() {
+                    existing.description = alert.description;
+                }
+            }
+        } else {
+            grouped_alerts.insert(hash, alert);
+        }
+    }
+    grouped_alerts.into_values().collect()
+}
+
+pub struct MonitorEngine<'a> {
+    pub db: &'a dyn DatabaseInterface,
+    pub notifier: &'a dyn NotificationProvider,
+    pub settings: &'a Settings,
+}
+
+impl<'a> MonitorEngine<'a> {
+    pub fn new(db: &'a dyn DatabaseInterface, notifier: &'a dyn NotificationProvider, settings: &'a Settings) -> Self {
+        Self { db, notifier, settings }
+    }
+
+    pub fn process_alerts(&self, alerts: Vec<UnifiedAlert>) {
+        let enabled_sources: Vec<String> = self.settings.enabled_sources.clone().unwrap_or_default();
+        
+        for alert in alerts {
+            if alert.is_local != Some(true) {
+                continue;
+            }
+
+            let source_key = alert.source.to_string();
+            if !enabled_sources.contains(&source_key) {
+                continue;
+            }
+
+            let notified_enabled = self.settings.notification_preferences.get(&source_key).copied().unwrap_or(false);
+
+            if notified_enabled {
+                let hash = alert.hash.clone().unwrap_or_else(|| alert.to_hash());
+                
+                // --- UPCOMING NOTIFICATION ---
+                if self.settings.upcoming_notification_enabled {
+                    if let Some(start_str) = &alert.startDate {
+                        // Utility function parse_date will be moved or accessed via crate::utils
+                        if let Some(start_dt) = crate::utils::parse_date(start_str) {
+                            let now_utc = chrono::Utc::now();
+                            let diff_hours = (start_dt - now_utc).num_hours();
+                            
+                            if diff_hours >= 0 && diff_hours <= self.settings.upcoming_notification_hours as i64 {
+                                let upcoming_hash = format!("upcoming_{}", hash);
+                                if let Ok(false) = self.db.is_alert_seen(&source_key, &upcoming_hash) {
+                                    let title = format_notification_title(&alert, self.settings, true);
+                                    let body = format_notification_body(&alert);
+                                    self.notifier.show_notification(title, body, hash.clone());
+                                    self.db.mark_alert_as_seen(&source_key, &upcoming_hash).ok();
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // --- NEW ALERT NOTIFICATION ---
+                if let Ok(false) = self.db.is_alert_seen(&source_key, &hash) {
+                    let title = format_notification_title(&alert, self.settings, false);
+                    let body = format_notification_body(&alert);
+                    self.notifier.show_notification(title, body, hash.clone());
+                    self.db.mark_alert_as_seen(&source_key, &hash).ok();
+                }
+            }
+        }
+    }
+}
+
+// These functions were extracted from lib.rs but kept identical in logic
+pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_upcoming: bool) -> String {
+    let is_pl = settings.language.as_ref().map(|l| l.contains("pl")).unwrap_or(true);
+    let label = match alert.source {
+        AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea | AlertSource::Pge | AlertSource::Stoen => {
+            if is_pl { "awaria prądu" } else { "power outage" }
+        }
+        AlertSource::Water => {
+            if is_pl { "awaria wody" } else { "water outage" }
+        }
+        AlertSource::Fortum => {
+            if is_pl { "awaria ogrzewania" } else { "heat outage" }
+        }
+    };
+    
+    let prefix = if is_upcoming {
+        if is_pl { "Nadchodząca" } else { "Upcoming" }
+    } else if is_pl { "Nowa" } else { "New" };
+    
+    let title = format!("{} {}", prefix, label);
+    
+    if let Some(idx) = alert.address_index {
+        if let Some(addr) = settings.addresses.get(idx) {
+            return format!("{}: {}", addr.name, title);
+        }
+    }
+    title
+}
+
+pub fn format_notification_body(alert: &UnifiedAlert) -> String {
+    let mut body = alert.message.clone().unwrap_or_default();
+    
+    let mut time_info = Vec::new();
+    if let Some(start) = &alert.startDate {
+        if let Some(dt) = crate::utils::parse_date(start) {
+            time_info.push(crate::utils::format_date(dt));
+        }
+    }
+    if let Some(end) = &alert.endDate {
+        if let Some(dt) = crate::utils::parse_date(end) {
+            time_info.push(crate::utils::format_date(dt));
+        }
+    }
+    
+    if !time_info.is_empty() {
+        let times = time_info.join(" - ");
+        if !body.contains(&times) {
+            if !body.is_empty() {
+                body.push('\n');
+            }
+            body.push_str(&times);
+        }
+    }
+    if body.is_empty() {
+        return "Nowe zdarzenie".to_string();
+    }
+    body
 }
 
 impl std::fmt::Display for AlertSource {
@@ -87,7 +244,7 @@ pub fn is_warszawa(addr: &AddressEntry) -> bool {
 
 // ── Address & Settings ────────────────────────────────────
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct AddressEntry {
     pub name: String,
@@ -177,6 +334,7 @@ pub fn load_settings_from_path(path: &std::path::Path) -> Result<Option<Settings
 #[cfg(test)]
 mod tests {
     use super::*;
+    use mockall::predicate;
 
     #[test]
     fn test_settings_serialization() {
@@ -327,5 +485,147 @@ mod tests {
         assert_eq!(alerts[0].source, AlertSource::Energa); // 10:00
         assert_eq!(alerts[1].source, AlertSource::Tauron); // 12:00
         assert_eq!(alerts[2].source, AlertSource::Water);  // None
+    }
+
+    #[test]
+    fn test_deduplicate_alerts() {
+        let alerts = vec![
+            UnifiedAlert {
+                source: AlertSource::Tauron,
+                message: Some("Outage".to_string()),
+                is_local: Some(false),
+                ..Default::default()
+            },
+            UnifiedAlert {
+                source: AlertSource::Tauron,
+                message: Some("Outage".to_string()),
+                is_local: Some(true),
+                address_index: Some(5),
+                ..Default::default()
+            },
+        ];
+
+        let deduplicated = deduplicate_alerts(alerts);
+        assert_eq!(deduplicated.len(), 1);
+        assert_eq!(deduplicated[0].is_local, Some(true));
+        assert_eq!(deduplicated[0].address_index, Some(5));
+    }
+
+    #[test]
+    fn test_monitor_engine_notification_flow() {
+        let mut mock_db = MockDatabaseInterface::new();
+        let mut mock_notifier = MockNotificationProvider::new();
+
+        let settings = Settings {
+            notification_preferences: [("tauron".to_string(), true)].into(),
+            enabled_sources: Some(vec!["tauron".to_string()]),
+            ..Default::default()
+        };
+
+        let alerts = vec![
+            UnifiedAlert {
+                source: AlertSource::Tauron,
+                message: Some("Brak prądu".to_string()),
+                is_local: Some(true),
+                ..Default::default()
+            }
+        ];
+
+        let hash = alerts[0].to_hash();
+
+        mock_db.expect_is_alert_seen()
+            .with(predicate::eq("tauron"), predicate::eq(hash.clone()))
+            .times(1)
+            .returning(|_, _| Ok(false));
+
+        mock_notifier.expect_show_notification()
+            .with(predicate::always(), predicate::eq("Brak prądu".to_string()), predicate::eq(hash.clone()))
+            .times(1)
+            .returning(|_, _, _| ());
+
+        mock_db.expect_mark_alert_as_seen()
+            .with(predicate::eq("tauron"), predicate::eq(hash.clone()))
+            .times(1)
+            .returning(|_, _| Ok(()));
+
+        let engine = MonitorEngine::new(&mock_db, &mock_notifier, &settings);
+        engine.process_alerts(alerts);
+    }
+
+    #[test]
+    fn test_monitor_engine_skip_seen() {
+        let mut mock_db = MockDatabaseInterface::new();
+        let mut mock_notifier = MockNotificationProvider::new();
+
+        let settings = Settings {
+            notification_preferences: [("tauron".to_string(), true)].into(),
+            enabled_sources: Some(vec!["tauron".to_string()]),
+            ..Default::default()
+        };
+
+        let alerts = vec![
+            UnifiedAlert {
+                source: AlertSource::Tauron,
+                message: Some("Brak prądu".to_string()),
+                is_local: Some(true),
+                ..Default::default()
+            }
+        ];
+
+        mock_db.expect_is_alert_seen()
+            .returning(|_, _| Ok(true));
+
+        mock_notifier.expect_show_notification().times(0);
+
+        let engine = MonitorEngine::new(&mock_db, &mock_notifier, &settings);
+        engine.process_alerts(alerts);
+    }
+
+    #[test]
+    fn test_monitor_engine_upcoming_notification() {
+        let mut mock_db = MockDatabaseInterface::new();
+        let mut mock_notifier = MockNotificationProvider::new();
+
+        // Outage starts in 2 hours
+        let start_time = (chrono::Utc::now() + chrono::Duration::hours(2)).format("%Y-%m-%d %H:%M:%S").to_string();
+
+        let settings = Settings {
+            notification_preferences: [("tauron".to_string(), true)].into(),
+            enabled_sources: Some(vec!["tauron".to_string()]),
+            upcoming_notification_enabled: true,
+            upcoming_notification_hours: 24,
+            ..Default::default()
+        };
+
+        let alerts = vec![
+            UnifiedAlert {
+                source: AlertSource::Tauron,
+                startDate: Some(start_time),
+                message: Some("Planowana przerwa".to_string()),
+                is_local: Some(true),
+                ..Default::default()
+            }
+        ];
+
+        let hash = alerts[0].to_hash();
+        let upcoming_hash = format!("upcoming_{}", hash);
+
+        mock_db.expect_is_alert_seen()
+            .with(predicate::eq("tauron"), predicate::eq(upcoming_hash.clone()))
+            .times(1)
+            .returning(|_, _| Ok(false));
+
+        mock_db.expect_is_alert_seen()
+            .with(predicate::eq("tauron"), predicate::eq(hash.clone()))
+            .times(1)
+            .returning(|_, _| Ok(false));
+
+        mock_notifier.expect_show_notification().times(2)
+            .returning(|_, _, _| ());
+
+        mock_db.expect_mark_alert_as_seen().times(2).returning(|_, _| Ok(()));
+
+        let engine = MonitorEngine::new(&mock_db, &mock_notifier, &settings);
+        engine.process_alerts(alerts);
     }
 }

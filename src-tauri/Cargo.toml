@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "1.0.39"
+version = "1.0.40"
 description = "AWARIA"
 authors = ["eremef.xyz"]
 license = ""
@@ -40,3 +40,7 @@ tauri-plugin-opener = "2"
 async-trait = "0.1.89"
 rustls-platform-verifier = "0.6.2"
 jni = "0.21"
+
+[dev-dependencies]
+mockito = "1.5.0"
+mockall = "0.13.1"

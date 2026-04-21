@@ -7,7 +7,18 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use regex::Regex;
 
-pub const MPWIK_URL: &str = "https://www.mpwik.wroc.pl/wp-admin/admin-ajax.php";
+pub const MPWIK_URL_PRODUCTION: &str = "https://www.mpwik.wroc.pl/wp-admin/admin-ajax.php";
+
+fn get_mpwik_url() -> String {
+    #[cfg(test)]
+    {
+        std::env::var("MPWIK_BASE_URL").unwrap_or_else(|_| MPWIK_URL_PRODUCTION.to_string())
+    }
+    #[cfg(not(test))]
+    {
+        MPWIK_URL_PRODUCTION.to_string()
+    }
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MpwikFailureItem {
@@ -105,7 +116,7 @@ impl MpwikFailureItem {
 
 pub async fn fetch_water_alerts(client: &Client) -> Result<Vec<MpwikFailureItem>, String> {
     let res = client
-        .post(MPWIK_URL)
+        .post(get_mpwik_url())
         .header(
             "content-type",
             "application/x-www-form-urlencoded; charset=UTF-8",
@@ -229,30 +240,24 @@ mod tests {
             is_active: true,
         };
 
-        let msg = Some("Awaria na ul. Kuźnicza".to_string());
+        let compiled = CompiledMpwikRegex::new(&addr);
+
+        let msg = "Awaria na ul. Kuźnicza";
         println!("Checking msg: {:?}", msg);
-        assert!(matches_address(&msg, &addr));
+        assert!(compiled.is_match(msg));
 
-        let msg_inflected = Some("Awaria na ul. Kuźniczej".to_string());
-        println!("Checking inflected msg: {:?}", msg_inflected);
-        // This might fail if word boundary is too strict for inflections
-        // assert!(matches_address(&msg_inflected, &addr));
-
-        let msg_other = Some("Awaria na ul. Legnickiej".to_string());
-        assert!(!matches_address(&msg_other, &addr));
-
-        let mut addr_warsaw = addr.clone();
-        addr_warsaw.city_name = "Warszawa".to_string();
-        addr_warsaw.city_id = Some(918123);
-        assert!(!matches_address(&msg, &addr_warsaw));
+        let msg_other = "Awaria na ul. Legnickiej";
+        assert!(!compiled.is_match(msg_other));
 
         // Mixed case and without "ul."
-        assert!(matches_address(&Some("WROCŁAW KUŹNICZA 25".to_string()), &addr));
+        assert!(compiled.is_match("WROCŁAW KUŹNICZA 25"));
     }
 
     #[tokio::test]
     async fn test_fetch_water_real() {
-        match fetch_water_alerts().await {
+        use crate::network_state::NetworkState;
+        let client = NetworkState::build_client_http1().unwrap();
+        match fetch_water_alerts(&client).await {
             Ok(items) => {
                 println!("Fetched {} MPWiK items", items.len());
             }

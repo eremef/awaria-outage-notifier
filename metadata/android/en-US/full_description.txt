@@ -8,8 +8,8 @@ Supported Sources:
 Key Features:
 - Multi-Address Support: Monitor up to 20 different locations simultaneously.
 - Smart Address Matching: Automatically highlights alerts affecting your specific street.
-- Real-time Notifications: Receive instant alerts on your mobile device.
-- Android Widgets: Compact 1x1 widgets for one-tap status checks.
+- Real-time Notifications: Receive instant alerts of current and upcoming outages on your mobile device.
+- Android Widgets: Compact 1x1 widgets for one-tap single provider status checks and 3x1 widget for selected address 
 - Privacy First: No cloud accounts required. Your location and settings stay on your device.
 
 Download Awaria today and stay informed about utility issues in your area!

@@ -9,6 +9,17 @@ use serde::{Deserialize, Serialize};
 
 pub const BASE_URL: &str = "https://www.tauron-dystrybucja.pl/waapi";
 
+fn get_base_url() -> String {
+    #[cfg(test)]
+    {
+        std::env::var("TAURON_BASE_URL").unwrap_or_else(|_| BASE_URL.to_string())
+    }
+    #[cfg(not(test))]
+    {
+        BASE_URL.to_string()
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 #[allow(non_snake_case)]
 pub struct GeoItem {
@@ -62,7 +73,7 @@ pub async fn lookup_city(
     let encoded_name = city_name.replace(' ', "%20");
     let url = format!(
         "{}/enum/geo/cities?partName={}&_={}",
-        BASE_URL, encoded_name, cache_bust
+        get_base_url(), encoded_name, cache_bust
     );
 
     log::info!("Tauron API: GET {}", url);
@@ -121,7 +132,7 @@ pub async fn lookup_street(
     let encoded_name = street_name.replace(' ', "%20");
     let url = format!(
         "{}/enum/geo/streets?partName={}&ownerGAID={}&_={}",
-        BASE_URL, encoded_name, city_gaid, cache_bust
+        get_base_url(), encoded_name, city_gaid, cache_bust
     );
 
     log::info!("Tauron API: GET {}", url);
@@ -146,7 +157,7 @@ pub async fn lookup_only_one_street(client: &Client, city_gaid: u64) -> Result<V
     let cache_bust = Utc::now().timestamp_millis().to_string();
     let url = format!(
         "{}/enum/geo/onlyonestreet?ownerGAID={}&_={}",
-        BASE_URL, city_gaid, cache_bust
+        get_base_url(), city_gaid, cache_bust
     );
 
     log::info!("Tauron API (onlyonestreet): GET {}", url);
@@ -250,7 +261,7 @@ pub async fn fetch_tauron_outages(
 
     let url = format!(
         "{}/outages/address?cityGAID={}&streetGAID={}&houseNo={}&fromDate={}&getLightingSupport=false&getServicedSwitchingoff=true&_={}",
-        BASE_URL, city.GAID, street.GAID, address.house_no.replace(' ', "%20"), from_date.replace(' ', "%20"), cache_bust
+        get_base_url(), city.GAID, street.GAID, address.house_no.replace(' ', "%20"), from_date.replace(' ', "%20"), cache_bust
     );
 
     log::info!("Tauron API (outages){}", url);
@@ -424,83 +435,78 @@ mod tests {
     #[test]
     fn test_tauron_matches_address() {
         // Base case: City + Street match
-        assert!(matches_address(
-            &Some("Wrocław, ul. Henryka Probusa 12".to_string()),
-            "Wrocław",
-            "Probusa",
-            &Some("Henryka".to_string())
-        ));
+        let compiled = CompiledTauronRegex::new("Wrocław", "Probusa", &Some("Henryka".to_string()));
+        assert!(compiled.is_match("Wrocław, ul. Henryka Probusa 12"));
 
         // Case-insensitivity
-        assert!(matches_address(
-            &Some("wrocław, UL. HENRYKA PROBUSA 12".to_string()),
-            "Wrocław",
-            "Probusa",
-            &Some("Henryka".to_string())
-        ));
+        assert!(compiled.is_match("wrocław, UL. HENRYKA PROBUSA 12"));
 
         // Short street name (last part only)
-        assert!(matches_address(
-            &Some("Wrocław, ul. Probusa 5".to_string()),
-            "Wrocław",
-            "Probusa",
-            &Some("Henryka".to_string())
-        ));
+        assert!(compiled.is_match("Wrocław, ul. Probusa 5"));
 
-        // Polish inflection: "Legnickiej" matches "Legnicka"
-        // Wait, the current implementation uses word_match which is r"(?i)\b{}\b", regex::escape(word).
-        // This DOES NOT handle inflections well if they change the root. 
-        // e.g. "Legnickiej" contains "Legnicka" but not as a whole word.
-        // Let's check how the current code handles it.
-        // candidates.iter().any(|c| word_match(message, c))
-        // "Legnickiej" will NOT match "Legnicka" with \b.
-        // However, Polish users often rely on this. 
-        // The existing frontend code handles this by checking .includes() or similar?
-        // Let's see... the frontend use .includes() or regex?
-        // Let's check the current code for tauron matches_address again.
-        
-        /* 
-        fn word_match(text: &str, word: &str) -> bool {
-            let pattern = format!(r"(?i)\b{}\b", regex::escape(word));
-            regex::Regex::new(&pattern)
-                .map(|r| r.is_match(text))
-                .unwrap_or(false)
-        }
-        */
-        
-        // If the word is "Legnicka" and text is "Legnickiej", it fails.
-        // If the word is "Probusa" and text is "Probusa", it succeeds.
-        
         // Wrong city
-        assert!(!matches_address(
-            &Some("Warszawa, ul. Henryka Probusa 12".to_string()),
-            "Wrocław",
-            "Probusa",
-            &None
-        ));
+        let compiled_wroclaw = CompiledTauronRegex::new("Wrocław", "Probusa", &None);
+        assert!(!compiled_wroclaw.is_match("Warszawa, ul. Henryka Probusa 12"));
 
         // Compound name match
-        assert!(matches_address(
-            &Some("Wrocław, Jana Pawła II 5".to_string()),
-            "Wrocław",
-            "Pawła",
-            &Some("Jana".to_string())
-        ));
+        let compiled_pawla = CompiledTauronRegex::new("Wrocław", "Pawła", &Some("Jana".to_string()));
+        assert!(compiled_pawla.is_match("Wrocław, Jana Pawła II 5"));
 
         // Specific case reported by user (Polish characters)
-        assert!(matches_address(
-            &Some("Wrocław, ul. Wieniawskiego 12".to_string()),
-            "Wrocław",
-            "Wieniawskiego",
-            &None
-        ));
+        let compiled_wieniawskiego = CompiledTauronRegex::new("Wrocław", "Wieniawskiego", &None);
+        assert!(compiled_wieniawskiego.is_match("Wrocław, ul. Wieniawskiego 12"));
 
         // Ensure we don't match substrings (like Wroc in Wrocław)
-        assert!(!matches_address(
-            &Some("Wrocław, ul. Wieniawskiego 12".to_string()),
-            "Wroc",
-            "Wieniawskie",
-            &None
-        ));
+        let compiled_wroc = CompiledTauronRegex::new("Wroc", "Wieniawskie", &None);
+        assert!(!compiled_wroc.is_match("Wrocław, ul. Wieniawskiego 12"));
+    }
+
+    #[tokio::test]
+    async fn test_fetch_tauron_mocked() {
+        let mut server = mockito::Server::new_async().await;
+        let url = server.url();
+        std::env::set_var("TAURON_BASE_URL", format!("{}/waapi", url));
+
+        let _m1 = server.mock("GET", mockito::Matcher::Regex(r"^/waapi/enum/geo/cities.*".to_string()))
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"[{"GAID": 100, "Name": "Opole", "ProvinceName": "Opolskie", "DistrictName": "Opole", "CommuneName": "Opole"}]"#)
+            .create_async().await;
+
+        let _m2 = server.mock("GET", mockito::Matcher::Regex(r"^/waapi/enum/geo/streets.*".to_string()))
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"[{"GAID": 200, "Name": "Gowna"}]"#)
+            .create_async().await;
+
+        let _m3 = server.mock("GET", mockito::Matcher::Regex(r"^/waapi/outages/address.*".to_string()))
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"OutageItems": [{"GAID": 100, "Message": "Brak pradu", "StartDate": "2026-03-21 10:00:00", "EndDate": "2026-03-21 14:00:00"}]}"#)
+            .create_async().await;
+
+        let client = reqwest::Client::new();
+        let settings = Settings {
+            addresses: vec![crate::api_logic::AddressEntry {
+                name: "Dom".to_string(),
+                city_name: "Opole".to_string(),
+                street_name_1: "Gowna".to_string(),
+                voivodeship: "Opolskie".to_string(),
+                district: "Opole".to_string(),
+                commune: "Opole".to_string(),
+                is_active: true,
+                ..Default::default()
+            }],
+            ..Default::default()
+        };
+
+        let provider = TauronProvider;
+        let (alerts, errors) = provider.fetch(&client, &client, &settings).await;
+
+        assert!(errors.is_empty(), "Expected no errors but got: {:?}", errors);
+        assert_eq!(alerts.len(), 1, "Alerts found: {:?}, Errors: {:?}", alerts, errors);
+        assert_eq!(alerts[0].message, Some("Brak pradu".to_string()));
+        
+        std::env::remove_var("TAURON_BASE_URL");
     }
 }

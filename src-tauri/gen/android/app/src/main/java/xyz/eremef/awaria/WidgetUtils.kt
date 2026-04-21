@@ -15,8 +15,8 @@ object WidgetUtils {
     init {
         try {
             System.loadLibrary("app_lib")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to load app_lib: ${e.message}")
+        } catch (e: Throwable) {
+            println("Failed to load app_lib: ${e.message}")
         }
     }
 
@@ -24,17 +24,17 @@ object WidgetUtils {
         if (text.isEmpty() || word.isEmpty()) return false
         val escapedWord = Pattern.quote(word)
         // Use manual boundaries [^\p{L}] instead of \b to better support Polish characters across Android versions
-        val pattern = "(?ui)(?:^|[^\\p{L}])$escapedWord(?:[^\\p{L}]|$)"
+        val pattern = "(?ui)(?:^|[^\\p{L}0-9])$escapedWord(?:[^\\p{L}0-9]|$)"
         return Regex(pattern).containsMatchIn(text)
     }
 
     class CompiledMatcher(settings: WidgetSettings) {
         private val cityRegex = if (settings.cityName.isNotEmpty()) {
-            Regex("(?ui)(?:^|[^\\p{L}])${Pattern.quote(settings.cityName)}(?:[^\\p{L}]|$)")
+            Regex("(?ui)(?:^|[^\\p{L}0-9])${Pattern.quote(settings.cityName)}(?:[^\\p{L}0-9]|$)")
         } else null
 
         private val communeRegex = if (settings.commune.isNotEmpty()) {
-            Regex("(?ui)(?:^|[^\\p{L}])${Pattern.quote(settings.commune)}(?:[^\\p{L}]|$)")
+            Regex("(?ui)(?:^|[^\\p{L}0-9])${Pattern.quote(settings.commune)}(?:[^\\p{L}0-9]|$)")
         } else null
 
         private val streetRegexes: List<Regex>
@@ -55,7 +55,7 @@ object WidgetUtils {
                 // 3. Full streetName (fallback)
                 if (!candidates.contains(settings.streetName1)) candidates.add(settings.streetName1)
             }
-            streetRegexes = candidates.map { Regex("(?ui)(?:^|[^\\p{L}])${Pattern.quote(it)}(?:[^\\p{L}]|$)") }
+            streetRegexes = candidates.map { Regex("(?ui)(?:^|[^\\p{L}0-9])${Pattern.quote(it)}(?:[^\\p{L}0-9]|$)") }
         }
 
         fun matchesCity(text: String): Boolean = cityRegex?.containsMatchIn(text) ?: true
