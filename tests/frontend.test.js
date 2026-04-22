@@ -237,8 +237,8 @@ describe('Frontend Logic', () => {
             
             renderAlerts([], container, mockSettings, -1);
             
-            // Should show the "Everything looks good" dashboard with operational status
-            expect(container.innerHTML).toContain('Operational');
+            // Should show the "Everything looks good" dashboard
+            expect(container.innerHTML).toContain('Everything looks good!');
         });
 
         it('filters non-enabled sources', () => {
@@ -274,7 +274,7 @@ describe('Frontend Logic', () => {
         });
 
         it('falls back to street name matching for other sources', () => {
-            const alert = { source: 'water', message: 'Utrudnienia na Probusa' };
+            const alert = { source: 'unknown', message: 'Utrudnienia na Probusa' };
             expect(matchesAddress(alert, addresses, 0)).toBe(true);
         });
     });

@@ -39,6 +39,25 @@ fn main() {
         std::process::exit(1);
     }
 
+    println!("Running tests...");
+    let npm_cmd = if cfg!(windows) { "npm.cmd" } else { "npm" };
+    let test_status = Command::new(npm_cmd)
+        .args(&["run", "test"])
+        .current_dir(".")
+        .status();
+
+    match test_status {
+        Ok(s) if s.success() => println!("Tests passed successfully."),
+        Ok(s) => {
+            eprintln!("Error: Tests failed with exit code: {:?}. Stopping release.", s.code());
+            std::process::exit(1);
+        }
+        Err(e) => {
+            eprintln!("Error: Failed to execute npm run test: {}. Stopping release.", e);
+            std::process::exit(1);
+        }
+    }
+
     update_cargo_toml(new_version);
     update_package_json(new_version);
     update_tauri_conf(new_version);
