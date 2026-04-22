@@ -57,16 +57,16 @@ object ProviderCache {
         val now = System.currentTimeMillis()
         val key = "$providerId:$hash"
 
-        return mutex.withLock {
+        val deferred = mutex.withLock {
             // Clear cache if stale
             if (now - lastClearTime > CACHE_TTL_MS) {
                 cache.clear()
                 lastClearTime = now
             }
 
-            val deferred = cache.getOrPut(key) { CoroutineScope(Dispatchers.IO).async { fetch() } }
-            deferred.await()
+            cache.getOrPut(key) { CoroutineScope(Dispatchers.IO).async { fetch() } }
         }
+        return deferred.await()
     }
 }
 
@@ -112,17 +112,24 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     abstract val sourceKey: String
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == refreshAction || 
-            intent.action == Intent.ACTION_BOOT_COMPLETED ||
-            intent.action == Intent.ACTION_CONFIGURATION_CHANGED) {
-            
-            val mgr = AppWidgetManager.getInstance(context)
-            val ids = mgr.getAppWidgetIds(ComponentName(context, this::class.java))
-            if (ids.isNotEmpty()) {
-                onUpdate(context, mgr, ids)
+        super.onReceive(context, intent)
+        
+        val mgr = AppWidgetManager.getInstance(context)
+        val allIds = mgr.getAppWidgetIds(ComponentName(context, this::class.java))
+        
+        if (intent.action == refreshAction) {
+            val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
+            if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+                onUpdate(context, mgr, intArrayOf(appWidgetId))
+            } else if (allIds.isNotEmpty()) {
+                onUpdate(context, mgr, allIds)
+            }
+        } else if (intent.action == Intent.ACTION_BOOT_COMPLETED ||
+                   intent.action == Intent.ACTION_CONFIGURATION_CHANGED) {
+            if (allIds.isNotEmpty()) {
+                onUpdate(context, mgr, allIds)
             }
         }
-        super.onReceive(context, intent)
     }
 
     override fun onUpdate(
@@ -386,6 +393,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                             SizeF(40f, 40f) to
                                     createRemoteViews(
                                             context,
+                                            appWidgetId,
                                             R.layout.widget_outage_small,
                                             count,
                                             updatedAt,
@@ -396,6 +404,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                             SizeF(100f, 100f) to
                                     createRemoteViews(
                                             context,
+                                            appWidgetId,
                                             R.layout.widget_outage,
                                             count,
                                             updatedAt,
@@ -406,6 +415,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                             SizeF(200f, 200f) to
                                     createRemoteViews(
                                             context,
+                                            appWidgetId,
                                             R.layout.widget_outage_large,
                                             count,
                                             updatedAt,
@@ -424,13 +434,14 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                     if (minWidth < 100 || minHeight < 100) R.layout.widget_outage_small
                     else if (minWidth < 200 || minHeight < 200) R.layout.widget_outage
                     else R.layout.widget_outage_large
-            val views = createRemoteViews(context, layoutId, count, updatedAt, language, theme, dark)
+            val views = createRemoteViews(context, appWidgetId, layoutId, count, updatedAt, language, theme, dark)
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
     }
 
     private fun createRemoteViews(
             context: Context,
+            appWidgetId: Int,
             layoutId: Int,
             count: String,
             updatedAt: String,
@@ -439,11 +450,14 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             dark: Boolean
     ): RemoteViews {
         val views = RemoteViews(context.packageName, layoutId)
-        val refreshIntent = Intent(context, this::class.java).apply { action = refreshAction }
+        val refreshIntent = Intent(context, this::class.java).apply { 
+            action = refreshAction 
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+        }
         val refreshPending =
                 PendingIntent.getBroadcast(
                         context,
-                        0,
+                        appWidgetId,
                         refreshIntent,
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
@@ -460,7 +474,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                     if (launchIntent != null)
                             PendingIntent.getActivity(
                                     context,
-                                    0,
+                                    appWidgetId,
                                     launchIntent,
                                     PendingIntent.FLAG_UPDATE_CURRENT or
                                             PendingIntent.FLAG_IMMUTABLE

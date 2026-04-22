@@ -118,11 +118,14 @@ class TriWidgetProvider : BaseWidgetProvider() {
         val views = RemoteViews(context.packageName, R.layout.widget_tri_outage)
 
         // Clicks
-        val refreshIntent = Intent(context, this::class.java).apply { action = refreshAction }
+        val refreshIntent = Intent(context, this::class.java).apply { 
+            action = refreshAction 
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+        }
         val refreshPending =
                 PendingIntent.getBroadcast(
                         context,
-                        0,
+                        appWidgetId,
                         refreshIntent,
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
@@ -139,7 +142,7 @@ class TriWidgetProvider : BaseWidgetProvider() {
                     if (launchIntent != null)
                             PendingIntent.getActivity(
                                     context,
-                                    0,
+                                    appWidgetId,
                                     launchIntent,
                                     PendingIntent.FLAG_UPDATE_CURRENT or
                                             PendingIntent.FLAG_IMMUTABLE

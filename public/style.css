@@ -25,19 +25,14 @@
     --safe-area-inset-left: env(safe-area-inset-left, 0px);
     --safe-area-inset-right: env(safe-area-inset-right, 0px);
 
-    /* Modern "Friendly" Light Theme */
+    /* Light Theme */
     --primary-color: #0a0a0a;
-    /* Indigo 500 */
     --background-color: #f8fafc;
-    /* Slate 50 */
     --card-background: #ffffff;
     --text-color: #1e293b;
-    /* Slate 800 */
     --secondary-text: #64748b;
-    /* Slate 500 */
     --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     --input-border: #e2e8f0;
-    /* Slate 200 */
     --input-focus: #818cf8;
     --error-bg: #fef2f2;
     --error-text: #ef4444;
@@ -47,18 +42,12 @@
     --success-border: #a7f3d0;
     --message-border: #f1f5f9;
     --label-border: #e2e8f0;
-    --tauron-color: #f39923;
-    /* Rose 500 */
+    --tauron-color: #e3067e;
     --water-color: #0ea5e9;
-    /* Sky 500 */
     --fortum-color: #00a859;
-    /* Fortum Green */
     --energa-color: #e50512;
-    /* Energa Red */
     --enea-color: #00225f;
-    /* Enea Blue */
     --pge-color: #1e3a8a;
-    /* PGE Blue */
     --stoen-color: #ea1b0a;
     --nav-bg: rgba(248, 250, 252, 0.85);
 }
@@ -69,20 +58,15 @@
 
 [data-theme="dark"] {
     /* Standard Dark Theme */
-    --primary-color: #818cf8;
-    /* Indigo 400 */
+    --primary-color: #fafafa;
     --background-color: #0f172a;
-    /* Slate 900 */
     --card-background: #1e293b;
-    /* Slate 800 */
     --text-color: #f1f5f9;
-    /* Slate 100 */
     --secondary-text: #94a3b8;
-    /* Slate 400 */
     --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
     --input-border: #334155;
-    /* Slate 700 */
-    --input-focus: #818cf8;
+    --input-focus: #fafafa;
+    --checkbox-accent: #94a3b8;
     --error-bg: #450a0a;
     --error-text: #fca5a5;
     --error-border: #7f1d1d;
@@ -91,18 +75,12 @@
     --success-border: #065f46;
     --message-border: #1e293b;
     --label-border: #334155;
-    --tauron-color: #f59e0b;
-    /* Amber 500 */
+    --tauron-color: #ff048e;
     --water-color: #38bdf8;
-    /* Sky 400 */
     --fortum-color: #10b981;
-    /* Emerald 500 */
     --energa-color: #f87171;
-    /* Red 400 */
     --enea-color: #60a5fa;
-    /* Blue 400 */
     --pge-color: #3b82f6;
-    /* Blue 500 */
     --stoen-color: #f87171;
     --nav-bg: rgba(15, 23, 42, 0.85);
 }
@@ -110,14 +88,10 @@
 [data-theme="emerald"] {
     /* Fresh Nature Theme */
     --primary-color: #10b981;
-    /* Emerald 500 */
     --background-color: #f0fdf4;
-    /* Green 50 */
     --card-background: #ffffff;
     --text-color: #064e3b;
-    /* Green 900 */
     --secondary-text: #166534;
-    /* Green 800 */
     --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     --input-border: #dcfce7;
     --input-focus: #10b981;
@@ -129,10 +103,8 @@
     --success-border: #d1fae5;
     --message-border: #ecfdf5;
     --label-border: #dcfce7;
-    --tauron-color: #f59e0b;
-    /* Amber for Contrast */
+    --tauron-color: #ff048e;
     --water-color: #3b82f6;
-    /* Blue */
     --fortum-color: #10b981;
     --energa-color: #be123c;
     --enea-color: #0369a1;
@@ -146,13 +118,9 @@
     --primary-color: #06b6d4;
     /* Cyan 500 */
     --background-color: #083344;
-    /* Cyan 950 */
     --card-background: #155e75;
-    /* Cyan 800 mixed darker */
     --text-color: #ecfeff;
-    /* Cyan 50 */
     --secondary-text: #a5f3fc;
-    /* Cyan 200 */
     --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
     --input-border: #164e63;
     --input-focus: #22d3ee;
@@ -164,8 +132,7 @@
     --success-border: #065f46;
     --message-border: #164e63;
     --label-border: #164e63;
-    --tauron-color: #ff9f43;
-    /* Softened Orange-Red */
+    --tauron-color: #e3067e;
     --water-color: #38bdf8;
     --fortum-color: #4ade80;
     --energa-color: #fb7185;
@@ -178,42 +145,27 @@
 [data-theme="nord"] {
     /* Nordic Frost Theme */
     --primary-color: #88c0d0;
-    /* Nord 8 */
     --background-color: #2e3440;
-    /* Nord 0 */
     --card-background: #3b4252;
-    /* Nord 1 */
     --text-color: #eceff4;
-    /* Nord 6 */
     --secondary-text: #d8dee9;
-    /* Nord 4 */
     --shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
     --input-border: #4c566a;
-    /* Nord 3 */
     --input-focus: #81a1c1;
-    /* Nord 9 */
     --error-bg: #bf616a;
-    /* Nord 11 */
     --error-text: #eceff4;
     --error-border: #2e3440;
     --success-bg: #a3be8c;
-    /* Nord 14 */
     --success-text: #2e3440;
     --success-border: #2e3440;
     --message-border: #434c5e;
-    /* Nord 2 */
     --label-border: #4c566a;
-    --tauron-color: #ebcb8b;
-    /* Nord 13 */
+    --tauron-color: #df5ca4;
     --water-color: #81a1c1;
-    /* Nord 9 */
     --fortum-color: #a3be8c;
     --energa-color: #bf616a;
-    /* Nord 11 */
     --enea-color: #5e81ac;
-    /* Nord 10 */
     --pge-color: #88c0d0;
-    /* Nord 8 */
     --stoen-color: #bf616a;
     --nav-bg: rgba(46, 52, 64, 0.85);
 }
@@ -221,7 +173,6 @@
 [data-theme="dracula"] {
     /* Classic Dracula Theme */
     --primary-color: #bd93f9;
-    /* Purple */
     --background-color: #282a36;
     --card-background: #44475a;
     --text-color: #f8f8f2;
@@ -229,7 +180,6 @@
     --shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
     --input-border: #6272a4;
     --input-focus: #ff79c6;
-    /* Pink focus */
     --error-bg: #ff5555;
     --error-text: #f8f8f2;
     --error-border: #282a36;
@@ -238,31 +188,22 @@
     --success-border: #282a36;
     --message-border: #44475a;
     --label-border: #44475a;
-    --tauron-color: #ffb86c;
-    /* Orange */
+    --tauron-color: #ff048e;
     --water-color: #8be9fd;
-    /* Cyan */
     --fortum-color: #50fa7b;
     --energa-color: #ff5555;
-    /* Red */
     --enea-color: #bd93f9;
-    /* Purple */
     --pge-color: #6272a4;
-    /* Indigo-ish Gray */
     --stoen-color: #ff5555;
 }
 
 [data-theme="sepia"] {
     /* Authentic Antique Sepia */
     --primary-color: #704214;
-    /* Deep Umber */
     --background-color: #f4ecd8;
-    /* Antique Parchment */
     --card-background: #fdf9f0;
     --text-color: #433422;
-    /* Dark Walnut */
     --secondary-text: #70665b;
-    /* Dusty Earth */
     --shadow: 0 4px 12px rgba(67, 52, 34, 0.08);
     --input-border: #e0d5ba;
     --input-focus: #704214;
@@ -274,10 +215,8 @@
     --success-border: #d8e5d8;
     --message-border: #e0d5ba;
     --label-border: #d6ccb2;
-    --tauron-color: #8b4513;
-    /* Saddle Brown */
+    --tauron-color: #9c3a70;
     --water-color: #556b2f;
-    /* Dark Olive */
     --fortum-color: #6a994e;
     --energa-color: #9b2226;
     --enea-color: #003049;
@@ -288,16 +227,12 @@
 [data-theme="latte"] {
     /* Legit Cafe Latte Theme */
     --primary-color: #967259;
-    /* Espresso Brown */
     --background-color: #fdfaf6;
-    /* Steamed Milk */
     --card-background: #ffffff;
     --text-color: #3c2f2f;
-    /* Dark Roast */
     --secondary-text: #705d56;
     --shadow: 0 4px 12px rgba(150, 114, 89, 0.08);
     --input-border: #f1e4d8;
-    /* Light Creama */
     --input-focus: #967259;
     --error-bg: #f8edeb;
     --error-text: #bc4749;
@@ -308,9 +243,7 @@
     --message-border: #f1e4d8;
     --label-border: #ede0d4;
     --tauron-color: #bc6c25;
-    /* Golden Caramel */
     --water-color: #588157;
-    /* Muted Sage */
     --fortum-color: #6a994e;
     --energa-color: #c1121f;
     --enea-color: #3d405b;

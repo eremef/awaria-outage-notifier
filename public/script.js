@@ -220,13 +220,13 @@ function toggleSettings(forceState = null) {
     if (shouldOpen) {
         // Prepare for opening transition
         savedScrollY = window.scrollY;
-        
+
         // Use 'fixed' during transition to isolate from document scroll/height changes.
         // This prevents Android safe-area flickering and 'edge-to-edge' jumps.
         settingsView.style.position = 'fixed';
         settingsView.style.top = '0';
         settingsView.style.display = 'flex';
-        
+
         // Use requestAnimationFrame to ensure layout is ready before we start the transition
         requestAnimationFrame(() => {
             settingsView.classList.add('open');
@@ -244,12 +244,12 @@ function toggleSettings(forceState = null) {
     } else {
         // Switch surfaces before closing transition
         mainView.classList.remove('hidden');
-        
+
         // Keep settingsView fixed at the top while we restore the background scroll.
         // This hides the background jump from the user.
         settingsView.style.position = 'fixed';
         settingsView.style.top = '0';
-        
+
         // On some Android WebViews, we need a small delay to ensure layout height is recalculated
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
@@ -1079,10 +1079,10 @@ async function loadSettingsAndFetch() {
             renderAddressesList();
             renderAlerts([], container, currentSettings, selectedAddressIndex);
             document.getElementById('last-updated').textContent = typeof t !== 'undefined' ? t('not_configured') : 'Not configured';
-            
+
             // Apply the default 'system' theme on first run
             applyTheme('system');
-            
+
             toggleSettings(true);
         }
     } catch (error) {
@@ -1338,7 +1338,7 @@ function matchesAddress(alert, addresses, addrIdx) {
     if (!addr || addr.isActive === false) return false;
 
     // Sources that provide addressIndex and isLocal from backend
-    if (['tauron', 'energa', 'enea', 'pge', 'stoen'].includes(alert.source)) {
+    if (['tauron', 'energa', 'enea', 'pge', 'stoen', 'fortum', 'water'].includes(alert.source)) {
         return alert.isLocal === true && alert.addressIndex === addrIdx;
     }
 
@@ -1551,7 +1551,6 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         const title = typeof t !== 'undefined' ? t('all_clear_title') : 'Everything looks good!';
         const subtitle = typeof t !== 'undefined' ? t('all_clear_subtitle') : 'No outages detected.';
         const providersLbl = typeof t !== 'undefined' ? t('monitored_providers') : 'Monitored Providers';
-        const operationalLbl = typeof t !== 'undefined' ? t('status_operational') : 'Operational';
         const refreshLbl = typeof t !== 'undefined' ? t('refresh_now') : 'Refresh Now';
 
         const statusItems = enabledSources.map(srcId => {
@@ -1562,7 +1561,6 @@ function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
                     <div class="status-dot"></div>
                     <div class="status-info">
                         <span class="status-name">${escapeHtml(name)}</span>
-                        <span class="status-label">${escapeHtml(operationalLbl)}</span>
                     </div>
                 </div>
             `;
