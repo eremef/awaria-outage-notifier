@@ -1200,14 +1200,17 @@ h1 {
 
 .icon-btn.delete-btn {
     color: var(--error-text);
+    opacity: 0.75;
 }
 
 .icon-btn.edit-btn {
     color: var(--text-color);
+    opacity: 0.75;
 }
 
 .primary-badge {
-    font-size: 1rem;
+    padding-right: 0.25rem;
+    /* font-size: 1rem; */
 }
 
 #location-settings-section,
