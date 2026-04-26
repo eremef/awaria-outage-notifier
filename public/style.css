@@ -330,7 +330,7 @@ body {
     overflow-x: hidden;
     overscroll-behavior: none;
     padding-top: 0;
-    padding-bottom: calc(1rem + var(--safe-area-inset-bottom));
+    padding-bottom: calc(0.25rem + var(--safe-area-inset-bottom));
     padding-left: var(--safe-area-inset-left);
     padding-right: var(--safe-area-inset-right);
     transition: background-color 0.3s ease, color 0.3s ease;
@@ -521,7 +521,7 @@ h1 {
     max-width: 600px;
     margin: 0 auto;
     padding: 0 1rem;
-    padding-bottom: calc(var(--safe-area-inset-bottom) + 4rem);
+    padding-bottom: calc(var(--safe-area-inset-bottom)+0.5rem);
 }
 
 .settings-title {
@@ -1189,9 +1189,16 @@ h1 {
     border: none;
     cursor: pointer;
     padding: 0.25rem;
-    font-size: 1rem;
     opacity: 0.25;
     transition: opacity 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-btn svg {
+    width: 1.1rem;
+    height: 1.1rem;
 }
 
 .icon-btn:hover {
@@ -1208,9 +1215,25 @@ h1 {
     opacity: 0.75;
 }
 
+.icon-btn.star-btn {
+    color: #ffca28;
+    opacity: 0.5;
+}
+
+.icon-btn.star-btn:hover {
+    opacity: 1;
+}
+
 .primary-badge {
     padding-right: 0.25rem;
-    /* font-size: 1rem; */
+    color: #ffca28;
+    display: flex;
+    align-items: center;
+}
+
+.primary-badge svg {
+    width: 1.1rem;
+    height: 1.1rem;
 }
 
 #location-settings-section,
