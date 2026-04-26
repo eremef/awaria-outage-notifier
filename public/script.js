@@ -641,7 +641,7 @@ if (typeof document !== 'undefined') {
                 opt.value = addr.originalIndex;
                 opt.textContent = addr.name || `${addr.streetName} ${addr.houseNo}`;
                 if (addr.originalIndex === currentSettings.primaryAddressIndex) {
-                    opt.textContent += ' (primary)';
+                    opt.textContent += ' ⭐';
                 }
                 filter.appendChild(opt);
             });
