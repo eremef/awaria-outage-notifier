@@ -157,6 +157,11 @@ describe('Frontend Logic', () => {
             expect(formatDate(null)).toBe('');
             expect(formatDate('')).toBe('');
         });
+
+        it('returns original string if input is not a valid date', () => {
+            const customStr = 'termin zostanie podany wkrótce';
+            expect(formatDate(customStr)).toBe(customStr);
+        });
     });
     describe('Deduplication logic (conceptual/manual)', () => {
         it('identifies duplicates by hash', () => {

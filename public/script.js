@@ -88,6 +88,7 @@ if (typeof document !== 'undefined') {
         { id: 'enea', label: 'Enea', category: 'power', defaultNotify: true, i18nLabel: 'source_enea_name', i18nShort: 'source_enea_short' },
         { id: 'pge', label: 'PGE', category: 'power', defaultNotify: true, i18nLabel: 'source_pge_name', i18nShort: 'source_pge_short' },
         { id: 'stoen', label: 'Stoen', category: 'power', defaultNotify: true, i18nLabel: 'source_stoen_name', i18nShort: 'source_stoen_short' },
+        { id: 'psg', label: 'PSG', category: 'gas', defaultNotify: true, i18nLabel: 'source_psg_name', i18nShort: 'source_psg_short' },
         { id: 'fortum', label: 'Fortum', category: 'heating', defaultNotify: true, i18nLabel: 'source_fortum_name', i18nShort: 'source_fortum_short' },
         { id: 'water', label: 'MPWiK', category: 'water', defaultNotify: true, i18nLabel: 'source_water_short', i18nShort: 'source_water_short' },
     ];
@@ -99,7 +100,8 @@ if (typeof document !== 'undefined') {
         const categories = {
             power: { label: 'Power', i18n: 'source_power' },
             heating: { label: 'Heat', i18n: 'source_heating' },
-            water: { label: 'Water', i18n: 'source_water_name' }
+            water: { label: 'Water', i18n: 'source_water_name' },
+            gas: { label: 'Gas', i18n: 'source_gas' }
         };
 
         let html = '';
@@ -1344,7 +1346,7 @@ if (typeof document !== 'undefined') {
         if (!addr || addr.isActive === false) return false;
 
         // Sources that provide addressIndex and isLocal from backend
-        if (['tauron', 'energa', 'enea', 'pge', 'stoen', 'fortum', 'water'].includes(alert.source)) {
+        if (['tauron', 'energa', 'enea', 'pge', 'stoen', 'fortum', 'water', 'psg'].includes(alert.source)) {
             return alert.isLocal === true && alert.addressIndex === addrIdx;
         }
 
@@ -1394,7 +1396,7 @@ if (typeof document !== 'undefined') {
     function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         const now = new Date();
 
-        const enabledSources = (settings && settings.enabledSources) ? settings.enabledSources : ['tauron', 'water', 'fortum', 'energa', 'enea', 'pge', 'stoen'];
+        const enabledSources = (settings && settings.enabledSources) ? settings.enabledSources : ['tauron', 'water', 'fortum', 'energa', 'enea', 'pge', 'stoen', 'psg'];
         const activeAlerts = alerts.filter(item => {
             if (!enabledSources.includes(item.source)) return false;
             if (!item.endDate) return true;
@@ -1663,7 +1665,8 @@ if (typeof document !== 'undefined') {
             if (s) {
                 sourceLabel = (typeof t !== 'undefined' ? t(s.i18nLabel) : null) || s.label;
                 if (s.category === 'water') sourceLabel = '💧 ' + sourceLabel;
-                else if (s.category === 'heating') sourceLabel = '🔥 ' + sourceLabel;
+                else if (s.category === 'heating') sourceLabel = '🌡️ ' + sourceLabel;
+                else if (s.category === 'gas') sourceLabel = '🔥 ' + sourceLabel;
                 else sourceLabel = '⚡ ' + sourceLabel;
             }
             sourceLabelCache[sourceId] = sourceLabel;
@@ -1686,6 +1689,10 @@ if (typeof document !== 'undefined') {
         if (dateCache[dateString]) return dateCache[dateString];
 
         const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+            return dateString;
+        }
+
         const localeStr = typeof getLocaleString !== 'undefined' ? getLocaleString() : 'pl-PL';
         const formatted = date.toLocaleString(localeStr, {
             weekday: 'short',

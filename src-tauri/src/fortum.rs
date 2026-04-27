@@ -145,8 +145,8 @@ impl AlertProvider for FortumProvider {
 
     async fn fetch(
         &self,
-        client: &reqwest::Client,
-        _client_http1: &reqwest::Client,
+        client: &Client,
+        _client_http1: &Client,
         settings: &Settings,
     ) -> (Vec<UnifiedAlert>, Vec<String>) {
         let active_addresses = settings.addresses.iter().filter(|a| a.is_active).collect::<Vec<_>>();

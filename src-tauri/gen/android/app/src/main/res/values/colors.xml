@@ -11,6 +11,7 @@
     <color name="utility_power">#EFB406</color>
     <color name="utility_heat">#F44336</color>
     <color name="utility_water">#0077D9</color>
+    <color name="utility_gas">#38BDF8</color>
 
     <!-- Provider Specific Brand Colors (Light) -->
     <color name="brand_tauron">#D9006C</color>
@@ -20,4 +21,5 @@
     <color name="brand_pge">#1E3A8A</color>
     <color name="brand_fortum">#00A859</color>
     <color name="brand_mpwik">#0077D9</color>
+    <color name="brand_psg">#38BDF8</color>
 </resources>

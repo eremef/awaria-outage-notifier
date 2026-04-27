@@ -355,8 +355,8 @@ impl AlertProvider for TauronProvider {
 
     async fn fetch(
         &self,
-        client: &reqwest::Client,
-        _client_http1: &reqwest::Client,
+        client: &Client,
+        _client_http1: &Client,
         settings: &Settings,
     ) -> (Vec<UnifiedAlert>, Vec<String>) {
         let mut tasks = Vec::new();
@@ -485,7 +485,7 @@ mod tests {
             .with_body(r#"{"OutageItems": [{"GAID": 100, "Message": "Brak pradu", "StartDate": "2026-03-21 10:00:00", "EndDate": "2026-03-21 14:00:00"}]}"#)
             .create_async().await;
 
-        let client = reqwest::Client::new();
+        let client = Client::new();
         let settings = Settings {
             addresses: vec![crate::api_logic::AddressEntry {
                 name: "Dom".to_string(),

@@ -148,8 +148,8 @@ impl AlertProvider for MpwikProvider {
 
     async fn fetch(
         &self,
-        _client: &reqwest::Client,
-        client_http1: &reqwest::Client,
+        _client: &Client,
+        client_http1: &Client,
         settings: &Settings,
     ) -> (Vec<UnifiedAlert>, Vec<String>) {
         if !settings.addresses.iter().any(|a| a.is_active && is_wroclaw(a)) {

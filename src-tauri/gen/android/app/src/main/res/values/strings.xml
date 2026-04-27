@@ -7,6 +7,7 @@
     <string name="label_power">Prąd</string>
     <string name="label_heat">Ciepło</string>
     <string name="label_water">Woda</string>
+    <string name="label_gas">Gaz</string>
     <string name="label_provider">Dostawca</string>
     <string name="label_outages">wyłączeń.</string>
     <string name="icon_description">ikona</string>
@@ -17,7 +18,9 @@
     <string name="widget_label_enea">Enea</string>
     <string name="widget_label_pge">PGE</string>
     <string name="widget_label_stoen">Stoen</string>
+    <string name="widget_label_psg">PSG</string>
     <string name="widget_label_tri">Status</string>
+    <string name="widget_label_all">Wszystkie media</string>
     <string name="msg_setup_needed">Skonfiguruj</string>
     <string name="msg_updating">Aktualizacja...</string>
     <string name="msg_inactive">Nieaktywne</string>
@@ -30,8 +33,9 @@
     <string name="provider_pge">PGE</string>
     <string name="provider_fortum">Fortum</string>
     <string name="provider_water">MPWiK</string>
+    <string name="provider_psg">PSG</string>
     <string name="notif_channel_name">Alerty o wyłączeniach</string>
-    <string name="notif_channel_desc">Powiadomienia o nowych i nadchodzących awariach oraz wyłączeniach.</string>
+    <string name="notif_channel_desc">Powiadomienia o nowych i nadchodzących awariach oraz wyłączeniach (prąd, woda, ciepło, gaz).</string>
     <string name="placeholder_time">--:--</string>
     <string name="placeholder_dash">–</string>
     <string name="config_cancel">Anuluj</string>

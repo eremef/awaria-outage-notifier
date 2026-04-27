@@ -1,0 +1,209 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:padding="3dp">
+
+    <RelativeLayout
+        android:id="@+id/widget_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="1dp"
+        android:paddingHorizontal="2dp">
+        
+        <TextView
+            android:id="@+id/widget_address_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_toStartOf="@+id/widget_updated"
+            android:layout_centerVertical="true"
+            android:gravity="center"
+            android:text=""
+            android:textColor="@color/widget_text_updated"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:singleLine="true"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/widget_updated"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:paddingTop="1dp"
+            android:text="@string/placeholder_time"
+            android:textColor="@color/widget_text_updated"
+            android:textSize="8sp" />
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/widget_content_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/widget_header"
+        android:baselineAligned="false"
+        android:orientation="horizontal"
+        android:weightSum="4">
+
+        <!-- Power -->
+      <LinearLayout
+        android:id="@+id/section_power"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <LinearLayout
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:orientation="horizontal"
+          android:gravity="center_vertical"
+          android:layout_marginBottom="1dp">
+          <ImageView
+            android:id="@+id/icon_power"
+            android:layout_width="10dp"
+            android:layout_height="12dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_electricity" />
+
+          <TextView
+            android:id="@+id/label_power"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/label_power"
+            android:textColor="@color/widget_text_label"
+            android:textSize="9sp" />
+        </LinearLayout>
+
+        <TextView
+          android:id="@+id/count_power"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/placeholder_dash"
+          android:textColor="@color/utility_power"
+          android:textSize="13sp"
+          android:textStyle="bold" />
+      </LinearLayout>
+
+        <!-- Heat -->
+        <LinearLayout
+            android:id="@+id/section_heat"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="1dp">
+                <ImageView
+                    android:id="@+id/icon_heat"
+                    android:layout_width="10dp"
+                    android:layout_height="12dp"
+                    android:src="@drawable/ic_heating"
+                    android:contentDescription="@null" />
+                <TextView
+                    android:id="@+id/label_heat"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_heat"
+                    android:textColor="@color/widget_text_label"
+                    android:textSize="9sp" />
+            </LinearLayout>
+
+          <TextView
+            android:id="@+id/count_heat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/placeholder_dash"
+            android:textColor="@color/utility_heat"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Water -->
+        <LinearLayout
+            android:id="@+id/section_water"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="1dp">
+              <ImageView
+                android:id="@+id/icon_water"
+                android:layout_width="10dp"
+                android:layout_height="12dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_water" />
+              <TextView
+                android:id="@+id/label_water"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/label_water"
+                android:textColor="@color/widget_text_label"
+                android:textSize="9sp" />
+            </LinearLayout>
+            <TextView
+                android:id="@+id/count_water"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/placeholder_dash"
+                android:textColor="@color/utility_water"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Gas -->
+        <LinearLayout
+            android:id="@+id/section_gas"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="1dp">
+              <ImageView
+                android:id="@+id/icon_gas"
+                android:layout_width="10dp"
+                android:layout_height="12dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_gas" />
+              <TextView
+                android:id="@+id/label_gas"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/label_gas"
+                android:textColor="@color/widget_text_label"
+                android:textSize="9sp" />
+            </LinearLayout>
+            <TextView
+                android:id="@+id/count_gas"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/placeholder_dash"
+                android:textColor="@color/utility_gas"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</RelativeLayout>

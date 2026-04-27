@@ -7,6 +7,7 @@
     <string name="label_power">Power</string>
     <string name="label_heat">Heat</string>
     <string name="label_water">Water</string>
+    <string name="label_gas">Gas</string>
     <string name="label_provider">Provider</string>
     <string name="label_outages">outages</string>
     <string name="icon_description">icon</string>
@@ -17,7 +18,9 @@
     <string name="widget_label_enea">Enea</string>
     <string name="widget_label_pge">PGE</string>
     <string name="widget_label_stoen">Stoen</string>
+    <string name="widget_label_psg">PSG</string>
     <string name="widget_label_tri">Status</string>
+    <string name="widget_label_all">All utilities</string>
     <string name="msg_setup_needed">Setup needed</string>
     <string name="msg_updating">Updating...</string>
     <string name="msg_inactive">Inactive</string>
@@ -30,6 +33,7 @@
     <string name="provider_pge">PGE</string>
     <string name="provider_fortum">Fortum</string>
     <string name="provider_water">MPWiK</string>
+    <string name="provider_psg">PSG</string>
     <string name="notif_channel_name">Outage Alerts</string>
-    <string name="notif_channel_desc">Notifications about new and upcoming power, water, and heat outages.</string>
+    <string name="notif_channel_desc">Notifications about new and upcoming power, water, heat, and gas outages.</string>
 </resources>

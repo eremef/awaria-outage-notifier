@@ -12,6 +12,7 @@ mod tauron;
 mod teryt;
 mod utils;
 mod cache;
+mod psg;
 
 use api_logic::{
     load_settings_from_path, save_settings_to_path,
@@ -227,6 +228,7 @@ fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(enea::EneaProvider),
         Box::new(pge::PgeProvider),
         Box::new(stoen::StoenProvider),
+        Box::new(psg::PsgProvider),
     ]
 }
 
@@ -273,8 +275,8 @@ async fn fetch_all_alerts(
         let s_arc = Arc::new(s.clone());
         let providers = get_providers();
         let net_state = app.state::<NetworkState>();
-        let client = net_state.client.clone();
-        let client_http1 = net_state.client_http1.clone();
+        let client = net_state.get_client().await?;
+        let client_http1 = net_state.get_client_http1().await?;
 
         for provider in providers {
             if !enabled_sources.contains(&provider.id()) {
@@ -423,38 +425,27 @@ pub fn run() {
             state_db::prune_old_alerts(&conn, 30)?;
             app.manage(DbState { conn: Mutex::new(conn) });
             app.manage(cache::CacheState::new());
-            app.manage(network_state::NetworkState::new()?);
 
             #[cfg(target_os = "android")]
             {
                 use tauri::Manager;
                 log::info!("Checking for webview windows to initialize rustls-platform-verifier...");
-                let windows = app.webview_windows();
-                if windows.is_empty() {
-                    log::warn!("No webview windows found during setup! Certification initialization might fail.");
-                }
                 
+                // Fallback: If we can't initialize here, NetworkState::new() might panic if it uses rustls immediately.
+                // However, we now initialize it in MainActivity.onCreate() which is called very early.
+                
+                let windows = app.webview_windows();
                 for (label, window) in windows {
-                    log::info!("Initializing verifier for window: {}", label);
+                    log::info!("Initializing verifier for window during setup: {}", label);
                     let _ = window.with_webview(|webview| {
                         webview.jni_handle().exec(|env, context, _webview| {
-                            log::info!("Accessing JNI context for verifier initialization...");
-                            let loader = env
-                                .call_method(context, "getClassLoader", "()Ljava/lang/ClassLoader;", &[])
-                                .expect("Failed to get ClassLoader")
-                                .l()
-                                .unwrap();
-
-                            rustls_platform_verifier::android::init_with_refs(
-                                env.get_java_vm().expect("Failed to get JavaVM"),
-                                env.new_global_ref(context).expect("Failed to create global ref for context"),
-                                env.new_global_ref(loader).expect("Failed to create global ref for loader"),
-                            );
-                            log::info!("rustls-platform-verifier initialized successfully on Android.");
+                            ensure_verifier_initialized(env, context);
                         });
                     });
                 }
             }
+
+            app.manage(network_state::NetworkState::new()?);
 
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -486,44 +477,52 @@ pub fn run() {
 
 #[cfg(target_os = "android")]
 fn ensure_verifier_initialized(env: &mut JNIEnv, context: &JObject) {
-    static START: std::sync::Once = std::sync::Once::new();
-    START.call_once(|| {
-        log::info!("Initializing rustls-platform-verifier via JNI context...");
-        let class_loader = match env.call_method(context, "getClassLoader", "()Ljava/lang/ClassLoader;", &[]) {
-            Ok(r) => r.l().expect("ClassLoader is not an object"),
-            Err(e) => {
-                log::error!("Failed to get ClassLoader: {:?}", e);
-                return;
-            }
-        };
+    static INITIALIZED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+    if INITIALIZED.load(std::sync::atomic::Ordering::SeqCst) {
+        return;
+    }
 
-        let vm = match env.get_java_vm() {
-            Ok(vm) => vm,
-            Err(e) => {
-                log::error!("Failed to get JavaVM: {:?}", e);
-                return;
-            }
-        };
+    android_logger::init_once(
+        android_logger::Config::default().with_tag("AWARIA_RUST").with_max_level(log::LevelFilter::Info),
+    );
 
-        let context_ref = match env.new_global_ref(context) {
-            Ok(r) => r,
-            Err(e) => {
-                log::error!("Failed to create global ref for context: {:?}", e);
-                return;
-            }
-        };
+    log::info!("Attempting to initialize rustls-platform-verifier...");
+    let class_loader = match env.call_method(context, "getClassLoader", "()Ljava/lang/ClassLoader;", &[]) {
+        Ok(r) => r.l().expect("ClassLoader is not an object"),
+        Err(e) => {
+            log::error!("Failed to get ClassLoader: {:?}", e);
+            return;
+        }
+    };
 
-        let loader_ref = match env.new_global_ref(class_loader) {
-            Ok(r) => r,
-            Err(e) => {
-                log::error!("Failed to create global ref for loader: {:?}", e);
-                return;
-            }
-        };
+    let vm = match env.get_java_vm() {
+        Ok(vm) => vm,
+        Err(e) => {
+            log::error!("Failed to get JavaVM: {:?}", e);
+            return;
+        }
+    };
 
-        rustls_platform_verifier::android::init_with_refs(vm, context_ref, loader_ref);
-        log::info!("rustls-platform-verifier initialized successfully.");
-    });
+    let context_ref = match env.new_global_ref(context) {
+        Ok(r) => r,
+        Err(e) => {
+            log::error!("Failed to create global ref for context: {:?}", e);
+            return;
+        }
+    };
+
+    let loader_ref = match env.new_global_ref(class_loader) {
+        Ok(r) => r,
+        Err(e) => {
+            log::error!("Failed to create global ref for loader: {:?}", e);
+            return;
+        }
+    };
+
+    log::info!("Calling rustls_platform_verifier::android::init_with_refs...");
+    rustls_platform_verifier::android::init_with_refs(vm, context_ref, loader_ref);
+    INITIALIZED.store(true, std::sync::atomic::Ordering::SeqCst);
+    log::info!("rustls-platform-verifier initialized successfully.");
 }
 
 #[cfg(target_os = "android")]
@@ -628,4 +627,15 @@ pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchCountFromRust(
             }
         }
     })
+}
+
+#[cfg(target_os = "android")]
+#[allow(non_snake_case)]
+#[no_mangle]
+pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_initVerifier(
+    mut env: JNIEnv,
+    _class: JClass,
+    context: JObject,
+) {
+    ensure_verifier_initialized(&mut env, &context);
 }

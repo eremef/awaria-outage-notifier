@@ -12,6 +12,9 @@ object WidgetUtils {
     @JvmStatic
     external fun fetchCountFromRust(context: Context, providerId: String, settingsJson: String): Int
 
+    @JvmStatic
+    external fun initVerifier(context: Context)
+
     init {
         try {
             System.loadLibrary("app_lib")

@@ -146,7 +146,7 @@ impl EnergaShutdown {
     }
 }
 
-pub async fn extract_energa_api_url(client: &reqwest::Client) -> Result<String, String> {
+pub async fn extract_energa_api_url(client: &Client) -> Result<String, String> {
     let res = client
         .get(get_energa_page_url())
         .header("accept", "text/html")
@@ -205,8 +205,8 @@ impl AlertProvider for EnergaProvider {
 
     async fn fetch(
         &self,
-        client: &reqwest::Client,
-        _client_http1: &reqwest::Client,
+        client: &Client,
+        _client_http1: &Client,
         settings: &Settings,
     ) -> (Vec<UnifiedAlert>, Vec<String>) {
         fn is_in_energa_region(addr: &crate::api_logic::AddressEntry) -> bool {
