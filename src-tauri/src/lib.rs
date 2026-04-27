@@ -12,6 +12,7 @@ mod tauron;
 mod teryt;
 mod utils;
 mod cache;
+mod psg;
 
 use api_logic::{
     load_settings_from_path, save_settings_to_path,
@@ -227,6 +228,7 @@ fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(enea::EneaProvider),
         Box::new(pge::PgeProvider),
         Box::new(stoen::StoenProvider),
+        Box::new(psg::PsgProvider),
     ]
 }
 

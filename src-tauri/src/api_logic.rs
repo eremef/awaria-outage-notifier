@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use reqwest::Client;
 use std::collections::HashMap;
 use sha2::{Sha256, Digest};
 use async_trait::async_trait;
@@ -18,6 +19,7 @@ pub enum AlertSource {
     Enea,
     Pge,
     Stoen,
+    Psg,
 }
 
 #[cfg_attr(test, automock)]
@@ -158,6 +160,9 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         AlertSource::Fortum => {
             if is_pl { "awaria ogrzewania" } else { "heat outage" }
         }
+        AlertSource::Psg => {
+            if is_pl { "awaria gazu" } else { "gas outage" }
+        }
     };
     
     let prefix = if is_upcoming {
@@ -181,11 +186,15 @@ pub fn format_notification_body(alert: &UnifiedAlert) -> String {
     if let Some(start) = &alert.startDate {
         if let Some(dt) = crate::utils::parse_date(start) {
             time_info.push(crate::utils::format_date(dt));
+        } else {
+            time_info.push(start.clone());
         }
     }
     if let Some(end) = &alert.endDate {
         if let Some(dt) = crate::utils::parse_date(end) {
             time_info.push(crate::utils::format_date(dt));
+        } else {
+            time_info.push(end.clone());
         }
     }
     
@@ -214,6 +223,7 @@ impl std::fmt::Display for AlertSource {
             AlertSource::Enea => "enea",
             AlertSource::Pge => "pge",
             AlertSource::Stoen => "stoen",
+            AlertSource::Psg => "psg",
         };
         write!(f, "{}", s)
     }
@@ -224,8 +234,8 @@ pub trait AlertProvider: Send + Sync {
     fn id(&self) -> String;
     async fn fetch(
         &self,
-        client: &reqwest::Client,
-        client_http1: &reqwest::Client,
+        client: &Client,
+        client_http1: &Client,
         settings: &Settings,
     ) -> (Vec<UnifiedAlert>, Vec<String>);
 }
@@ -627,5 +637,23 @@ mod tests {
 
         let engine = MonitorEngine::new(&mock_db, &mock_notifier, &settings);
         engine.process_alerts(alerts);
+    }
+
+    #[test]
+    fn test_format_notification_body_with_custom_dates() {
+        let alert = UnifiedAlert {
+            source: AlertSource::Psg,
+            startDate: Some("2024-05-20 10:00".to_string()),
+            endDate: Some("termin zostanie podany wkrótce".to_string()),
+            message: Some("Prace serwisowe".to_string()),
+            ..Default::default()
+        };
+
+        let body = format_notification_body(&alert);
+        // "2024-05-20 10:00" parses to "20-05-2024 10:00"
+        // "termin zostanie podany wkrótce" remains as is
+        assert!(body.contains("20-05-2024 10:00"));
+        assert!(body.contains("termin zostanie podany wkrótce"));
+        assert!(body.contains("Prace serwisowe"));
     }
 }

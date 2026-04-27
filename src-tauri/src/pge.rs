@@ -86,8 +86,8 @@ impl AlertProvider for PgeProvider {
 
     async fn fetch(
         &self,
-        client: &reqwest::Client,
-        _client_http1: &reqwest::Client,
+        client: &Client,
+        _client_http1: &Client,
         settings: &Settings,
     ) -> (Vec<UnifiedAlert>, Vec<String>) {
         fn is_in_pge_region(addr: &crate::api_logic::AddressEntry) -> bool {

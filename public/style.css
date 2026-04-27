@@ -49,6 +49,7 @@
     --enea-color: #00225f;
     --pge-color: #1e3a8a;
     --stoen-color: #ea1b0a;
+    --psg-color: #38bdf8;
     --nav-bg: rgba(248, 250, 252, 0.85);
 }
 
@@ -82,6 +83,7 @@
     --enea-color: #60a5fa;
     --pge-color: #3b82f6;
     --stoen-color: #f87171;
+    --psg-color: #38bdf8;
     --nav-bg: rgba(15, 23, 42, 0.85);
 }
 
@@ -110,6 +112,7 @@
     --enea-color: #0369a1;
     --pge-color: #1d4ed8;
     --stoen-color: #be123c;
+    --psg-color: #3b82f6;
     --nav-bg: rgba(240, 253, 244, 0.85);
 }
 
@@ -139,6 +142,7 @@
     --enea-color: #bae6fd;
     --pge-color: #7dd3fc;
     --stoen-color: #fb7185;
+    --psg-color: #38bdf8;
     --nav-bg: rgba(8, 51, 68, 0.85);
 }
 
@@ -167,6 +171,7 @@
     --enea-color: #5e81ac;
     --pge-color: #88c0d0;
     --stoen-color: #bf616a;
+    --psg-color: #88c0d0;
     --nav-bg: rgba(46, 52, 64, 0.85);
 }
 
@@ -195,6 +200,7 @@
     --enea-color: #bd93f9;
     --pge-color: #6272a4;
     --stoen-color: #ff5555;
+    --psg-color: #8be9fd;
 }
 
 [data-theme="sepia"] {
@@ -222,6 +228,7 @@
     --enea-color: #003049;
     --pge-color: #2a4d69;
     --stoen-color: #9b2226;
+    --psg-color: #2a4d69;
 }
 
 [data-theme="latte"] {
@@ -249,6 +256,7 @@
     --enea-color: #3d405b;
     --pge-color: #4a4e69;
     --stoen-color: #c1121f;
+    --psg-color: #3d405b;
 }
 
 [data-theme="monochrome-light"] {
@@ -278,6 +286,7 @@
     --enea-color: #525252;
     --pge-color: #525252;
     --stoen-color: #525252;
+    --psg-color: #525252;
 }
 
 [data-theme="monochrome-dark"] {
@@ -868,7 +877,11 @@ h1 {
     border-top: 4px solid var(--stoen-color);
 }
 
-.card:not(.source-tauron):not(.source-water):not(.source-fortum):not(.source-energa):not(.source-enea):not(.source-pge):not(.source-stoen) {
+.card.source-psg {
+    border-top: 4px solid var(--psg-color);
+}
+
+.card:not(.source-tauron):not(.source-water):not(.source-fortum):not(.source-energa):not(.source-enea):not(.source-pge):not(.source-stoen):not(.source-psg) {
     border-top: 4px solid #7c7c7c;
 }
 
@@ -894,6 +907,10 @@ h1 {
 
 .card.source-stoen .outage-type {
     color: var(--stoen-color);
+}
+
+.card.source-psg .outage-type {
+    color: var(--psg-color);
 }
 
 .outage-time {
@@ -1017,6 +1034,10 @@ h1 {
 
 .collapsible.source-stoen .section-label.other {
     color: var(--stoen-color);
+}
+
+.collapsible.source-psg .section-label.other {
+    color: var(--psg-color);
 }
 
 

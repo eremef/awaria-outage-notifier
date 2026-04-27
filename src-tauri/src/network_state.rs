@@ -1,4 +1,4 @@
-use reqwest::Client;
+use reqwest::{Client, Error};
 
 pub struct NetworkState {
     pub client: Client,
@@ -13,11 +13,11 @@ impl NetworkState {
         })
     }
 
-    pub fn build_client() -> Result<Client, reqwest::Error> {
-        reqwest::Client::builder().build()
+    pub fn build_client() -> Result<Client, Error> {
+        Client::builder().build()
     }
 
-    pub fn build_client_http1() -> Result<Client, reqwest::Error> {
-        reqwest::Client::builder().http1_only().build()
+    pub fn build_client_http1() -> Result<Client, Error> {
+        Client::builder().http1_only().build()
     }
 }

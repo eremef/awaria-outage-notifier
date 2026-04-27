@@ -290,8 +290,8 @@ impl AlertProvider for EneaProvider {
 
     async fn fetch(
         &self,
-        client: &reqwest::Client,
-        _client_http1: &reqwest::Client,
+        client: &Client,
+        _client_http1: &Client,
         settings: &Settings,
     ) -> (Vec<UnifiedAlert>, Vec<String>) {
         let mut target_regions = Vec::new();

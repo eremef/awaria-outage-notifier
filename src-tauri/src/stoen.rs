@@ -92,8 +92,8 @@ impl AlertProvider for StoenProvider {
 
     async fn fetch(
         &self,
-        client: &reqwest::Client,
-        _client_http1: &reqwest::Client,
+        client: &Client,
+        _client_http1: &Client,
         settings: &Settings,
     ) -> (Vec<UnifiedAlert>, Vec<String>) {
         if !settings.addresses.iter().any(|a| a.is_active && is_warszawa(a)) {

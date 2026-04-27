@@ -311,6 +311,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             "pge" -> context.getString(R.string.provider_pge)
             "fortum" -> context.getString(R.string.provider_fortum)
             "water" -> context.getString(R.string.provider_water)
+            "psg" -> context.getString(R.string.provider_psg)
             else ->
                     key.replaceFirstChar {
                         if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
@@ -328,6 +329,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             "power" -> context.getString(R.string.label_power)
             "heat" -> context.getString(R.string.label_heat)
             "water" -> context.getString(R.string.label_water)
+            "gas" -> context.getString(R.string.label_gas)
             "no_address" -> context.getString(R.string.msg_no_address)
             "error" -> context.getString(R.string.msg_error)
             else -> key

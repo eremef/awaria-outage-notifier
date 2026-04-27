@@ -162,6 +162,38 @@
                 android:resource="@xml/widget_tri_info" />
         </receiver>
 
+        <receiver
+            android:name=".PsgWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_psg">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_PSG" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_psg_info" />
+        </receiver>
+
+        <receiver
+            android:name=".AllWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_all">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_ALL" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_all_info" />
+        </receiver>
+
         <provider
           android:name="androidx.core.content.FileProvider"
           android:authorities="${applicationId}.fileprovider"
