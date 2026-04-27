@@ -11,6 +11,13 @@ class MainActivity : TauriActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     enableEdgeToEdge()
     super.onCreate(savedInstanceState)
+    try {
+        android.util.Log.i("AWARIA", "Calling initVerifier from onCreate")
+        WidgetUtils.initVerifier(this)
+        android.util.Log.i("AWARIA", "initVerifier call completed")
+    } catch (e: Exception) {
+        android.util.Log.e("AWARIA", "Failed to call initVerifier: ${e.message}", e)
+    }
 
     val decorView = this.window.decorView
     ViewCompat.setOnApplyWindowInsetsListener(decorView) { _, insets: WindowInsetsCompat ->
