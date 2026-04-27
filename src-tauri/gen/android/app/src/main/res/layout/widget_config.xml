@@ -1,63 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
+
+  <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="24dp">
 
     <TextView
-        android:id="@+id/config_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/config_select_address"
-        android:textColor="?android:attr/textColorPrimary"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="16dp" />
+      android:id="@+id/config_title"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginBottom="24dp"
+      android:text="@string/config_select_address"
+      android:textColor="?android:attr/textColorPrimary"
+      android:textSize="20sp"
+      android:textStyle="bold" />
 
     <ListView
-        android:id="@+id/address_list"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:choiceMode="singleChoice"
-        android:divider="?android:attr/listDivider"
-        android:dividerHeight="1dp" />
+      android:id="@+id/address_list"
+      android:layout_width="match_parent"
+      android:layout_height="0dp"
+      android:layout_weight="1"
+      android:choiceMode="singleChoice"
+      android:divider="?android:attr/listDivider"
+      android:dividerHeight="1dp" />
 
     <RelativeLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="24dp">
+
+      <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp">
+        android:orientation="horizontal">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
+        <Button
+          android:id="@+id/btn_cancel"
+          android:layout_width="0dp"
+          android:layout_height="wrap_content"
+          android:layout_weight="1"
+          android:text="@string/config_cancel"
+          android:textColor="?android:attr/textColorSecondary" />
 
-            <Button
-                android:id="@+id/btn_cancel"
-                style="?android:attr/borderlessButtonStyle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/config_cancel"
-                android:textColor="?android:attr/textColorSecondary" />
+        <Button
+          android:id="@+id/btn_confirm"
+          android:layout_width="0dp"
+          android:layout_height="wrap_content"
+          android:layout_weight="1"
+          android:enabled="false"
+          android:text="@string/config_confirm"
+          android:textColor="?android:attr/textColorSecondary" />
+      </LinearLayout>
 
-            <Button
-                android:id="@+id/btn_confirm"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/config_confirm"
-                android:enabled="false" />
-        </LinearLayout>
-
-        <ProgressBar
-            android:id="@+id/config_progress"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_centerInParent="true"
-            android:visibility="gone" />
+      <ProgressBar
+        android:id="@+id/config_progress"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_centerInParent="true"
+        android:visibility="gone" />
     </RelativeLayout>
 
-</LinearLayout>
+  </LinearLayout>
+</FrameLayout>

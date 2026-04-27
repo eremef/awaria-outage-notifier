@@ -1,21 +1,37 @@
 package xyz.eremef.awaria
 
-import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.Intent
+import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.view.View
+import android.view.WindowManager
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.ListView
 import android.widget.ProgressBar
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import kotlinx.coroutines.*
 
-class WidgetConfigActivity : Activity() {
+class WidgetConfigActivity : ComponentActivity() {
     private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
     private var fullAddresses = listOf<WidgetSettings>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Enable edge-to-edge for Android 15+ (API 35+) compatibility.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT)
+        )
+        
+        // Set layout in display cutout mode to use the full screen including notch areas.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        }
+
         super.onCreate(savedInstanceState)
         
         // Default to canceled
@@ -127,8 +143,10 @@ class WidgetConfigActivity : Activity() {
 
         val settingsList = provider.loadSettings(this)
         if (settingsList != null) {
-            fullAddresses = settingsList
-            for (ws in settingsList) {
+            // Only show active addresses
+            val activeSettings = settingsList.filter { it.isActive }
+            fullAddresses = activeSettings
+            for (ws in activeSettings) {
                 val displayName = if (ws.name.isNotEmpty()) ws.name else "${ws.cityName}, ${ws.streetName} ${ws.houseNo}"
                 names.add(displayName)
             }

@@ -19,8 +19,8 @@
     <string name="widget_label_pge">PGE</string>
     <string name="widget_label_stoen">Stoen</string>
     <string name="widget_label_psg">PSG</string>
-    <string name="widget_label_tri">Status</string>
-    <string name="widget_label_all">Wszystkie media</string>
+    <string name="widget_label_tri">Adres: prąd, ciepło, woda</string>
+    <string name="widget_label_all">Adres: wszystkie media</string>
     <string name="msg_setup_needed">Skonfiguruj</string>
     <string name="msg_updating">Aktualizacja...</string>
     <string name="msg_inactive">Nieaktywne</string>

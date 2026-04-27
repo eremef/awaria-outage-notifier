@@ -19,8 +19,8 @@
     <string name="widget_label_pge">PGE</string>
     <string name="widget_label_stoen">Stoen</string>
     <string name="widget_label_psg">PSG</string>
-    <string name="widget_label_tri">Status</string>
-    <string name="widget_label_all">All utilities</string>
+    <string name="widget_label_tri">Address: power, heat, water</string>
+    <string name="widget_label_all">Address: all utilities</string>
     <string name="msg_setup_needed">Setup needed</string>
     <string name="msg_updating">Updating...</string>
     <string name="msg_inactive">Inactive</string>
