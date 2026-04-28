@@ -35,6 +35,16 @@ fn _init_db(conn: &mut Connection) -> Result<(), String> {
         [],
     )
     .map_err(|e| e.to_string())?;
+ 
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS kv_store (
+            key TEXT PRIMARY KEY,
+            value TEXT,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
 
     Ok(())
 }
@@ -82,6 +92,30 @@ fn _prune_old_alerts(conn: &Connection, days: i32) -> Result<(), String> {
     .map_err(|e| e.to_string())?;
 
     Ok(())
+}
+
+#[allow(dead_code)]
+pub fn set_kv(conn: &Connection, key: &str, value: &str) -> Result<(), String> {
+    conn.execute(
+        "INSERT OR REPLACE INTO kv_store (key, value, updated_at) VALUES (?1, ?2, CURRENT_TIMESTAMP)",
+        params![key, value],
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+pub fn get_kv(conn: &Connection, key: &str) -> Result<Option<String>, String> {
+    let mut stmt = conn
+        .prepare("SELECT value FROM kv_store WHERE key = ?1")
+        .map_err(|e| e.to_string())?;
+
+    let mut rows = stmt.query(params![key]).map_err(|e| e.to_string())?;
+    if let Some(row) = rows.next().map_err(|e| e.to_string())? {
+        let val: String = row.get(0).map_err(|e| e.to_string())?;
+        Ok(Some(val))
+    } else {
+        Ok(None)
+    }
 }
 
 #[cfg(test)]

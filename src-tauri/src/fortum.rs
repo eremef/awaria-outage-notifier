@@ -148,6 +148,7 @@ impl AlertProvider for FortumProvider {
         client: &Client,
         _client_http1: &Client,
         settings: &Settings,
+        _app_handle: Option<&tauri::AppHandle>,
     ) -> (Vec<UnifiedAlert>, Vec<String>) {
         let active_addresses = settings.addresses.iter().filter(|a| a.is_active).collect::<Vec<_>>();
         if active_addresses.is_empty() {

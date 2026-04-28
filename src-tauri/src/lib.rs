@@ -287,9 +287,10 @@ async fn fetch_all_alerts(
             let sem = semaphore.clone();
             let c = client.clone();
             let c_h1 = client_http1.clone();
+            let app_h = app.clone();
             tasks.push(tokio::spawn(async move {
                 let _permit = sem.acquire().await.ok();
-                provider.fetch(&c, &c_h1, &s_p).await
+                provider.fetch(&c, &c_h1, &s_p, Some(&app_h)).await
             }));
         }
 
@@ -591,7 +592,7 @@ pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchCountFromRust(
 
         match provider {
             Some(p) => {
-                let (mut alerts, errors) = p.fetch(&client, &client_http1, &settings).await;
+                let (mut alerts, errors) = p.fetch(&client, &client_http1, &settings, None).await;
                 if alerts.is_empty() && !errors.is_empty() {
                     let _ = env.throw_new("java/io/IOException", errors.join("; "));
                     return -1;

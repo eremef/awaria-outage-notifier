@@ -208,6 +208,7 @@ impl AlertProvider for EnergaProvider {
         client: &Client,
         _client_http1: &Client,
         settings: &Settings,
+        _app_handle: Option<&tauri::AppHandle>,
     ) -> (Vec<UnifiedAlert>, Vec<String>) {
         fn is_in_energa_region(addr: &crate::api_logic::AddressEntry) -> bool {
             let v = addr.voivodeship.to_lowercase();

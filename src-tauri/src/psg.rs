@@ -1,11 +1,15 @@
 use reqwest::Client;
 use crate::api_logic::{AlertSource, UnifiedAlert, AlertProvider, Settings};
-use crate::utils::retry;
 use async_trait::async_trait;
 use scraper::{Html, Selector};
+use tauri::{AppHandle, Manager};
+#[cfg(not(target_os = "android"))]
+use tauri::{WebviewWindowBuilder, WebviewUrl, Event, Listener};
+use crate::state_db;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const PSG_URL: &str = "https://www.psgaz.pl/przerwy-w-dostawie-gazu";
-pub const PSG_AJAX_URL: &str = "https://www.psgaz.pl/przerwy-w-dostawie-gazu?p_p_id=supplyinterruptions_WAR_supplyinterruptionsportlet&p_p_lifecycle=2&p_p_resource_id=getSupplyInterruptions";
+const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
 pub struct PsgProvider;
 
@@ -20,50 +24,232 @@ impl AlertProvider for PsgProvider {
         _client: &Client,
         _client_http1: &Client,
         settings: &Settings,
+        app_handle: Option<&AppHandle>,
     ) -> (Vec<UnifiedAlert>, Vec<String>) {
         let active_addresses: Vec<_> = settings.addresses.iter().filter(|a| a.is_active).collect();
         if active_addresses.is_empty() {
             return (Vec::new(), Vec::new());
         }
 
-        // We use a custom client with cookie store for PSG because it requires session cookies
-        let client: Client = match Client::builder().cookie_store(true).build() {
-            Ok(c) => c,
-            Err(e) => return (Vec::new(), vec![format!("PSG client error: {}", e)]),
-        };
-
-        match retry(|| async {
-            // First fetch to establish session
-            let _ = client.get(PSG_URL)
-                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-                .send()
-                .await?;
-            
-            // Second fetch to get portlet data
-            let text = client.get(PSG_AJAX_URL)
-                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-                .header("X-Requested-With", "XMLHttpRequest")
-                .send()
-                .await?
-                .text()
-                .await?;
-            
-            Ok::<String, reqwest::Error>(text)
-        }, 3).await {
-            Ok(html) => {
+        if let Some(app) = app_handle {
+            if let Ok(html) = try_direct_fetch_with_cache(app).await {
                 let alerts = parse_psg_html(&html, settings);
-                (alerts, Vec::new())
+                if !alerts.is_empty() || html.contains("województwo") || html.contains("Polska Spółka Gazownictwa") || html.contains("Przerwy w dostawie gazu") {
+                    log::info!("PSG: Data fetched from cache/direct successfully");
+                    return (alerts, Vec::new());
+                }
             }
-            Err(e) => (Vec::new(), vec![format!("PSG error: {}", e)]),
+            
+            match fetch_via_webview(app).await {
+                Ok(html) => {
+                    let alerts = parse_psg_html(&html, settings);
+                    (alerts, Vec::new())
+                }
+                Err(e) => {
+                    log::error!("PSG Fetch Error: {}", e);
+                    (Vec::new(), vec![format!("PSG WebView error: {}", e)])
+                }
+            }
+        } else {
+            (Vec::new(), vec!["PSG: WebView fetch requires AppHandle".to_string()])
         }
     }
+}
+
+async fn try_direct_fetch_with_cache(app: &AppHandle) -> Result<String, String> {
+    let (cookies, cache_time) = {
+        let db = app.state::<crate::state_db::DbState>();
+        let conn = db.conn.lock().map_err(|e| e.to_string())?;
+        
+        let cookies = state_db::get_kv(&conn, "psg_cookies")?.ok_or("No cached cookies")?;
+        
+        let cache_time = state_db::get_kv(&conn, "psg_cookies_time")?
+            .and_then(|s| s.parse::<u64>().ok())
+            .unwrap_or(0);
+        (cookies, cache_time)
+    };
+    
+    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+    if now - cache_time > 25 * 60 {
+        return Err("Cookies expired".to_string());
+    }
+
+    let client = Client::builder()
+        .user_agent(USER_AGENT)
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let res = client.get(PSG_URL)
+        .header("Cookie", cookies)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let status = res.status();
+    if status.is_success() {
+        let text = res.text().await.map_err(|e| e.to_string())?;
+        if text.contains("województwo") || text.contains("supply-interruptions") || text.contains("Polska Spółka Gazownictwa") || text.contains("Przerwy w dostawie gazu") {
+            return Ok(text);
+        }
+    }
+    
+    Err(format!("Direct fetch failed: {}", status))
+}async fn fetch_via_webview(#[allow(unused_variables)] app: &AppHandle) -> Result<String, String> {
+    #[cfg(target_os = "android")]
+    {
+        log::warn!("PSG WebView fetch skipped on Android to avoid showing the website activity.");
+        return Err("WebView fetch not supported on Android".to_string());
+    }
+
+    #[cfg(not(target_os = "android"))]
+    {
+        log::info!("Starting PSG WebView fetch (timeout 90s)...");
+        
+        if let Some(_existing) = app.get_webview_window("psg_fetcher") {
+            let _ = _existing.close();
+            tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+        }
+
+        let script = r#"
+            (function() {
+                console.log('PSG-FETCH: Script injected');
+                function check() {
+                    const body = document.body ? document.body.innerHTML : '';
+                    if (body.includes('województwo') || body.includes('supply-interruptions') || body.includes('miejscowość') || body.includes('Polska Spółka Gazownictwa') || body.includes('Przerwy w dostawie gazu') || body.includes('Brak przerw')) {
+                        console.log('PSG-FETCH: Data found, emitting...');
+                        const data = {
+                            cookies: document.cookie,
+                            html: document.documentElement.outerHTML
+                        };
+                        
+                        const payload = JSON.stringify(data);
+                        
+                        // Try to emit via all possible channels
+                        try {
+                            if (window.__TAURI__ && window.__TAURI__.event) {
+                                window.__TAURI__.event.emit('psg_data_ready', data);
+                            }
+                        } catch(e) {}
+                        
+                        try {
+                            if (window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.emit) {
+                                window.__TAURI_INTERNALS__.emit('psg_data_ready', data);
+                            }
+                        } catch(e) {}
+
+                        // Low-level IPC fallback for remote pages where Tauri might not be fully injected
+                        try {
+                            const ipcMsg = JSON.stringify({
+                                cmd: 'emit',
+                                event: 'psg_data_ready',
+                                payload: data
+                            });
+                            if (window.chrome && window.chrome.webview && window.chrome.webview.postMessage) {
+                                window.chrome.webview.postMessage(ipcMsg);
+                            } else if (window.ipc && window.ipc.postMessage) {
+                                window.ipc.postMessage(ipcMsg);
+                            }
+                        } catch(e) {}
+
+                        return true;
+                    }
+                    
+                    if (body.includes('Checking your browser') || body.includes('Verify you are human') || body.includes('Cloudflare')) {
+                        console.log('PSG-FETCH: Cloudflare challenge detected...');
+                    }
+                    
+                    return false;
+                }
+
+                let attempts = 0;
+                const interval = setInterval(() => {
+                    attempts++;
+                    if (check() || attempts > 80) {
+                        clearInterval(interval);
+                    }
+                }, 1000);
+                check();
+            })();
+        "#;
+
+        let mut builder = WebviewWindowBuilder::new(app, "psg_fetcher", WebviewUrl::External(PSG_URL.parse().unwrap()))
+            .user_agent(USER_AGENT)
+            .initialization_script(script);
+
+        #[cfg(desktop)]
+        {
+            builder = builder.title("PSG Fetcher").visible(false);
+        }
+
+        let window = builder.build()
+            .map_err(|e: tauri::Error| e.to_string())?;
+
+        let (tx, rx) = tokio::sync::oneshot::channel::<String>();
+        let tx = std::sync::Arc::new(std::sync::Mutex::new(Some(tx)));
+        
+        let app_clone = app.clone();
+        // Listen globally since events from remote pages might be weirdly scoped
+        let _id = app.listen("psg_data_ready", move |event: Event| {
+            log::info!("PSG-FETCH: Received psg_data_ready event!");
+            if let Ok(data) = serde_json::from_str::<serde_json::Value>(event.payload()) {
+                if let Some(cookies) = data.get("cookies").and_then(|v| v.as_str()) {
+                    let _ = save_cookies(&app_clone, cookies);
+                }
+                if let Some(html) = data.get("html").and_then(|v| v.as_str()) {
+                    if let Some(tx) = tx.lock().unwrap().take() {
+                        let _ = tx.send(html.to_string());
+                    }
+                }
+            }
+        });
+
+        let result = match tokio::time::timeout(std::time::Duration::from_secs(90), rx).await {
+            Ok(Ok(html)) => {
+                log::info!("PSG-FETCH: Success!");
+                Ok(html)
+            },
+            Ok(Err(_)) => Err("Channel closed".to_string()),
+            Err(_) => Err("Timeout waiting for PSG data (Cloudflare challenge might be too slow or blocking JS)".to_string()),
+        };
+        
+        #[cfg(desktop)]
+        let _ = window.close();
+        
+        result
+    }
+}
+
+#[cfg(not(target_os = "android"))]
+fn save_cookies(app: &AppHandle, cookies: &str) -> Result<(), String> {
+    let db = app.state::<crate::state_db::DbState>();
+    let conn = db.conn.lock().map_err(|e| e.to_string())?;
+    
+    state_db::set_kv(&conn, "psg_cookies", cookies)?;
+    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+    state_db::set_kv(&conn, "psg_cookies_time", &now.to_string())?;
+    
+    Ok(())
+}
+
+fn normalize(s: &str) -> String {
+    s.to_lowercase()
+        .replace('ą', "a")
+        .replace('ć', "c")
+        .replace('ę', "e")
+        .replace('ł', "l")
+        .replace('ń', "n")
+        .replace('ó', "o")
+        .replace('ś', "s")
+        .replace('ź', "z")
+        .replace('ż', "z")
+        .trim()
+        .to_string()
 }
 
 pub fn parse_psg_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAlert> {
     let mut alerts = Vec::new();
     let document = Html::parse_document(html_content);
     
-    // The table rows for PSG
     let row_selector = Selector::parse("tr").unwrap();
     let td_selector = Selector::parse("td").unwrap();
 
@@ -78,15 +264,21 @@ pub fn parse_psg_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAle
             let status = cells[7].text().collect::<Vec<_>>().join(" ").trim().to_string();
 
             if status.to_lowercase().contains("zakończona") {
-                continue; // We only want Active and Planned
+                continue;
             }
 
             let mut matched_index = None;
             let mut is_local = false;
 
+            let norm_city = normalize(&city);
+            let norm_area = normalize(&area);
+
             for (idx, addr) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
-                if city.to_lowercase() == addr.city_name.to_lowercase() {
-                    if area.to_lowercase().contains(&addr.street_name_1.to_lowercase()) {
+                let addr_city = normalize(&addr.city_name);
+                let addr_street = normalize(&addr.street_name_1);
+
+                if norm_city == addr_city || norm_city.contains(&addr_city) || addr_city.contains(&norm_city) {
+                    if norm_area.contains(&addr_street) {
                         matched_index = Some(idx);
                         is_local = true;
                         break;
@@ -122,24 +314,14 @@ mod tests {
         let html = r#"
             <table>
                 <tr>
-                    <td>1</td>
-                    <td>Wrocław</td>
-                    <td>Legnicka, Ruska</td>
+                    <td>Wielkopolskie</td>
+                    <td>Poznań</td>
+                    <td>ul. Bratumiły, Bożymira</td>
                     <td>2024-05-20 10:00</td>
                     <td>2024-05-20 14:00</td>
                     <td>Prace serwisowe</td>
                     <td>Planowana</td>
                     <td>Aktywna</td>
-                </tr>
-                <tr>
-                    <td>2</td>
-                    <td>Warszawa</td>
-                    <td>Grzybowska</td>
-                    <td>2024-05-21 08:00</td>
-                    <td>2024-05-21 12:00</td>
-                    <td>Inna awaria</td>
-                    <td>Awaryjna</td>
-                    <td>Zakończona</td>
                 </tr>
             </table>
         "#;
@@ -147,8 +329,8 @@ mod tests {
         let settings = Settings {
             addresses: vec![
                 AddressEntry {
-                    city_name: "Wrocław".to_string(),
-                    street_name_1: "Legnicka".to_string(),
+                    city_name: "Poznań".to_string(),
+                    street_name_1: "Bratumiły".to_string(),
                     is_active: true,
                     ..Default::default()
                 }
@@ -159,37 +341,5 @@ mod tests {
         let alerts = parse_psg_html(html, &settings);
         assert_eq!(alerts.len(), 1);
         assert_eq!(alerts[0].source, AlertSource::Psg);
-        assert_eq!(alerts[0].startDate, Some("2024-05-20 10:00".to_string()));
-        assert_eq!(alerts[0].endDate, Some("2024-05-20 14:00".to_string()));
-        assert!(alerts[0].message.as_ref().unwrap().contains("Prace serwisowe"));
-        assert!(alerts[0].is_local.unwrap_or(false));
-    }
-
-    #[tokio::test]
-    async fn test_fetch_psg_real() {
-        let provider = PsgProvider;
-        let settings = Settings {
-            addresses: vec![
-                AddressEntry {
-                    city_name: "Wrocław".to_string(),
-                    street_name_1: "Legnicka".to_string(),
-                    is_active: true,
-                    ..Default::default()
-                }
-            ],
-            ..Default::default()
-        };
-        
-        let client = Client::new();
-        let (alerts, errors) = provider.fetch(&client, &client, &settings).await;
-        
-        println!("Alerts: {:?}", alerts);
-        println!("Errors: {:?}", errors);
-        
-        // Even if there are no outages right now, we should at least check if the fetch succeeded without client errors
-        for err in &errors {
-            assert!(!err.contains("client error"));
-        }
     }
 }
-

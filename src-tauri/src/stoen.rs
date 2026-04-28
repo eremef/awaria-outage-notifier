@@ -95,6 +95,7 @@ impl AlertProvider for StoenProvider {
         client: &Client,
         _client_http1: &Client,
         settings: &Settings,
+        _app_handle: Option<&tauri::AppHandle>,
     ) -> (Vec<UnifiedAlert>, Vec<String>) {
         if !settings.addresses.iter().any(|a| a.is_active && is_warszawa(a)) {
             return (Vec::new(), Vec::new());

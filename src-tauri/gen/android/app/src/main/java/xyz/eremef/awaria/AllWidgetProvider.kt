@@ -37,7 +37,6 @@ class AllWidgetProvider : BaseWidgetProvider() {
                     primaryAddress
                 }
 
-        val language = allSettings?.firstOrNull()?.language ?: "system"
         val theme = allSettings?.firstOrNull()?.theme ?: "system"
         val dark = isDarkMode(context, theme)
 
@@ -50,49 +49,61 @@ class AllWidgetProvider : BaseWidgetProvider() {
         if (selectedAddress != null) {
             val settingsList = listOf(selectedAddress)
             val hash = calculateHash(settingsList)
+            val activeSettings = settingsList.filter { it.isActive }
 
             try {
                 coroutineScope {
-                    val settingsJson = WidgetUtils.serializeSettingsForRust(settingsList)
+                    val settingsJson = WidgetUtils.serializeSettingsForRust(activeSettings)
                     val p = async {
                         val sources = listOf("tauron", "stoen", "energa", "enea", "pge")
-                        sources.map { source ->
-                            async {
-                                try {
-                                    ProviderCache.getOrFetch(source, hash) {
-                                        WidgetUtils.fetchCountFromRust(context, source, settingsJson)
+                        sources
+                                .map { source ->
+                                    async {
+                                        try {
+                                            ProviderCache.getOrFetch(source, hash) {
+                                                WidgetUtils.fetchCountFromRust(
+                                                        context,
+                                                        source,
+                                                        settingsJson
+                                                )
+                                            }
+                                        } catch (e: Exception) {
+                                            Log.w(
+                                                    "AllWidget",
+                                                    "Failed to fetch $source: ${e.message}"
+                                            )
+                                            0
+                                        }
                                     }
-                                } catch (e: Exception) {
-                                    Log.w("AllWidget", "Failed to fetch $source: ${e.message}")
-                                    0
                                 }
-                            }
-                        }.awaitAll().sum()
+                                .awaitAll()
+                                .sum()
                     }
                     val h = async {
                         try {
-                                ProviderCache.getOrFetch("fortum", hash) {
-                                    WidgetUtils.fetchCountFromRust(context, "fortum", settingsJson)
-                                }
+                            ProviderCache.getOrFetch("fortum", hash) {
+                                WidgetUtils.fetchCountFromRust(context, "fortum", settingsJson)
+                            }
                         } catch (e: Exception) {
                             0
                         }
                     }
                     val w = async {
                         try {
-                                ProviderCache.getOrFetch("water", hash) {
-                                    WidgetUtils.fetchCountFromRust(context, "water", settingsJson)
-                                }
+                            ProviderCache.getOrFetch("water", hash) {
+                                WidgetUtils.fetchCountFromRust(context, "water", settingsJson)
+                            }
                         } catch (e: Exception) {
                             0
                         }
                     }
                     val g = async {
                         try {
-                                ProviderCache.getOrFetch("psg", hash) {
-                                    WidgetUtils.fetchCountFromRust(context, "psg", settingsJson)
-                                }
+                            ProviderCache.getOrFetch("psg", hash) {
+                                PsgWebViewFetcher.fetchCount(context, activeSettings)
+                            }
                         } catch (e: Exception) {
+                            Log.w("AllWidget", "Failed to fetch psg: ${e.message}")
                             0
                         }
                     }
@@ -105,8 +116,8 @@ class AllWidgetProvider : BaseWidgetProvider() {
                     powerCount = resP.toString()
                     heatCount = resH.toString()
                     waterCount = resW.toString()
-                    gasCount = resG.toString()
-                    totalOutages = resP + resH + resW + resG
+                    gasCount = if (resG >= 0) resG.toString() else "!"
+                    totalOutages = resP + resH + resW + (if (resG >= 0) resG else 0)
                 }
             } catch (e: Exception) {
                 Log.e("AllWidget", "Error fetching counts", e)
@@ -130,10 +141,11 @@ class AllWidgetProvider : BaseWidgetProvider() {
         val views = RemoteViews(context.packageName, R.layout.widget_all_outage)
 
         // Clicks
-        val refreshIntent = Intent(context, this::class.java).apply { 
-            action = refreshAction 
-            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-        }
+        val refreshIntent =
+                Intent(context, this::class.java).apply {
+                    action = refreshAction
+                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                }
         val refreshPending =
                 PendingIntent.getBroadcast(
                         context,
@@ -190,9 +202,15 @@ class AllWidgetProvider : BaseWidgetProvider() {
         appWidgetManager.updateAppWidget(appWidgetId, views)
     }
 
-    private fun applyAllTheme(context: Context, views: RemoteViews, themeSetting: String, dark: Boolean) {
+    private fun applyAllTheme(
+            context: Context,
+            views: RemoteViews,
+            themeSetting: String,
+            dark: Boolean
+    ) {
         if (themeSetting != "system") {
-            val bgRes = if (dark) R.drawable.widget_background_dark else R.drawable.widget_background
+            val bgRes =
+                    if (dark) R.drawable.widget_background_dark else R.drawable.widget_background
             if (bgRes != 0) {
                 views.setInt(R.id.widget_root, "setBackgroundResource", bgRes)
             }

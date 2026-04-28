@@ -293,6 +293,7 @@ impl AlertProvider for EneaProvider {
         client: &Client,
         _client_http1: &Client,
         settings: &Settings,
+        _app_handle: Option<&tauri::AppHandle>,
     ) -> (Vec<UnifiedAlert>, Vec<String>) {
         let mut target_regions = Vec::new();
         for addr in settings.addresses.iter().filter(|a| a.is_active) {

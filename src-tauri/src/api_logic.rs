@@ -237,6 +237,7 @@ pub trait AlertProvider: Send + Sync {
         client: &Client,
         client_http1: &Client,
         settings: &Settings,
+        app_handle: Option<&tauri::AppHandle>,
     ) -> (Vec<UnifiedAlert>, Vec<String>);
 }
 

@@ -358,6 +358,7 @@ impl AlertProvider for TauronProvider {
         client: &Client,
         _client_http1: &Client,
         settings: &Settings,
+        _app_handle: Option<&tauri::AppHandle>,
     ) -> (Vec<UnifiedAlert>, Vec<String>) {
         let mut tasks = Vec::new();
 

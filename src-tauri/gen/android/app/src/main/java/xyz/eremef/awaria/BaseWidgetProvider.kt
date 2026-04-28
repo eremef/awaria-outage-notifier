@@ -141,12 +141,16 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         val pendingResult = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // Parallelize widget updates
-                appWidgetIds
+                // Parallelize widget updates with a timeout to avoid ANR in goAsync()
+                withTimeoutOrNull(15000L) {
+                    appWidgetIds
                         .map { appWidgetId ->
                             async { updateWidget(context, appWidgetManager, appWidgetId) }
                         }
                         .awaitAll()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Immediate update timed out or failed: ${e.message}")
             } finally {
                 pendingResult.finish()
             }
@@ -371,10 +375,14 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 val hash = calculateHash(activeSettings)
                 val total =
                         ProviderCache.getOrFetch(sourceKey, hash) {
-                            val settingsJson = WidgetUtils.serializeSettingsForRust(activeSettings)
-                            WidgetUtils.fetchCountFromRust(context, sourceKey, settingsJson)
+                            if (sourceKey == "psg") {
+                                PsgWebViewFetcher.fetchCount(context, activeSettings)
+                            } else {
+                                val settingsJson = WidgetUtils.serializeSettingsForRust(activeSettings)
+                                WidgetUtils.fetchCountFromRust(context, sourceKey, settingsJson)
+                            }
                         }
-                count = total.toString()
+                count = if (total >= 0) total.toString() else "!"
             } catch (e: Exception) {
                 Log.e(TAG, "Error fetching count from Rust for $sourceKey: ${e.message}", e)
                 count = "!"
