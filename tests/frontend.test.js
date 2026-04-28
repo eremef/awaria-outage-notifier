@@ -267,7 +267,8 @@ describe('Frontend Logic', () => {
     describe('matchesAddress', () => {
         const { matchesAddress } = require('../public/script.js');
         const addresses = [
-            { name: 'Home', isActive: true, streetName1: 'Probusa', cityName: 'Wrocław' }
+            { name: 'Home', isActive: true, streetName1: 'Probusa', cityName: 'Wrocław' },
+            { name: 'Work', isActive: true, streetName1: '', cityName: 'Oleśnica' }
         ];
 
         it('respects backend matching for specific sources', () => {
@@ -281,6 +282,68 @@ describe('Frontend Logic', () => {
         it('falls back to street name matching for other sources', () => {
             const alert = { source: 'unknown', message: 'Utrudnienia na Probusa' };
             expect(matchesAddress(alert, addresses, 0)).toBe(true);
+        });
+
+        it('matches by city name for addresses without streets', () => {
+            const alert = { source: 'unknown', message: 'Awaria w mieście Oleśnica' };
+            expect(matchesAddress(alert, addresses, 1)).toBe(true);
+            
+            const alert2 = { source: 'unknown', message: 'Awaria w mieście Wrocław' };
+            expect(matchesAddress(alert2, addresses, 1)).toBe(false);
+        });
+    });
+
+    describe('escapeHtml', () => {
+        const { escapeHtml } = require('../public/script.js');
+        it('escapes special characters', () => {
+            expect(escapeHtml('<script>alert("xss")</script>')).toBe('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;');
+            expect(escapeHtml('Hello & Welcome')).toBe('Hello &amp; Welcome');
+        });
+        it('handles null or undefined', () => {
+            expect(escapeHtml(null)).toBe(null);
+            expect(escapeHtml(undefined)).toBe(undefined);
+        });
+    });
+
+    describe('renderAlerts complex scenarios', () => {
+        const { renderAlerts, setSelectedAddressIndex } = require('../public/script.js');
+        
+        it('renders empty state when no addresses', () => {
+            document.body.innerHTML = '<div id="outages-container"></div>';
+            const container = document.getElementById('outages-container');
+            renderAlerts([], container, { addresses: [] }, -1);
+            expect(container.innerHTML).toContain('Welcome to Awaria');
+        });
+
+        it('renders disabled state when all addresses inactive', () => {
+            document.body.innerHTML = '<div id="outages-container"></div>';
+            const container = document.getElementById('outages-container');
+            renderAlerts([], container, { addresses: [{ isActive: false }] }, -1);
+            expect(container.innerHTML).toContain('Monitoring Paused');
+        });
+
+        it('renders section for local and other alerts', () => {
+            document.body.innerHTML = '<div id="outages-container"></div>';
+            const container = document.getElementById('outages-container');
+            const settings = {
+                addresses: [
+                    { name: 'Home', isActive: true, streetName1: 'Probusa', cityName: 'Wrocław' },
+                    { name: 'Work', isActive: true, streetName1: 'Legnicka', cityName: 'Wrocław' }
+                ],
+                enabledSources: ['tauron']
+            };
+            const alerts = [
+                { source: 'tauron', message: 'Probusa 1', isLocal: true, addressIndex: 0, hash: 'h1' },
+                { source: 'tauron', message: 'Legnicka 1', isLocal: true, addressIndex: 1, hash: 'h2' }
+            ];
+
+            // Filter for Home (index 0)
+            renderAlerts(alerts, container, settings, 0);
+            
+            expect(container.innerHTML).toContain('Your location');
+            expect(container.innerHTML).toContain('Probusa 1');
+            // Legnicka 1 should be in "Other alerts" (rendered in timeout, so we might need to wait or just check initial state)
+            expect(container.innerHTML).not.toContain('Legnicka 1');
         });
     });
 });

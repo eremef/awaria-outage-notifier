@@ -1715,6 +1715,7 @@ if (typeof document !== 'undefined') {
             updateNotifyStatus,
             updateUpcomingStatus,
             matchesAddress,
+            escapeHtml,
             setCurrentSettings: (s) => { currentSettings = s; },
             setLastAlerts: (a) => { lastAlerts = a; },
             setSelectedAddressIndex: (i) => { selectedAddressIndex = i; }

@@ -117,6 +117,54 @@ mod tests {
     use super::*;
     use crate::api_logic::{AddressEntry, Settings};
 
+    #[test]
+    fn test_parse_psg_html_mock() {
+        let html = r#"
+            <table>
+                <tr>
+                    <td>1</td>
+                    <td>Wrocław</td>
+                    <td>Legnicka, Ruska</td>
+                    <td>2024-05-20 10:00</td>
+                    <td>2024-05-20 14:00</td>
+                    <td>Prace serwisowe</td>
+                    <td>Planowana</td>
+                    <td>Aktywna</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Warszawa</td>
+                    <td>Grzybowska</td>
+                    <td>2024-05-21 08:00</td>
+                    <td>2024-05-21 12:00</td>
+                    <td>Inna awaria</td>
+                    <td>Awaryjna</td>
+                    <td>Zakończona</td>
+                </tr>
+            </table>
+        "#;
+        
+        let settings = Settings {
+            addresses: vec![
+                AddressEntry {
+                    city_name: "Wrocław".to_string(),
+                    street_name_1: "Legnicka".to_string(),
+                    is_active: true,
+                    ..Default::default()
+                }
+            ],
+            ..Default::default()
+        };
+        
+        let alerts = parse_psg_html(html, &settings);
+        assert_eq!(alerts.len(), 1);
+        assert_eq!(alerts[0].source, AlertSource::Psg);
+        assert_eq!(alerts[0].startDate, Some("2024-05-20 10:00".to_string()));
+        assert_eq!(alerts[0].endDate, Some("2024-05-20 14:00".to_string()));
+        assert!(alerts[0].message.as_ref().unwrap().contains("Prace serwisowe"));
+        assert!(alerts[0].is_local.unwrap_or(false));
+    }
+
     #[tokio::test]
     async fn test_fetch_psg_real() {
         let provider = PsgProvider;

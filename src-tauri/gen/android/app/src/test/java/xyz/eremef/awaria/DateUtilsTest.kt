@@ -47,6 +47,8 @@ class DateUtilsTest {
         assertNull(DateUtils.parseDate("not-a-date"))
         assertNull(DateUtils.parseDate(""))
         assertNull(DateUtils.parseDate(null))
+        // Special case from PSG
+        assertNull(DateUtils.parseDate("termin zostanie podany wkrótce"))
     }
 
     @Test

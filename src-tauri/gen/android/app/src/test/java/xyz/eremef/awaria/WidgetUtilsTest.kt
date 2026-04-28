@@ -81,4 +81,14 @@ class WidgetUtilsTest {
         // Missing commune
         assertFalse(matcher.matchesFull("Outage at Kuźnicza, Wrocław", listOf("Other Area")))
     }
+
+    @Test
+    fun testMatchesCityOnly() {
+        val settings = createSettings(cityName = "Wrocław", streetName1 = "")
+        val matcher = WidgetUtils.CompiledMatcher(settings)
+        
+        // When no street is configured, it matches if city is in message
+        assertTrue(matcher.matchesFull("Brak prądu w mieście Wrocław"))
+        assertFalse(matcher.matchesFull("Brak prądu w Opolu"))
+    }
 }
