@@ -502,7 +502,7 @@ mod tests {
         };
 
         let provider = TauronProvider;
-        let (alerts, errors) = provider.fetch(&client, &client, &settings).await;
+        let (alerts, errors) = provider.fetch(&client, &client, &settings, None).await;
 
         assert!(errors.is_empty(), "Expected no errors but got: {:?}", errors);
         assert_eq!(alerts.len(), 1, "Alerts found: {:?}, Errors: {:?}", alerts, errors);
