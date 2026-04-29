@@ -118,25 +118,25 @@ jobs:
           # The export step might fail due to "No Team Found", but the archive should be created.
           # We search for the .xcarchive first.
           
-          XCARCHIVE_PATH=$(find src-tauri/gen/apple/build -name "*.xcarchive" | head -n 1)
+          XCARCHIVE_PATH=$(find src-tauri -name "*.xcarchive" 2>/dev/null | head -n 1)
           APP_PATH=""
 
-          if [ -d "$XCARCHIVE_PATH" ]; then
+          if [ -n "$XCARCHIVE_PATH" ] && [ -d "$XCARCHIVE_PATH" ]; then
              echo "Found xcarchive at $XCARCHIVE_PATH"
-             APP_PATH=$(find "$XCARCHIVE_PATH/Products/Applications" -name "*.app" | head -n 1)
+             APP_PATH=$(find "$XCARCHIVE_PATH/Products/Applications" -name "*.app" 2>/dev/null | head -n 1)
           else
              echo "xcarchive not found, checking for .app directly..."
-             # Fallback to direct app path (standard derived data or build output)
-             POSSIBLE_APPS=$(find src-tauri/gen/apple/build -name "*.app" | head -n 1)
+             # Fallback to direct app path
+             POSSIBLE_APPS=$(find src-tauri -type d -name "*.app" 2>/dev/null | head -n 1)
              if [ -n "$POSSIBLE_APPS" ]; then
                 APP_PATH="$POSSIBLE_APPS"
              fi
           fi
           
-          if [ ! -d "$APP_PATH" ]; then
+          if [ -z "$APP_PATH" ] || [ ! -d "$APP_PATH" ]; then
              echo "Critical Error: .app bundle not found!"
              echo "Listing build directory for debugging:"
-             ls -R src-tauri/gen/apple/build || true
+             find src-tauri -name "*.app" 2>/dev/null || true
              exit 1
           fi
 
