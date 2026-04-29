@@ -34,10 +34,12 @@ object PsgWebViewFetcher {
     private const val PSG_URL = "https://www.psgaz.pl/przerwy-w-dostawie-gazu"
     private const val TIMEOUT_MS = 60000L // 60 seconds
 
-    // Cookie cache
-    private var cachedCfClearance: String? = null
-    private var cachedCookies: String? = null
-    private var cookieCacheTime = 0L
+    private const val PREFS_NAME = "xyz.eremef.awaria.PsgCache"
+    private const val KEY_HTML = "cached_html"
+    private const val KEY_HTML_TIME = "html_cache_time"
+    private const val KEY_COOKIES = "cached_cookies"
+    private const val KEY_COOKIES_TIME = "cookies_cache_time"
+    private const val HTML_TTL_MS = 60 * 60 * 1000L // 1 hour
     private const val COOKIE_TTL_MS = 25 * 60 * 1000L // 25 minutes
 
     data class PsgOutage(
@@ -72,28 +74,52 @@ object PsgWebViewFetcher {
      * Fetches the PSG page HTML, trying direct fetch first, then WebView fallback.
      */
     private suspend fun fetchHtml(context: Context): String? {
-        // 1. Try direct fetch with cached cookies
-        val directResult = tryDirectFetch()
+        val now = System.currentTimeMillis()
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        
+        // 1. Try persistent HTML cache (1 hour)
+        val cachedHtml = prefs.getString(KEY_HTML, null)
+        val htmlTime = prefs.getLong(KEY_HTML_TIME, 0L)
+        if (cachedHtml != null && now - htmlTime < HTML_TTL_MS) {
+            Log.i(TAG, "Using persistent HTML cache (1h TTL)")
+            return cachedHtml
+        }
+
+        // 2. Try direct fetch with cached cookies
+        val directResult = tryDirectFetch(context)
         if (directResult != null) {
             Log.i(TAG, "Direct fetch succeeded (using cached cookies)")
+            saveHtmlCache(context, directResult)
             return directResult
         }
 
-        // 2. WebView fallback
+        // 3. WebView fallback
         Log.i(TAG, "Direct fetch failed, falling back to WebView")
-        return fetchViaWebView(context)
+        val webViewResult = fetchViaWebView(context)
+        if (webViewResult != null) {
+            saveHtmlCache(context, webViewResult)
+        }
+        return webViewResult
+    }
+
+    private fun saveHtmlCache(context: Context, html: String) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
+            .putString(KEY_HTML, html)
+            .putLong(KEY_HTML_TIME, System.currentTimeMillis())
+            .apply()
     }
 
     /**
      * Try fetching the PSG page directly using HttpURLConnection with cached cookies.
      */
-    private fun tryDirectFetch(): String? {
+    private fun tryDirectFetch(context: Context): String? {
         val now = System.currentTimeMillis()
-        val cookies = cachedCookies ?: return null
-        if (now - cookieCacheTime > COOKIE_TTL_MS) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val cookies = prefs.getString(KEY_COOKIES, null) ?: return null
+        val cookieTime = prefs.getLong(KEY_COOKIES_TIME, 0L)
+        
+        if (now - cookieTime > COOKIE_TTL_MS) {
             Log.d(TAG, "Cookie cache expired")
-            cachedCookies = null
-            cachedCfClearance = null
             return null
         }
 
@@ -160,7 +186,7 @@ object PsgWebViewFetcher {
                                         val unescaped = unescapeJsString(html)
                                         if (unescaped.contains("województwo") || unescaped.contains("supply-interruptions") || unescaped.contains("Polska Spółka Gazownictwa") || unescaped.contains("Wyszukiwarka") || unescaped.contains("Przerwy w dostawie gazu") || unescaped.contains("Brak przerw")) {
                                             // Cache cookies for future direct fetches
-                                            cacheCookies()
+                                            cacheCookies(context)
                                             deferred.complete(unescaped)
                                         } else {
                                             Log.w(TAG, "WebView loaded but no outage table found, might be CF challenge page")
@@ -171,7 +197,7 @@ object PsgWebViewFetcher {
                                                 ) { retryHtml ->
                                                     val retryUnescaped = if (retryHtml != null && retryHtml != "null") unescapeJsString(retryHtml) else null
                                                     if (retryUnescaped != null && (retryUnescaped.contains("województwo") || retryUnescaped.contains("supply-interruptions") || retryUnescaped.contains("Polska Spółka Gazownictwa") || retryUnescaped.contains("Przerwy w dostawie gazu"))) {
-                                                        cacheCookies()
+                                                        cacheCookies(context)
                                                         deferred.complete(retryUnescaped)
                                                     } else {
                                                         deferred.complete(null)
@@ -215,16 +241,15 @@ object PsgWebViewFetcher {
         return withTimeoutOrNull(TIMEOUT_MS) { deferred.await() }
     }
 
-    private fun cacheCookies() {
+    private fun cacheCookies(context: Context) {
         try {
             val cookies = CookieManager.getInstance().getCookie(PSG_URL)
             if (cookies != null) {
-                cachedCookies = cookies
-                cookieCacheTime = System.currentTimeMillis()
-                // Extract cf_clearance specifically
-                val cfMatch = Regex("cf_clearance=([^;]+)").find(cookies)
-                cachedCfClearance = cfMatch?.groupValues?.get(1)
-                Log.i(TAG, "Cached cookies (cf_clearance=${cachedCfClearance != null})")
+                context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
+                    .putString(KEY_COOKIES, cookies)
+                    .putLong(KEY_COOKIES_TIME, System.currentTimeMillis())
+                    .apply()
+                Log.i(TAG, "Cached cookies persistently")
             }
         } catch (e: Exception) {
             Log.w(TAG, "Failed to cache cookies: ${e.message}")

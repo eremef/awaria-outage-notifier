@@ -32,17 +32,28 @@ impl AlertProvider for PsgProvider {
         }
 
         if let Some(app) = app_handle {
+            // 1. Try persistent HTML cache (1 hour TTL)
+            if let Ok(Some(cached_html)) = get_cached_html(app).await {
+                log::info!("PSG: Using cached HTML (1h TTL)");
+                let alerts = parse_psg_html(&cached_html, settings);
+                return (alerts, Vec::new());
+            }
+
+            // 2. Try direct fetch with cached cookies (25 min TTL)
             if let Ok(html) = try_direct_fetch_with_cache(app).await {
                 let alerts = parse_psg_html(&html, settings);
                 if !alerts.is_empty() || html.contains("województwo") || html.contains("Polska Spółka Gazownictwa") || html.contains("Przerwy w dostawie gazu") {
-                    log::info!("PSG: Data fetched from cache/direct successfully");
+                    log::info!("PSG: Data fetched from direct successfully");
+                    let _ = save_cached_html(app, &html).await;
                     return (alerts, Vec::new());
                 }
             }
             
+            // 3. Fallback to WebView
             match fetch_via_webview(app).await {
                 Ok(html) => {
                     let alerts = parse_psg_html(&html, settings);
+                    let _ = save_cached_html(app, &html).await;
                     (alerts, Vec::new())
                 }
                 Err(e) => {
@@ -227,6 +238,33 @@ fn save_cookies(app: &AppHandle, cookies: &str) -> Result<(), String> {
     state_db::set_kv(&conn, "psg_cookies", cookies)?;
     let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
     state_db::set_kv(&conn, "psg_cookies_time", &now.to_string())?;
+    
+    Ok(())
+}
+
+async fn get_cached_html(app: &AppHandle) -> Result<Option<String>, String> {
+    let db = app.state::<crate::state_db::DbState>();
+    let conn = db.conn.lock().map_err(|e| e.to_string())?;
+    
+    let cache_time = state_db::get_kv(&conn, "psg_html_time")?
+        .and_then(|s| s.parse::<u64>().ok())
+        .unwrap_or(0);
+    
+    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+    if now - cache_time < 60 * 60 { // 1 hour
+        return Ok(state_db::get_kv(&conn, "psg_html_cache")?);
+    }
+    
+    Ok(None)
+}
+
+async fn save_cached_html(app: &AppHandle, html: &str) -> Result<(), String> {
+    let db = app.state::<crate::state_db::DbState>();
+    let conn = db.conn.lock().map_err(|e| e.to_string())?;
+    
+    state_db::set_kv(&conn, "psg_html_cache", html)?;
+    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+    state_db::set_kv(&conn, "psg_html_time", &now.to_string())?;
     
     Ok(())
 }
