@@ -78,6 +78,22 @@ class WidgetUpdateWorker(
             triProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        // Update All-Status widgets
+        val allName = ComponentName(context, AllWidgetProvider::class.java)
+        val allIds = appWidgetManager.getAppWidgetIds(allName)
+        val allProvider = AllWidgetProvider()
+        for (id in allIds) {
+            allProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update PSG widgets
+        val psgName = ComponentName(context, PsgWidgetProvider::class.java)
+        val psgIds = appWidgetManager.getAppWidgetIds(psgName)
+        val psgProvider = PsgWidgetProvider()
+        for (id in psgIds) {
+            psgProvider.updateWidget(context, appWidgetManager, id)
+        }
+
         return androidx.work.ListenableWorker.Result.success()
     }
 }

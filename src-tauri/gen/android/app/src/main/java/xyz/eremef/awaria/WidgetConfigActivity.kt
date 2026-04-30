@@ -53,7 +53,11 @@ class WidgetConfigActivity : ComponentActivity() {
             return
         }
 
-        val addressNames = loadAddressNames()
+        val appWidgetManager = AppWidgetManager.getInstance(this)
+        val info = appWidgetManager.getAppWidgetInfo(appWidgetId)
+        val provider = getProviderForWidget(info?.provider?.className ?: "")
+
+        val addressNames = loadAddressNames(provider)
         val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_single_choice, addressNames)
         val listView = findViewById<ListView>(R.id.address_list)
         listView.adapter = adapter
@@ -111,9 +115,6 @@ class WidgetConfigActivity : ComponentActivity() {
                 BaseWidgetProvider.saveAddressId(context, appWidgetId, addressId)
             }
 
-            // Update the widget
-            val appWidgetManager = AppWidgetManager.getInstance(context)
-            
             // Success result
             val resultValue = Intent().apply {
                 putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
@@ -123,7 +124,7 @@ class WidgetConfigActivity : ComponentActivity() {
             // Trigger an immediate update and finish
             CoroutineScope(Dispatchers.IO).launch {
                 try {
-                    TriWidgetProvider().updateWidget(context, appWidgetManager, appWidgetId)
+                    provider.updateWidget(context, appWidgetManager, appWidgetId)
                 } finally {
                     withContext(Dispatchers.Main) {
                         finish()
@@ -133,14 +134,25 @@ class WidgetConfigActivity : ComponentActivity() {
         }
     }
 
-    private fun loadAddressNames(): List<String> {
+    private fun getProviderForWidget(className: String): BaseWidgetProvider {
+        return when {
+            className.contains("AllWidgetProvider") -> AllWidgetProvider()
+            className.contains("TauronWidgetProvider") -> TauronWidgetProvider()
+            className.contains("EnergaWidgetProvider") -> EnergaWidgetProvider()
+            className.contains("EneaWidgetProvider") -> EneaWidgetProvider()
+            className.contains("PgeWidgetProvider") -> PgeWidgetProvider()
+            className.contains("StoenWidgetProvider") -> StoenWidgetProvider()
+            className.contains("FortumWidgetProvider") -> FortumWidgetProvider()
+            className.contains("MpwikWidgetProvider") -> MpwikWidgetProvider()
+            className.contains("PsgWidgetProvider") -> PsgWidgetProvider()
+            else -> TriWidgetProvider()
+        }
+    }
+
+    private fun loadAddressNames(provider: BaseWidgetProvider): List<String> {
         val names = mutableListOf<String>()
         names.add(getString(R.string.config_primary_address))
         
-        // Use an actual TriWidgetProvider instance to load settings 
-        // ensuring the exactly same behavior (e.g. sourceKey logic)
-        val provider = TriWidgetProvider()
-
         val settingsList = provider.loadSettings(this)
         if (settingsList != null) {
             // Only show active addresses
