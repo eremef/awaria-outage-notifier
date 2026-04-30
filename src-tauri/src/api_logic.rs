@@ -117,7 +117,6 @@ impl<'a> MonitorEngine<'a> {
                 // --- UPCOMING NOTIFICATION ---
                 if self.settings.upcoming_notification_enabled {
                     if let Some(start_str) = &alert.startDate {
-                        // Utility function parse_date will be moved or accessed via crate::utils
                         if let Some(start_dt) = crate::utils::parse_date(start_str) {
                             let now_utc = chrono::Utc::now();
                             let diff_hours = (start_dt - now_utc).num_hours();
@@ -126,7 +125,7 @@ impl<'a> MonitorEngine<'a> {
                                 let upcoming_hash = format!("upcoming_{}", hash);
                                 if let Ok(false) = self.db.is_alert_seen(&source_key, &upcoming_hash) {
                                     let title = format_notification_title(&alert, self.settings, true);
-                                    let body = format_notification_body(&alert);
+                                    let body = format_notification_body(&alert, self.settings);
                                     self.notifier.show_notification(title, body, hash.clone());
                                     self.db.mark_alert_as_seen(&source_key, &upcoming_hash).ok();
                                 }
@@ -138,7 +137,7 @@ impl<'a> MonitorEngine<'a> {
                 // --- NEW ALERT NOTIFICATION ---
                 if let Ok(false) = self.db.is_alert_seen(&source_key, &hash) {
                     let title = format_notification_title(&alert, self.settings, false);
-                    let body = format_notification_body(&alert);
+                    let body = format_notification_body(&alert, self.settings);
                     self.notifier.show_notification(title, body, hash.clone());
                     self.db.mark_alert_as_seen(&source_key, &hash).ok();
                 }
@@ -149,7 +148,16 @@ impl<'a> MonitorEngine<'a> {
 
 // These functions were extracted from lib.rs but kept identical in logic
 pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_upcoming: bool) -> String {
-    let is_pl = settings.language.as_ref().map(|l| l.contains("pl")).unwrap_or(true);
+    let is_pl = match settings.language.as_deref() {
+        Some("pl") => true,
+        Some("en") => false,
+        _ => {
+            // For "system" or None, we default to Polish as it's the primary market
+            // and the content (street names, provider messages) is in Polish.
+            true
+        }
+    };
+    
     let label = match alert.source {
         AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea | AlertSource::Pge | AlertSource::Stoen => {
             if is_pl { "awaria prądu" } else { "power outage" }
@@ -179,7 +187,7 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
     title
 }
 
-pub fn format_notification_body(alert: &UnifiedAlert) -> String {
+pub fn format_notification_body(alert: &UnifiedAlert, settings: &Settings) -> String {
     let mut body = alert.message.clone().unwrap_or_default();
     
     let mut time_info = Vec::new();
@@ -208,7 +216,12 @@ pub fn format_notification_body(alert: &UnifiedAlert) -> String {
         }
     }
     if body.is_empty() {
-        return "Nowe zdarzenie".to_string();
+        let is_pl = match settings.language.as_deref() {
+            Some("pl") => true,
+            Some("en") => false,
+            _ => true,
+        };
+        return if is_pl { "Nowe zdarzenie".to_string() } else { "New event".to_string() };
     }
     body
 }
@@ -650,7 +663,8 @@ mod tests {
             ..Default::default()
         };
 
-        let body = format_notification_body(&alert);
+        let settings = Settings::default();
+        let body = format_notification_body(&alert, &settings);
         // "2024-05-20 10:00" parses to "20-05-2024 10:00"
         // "termin zostanie podany wkrótce" remains as is
         assert!(body.contains("20-05-2024 10:00"));
