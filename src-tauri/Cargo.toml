@@ -46,3 +46,9 @@ android_logger = "0.15"
 [dev-dependencies]
 mockito = "1.5.0"
 mockall = "0.13.1"
+
+[profile.release]
+# Enable debug symbols in release mode so Google Play can symbolicate crashes.
+# Gradle will extract these into the AAB metadata and then strip the APK binary.
+debug = true
+strip = false

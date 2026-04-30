@@ -1,0 +1,11 @@
+[target.aarch64-linux-android]
+rustflags = ["-C", "link-arg=-Wl,--build-id"]
+
+[target.armv7-linux-androideabi]
+rustflags = ["-C", "link-arg=-Wl,--build-id"]
+
+[target.i686-linux-android]
+rustflags = ["-C", "link-arg=-Wl,--build-id"]
+
+[target.x86_64-linux-android]
+rustflags = ["-C", "link-arg=-Wl,--build-id"]
