@@ -460,7 +460,7 @@ mod tests {
 
     #[test]
     fn test_unified_alert_sorting() {
-        let mut alerts = vec![
+        let mut alerts = [
             UnifiedAlert {
                 source: AlertSource::Tauron,
                 startDate: Some("2024-05-20 12:00".to_string()),

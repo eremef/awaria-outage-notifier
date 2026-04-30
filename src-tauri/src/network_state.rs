@@ -20,7 +20,7 @@ impl NetworkState {
                 Self::build_client().map_err(|e| e.to_string())
             })
             .await
-            .map(|c| c.clone())
+            .cloned()
     }
 
     pub async fn get_client_http1(&self) -> Result<Client, String> {
@@ -29,7 +29,7 @@ impl NetworkState {
                 Self::build_client_http1().map_err(|e| e.to_string())
             })
             .await
-            .map(|c| c.clone())
+            .cloned()
     }
 
     pub fn build_client() -> Result<Client, Error> {

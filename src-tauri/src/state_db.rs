@@ -150,11 +150,11 @@ mod tests {
             [],
         ).unwrap();
 
-        _prune_old_alerts(&mut conn, 5).unwrap();
+        _prune_old_alerts(&conn, 5).unwrap();
         assert!(!_is_alert_seen(&conn, "energa", "old").unwrap());
 
         _mark_alert_as_seen(&mut conn, "energa", "fresh").unwrap();
-        _prune_old_alerts(&mut conn, 5).unwrap();
+        _prune_old_alerts(&conn, 5).unwrap();
         assert!(_is_alert_seen(&conn, "energa", "fresh").unwrap());
     }
 }

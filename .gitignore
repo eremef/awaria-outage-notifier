@@ -18,3 +18,4 @@ src-tauri/gen/android/keystore.properties
 test_*.txt
 scratch/
 coverage/
+clippy*.txt

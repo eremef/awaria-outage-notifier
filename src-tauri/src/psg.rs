@@ -252,7 +252,7 @@ async fn get_cached_html(app: &AppHandle) -> Result<Option<String>, String> {
     
     let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
     if now - cache_time < 60 * 60 { // 1 hour
-        return Ok(state_db::get_kv(&conn, "psg_html_cache")?);
+        return state_db::get_kv(&conn, "psg_html_cache");
     }
     
     Ok(None)
@@ -278,8 +278,7 @@ fn normalize(s: &str) -> String {
         .replace('ń', "n")
         .replace('ó', "o")
         .replace('ś', "s")
-        .replace('ź', "z")
-        .replace('ż', "z")
+        .replace(['ź', 'ż'], "z")
         .trim()
         .to_string()
 }
@@ -315,12 +314,11 @@ pub fn parse_psg_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAle
                 let addr_city = normalize(&addr.city_name);
                 let addr_street = normalize(&addr.street_name_1);
 
-                if norm_city == addr_city || norm_city.contains(&addr_city) || addr_city.contains(&norm_city) {
-                    if norm_area.contains(&addr_street) {
-                        matched_index = Some(idx);
-                        is_local = true;
-                        break;
-                    }
+                if (norm_city == addr_city || norm_city.contains(&addr_city) || addr_city.contains(&norm_city))
+                    && norm_area.contains(&addr_street) {
+                    matched_index = Some(idx);
+                    is_local = true;
+                    break;
                 }
             }
 
