@@ -45,18 +45,18 @@ object WidgetUtils {
         init {
             val candidates = mutableListOf<String>()
             if (settings.streetName1.isNotEmpty()) {
-                // 1. Compound name
+                val s1 = settings.streetName1.trim()
                 val s2 = settings.streetName2
+
+                // 1. Compound name
                 if (!s2.isNullOrEmpty() && s2 != "null") {
-                    candidates.add("${s2.trim()} ${settings.streetName1.trim()}")
+                    candidates.add("${s2.trim()} $s1")
                 }
 
-                // 2. Individual parts (min 3 chars)
-                settings.streetName1.split(Regex("\\s+")).filter { it.length >= 3 }.forEach { candidates.add(it) }
-                s2?.takeIf { it != "null" }?.split(Regex("\\s+"))?.filter { it.length >= 3 }?.forEach { candidates.add(it) }
-
-                // 3. Full streetName (fallback)
-                if (!candidates.contains(settings.streetName1)) candidates.add(settings.streetName1)
+                // 2. Full streetName1
+                if (!candidates.contains(s1)) {
+                    candidates.add(s1)
+                }
             }
             streetRegexes = candidates.map { Regex("(?ui)(?:^|[^\\p{L}0-9])${Pattern.quote(it)}(?:[^\\p{L}0-9]|$)") }
         }

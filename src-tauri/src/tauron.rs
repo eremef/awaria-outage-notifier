@@ -304,25 +304,16 @@ impl CompiledTauronRegex {
         let has_street = !street_name_1.is_empty();
         
         if has_street {
-            let mut words = Vec::new();
+            let mut candidates = Vec::new();
             if let Some(n2) = street_name_2 {
-                let compound = format!("{} {}", n2.trim(), street_name_1.trim());
-                words.push(compound);
-            }
-            for word in street_name_1.split_whitespace() {
-                if word.len() >= 3 {
-                    words.push(word.to_string());
+                if !n2.is_empty() && n2 != "null" {
+                    let compound = format!("{} {}", n2.trim(), street_name_1.trim());
+                    candidates.push(compound);
                 }
             }
-            if let Some(n2) = street_name_2 {
-                for word in n2.split_whitespace() {
-                    if word.len() >= 3 {
-                        words.push(word.to_string());
-                    }
-                }
-            }
+            candidates.push(street_name_1.trim().to_string());
 
-            for word in words {
+            for word in candidates {
                 let p = format!(r"(?i)(?:^|[^\p{{L}}]){}(?:[^\p{{L}}]|$)", regex::escape(&word));
                 if let Ok(r) = regex::Regex::new(&p) {
                     street_candidates.push(r);

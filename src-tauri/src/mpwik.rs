@@ -59,25 +59,16 @@ impl CompiledMpwikRegex {
         let has_street = !address.street_name_1.is_empty();
 
         if has_street {
-            let mut words = Vec::new();
+            let mut candidates = Vec::new();
             if let Some(n2) = &address.street_name_2 {
-                let compound = format!("{} {}", n2.trim(), address.street_name_1.trim());
-                words.push(compound);
-            }
-            for word in address.street_name_1.split_whitespace() {
-                if word.len() >= 3 {
-                    words.push(word.to_string());
+                if !n2.is_empty() && n2 != "null" {
+                    let compound = format!("{} {}", n2.trim(), address.street_name_1.trim());
+                    candidates.push(compound);
                 }
             }
-            if let Some(n2) = &address.street_name_2 {
-                for word in n2.split_whitespace() {
-                    if word.len() >= 3 {
-                        words.push(word.to_string());
-                    }
-                }
-            }
+            candidates.push(address.street_name_1.trim().to_string());
 
-            for word in words {
+            for word in candidates {
                 let p = format!(r"(?i)(?:^|[^\p{{L}}]){}(?:[^\p{{L}}]|$)", regex::escape(&word));
                 if let Ok(r) = Regex::new(&p) {
                     street_candidates.push(r);

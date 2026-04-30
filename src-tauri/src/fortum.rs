@@ -240,26 +240,15 @@ pub fn matches_street_only(
         return true;
     }
 
-    // Build priority list: compound name first (if nazwa_2 exists), then individual words
+    // Build priority list: compound name first (if nazwa_2 exists), then street_name_1
     let mut candidates: Vec<String> = Vec::new();
     if let Some(n2) = street_name_2 {
-        let compound = format!("{} {}", n2.trim(), street_name_1.trim());
-        candidates.push(compound);
-    }
-
-    // Add significant individual words (>= 3 chars)
-    for word in street_name_1.split_whitespace() {
-        if word.len() >= 3 {
-            candidates.push(word.to_string());
+        if !n2.is_empty() && n2 != "null" {
+            let compound = format!("{} {}", n2.trim(), street_name_1.trim());
+            candidates.push(compound);
         }
     }
-    if let Some(n2) = street_name_2 {
-        for word in n2.split_whitespace() {
-            if word.len() >= 3 {
-                candidates.push(word.to_string());
-            }
-        }
-    }
+    candidates.push(street_name_1.trim().to_string());
 
     candidates.iter().any(|c| word_match(message, c))
 }
