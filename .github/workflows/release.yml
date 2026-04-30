@@ -84,73 +84,73 @@ jobs:
       #     status: completed
       #     metadataDirectory: metadata/android
 
-  release-ios:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-      - name: Install Rust target
-        run: rustup target add aarch64-apple-ios x86_64-apple-ios
-      - name: Install dependencies
-        run: npm ci
+  # release-ios:
+  #   runs-on: macos-latest
+  #   steps:
+  #     - uses: actions/checkout@v6
+  #     - uses: actions/setup-node@v6
+  #       with:
+  #         node-version: 24
+  #     - name: Install Rust target
+  #       run: rustup target add aarch64-apple-ios x86_64-apple-ios
+  #     - name: Install dependencies
+  #       run: npm ci
 
-      - name: Initialize iOS
-        run: npm run ios:init
+  #     - name: Initialize iOS
+  #       run: npm run ios:init
 
-      - name: Patch Xcode Project
-        run: |
-          sed -i '' 's/ProvisioningStyle = Automatic;/ProvisioningStyle = Manual;/g' src-tauri/gen/apple/app.xcodeproj/project.pbxproj
-          sed -i '' '/DEVELOPMENT_TEAM/d' src-tauri/gen/apple/app.xcodeproj/project.pbxproj
-          sed -i '' 's/buildSettings = {/buildSettings = { CODE_SIGNING_REQUIRED = NO; CODE_SIGNING_ALLOWED = NO; CODE_SIGN_IDENTITY = "";/g' src-tauri/gen/apple/app.xcodeproj/project.pbxproj
+  #     - name: Patch Xcode Project
+  #       run: |
+  #         sed -i '' 's/ProvisioningStyle = Automatic;/ProvisioningStyle = Manual;/g' src-tauri/gen/apple/app.xcodeproj/project.pbxproj
+  #         sed -i '' '/DEVELOPMENT_TEAM/d' src-tauri/gen/apple/app.xcodeproj/project.pbxproj
+  #         sed -i '' 's/buildSettings = {/buildSettings = { CODE_SIGNING_REQUIRED = NO; CODE_SIGNING_ALLOWED = NO; CODE_SIGN_IDENTITY = "";/g' src-tauri/gen/apple/app.xcodeproj/project.pbxproj
 
-      - name: Build iOS (Unsigned)
-        run: npm run ios:build || true
-        env:
-          CODE_SIGN_STYLE: Manual
-          CODE_SIGNING_REQUIRED: "NO"
-          CODE_SIGNING_ALLOWED: "NO"
-          CODE_SIGNING_IDENTITY: ""
+  #     - name: Build iOS (Unsigned)
+  #       run: npm run ios:build || true
+  #       env:
+  #         CODE_SIGN_STYLE: Manual
+  #         CODE_SIGNING_REQUIRED: "NO"
+  #         CODE_SIGNING_ALLOWED: "NO"
+  #         CODE_SIGNING_IDENTITY: ""
 
-      - name: Package Payload
-        run: |
-          # The export step might fail due to "No Team Found", but the archive should be created.
-          # We search for the .xcarchive first.
+  #     - name: Package Payload
+  #       run: |
+  #         # The export step might fail due to "No Team Found", but the archive should be created.
+  #         # We search for the .xcarchive first.
           
-          XCARCHIVE_PATH=$(find src-tauri -name "*.xcarchive" 2>/dev/null | head -n 1)
-          APP_PATH=""
+  #         XCARCHIVE_PATH=$(find src-tauri -name "*.xcarchive" 2>/dev/null | head -n 1)
+  #         APP_PATH=""
 
-          if [ -n "$XCARCHIVE_PATH" ] && [ -d "$XCARCHIVE_PATH" ]; then
-             echo "Found xcarchive at $XCARCHIVE_PATH"
-             APP_PATH=$(find "$XCARCHIVE_PATH/Products/Applications" -name "*.app" 2>/dev/null | head -n 1)
-          else
-             echo "xcarchive not found, checking for .app directly..."
-             # Fallback to direct app path
-             POSSIBLE_APPS=$(find src-tauri -type d -name "*.app" 2>/dev/null | head -n 1)
-             if [ -n "$POSSIBLE_APPS" ]; then
-                APP_PATH="$POSSIBLE_APPS"
-             fi
-          fi
+  #         if [ -n "$XCARCHIVE_PATH" ] && [ -d "$XCARCHIVE_PATH" ]; then
+  #            echo "Found xcarchive at $XCARCHIVE_PATH"
+  #            APP_PATH=$(find "$XCARCHIVE_PATH/Products/Applications" -name "*.app" 2>/dev/null | head -n 1)
+  #         else
+  #            echo "xcarchive not found, checking for .app directly..."
+  #            # Fallback to direct app path
+  #            POSSIBLE_APPS=$(find src-tauri -type d -name "*.app" 2>/dev/null | head -n 1)
+  #            if [ -n "$POSSIBLE_APPS" ]; then
+  #               APP_PATH="$POSSIBLE_APPS"
+  #            fi
+  #         fi
           
-          if [ -z "$APP_PATH" ] || [ ! -d "$APP_PATH" ]; then
-             echo "Critical Error: .app bundle not found!"
-             echo "Listing build directory for debugging:"
-             find src-tauri -name "*.app" 2>/dev/null || true
-             exit 1
-          fi
+  #         if [ -z "$APP_PATH" ] || [ ! -d "$APP_PATH" ]; then
+  #            echo "Critical Error: .app bundle not found!"
+  #            echo "Listing build directory for debugging:"
+  #            find src-tauri -name "*.app" 2>/dev/null || true
+  #            exit 1
+  #         fi
 
-          echo "Found app at $APP_PATH"
-          mkdir Payload
-          cp -r "$APP_PATH" Payload/
-          zip -r awaria-ios-${{ github.ref_name }}-unsigned.ipa Payload
+  #         echo "Found app at $APP_PATH"
+  #         mkdir Payload
+  #         cp -r "$APP_PATH" Payload/
+  #         zip -r awaria-ios-${{ github.ref_name }}-unsigned.ipa Payload
 
-      - name: Upload IPA
-        uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          prerelease: ${{ contains(github.ref_name, 'alpha') }}
-          files: awaria-ios-${{ github.ref_name }}-unsigned.ipa
+  #     - name: Upload IPA
+  #       uses: softprops/action-gh-release@v2
+  #       if: startsWith(github.ref, 'refs/tags/')
+  #       with:
+  #         prerelease: ${{ contains(github.ref_name, 'alpha') }}
+  #         files: awaria-ios-${{ github.ref_name }}-unsigned.ipa
 
   release-desktop:
     permissions:
