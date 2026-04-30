@@ -427,28 +427,9 @@ pub fn run() {
             app.manage(DbState { conn: Mutex::new(conn) });
             app.manage(cache::CacheState::new());
 
-            #[cfg(target_os = "android")]
-            {
-                use tauri::Manager;
-                log::info!("Checking for webview windows to initialize rustls-platform-verifier...");
-                
-                // Fallback: If we can't initialize here, NetworkState::new() might panic if it uses rustls immediately.
-                // However, we now initialize it in MainActivity.onCreate() which is called very early.
-                
-                let windows = app.webview_windows();
-                for (label, window) in windows {
-                    log::info!("Initializing verifier for window during setup: {}", label);
-                    let _ = window.with_webview(|webview| {
-                        webview.jni_handle().exec(|env, context, _webview| {
-                            ensure_verifier_initialized(env, context);
-                        });
-                    });
-                }
-            }
-
             app.manage(network_state::NetworkState::new()?);
 
-            if cfg!(debug_assertions) {
+            if cfg!(debug_assertions) || cfg!(target_os = "android") {
                 app.handle().plugin(
                     tauri_plugin_log::Builder::default()
                         .level(log::LevelFilter::Info)
@@ -482,10 +463,6 @@ fn ensure_verifier_initialized(env: &mut JNIEnv, context: &JObject) {
     if INITIALIZED.load(std::sync::atomic::Ordering::SeqCst) {
         return;
     }
-
-    android_logger::init_once(
-        android_logger::Config::default().with_tag("AWARIA_RUST").with_max_level(log::LevelFilter::Info),
-    );
 
     log::info!("Attempting to initialize rustls-platform-verifier...");
     let class_loader = match env.call_method(context, "getClassLoader", "()Ljava/lang/ClassLoader;", &[]) {
