@@ -5,7 +5,6 @@ mod fortum;
 mod mpwik;
 mod pge;
 mod network_state;
-use crate::network_state::NetworkState;
 mod state_db;
 mod stoen;
 mod tauron;
@@ -14,6 +13,7 @@ mod utils;
 mod cache;
 mod psg;
 
+use crate::network_state::NetworkState;
 use api_logic::{
     load_settings_from_path, save_settings_to_path,
     AddressEntry, Settings, UnifiedAlert,
@@ -42,6 +42,18 @@ use teryt::{TerytCity, TerytStreet};
 
 
 const MAX_CONCURRENT_REQUESTS: usize = 5;
+
+#[derive(Clone, Copy)]
+struct SendRawVM(usize);
+unsafe impl Send for SendRawVM {}
+unsafe impl Sync for SendRawVM {}
+
+#[cfg(target_os = "android")]
+static RAW_VM: Mutex<Option<SendRawVM>> = Mutex::new(None);
+#[cfg(target_os = "android")]
+static ANDROID_CONTEXT: Mutex<Option<std::sync::Arc<jni::objects::GlobalRef>>> = Mutex::new(None);
+#[cfg(target_os = "android")]
+static PSG_FETCHER_CLASS: Mutex<Option<std::sync::Arc<jni::objects::GlobalRef>>> = Mutex::new(None);
 
 // ── Trait implementations for production ──────────────────
 
@@ -498,6 +510,31 @@ fn ensure_verifier_initialized(env: &mut JNIEnv, context: &JObject) {
     };
 
     log::info!("Calling rustls_platform_verifier::android::init_with_refs...");
+    
+    // Store for our own use (before moving into init_with_refs)
+    if let Ok(mut g_vm) = RAW_VM.lock() {
+        *g_vm = Some(SendRawVM(vm.get_java_vm_pointer() as usize));
+    }
+    if let Ok(mut g_ctx) = ANDROID_CONTEXT.lock() {
+        *g_ctx = Some(std::sync::Arc::new(context_ref.clone()));
+    }
+
+    // Also find and cache our PsgWebViewFetcher class
+    log::info!("Caching PsgWebViewFetcher class...");
+    match env.find_class("xyz/eremef/awaria/PsgWebViewFetcher") {
+        Ok(cls) => {
+            if let Ok(cls_ref) = env.new_global_ref(cls) {
+                if let Ok(mut g_psg) = PSG_FETCHER_CLASS.lock() {
+                    *g_psg = Some(std::sync::Arc::new(cls_ref));
+                    log::info!("PsgWebViewFetcher class cached successfully.");
+                }
+            }
+        }
+        Err(e) => {
+            log::error!("Failed to find PsgWebViewFetcher class: {:?}", e);
+        }
+    }
+
     rustls_platform_verifier::android::init_with_refs(vm, context_ref, loader_ref);
     INITIALIZED.store(true, std::sync::atomic::Ordering::SeqCst);
     log::info!("rustls-platform-verifier initialized successfully.");
@@ -616,4 +653,38 @@ pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_initVerifier(
     context: JObject,
 ) {
     ensure_verifier_initialized(&mut env, &context);
+}
+
+#[cfg(target_os = "android")]
+pub async fn get_psg_html_android() -> Result<String, String> {
+    let raw_vm_wrapper = RAW_VM.lock().map_err(|e| e.to_string())?.ok_or("JavaVM not initialized")?;
+    let context_ref = ANDROID_CONTEXT.lock().map_err(|e| e.to_string())?.clone().ok_or("Android Context not initialized")?;
+    let class_ref = PSG_FETCHER_CLASS.lock().map_err(|e| e.to_string())?.clone().ok_or("PsgWebViewFetcher class not cached")?;
+    
+    tokio::task::spawn_blocking(move || {
+        let vm = unsafe { jni::JavaVM::from_raw(raw_vm_wrapper.0 as *mut jni::sys::JavaVM).map_err(|e| e.to_string())? };
+        let mut env = vm.attach_current_thread().map_err(|e: jni::errors::Error| e.to_string())?;
+        let context = context_ref.as_obj();
+        let class = class_ref.as_obj();
+        
+        // Convert to JClass for call_static_method
+        let class = unsafe { jni::objects::JClass::from_raw(class.as_raw()) };
+        
+        let result = env.call_static_method(
+            &class,
+            "fetchHtmlNative",
+            "(Landroid/content/Context;)Ljava/lang/String;",
+            &[jni::objects::JValue::Object(context)]
+        ).map_err(|e: jni::errors::Error| e.to_string())?;
+        
+        let html_obj = result.l().map_err(|e: jni::errors::Error| e.to_string())?;
+        if html_obj.is_null() {
+            return Err("Native PSG fetch returned null".to_string());
+        }
+        
+        let html_jstr: jni::objects::JString = html_obj.into();
+        let html: String = env.get_string(&html_jstr).map_err(|e: jni::errors::Error| e.to_string())?.into();
+        
+        Ok(html)
+    }).await.map_err(|e| e.to_string())?
 }

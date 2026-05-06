@@ -19,3 +19,4 @@ test_*.txt
 scratch/
 coverage/
 clippy*.txt
+src-tauri/target_test/

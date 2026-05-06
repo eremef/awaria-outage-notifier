@@ -99,17 +99,18 @@ async fn try_direct_fetch_with_cache(app: &AppHandle) -> Result<String, String> 
     let status = res.status();
     if status.is_success() {
         let text = res.text().await.map_err(|e| e.to_string())?;
-        if text.contains("województwo") || text.contains("supply-interruptions") || text.contains("Polska Spółka Gazownictwa") || text.contains("Przerwy w dostawie gazu") {
+        // Stricter check: must contain table headers to be considered successful
+        if (text.contains("województwo") || text.contains("miejscowość")) && (text.contains("obszar") || text.contains("<table")) {
             return Ok(text);
         }
     }
     
-    Err(format!("Direct fetch failed: {}", status))
+    Err(format!("Direct fetch failed (or blocked by Cloudflare): {}", status))
 }async fn fetch_via_webview(#[allow(unused_variables)] app: &AppHandle) -> Result<String, String> {
     #[cfg(target_os = "android")]
     {
-        log::warn!("PSG WebView fetch skipped on Android to avoid showing the website activity.");
-        return Err("WebView fetch not supported on Android".to_string());
+        log::info!("Starting native PSG fetch on Android...");
+        crate::get_psg_html_android().await
     }
 
     #[cfg(not(target_os = "android"))]
@@ -126,7 +127,8 @@ async fn try_direct_fetch_with_cache(app: &AppHandle) -> Result<String, String> 
                 console.log('PSG-FETCH: Script injected');
                 function check() {
                     const body = document.body ? document.body.innerHTML : '';
-                    if (body.includes('województwo') || body.includes('supply-interruptions') || body.includes('miejscowość') || body.includes('Polska Spółka Gazownictwa') || body.includes('Przerwy w dostawie gazu') || body.includes('Brak przerw')) {
+                    // Stricter check: must contain table headers to avoid false positives on Cloudflare challenge pages
+                    if ((body.includes('województwo') || body.includes('miejscowość')) && (body.includes('obszar') || body.includes('<table'))) {
                         console.log('PSG-FETCH: Data found, emitting...');
                         const data = {
                             cookies: document.cookie,
@@ -299,8 +301,8 @@ pub fn parse_psg_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAle
             let end_date = cells[4].text().collect::<Vec<_>>().join(" ").trim().to_string();
             let message = cells[5].text().collect::<Vec<_>>().join(" ").trim().to_string();
             let status = cells[7].text().collect::<Vec<_>>().join(" ").trim().to_string();
-
-            if status.to_lowercase().contains("zakończona") {
+            let status_low = status.to_lowercase();
+            if status_low.contains("zakończona") || status_low.contains("zakonczona") {
                 continue;
             }
 
@@ -314,8 +316,20 @@ pub fn parse_psg_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAle
                 let addr_city = normalize(&addr.city_name);
                 let addr_street = normalize(&addr.street_name_1);
 
-                if (norm_city == addr_city || norm_city.contains(&addr_city) || addr_city.contains(&norm_city))
-                    && norm_area.contains(&addr_street) {
+                // City match: exact or contains
+                let city_match = norm_city == addr_city || norm_city.contains(&addr_city) || addr_city.contains(&norm_city);
+                
+                // If city didn't match directly, check if the city name is mentioned in the AREA field
+                // This happens when PSG puts the commune in the city column and village in the area column
+                let city_in_area = !city_match && norm_area.contains(&addr_city);
+                
+                let street_match = if addr_street.is_empty() {
+                    true // City-level match
+                } else {
+                    norm_area.contains(&addr_street)
+                };
+
+                if (city_match || city_in_area) && street_match {
                     matched_index = Some(idx);
                     is_local = true;
                     break;

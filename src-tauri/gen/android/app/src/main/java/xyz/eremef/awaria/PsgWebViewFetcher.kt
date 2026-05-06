@@ -8,6 +8,7 @@ import android.webkit.CookieManager
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
+import androidx.annotation.Keep
 import android.webkit.WebViewClient
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +30,7 @@ import java.util.regex.Pattern
  * 3. Extract HTML from the WebView and cache the cf_clearance cookie
  * 4. Parse the outage table from the HTML
  */
+@Keep
 object PsgWebViewFetcher {
     private const val TAG = "PsgWebViewFetcher"
     private const val PSG_URL = "https://www.psgaz.pl/przerwy-w-dostawie-gazu"
@@ -52,6 +54,14 @@ object PsgWebViewFetcher {
         val type: String,
         val status: String
     )
+    
+    @Keep
+    @JvmStatic
+    fun fetchHtmlNative(context: Context): String? {
+        return kotlinx.coroutines.runBlocking {
+            fetchHtml(context)
+        }
+    }
 
     /**
      * Main entry point: fetches and counts PSG outages matching the given settings.
