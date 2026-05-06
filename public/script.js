@@ -136,8 +136,7 @@ if (typeof document !== 'undefined') {
         if (!window.__TAURI__) return;
 
         // Guard against about:blank origin which causes Tauri capability errors on startup
-        if (window.location.href === 'about:blank') {
-            setTimeout(checkAndRequestNotificationPermission, 100);
+        if (window.location.href === 'about:blank' || window.location.href === 'http://localhost/') {
             return;
         }
 

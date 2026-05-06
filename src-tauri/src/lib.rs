@@ -43,9 +43,12 @@ use teryt::{TerytCity, TerytStreet};
 
 const MAX_CONCURRENT_REQUESTS: usize = 5;
 
+#[cfg(target_os = "android")]
 #[derive(Clone, Copy)]
 struct SendRawVM(usize);
+#[cfg(target_os = "android")]
 unsafe impl Send for SendRawVM {}
+#[cfg(target_os = "android")]
 unsafe impl Sync for SendRawVM {}
 
 #[cfg(target_os = "android")]
