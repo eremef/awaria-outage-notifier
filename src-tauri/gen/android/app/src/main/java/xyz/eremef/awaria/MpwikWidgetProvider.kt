@@ -7,6 +7,6 @@ class MpwikWidgetProvider : BaseWidgetProvider() {
     override val primaryColorRes: Int = R.color.brand_mpwik
     override val iconResId: Int = R.drawable.ic_water
     override val labelKey: String = "outages"
-    override val sourceKey: String = "water"
+    override val sourceKey: String = "mpwik_wroclaw"
 
 }

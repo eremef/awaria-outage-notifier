@@ -195,6 +195,10 @@ impl AlertProvider for EnergaProvider {
         "energa".to_string()
     }
 
+    fn source(&self) -> AlertSource {
+        AlertSource::Energa
+    }
+
     async fn fetch(
         &self,
         client: &Client,
@@ -202,16 +206,6 @@ impl AlertProvider for EnergaProvider {
         settings: &Settings,
         _app_handle: Option<&tauri::AppHandle>,
     ) -> (Vec<UnifiedAlert>, Vec<String>) {
-        fn is_in_energa_region(addr: &crate::api_logic::AddressEntry) -> bool {
-            let v = addr.voivodeship.to_lowercase();
-            v.contains("pomorskie") || v.contains("warmińsko") || v.contains("zachodniopomorskie") || 
-            v.contains("wielkopolskie") || v.contains("kujawsko") || v.contains("mazowieckie")
-        }
-
-        if !settings.addresses.iter().any(|a| a.is_active && is_in_energa_region(a)) {
-            return (Vec::new(), Vec::new());
-        }
-
         match retry(|| fetch_energa_alerts(client), 3).await {
                 Ok(shutdowns) => {
                     let mut alerts = Vec::new();

@@ -314,8 +314,9 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             "energa" -> context.getString(R.string.provider_energa)
             "pge" -> context.getString(R.string.provider_pge)
             "fortum" -> context.getString(R.string.provider_fortum)
-            "water" -> context.getString(R.string.provider_water)
+            "mpwik_wroclaw" -> context.getString(R.string.provider_water)
             "psg" -> context.getString(R.string.provider_psg)
+            "wmk" -> context.getString(R.string.provider_wmk)
             else ->
                     key.replaceFirstChar {
                         if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()

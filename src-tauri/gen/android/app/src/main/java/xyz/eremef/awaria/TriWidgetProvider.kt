@@ -55,36 +55,62 @@ class TriWidgetProvider : BaseWidgetProvider() {
                     val settingsJson = WidgetUtils.serializeSettingsForRust(settingsList)
                     val p = async {
                         val sources = listOf("tauron", "stoen", "energa", "enea", "pge")
-                        sources.map { source ->
-                            async {
-                                try {
-                                    ProviderCache.getOrFetch(source, hash) {
-                                        WidgetUtils.fetchCountFromRust(context, source, settingsJson)
+                        sources
+                                .map { source ->
+                                    async {
+                                        try {
+                                            ProviderCache.getOrFetch(source, hash) {
+                                                WidgetUtils.fetchCountFromRust(
+                                                        context,
+                                                        source,
+                                                        settingsJson
+                                                )
+                                            }
+                                        } catch (e: Exception) {
+                                            Log.w(
+                                                    "TriWidget",
+                                                    "Failed to fetch $source: ${e.message}"
+                                            )
+                                            0
+                                        }
                                     }
-                                } catch (e: Exception) {
-                                    Log.w("TriWidget", "Failed to fetch $source: ${e.message}")
-                                    0
                                 }
-                            }
-                        }.awaitAll().sum()
+                                .awaitAll()
+                                .sum()
                     }
                     val h = async {
                         try {
-                                ProviderCache.getOrFetch("fortum", hash) {
-                                    WidgetUtils.fetchCountFromRust(context, "fortum", settingsJson)
-                                }
+                            ProviderCache.getOrFetch("fortum", hash) {
+                                WidgetUtils.fetchCountFromRust(context, "fortum", settingsJson)
+                            }
                         } catch (e: Exception) {
                             0
                         }
                     }
                     val w = async {
-                        try {
-                                ProviderCache.getOrFetch("water", hash) {
-                                    WidgetUtils.fetchCountFromRust(context, "water", settingsJson)
+                        val waterSources = listOf("mpwik_wroclaw", "wmk")
+                        waterSources
+                                .map { source ->
+                                    async {
+                                        try {
+                                            ProviderCache.getOrFetch(source, hash) {
+                                                WidgetUtils.fetchCountFromRust(
+                                                        context,
+                                                        source,
+                                                        settingsJson
+                                                )
+                                            }
+                                        } catch (e: Exception) {
+                                            Log.w(
+                                                    "TriWidget",
+                                                    "Failed to fetch $source: ${e.message}"
+                                            )
+                                            0
+                                        }
+                                    }
                                 }
-                        } catch (e: Exception) {
-                            0
-                        }
+                                .awaitAll()
+                                .sum()
                     }
 
                     val resP = p.await()
@@ -118,10 +144,11 @@ class TriWidgetProvider : BaseWidgetProvider() {
         val views = RemoteViews(context.packageName, R.layout.widget_tri_outage)
 
         // Clicks
-        val refreshIntent = Intent(context, this::class.java).apply { 
-            action = refreshAction 
-            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-        }
+        val refreshIntent =
+                Intent(context, this::class.java).apply {
+                    action = refreshAction
+                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                }
         val refreshPending =
                 PendingIntent.getBroadcast(
                         context,
@@ -175,12 +202,19 @@ class TriWidgetProvider : BaseWidgetProvider() {
         appWidgetManager.updateAppWidget(appWidgetId, views)
     }
 
-    private fun applyTriTheme(context: Context, views: RemoteViews, themeSetting: String, dark: Boolean) {
-        // If system theme is selected, the XML handles background and generic label colors automatically.
+    private fun applyTriTheme(
+            context: Context,
+            views: RemoteViews,
+            themeSetting: String,
+            dark: Boolean
+    ) {
+        // If system theme is selected, the XML handles background and generic label colors
+        // automatically.
         // We only explicitly set them here to support manual theme overrides.
 
         if (themeSetting != "system") {
-            val bgRes = if (dark) R.drawable.widget_background_dark else R.drawable.widget_background
+            val bgRes =
+                    if (dark) R.drawable.widget_background_dark else R.drawable.widget_background
             if (bgRes != 0) {
                 views.setInt(R.id.widget_root, "setBackgroundResource", bgRes)
             }
@@ -195,8 +229,8 @@ class TriWidgetProvider : BaseWidgetProvider() {
             views.setTextColor(R.id.label_water, labelColor)
         }
 
-        // Utility Colors Pull from theme-aware resources. 
-        // We set these in code because they can be tinted/forced per address logic, 
+        // Utility Colors Pull from theme-aware resources.
+        // We set these in code because they can be tinted/forced per address logic,
         // but we use the resource ID to let context resolve it.
         val colorPower = context.getColor(R.color.utility_power)
         val colorHeat = context.getColor(R.color.utility_heat)

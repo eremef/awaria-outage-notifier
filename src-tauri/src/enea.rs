@@ -278,6 +278,10 @@ impl AlertProvider for EneaProvider {
         "enea".to_string()
     }
 
+    fn source(&self) -> AlertSource {
+        AlertSource::Enea
+    }
+
     async fn fetch(
         &self,
         client: &Client,

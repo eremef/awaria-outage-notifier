@@ -43,13 +43,14 @@
     --message-border: #f1f5f9;
     --label-border: #e2e8f0;
     --tauron-color: #e3067e;
-    --water-color: #0ea5e9;
+    --mpwik_wroclaw-color: #0ea5e9;
     --fortum-color: #00a859;
     --energa-color: #e50512;
     --enea-color: #00225f;
     --pge-color: #1e3a8a;
     --stoen-color: #ea1b0a;
     --psg-color: #38bdf8;
+    --wmk-color: #01618F;
     --nav-bg: rgba(248, 250, 252, 0.85);
 }
 
@@ -77,13 +78,14 @@
     --message-border: #1e293b;
     --label-border: #334155;
     --tauron-color: #df489b;
-    --water-color: #38bdf8;
+    --mpwik_wroclaw-color: #38bdf8;
     --fortum-color: #10b981;
     --energa-color: #f87171;
     --enea-color: #60a5fa;
     --pge-color: #3b82f6;
     --stoen-color: #f87171;
     --psg-color: #38bdf8;
+    --wmk-color: #38bdf8;
     --nav-bg: rgba(15, 23, 42, 0.85);
 }
 
@@ -106,13 +108,14 @@
     --message-border: #ecfdf5;
     --label-border: #dcfce7;
     --tauron-color: #ff048e;
-    --water-color: #3b82f6;
+    --mpwik_wroclaw-color: #3b82f6;
     --fortum-color: #10b981;
     --energa-color: #be123c;
     --enea-color: #0369a1;
     --pge-color: #1d4ed8;
     --stoen-color: #be123c;
     --psg-color: #3b82f6;
+    --wmk-color: #0284c7;
     --nav-bg: rgba(240, 253, 244, 0.85);
 }
 
@@ -136,13 +139,14 @@
     --message-border: #164e63;
     --label-border: #164e63;
     --tauron-color: #e3067e;
-    --water-color: #38bdf8;
+    --mpwik_wroclaw-color: #38bdf8;
     --fortum-color: #4ade80;
     --energa-color: #fb7185;
     --enea-color: #bae6fd;
     --pge-color: #7dd3fc;
     --stoen-color: #fb7185;
     --psg-color: #38bdf8;
+    --wmk-color: #38bdf8;
     --nav-bg: rgba(8, 51, 68, 0.85);
 }
 
@@ -165,13 +169,14 @@
     --message-border: #434c5e;
     --label-border: #4c566a;
     --tauron-color: #df5ca4;
-    --water-color: #81a1c1;
+    --mpwik_wroclaw-color: #81a1c1;
     --fortum-color: #a3be8c;
     --energa-color: #bf616a;
     --enea-color: #5e81ac;
     --pge-color: #88c0d0;
     --stoen-color: #bf616a;
     --psg-color: #88c0d0;
+    --wmk-color: #81a1c1;
     --nav-bg: rgba(46, 52, 64, 0.85);
 }
 
@@ -194,13 +199,14 @@
     --message-border: #44475a;
     --label-border: #44475a;
     --tauron-color: #ff048e;
-    --water-color: #8be9fd;
+    --mpwik_wroclaw-color: #8be9fd;
     --fortum-color: #50fa7b;
     --energa-color: #ff5555;
     --enea-color: #bd93f9;
     --pge-color: #6272a4;
     --stoen-color: #ff5555;
     --psg-color: #8be9fd;
+    --wmk-color: #8be9fd;
 }
 
 [data-theme="sepia"] {
@@ -222,13 +228,14 @@
     --message-border: #e0d5ba;
     --label-border: #d6ccb2;
     --tauron-color: #9c3a70;
-    --water-color: #556b2f;
+    --mpwik_wroclaw-color: #556b2f;
     --fortum-color: #6a994e;
     --energa-color: #9b2226;
     --enea-color: #003049;
     --pge-color: #2a4d69;
     --stoen-color: #9b2226;
     --psg-color: #2a4d69;
+    --wmk-color: #3d5a80;
 }
 
 [data-theme="latte"] {
@@ -250,13 +257,14 @@
     --message-border: #f1e4d8;
     --label-border: #ede0d4;
     --tauron-color: #bc6c25;
-    --water-color: #588157;
+    --mpwik_wroclaw-color: #588157;
     --fortum-color: #6a994e;
     --energa-color: #c1121f;
     --enea-color: #3d405b;
     --pge-color: #4a4e69;
     --stoen-color: #c1121f;
     --psg-color: #3d405b;
+    --wmk-color: #2a6f97;
 }
 
 [data-theme="monochrome-light"] {
@@ -280,13 +288,14 @@
     --label-border: #e5e5e5;
     --source-color: #525252;
     --tauron-color: #525252;
-    --water-color: #525252;
+    --mpwik_wroclaw-color: #525252;
     --fortum-color: #525252;
     --energa-color: #525252;
     --enea-color: #525252;
     --pge-color: #525252;
     --stoen-color: #525252;
     --psg-color: #525252;
+    --wmk-color: #525252;
 }
 
 [data-theme="monochrome-dark"] {
@@ -310,13 +319,14 @@
     --label-border: #404040;
     --source-color: #a3a3a3;
     --tauron-color: #a3a3a3;
-    --water-color: #a3a3a3;
+    --mpwik_wroclaw-color: #a3a3a3;
     --fortum-color: #a3a3a3;
     --energa-color: #a3a3a3;
     --enea-color: #a3a3a3;
     --pge-color: #a3a3a3;
     --stoen-color: #a3a3a3;
     --psg-color: #a3a3a3;
+    --wmk-color: #a3a3a3;
 }
 
 * {
@@ -626,6 +636,31 @@ h1 {
     gap: 8px;
 }
 
+.settings-checkbox-row {
+    display: flex !important;
+    align-items: flex-start;
+    margin: 0.75rem 0;
+    padding: 0.5rem 0;
+    gap: 12px;
+}
+
+.settings-checkbox-row label {
+    color: var(--text-color) !important;
+    font-size: 0.9rem;
+    font-weight: 400;
+    margin: 0 !important;
+    cursor: pointer;
+    line-height: 1.3;
+}
+
+.settings-checkbox-row input[type="checkbox"] {
+    width: 1.2rem;
+    height: 1.2rem;
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--checkbox-accent, var(--primary-color));
+}
+
 .permission-warning {
     background-color: rgba(239, 68, 68, 0.1);
     border: 1px solid var(--error-text);
@@ -862,8 +897,8 @@ h1 {
     border-top: 4px solid var(--tauron-color);
 }
 
-.card.source-water {
-    border-top: 4px solid var(--water-color);
+.card.source-mpwik_wroclaw {
+    border-top: 4px solid var(--mpwik_wroclaw-color);
 }
 
 .card.source-fortum {
@@ -882,7 +917,11 @@ h1 {
     border-top: 4px solid var(--psg-color);
 }
 
-.card:not(.source-tauron):not(.source-water):not(.source-fortum):not(.source-energa):not(.source-enea):not(.source-pge):not(.source-stoen):not(.source-psg) {
+.card.source-wmk {
+    border-top: 4px solid var(--wmk-color);
+}
+
+.card:not(.source-tauron):not(.source-mpwik_wroclaw):not(.source-fortum):not(.source-energa):not(.source-enea):not(.source-pge):not(.source-stoen):not(.source-psg):not(.source-wmk) {
     border-top: 4px solid #7c7c7c;
 }
 
@@ -890,8 +929,8 @@ h1 {
     color: var(--tauron-color);
 }
 
-.card.source-water .outage-type {
-    color: var(--water-color);
+.card.source-mpwik_wroclaw .outage-type {
+    color: var(--mpwik_wroclaw-color);
 }
 
 .card.source-energa .outage-type {
@@ -912,6 +951,10 @@ h1 {
 
 .card.source-psg .outage-type {
     color: var(--psg-color);
+}
+
+.card.source-wmk .outage-type {
+    color: var(--wmk-color);
 }
 
 .outage-time {
@@ -1013,8 +1056,8 @@ h1 {
     color: var(--tauron-color);
 }
 
-.collapsible.source-water .section-label.other {
-    color: var(--water-color);
+.collapsible.source-mpwik_wroclaw .section-label.other {
+    color: var(--mpwik_wroclaw-color);
 }
 
 .collapsible.source-fortum .section-label.other {
@@ -1041,8 +1084,9 @@ h1 {
     color: var(--psg-color);
 }
 
-
-
+.collapsible.source-wmk .section-label.other {
+    color: var(--wmk-color);
+}
 
 .other-divider {
     text-align: center;

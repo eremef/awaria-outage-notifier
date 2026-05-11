@@ -344,6 +344,10 @@ impl AlertProvider for TauronProvider {
         "tauron".to_string()
     }
 
+    fn source(&self) -> AlertSource {
+        AlertSource::Tauron
+    }
+
     async fn fetch(
         &self,
         client: &Client,

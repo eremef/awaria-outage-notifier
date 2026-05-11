@@ -90,7 +90,8 @@ if (typeof document !== 'undefined') {
         { id: 'stoen', label: 'Stoen', category: 'power', defaultNotify: true, i18nLabel: 'source_stoen_name', i18nShort: 'source_stoen_short' },
         { id: 'psg', label: 'PSG', category: 'gas', defaultNotify: true, i18nLabel: 'source_psg_name', i18nShort: 'source_psg_short' },
         { id: 'fortum', label: 'Fortum', category: 'heating', defaultNotify: true, i18nLabel: 'source_fortum_name', i18nShort: 'source_fortum_short' },
-        { id: 'water', label: 'MPWiK', category: 'water', defaultNotify: true, i18nLabel: 'source_water_short', i18nShort: 'source_water_short' },
+        { id: 'mpwik_wroclaw', label: 'MPWiK', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_wroclaw_name', i18nShort: 'source_mpwik_wroclaw_short' },
+        { id: 'wmk', label: 'WMK', category: 'water', defaultNotify: true, i18nLabel: 'source_wmk_name', i18nShort: 'source_wmk_short' },
     ];
 
     function renderSourcesUI() {
@@ -472,7 +473,8 @@ if (typeof document !== 'undefined') {
                     primaryAddressIndex: null,
                     theme: newTheme,
                     language: 'system',
-                    enabledSources: []
+                    enabledSources: [],
+                    show_other_outages: true
                 };
             } else {
                 currentSettings.theme = newTheme;
@@ -495,7 +497,8 @@ if (typeof document !== 'undefined') {
                     primaryAddressIndex: null,
                     theme: 'system',
                     language: newLang,
-                    enabledSources: []
+                    enabledSources: [],
+                    show_other_outages: true
                 };
             } else {
                 currentSettings.language = newLang;
@@ -598,6 +601,18 @@ if (typeof document !== 'undefined') {
                     upcomingHoursInput.value = val;
                     currentSettings.upcomingNotificationHours = val;
                     await autoSaveSettings();
+                }
+            });
+        }
+
+        const showOtherCheck = document.getElementById('show-other-outages-check');
+        if (showOtherCheck) {
+            showOtherCheck.addEventListener('change', async () => {
+                if (currentSettings) {
+                    currentSettings.show_other_outages = showOtherCheck.checked;
+                    await autoSaveSettings();
+                    const container = document.getElementById('outages-container');
+                    renderAlerts(lastAlerts || [], container, currentSettings, selectedAddressIndex);
                 }
             });
         }
@@ -1039,6 +1054,10 @@ if (typeof document !== 'undefined') {
                     updateUpcomingStatus();
                 }
 
+                if (document.getElementById('show-other-outages-check')) {
+                    document.getElementById('show-other-outages-check').checked = settings.show_other_outages !== false;
+                }
+
                 // Also check permissions on load if notifications are enabled
                 const hasAnyNotify = Object.values(notifyPrefs).some(v => v === true) || !!settings.upcomingNotificationEnabled;
                 if (hasAnyNotify) {
@@ -1066,7 +1085,8 @@ if (typeof document !== 'undefined') {
                     primaryAddressIndex: null,
                     theme: 'system',
                     language: 'system',
-                    enabledSources: []
+                    enabledSources: [],
+                    show_other_outages: true
                 };
 
                 // Explicitly uncheck and disable all source/notify pairs on first run
@@ -1345,7 +1365,7 @@ if (typeof document !== 'undefined') {
         if (!addr || addr.isActive === false) return false;
 
         // Sources that provide addressIndex and isLocal from backend
-        if (['tauron', 'energa', 'enea', 'pge', 'stoen', 'fortum', 'water', 'psg'].includes(alert.source)) {
+        if (['tauron', 'energa', 'enea', 'pge', 'stoen', 'fortum', 'mpwik_wroclaw', 'wmk', 'psg'].includes(alert.source)) {
             return alert.isLocal === true && alert.addressIndex === addrIdx;
         }
 
@@ -1394,8 +1414,7 @@ if (typeof document !== 'undefined') {
 
     function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         const now = new Date();
-
-        const enabledSources = (settings && settings.enabledSources) ? settings.enabledSources : ['tauron', 'water', 'fortum', 'energa', 'enea', 'pge', 'stoen', 'psg'];
+        const enabledSources = (settings && settings.enabledSources) ? settings.enabledSources : ['tauron', 'mpwik_wroclaw', 'wmk', 'fortum', 'energa', 'enea', 'pge', 'stoen', 'psg'];
         const activeAlerts = alerts.filter(item => {
             if (!enabledSources.includes(item.source)) return false;
             if (!item.endDate) return true;
@@ -1493,17 +1512,23 @@ if (typeof document !== 'undefined') {
 
         const isWarszawa = (addr) => {
             if (!addr) return false;
-            const city = (addr.cityName || '').toLowerCase();
-            return city === 'warszawa' || city === 'warsaw' || addr.cityId === 918123;
+            const city = (addr.cityName || '').trim().toLowerCase();
+            return city.startsWith('warszawa') || city.startsWith('warsaw') || addr.cityId === 918123;
         };
         const isWroclaw = (addr) => {
             if (!addr) return false;
-            const city = (addr.cityName || '').toLowerCase();
-            return city === 'wrocław' || city === 'wroclaw' || addr.cityId === 969400;
+            const city = (addr.cityName || '').trim().toLowerCase();
+            return city.startsWith('wrocław') || city.startsWith('wroclaw') || addr.cityId === 986283;
+        };
+        const isKrakow = (addr) => {
+            if (!addr) return false;
+            const city = (addr.cityName || '').trim().toLowerCase();
+            return city.startsWith('kraków') || city.startsWith('krakow') || addr.cityId === 950463;
         };
 
         const hasAnyWarszawa = addresses.some(isWarszawa);
         const hasAnyWroclaw = addresses.some(isWroclaw);
+        const hasAnyKrakow = addresses.some(isKrakow);
 
         const localLists = {};
         const otherLists = {};
@@ -1521,8 +1546,10 @@ if (typeof document !== 'undefined') {
                 if (matchesAddress(item, addresses, selectedAddrIdx)) {
                     localLists[item.source].push(item);
                 } else {
-                    if (item.source === 'water') {
+                    if (item.source === 'mpwik_wroclaw') {
                         if (isWroclaw(addr)) otherLists[item.source].push(item);
+                    } else if (item.source === 'wmk') {
+                        if (isKrakow(addr)) otherLists[item.source].push(item);
                     } else if (item.source === 'stoen') {
                         if (isWarszawa(addr)) otherLists[item.source].push(item);
                     } else {
@@ -1537,8 +1564,10 @@ if (typeof document !== 'undefined') {
                 if (isLocal) {
                     localLists[item.source].push(item);
                 } else {
-                    if (item.source === 'water') {
+                    if (item.source === 'mpwik_wroclaw') {
                         if (hasAnyWroclaw) otherLists[item.source].push(item);
+                    } else if (item.source === 'wmk') {
+                        if (hasAnyKrakow) otherLists[item.source].push(item);
                     } else if (item.source === 'stoen') {
                         if (hasAnyWarszawa) otherLists[item.source].push(item);
                     } else {
@@ -1550,7 +1579,8 @@ if (typeof document !== 'undefined') {
 
         const hasLocalAlerts = Object.values(localLists).some(l => l.length > 0);
         const hasOtherAlerts = Object.values(otherLists).some(l => l.length > 0);
-        const hasAnyAlerts = hasLocalAlerts || hasOtherAlerts;
+        const showOther = settings.show_other_outages !== false;
+        const hasAnyAlerts = hasLocalAlerts || (hasOtherAlerts && showOther);
 
         let html = '';
         if (!hasAnyAlerts) {
@@ -1628,7 +1658,7 @@ if (typeof document !== 'undefined') {
         container.innerHTML = html;
 
         // Step 2: Defer "Other Alerts" to keep UI interactive
-        if (hasOtherAlerts) {
+        if (hasOtherAlerts && showOther) {
             setTimeout(() => {
                 let otherHtml = '';
                 const lblDivider = typeof t !== 'undefined' ? t('lbl_other_alerts_divider') : 'Other alerts';

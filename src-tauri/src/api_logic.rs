@@ -13,13 +13,66 @@ use mockall::{automock, predicate::*};
 pub enum AlertSource {
     #[default]
     Tauron,
-    Water,
+    #[serde(rename = "mpwik_wroclaw")]
+    MpwikWroclaw,
     Fortum,
     Energa,
     Enea,
     Pge,
     Stoen,
     Psg,
+    Wmk,
+}
+
+impl AlertSource {
+    pub fn service_voivodeships(&self) -> Option<Vec<&'static str>> {
+        match self {
+            AlertSource::Tauron => Some(vec![
+                "DOLNOŚLĄSKIE",
+                "MAŁOPOLSKIE",
+                "OPOLSKIE",
+                "ŚLĄSKIE",
+                "ŚWIĘTOKRZYSKIE",
+                "PODKARPACKIE",
+            ]),
+            AlertSource::Energa => Some(vec![
+                "POMORSKIE",
+                "WARMIŃSKO-MAZURSKIE",
+                "KUJAWSKO-POMORSKIE",
+                "ZACHODNIOPOMORSKIE",
+                "MAZOWIECKIE",
+                "WIELKOPOLSKIE",
+                "ŁÓDZKIE",
+            ]),
+            AlertSource::Enea => Some(vec![
+                "WIELKOPOLSKIE",
+                "LUBUSKIE",
+                "ZACHODNIOPOMORSKIE",
+                "KUJAWSKO-POMORSKIE",
+            ]),
+            AlertSource::Pge => Some(vec![
+                "PODLASKIE",
+                "LUBELSKIE",
+                "PODKARPACKIE",
+                "ŚWIĘTOKRZYSKIE",
+                "ŁÓDZKIE",
+                "MAZOWIECKIE",
+                "MAŁOPOLSKIE",
+                "WIELKOPOLSKIE",
+            ]),
+            AlertSource::Stoen => Some(vec!["MAZOWIECKIE"]),
+            AlertSource::MpwikWroclaw => Some(vec!["DOLNOŚLĄSKIE"]),
+            AlertSource::Wmk => Some(vec!["MAŁOPOLSKIE"]),
+            AlertSource::Fortum => Some(vec![
+                "DOLNOŚLĄSKIE",
+                "ŚLĄSKIE",
+                "MAZOWIECKIE",
+                "WIELKOPOLSKIE",
+                "ŁÓDZKIE",
+            ]),
+            AlertSource::Psg => None, // Nationwide
+        }
+    }
 }
 
 #[cfg_attr(test, automock)]
@@ -162,7 +215,7 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea | AlertSource::Pge | AlertSource::Stoen => {
             if is_pl { "awaria prądu" } else { "power outage" }
         }
-        AlertSource::Water => {
+        AlertSource::MpwikWroclaw | AlertSource::Wmk => {
             if is_pl { "awaria wody" } else { "water outage" }
         }
         AlertSource::Fortum => {
@@ -230,13 +283,14 @@ impl std::fmt::Display for AlertSource {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
             AlertSource::Tauron => "tauron",
-            AlertSource::Water => "water",
+            AlertSource::MpwikWroclaw => "mpwik_wroclaw",
             AlertSource::Fortum => "fortum",
             AlertSource::Energa => "energa",
             AlertSource::Enea => "enea",
             AlertSource::Pge => "pge",
             AlertSource::Stoen => "stoen",
             AlertSource::Psg => "psg",
+            AlertSource::Wmk => "wmk",
         };
         write!(f, "{}", s)
     }
@@ -245,6 +299,7 @@ impl std::fmt::Display for AlertSource {
 #[async_trait]
 pub trait AlertProvider: Send + Sync {
     fn id(&self) -> String;
+    fn source(&self) -> AlertSource;
     async fn fetch(
         &self,
         client: &Client,
@@ -254,14 +309,43 @@ pub trait AlertProvider: Send + Sync {
     ) -> (Vec<UnifiedAlert>, Vec<String>);
 }
 
+pub fn is_provider_applicable(source: AlertSource, settings: &Settings) -> bool {
+    let voivodeships = match source.service_voivodeships() {
+        Some(v) => v,
+        None => return true, // Nationwide
+    };
+
+    let active_addresses: Vec<_> = settings.addresses.iter().filter(|a| a.is_active).collect();
+    if active_addresses.is_empty() {
+        // If there are no active addresses, we don't have a basis for pre-filtration.
+        // We return true to allow fetching (likely resulting in 0 alerts if addresses are empty,
+        // or general city alerts if applicable).
+        return true;
+    }
+
+    active_addresses.iter().any(|a| {
+        if a.voivodeship.is_empty() {
+            // Fallback for missing voivodeship data
+            return true;
+        }
+        let v = a.voivodeship.trim().to_uppercase();
+        voivodeships.iter().any(|&sv| sv == v)
+    })
+}
+
 pub fn is_wroclaw(addr: &AddressEntry) -> bool {
-    let name = addr.city_name.to_lowercase();
-    name == "wrocław" || name == "wroclaw" || addr.city_id == Some(969400)
+    let name = addr.city_name.trim().to_lowercase();
+    name.starts_with("wrocław") || name.starts_with("wroclaw") || addr.city_id == Some(986283)
 }
 
 pub fn is_warszawa(addr: &AddressEntry) -> bool {
-    let name = addr.city_name.to_lowercase();
-    name == "warszawa" || name == "warsaw" || addr.city_id == Some(918123)
+    let name = addr.city_name.trim().to_lowercase();
+    name.starts_with("warszawa") || name.starts_with("warsaw") || addr.city_id == Some(918123)
+}
+
+pub fn is_krakow(addr: &AddressEntry) -> bool {
+    let name = addr.city_name.trim().to_lowercase();
+    name.starts_with("kraków") || name.starts_with("krakow") || addr.city_id == Some(950463)
 }
 
 
@@ -482,7 +566,7 @@ mod tests {
                 hash: None,
             },
             UnifiedAlert {
-                source: AlertSource::Water,
+                source: AlertSource::MpwikWroclaw,
                 startDate: None,
                 endDate: None,
                 message: None,
@@ -508,7 +592,7 @@ mod tests {
 
         assert_eq!(alerts[0].source, AlertSource::Energa); // 10:00
         assert_eq!(alerts[1].source, AlertSource::Tauron); // 12:00
-        assert_eq!(alerts[2].source, AlertSource::Water);  // None
+        assert_eq!(alerts[2].source, AlertSource::MpwikWroclaw);  // None
     }
 
     #[test]
@@ -670,5 +754,44 @@ mod tests {
         assert!(body.contains("20-05-2024 10:00"));
         assert!(body.contains("termin zostanie podany wkrótce"));
         assert!(body.contains("Prace serwisowe"));
+    }
+
+    #[test]
+    fn test_is_provider_applicable() {
+        let mut settings = Settings::default();
+        settings.addresses.push(AddressEntry {
+            city_name: "Wrocław".to_string(),
+            voivodeship: "Dolnośląskie".to_string(),
+            is_active: true,
+            ..Default::default()
+        });
+
+        // Tauron is nationwide (basically) but serves Wrocław
+        assert!(is_provider_applicable(AlertSource::Tauron, &settings));
+        
+        // MPWiK Wrocław is local to Wrocław
+        assert!(is_provider_applicable(AlertSource::MpwikWroclaw, &settings));
+        
+        // Stoen is Warsaw only
+        assert!(!is_provider_applicable(AlertSource::Stoen, &settings));
+        
+        // Energa does not serve Dolnośląskie
+        assert!(!is_provider_applicable(AlertSource::Energa, &settings));
+
+        // Now add a Warsaw address
+        settings.addresses.push(AddressEntry {
+            city_name: "Warszawa".to_string(),
+            voivodeship: "Mazowieckie".to_string(),
+            is_active: true,
+            ..Default::default()
+        });
+
+        // Now Stoen and Energa should be applicable
+        assert!(is_provider_applicable(AlertSource::Stoen, &settings));
+        assert!(is_provider_applicable(AlertSource::Energa, &settings));
+        
+        // If address is inactive, it shouldn't count
+        settings.addresses[1].is_active = false;
+        assert!(!is_provider_applicable(AlertSource::Stoen, &settings));
     }
 }

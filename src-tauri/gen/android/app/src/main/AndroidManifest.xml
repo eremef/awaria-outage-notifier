@@ -178,6 +178,22 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_psg_info" />
         </receiver>
+        
+        <receiver
+            android:name=".WmkWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_wmk">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_WMK" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_wmk_info" />
+        </receiver>
 
         <receiver
             android:name=".AllWidgetProvider"

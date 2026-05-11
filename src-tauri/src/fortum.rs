@@ -143,6 +143,10 @@ impl AlertProvider for FortumProvider {
         "fortum".to_string()
     }
 
+    fn source(&self) -> AlertSource {
+        AlertSource::Fortum
+    }
+
     async fn fetch(
         &self,
         client: &Client,

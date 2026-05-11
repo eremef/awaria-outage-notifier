@@ -19,6 +19,10 @@ impl AlertProvider for PsgProvider {
         "psg".to_string()
     }
 
+    fn source(&self) -> AlertSource {
+        AlertSource::Psg
+    }
+
     async fn fetch(
         &self,
         _client: &Client,

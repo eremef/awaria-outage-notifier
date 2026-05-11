@@ -89,13 +89,19 @@ class AllWidgetProvider : BaseWidgetProvider() {
                         }
                     }
                     val w = async {
-                        try {
-                            ProviderCache.getOrFetch("water", hash) {
-                                WidgetUtils.fetchCountFromRust(context, "water", settingsJson)
+                        val waterSources = listOf("mpwik_wroclaw", "wmk")
+                        waterSources.map { source ->
+                            async {
+                                try {
+                                    ProviderCache.getOrFetch(source, hash) {
+                                        WidgetUtils.fetchCountFromRust(context, source, settingsJson)
+                                    }
+                                } catch (e: Exception) {
+                                    Log.w("AllWidget", "Failed to fetch $source: ${e.message}")
+                                    0
+                                }
                             }
-                        } catch (e: Exception) {
-                            0
-                        }
+                        }.awaitAll().sum()
                     }
                     val g = async {
                         try {

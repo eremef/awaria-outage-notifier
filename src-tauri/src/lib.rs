@@ -12,12 +12,14 @@ mod teryt;
 mod utils;
 mod cache;
 mod psg;
+mod wmk;
 
 use crate::network_state::NetworkState;
 use api_logic::{
     load_settings_from_path, save_settings_to_path,
     AddressEntry, Settings, UnifiedAlert,
-    AlertProvider, is_wroclaw, is_warszawa,
+    AlertProvider,
+    is_wroclaw, is_warszawa, is_krakow,
 };
 use tauri::command;
 use tauri::AppHandle;
@@ -244,6 +246,7 @@ fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(pge::PgeProvider),
         Box::new(stoen::StoenProvider),
         Box::new(psg::PsgProvider),
+        Box::new(wmk::WmkProvider),
     ]
 }
 
@@ -295,6 +298,12 @@ async fn fetch_all_alerts(
 
         for provider in providers {
             if !enabled_sources.contains(&provider.id()) {
+                continue;
+            }
+
+            // --- VOIVODESHIP PREFILTRATION ---
+            if !api_logic::is_provider_applicable(provider.source(), &s_arc) {
+                log::info!("fetch_all_alerts: skipping {}, not applicable for active addresses", provider.id());
                 continue;
             }
 
@@ -370,6 +379,9 @@ async fn fetch_all_alerts(
                     }
                     if desc.contains("Warszawa") {
                         return s.addresses.iter().any(|a| a.is_active && is_warszawa(a));
+                    }
+                    if desc.contains("Kraków") {
+                        return s.addresses.iter().any(|a| a.is_active && is_krakow(a));
                     }
                     // For other cities (dynamic check based on active addresses)
                     for addr in s.addresses.iter().filter(|a| a.is_active) {
@@ -609,6 +621,12 @@ pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchCountFromRust(
 
         match provider {
             Some(p) => {
+                // --- VOIVODESHIP PREFILTRATION ---
+                if !api_logic::is_provider_applicable(p.source(), &settings) {
+                    log::info!("WidgetUtils: skipping {}, not applicable", p.id());
+                    return 0;
+                }
+
                 let (mut alerts, errors) = p.fetch(&client, &client_http1, &settings, None).await;
                 if alerts.is_empty() && !errors.is_empty() {
                     let _ = env.throw_new("java/io/IOException", errors.join("; "));
