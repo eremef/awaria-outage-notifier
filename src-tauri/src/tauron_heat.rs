@@ -294,9 +294,12 @@ impl AlertProvider for TauronHeatProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Mutex;
+    static TEST_MUTEX: Mutex<()> = Mutex::new(());
 
     #[tokio::test]
     async fn test_fetch_tauron_heat_mocked() {
+        let _guard = TEST_MUTEX.lock().unwrap();
         let mut server = mockito::Server::new_async().await;
         let url = server.url();
         std::env::set_var("TAURON_HEAT_BASE_URL", url.clone());
@@ -342,6 +345,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_fetch_tauron_heat_no_outages() {
+        let _guard = TEST_MUTEX.lock().unwrap();
         let mut server = mockito::Server::new_async().await;
         let url = server.url();
         std::env::set_var("TAURON_HEAT_BASE_URL", url.clone());

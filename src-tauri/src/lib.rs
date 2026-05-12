@@ -266,7 +266,7 @@ async fn fetch_all_alerts_internal(
             return Ok(cached);
         }
     }
-    let path = settings_path(&app)?;
+    let path = settings_path(app)?;
     let settings = load_settings_from_path(&path)?;
     let settings_orig = settings.clone();
 
@@ -355,7 +355,7 @@ async fn fetch_all_alerts_internal(
 
         // --- PROCESS NEW ALERTS AND NOTIFY ---
         let db_adapter = RealDatabase(&db_state.conn);
-        let notifier = RealNotification(&app);
+        let notifier = RealNotification(app);
         let engine = MonitorEngine::new(&db_adapter, &notifier, &s);
         engine.process_alerts(all_alerts.clone());
     }

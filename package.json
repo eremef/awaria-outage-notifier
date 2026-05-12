@@ -15,10 +15,11 @@
     "test:frontend": "vitest run",
     "test:backend": "cd src-tauri && cargo test",
     "rust:check": "cd src-tauri && cargo check",
+    "rust:clippy": "cd src-tauri && cargo clippy",
     "test:android": "cd src-tauri/gen/android && gradlew.bat :app:testUniversalDebugUnitTest",
     "load:teryt": "node scripts/load-teryt.mjs",
     "mempalace:mine": "mempalace mine .",
-    "mempalace:sync": "mempalace sync --apply",
+    "mempalace:sync": "mempalace sync --apply --wing awaria",
     "kill:em:all": "taskkill /f /im cargo.exe & taskkill /f /im rustc.exe & taskkill /f /im rust-analyzer.exe"
   },
   "devDependencies": {

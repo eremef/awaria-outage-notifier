@@ -455,6 +455,8 @@ impl AlertProvider for TauronProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Mutex;
+    static TEST_MUTEX: Mutex<()> = Mutex::new(());
 
     #[test]
     fn test_tauron_to_unified() {
@@ -502,6 +504,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_fetch_tauron_mocked() {
+        let _guard = TEST_MUTEX.lock().unwrap();
         let mut server = mockito::Server::new_async().await;
         let url = server.url();
         std::env::set_var("TAURON_BASE_URL", format!("{}/waapi", url));
@@ -551,6 +554,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_fetch_tauron_street_fallback() {
+        let _guard = TEST_MUTEX.lock().unwrap();
         let mut server = mockito::Server::new_async().await;
         let url = server.url();
         std::env::set_var("TAURON_BASE_URL", format!("{}/waapi", url));
@@ -598,6 +602,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_fetch_tauron_last_word_fallback() {
+        let _guard = TEST_MUTEX.lock().unwrap();
         let mut server = mockito::Server::new_async().await;
         let url = server.url();
         std::env::set_var("TAURON_BASE_URL", format!("{}/waapi", url));
