@@ -56,6 +56,8 @@ class MainActivity : TauriActivity() {
       }
       insets
     }
+
+    WidgetUtils.scheduleBackgroundMonitoring(this.applicationContext)
   }
 
   private fun findWebView(view: ViewGroup): WebView? {

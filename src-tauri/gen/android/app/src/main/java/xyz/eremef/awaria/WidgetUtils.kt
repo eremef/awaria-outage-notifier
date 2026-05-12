@@ -151,7 +151,62 @@ object WidgetUtils {
         return name == "warszawa" || name == "warsaw" || settings.cityId == 918123L
     }
 
-    fun serializeSettingsForRust(settingsList: List<WidgetSettings>): String {
+    @JvmStatic
+    external fun fetchAndNotifyFromRust(context: Context, settingsJson: String)
+
+    @JvmStatic
+    fun showNotification(context: Context, title: String, body: String, hash: String) {
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+        
+        // Create channel for Android 8.0+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val channel = android.app.NotificationChannel(
+                "outages",
+                "Outage Alerts",
+                android.app.NotificationManager.IMPORTANCE_DEFAULT
+            )
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+        val pendingIntent = android.app.PendingIntent.getActivity(
+            context,
+            hash.hashCode(),
+            intent,
+            android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val builder = androidx.core.app.NotificationCompat.Builder(context, "outages")
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(androidx.core.app.NotificationCompat.BigTextStyle().bigText(body))
+            .setPriority(androidx.core.app.NotificationCompat.PRIORITY_DEFAULT)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+
+        notificationManager.notify(hash.hashCode(), builder.build())
+    }
+
+    @JvmStatic
+    fun scheduleBackgroundMonitoring(context: android.content.Context) {
+        val workManager = androidx.work.WorkManager.getInstance(context)
+        val request = androidx.work.PeriodicWorkRequestBuilder<BackgroundMonitorWorker>(1, java.util.concurrent.TimeUnit.HOURS)
+            .setConstraints(
+                androidx.work.Constraints.Builder()
+                    .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
+                    .build()
+            )
+            .build()
+        
+        workManager.enqueueUniquePeriodicWork(
+            "BackgroundMonitorWork",
+            androidx.work.ExistingPeriodicWorkPolicy.KEEP,
+            request
+        )
+    }
+
+    fun serializeSettingsForRust(settingsList: List<WidgetSettings>, fullJson: org.json.JSONObject?): String {
         val root = org.json.JSONObject()
         val addresses = org.json.JSONArray()
         
@@ -173,8 +228,18 @@ object WidgetUtils {
         }
         
         root.put("addresses", addresses)
-        root.put("upcomingNotificationEnabled", false)
-        root.put("upcomingNotificationHours", 24)
+        
+        // Extract language and preferences from fullJson
+        if (fullJson != null) {
+            root.put("language", fullJson.optString("language", "system"))
+            root.put("notificationPreferences", fullJson.optJSONObject("notificationPreferences") ?: org.json.JSONObject())
+            root.put("upcomingNotificationEnabled", fullJson.optBoolean("upcomingNotificationEnabled", false))
+            root.put("upcomingNotificationHours", fullJson.optInt("upcomingNotificationHours", 24))
+            root.put("enabledSources", fullJson.optJSONArray("enabledSources") ?: org.json.JSONArray())
+        } else {
+            root.put("upcomingNotificationEnabled", false)
+            root.put("upcomingNotificationHours", 24)
+        }
         
         return root.toString()
     }

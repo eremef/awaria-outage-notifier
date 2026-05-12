@@ -5,7 +5,7 @@
     <string name="config_primary_address">Używaj adresu głównego</string>
     <string name="config_confirm">Zatwierdź</string>
     <string name="label_power">Prąd</string>
-    <string name="label_heat">Ciepło</string>
+    <string name="label_heat">CO</string>
     <string name="label_water">Woda</string>
     <string name="label_gas">Gaz</string>
     <string name="label_provider">Dostawca</string>

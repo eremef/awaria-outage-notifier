@@ -43,6 +43,7 @@
     --message-border: #f1f5f9;
     --label-border: #e2e8f0;
     --tauron-color: #e3067e;
+    --tauron_heat-color: #e3067e;
     --mpwik_wroclaw-color: #0ea5e9;
     --fortum-color: #00a859;
     --energa-color: #e50512;
@@ -78,6 +79,7 @@
     --message-border: #1e293b;
     --label-border: #334155;
     --tauron-color: #df489b;
+    --tauron_heat-color: #df489b;
     --mpwik_wroclaw-color: #38bdf8;
     --fortum-color: #10b981;
     --energa-color: #f87171;
@@ -108,6 +110,7 @@
     --message-border: #ecfdf5;
     --label-border: #dcfce7;
     --tauron-color: #ff048e;
+    --tauron_heat-color: #ff048e;
     --mpwik_wroclaw-color: #3b82f6;
     --fortum-color: #10b981;
     --energa-color: #be123c;
@@ -139,6 +142,7 @@
     --message-border: #164e63;
     --label-border: #164e63;
     --tauron-color: #e3067e;
+    --tauron_heat-color: #e3067e;
     --mpwik_wroclaw-color: #38bdf8;
     --fortum-color: #4ade80;
     --energa-color: #fb7185;
@@ -169,6 +173,7 @@
     --message-border: #434c5e;
     --label-border: #4c566a;
     --tauron-color: #df5ca4;
+    --tauron_heat-color: #df5ca4;
     --mpwik_wroclaw-color: #81a1c1;
     --fortum-color: #a3be8c;
     --energa-color: #bf616a;
@@ -199,6 +204,7 @@
     --message-border: #44475a;
     --label-border: #44475a;
     --tauron-color: #ff048e;
+    --tauron_heat-color: #ff048e;
     --mpwik_wroclaw-color: #8be9fd;
     --fortum-color: #50fa7b;
     --energa-color: #ff5555;
@@ -228,6 +234,7 @@
     --message-border: #e0d5ba;
     --label-border: #d6ccb2;
     --tauron-color: #9c3a70;
+    --tauron_heat-color: #9c3a70;
     --mpwik_wroclaw-color: #556b2f;
     --fortum-color: #6a994e;
     --energa-color: #9b2226;
@@ -257,6 +264,7 @@
     --message-border: #f1e4d8;
     --label-border: #ede0d4;
     --tauron-color: #bc6c25;
+    --tauron_heat-color: #bc6c25;
     --mpwik_wroclaw-color: #588157;
     --fortum-color: #6a994e;
     --energa-color: #c1121f;
@@ -288,6 +296,7 @@
     --label-border: #e5e5e5;
     --source-color: #525252;
     --tauron-color: #525252;
+    --tauron_heat-color: #525252;
     --mpwik_wroclaw-color: #525252;
     --fortum-color: #525252;
     --energa-color: #525252;
@@ -319,6 +328,7 @@
     --label-border: #404040;
     --source-color: #a3a3a3;
     --tauron-color: #a3a3a3;
+    --tauron_heat-color: #a3a3a3;
     --mpwik_wroclaw-color: #a3a3a3;
     --fortum-color: #a3a3a3;
     --energa-color: #a3a3a3;
@@ -588,7 +598,7 @@ h1 {
        Col 1: Indent spacer
        Col 2: Main content (Source name)
        Col 3: Notify controls (locked to 230px, wide enough for Polish text) */
-    grid-template-columns: 100px 1fr;
+    grid-template-columns: 160px 1fr;
     align-items: center;
     gap: 10px;
     box-sizing: border-box;
@@ -921,12 +931,20 @@ h1 {
     border-top: 4px solid var(--wmk-color);
 }
 
-.card:not(.source-tauron):not(.source-mpwik_wroclaw):not(.source-fortum):not(.source-energa):not(.source-enea):not(.source-pge):not(.source-stoen):not(.source-psg):not(.source-wmk) {
+.card.source-tauron_heat {
+    border-top: 4px solid var(--tauron_heat-color);
+}
+
+.card:not(.source-tauron):not(.source-mpwik_wroclaw):not(.source-fortum):not(.source-energa):not(.source-enea):not(.source-pge):not(.source-stoen):not(.source-psg):not(.source-wmk):not(.source-tauron_heat) {
     border-top: 4px solid #7c7c7c;
 }
 
 .card.source-tauron .outage-type {
     color: var(--tauron-color);
+}
+
+.card.source-tauron_heat .outage-type {
+    color: var(--tauron_heat-color);
 }
 
 .card.source-mpwik_wroclaw .outage-type {
@@ -1086,6 +1104,10 @@ h1 {
 
 .collapsible.source-wmk .section-label.other {
     color: var(--wmk-color);
+}
+
+.collapsible.source-tauron_heat .section-label.other {
+    color: var(--tauron_heat-color);
 }
 
 .other-divider {

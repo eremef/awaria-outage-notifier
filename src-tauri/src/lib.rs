@@ -13,6 +13,7 @@ mod utils;
 mod cache;
 mod psg;
 mod wmk;
+mod tauron_heat;
 
 use crate::network_state::NetworkState;
 use api_logic::{
@@ -247,16 +248,17 @@ fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(stoen::StoenProvider),
         Box::new(psg::PsgProvider),
         Box::new(wmk::WmkProvider),
+        Box::new(tauron_heat::TauronHeatProvider),
     ]
 }
 
-#[command]
-async fn fetch_all_alerts(
-    app: AppHandle,
-    db_state: tauri::State<'_, DbState>,
-    cache_state: tauri::State<'_, cache::CacheState>,
+async fn fetch_all_alerts_internal(
+    app: &AppHandle,
     sources: Option<Vec<String>>,
 ) -> Result<Vec<UnifiedAlert>, String> {
+    let db_state = app.state::<DbState>();
+    let cache_state = app.state::<cache::CacheState>();
+
     // 1. Check Cache (only on full refresh)
     if sources.is_none() {
         if let Some(cached) = cache_state.get() {
@@ -312,7 +314,7 @@ async fn fetch_all_alerts(
             let c = client.clone();
             let c_h1 = client_http1.clone();
             let app_h = app.clone();
-            tasks.push(tokio::spawn(async move {
+            tasks.push(tauri::async_runtime::spawn(async move {
                 let _permit = sem.acquire().await.ok();
                 provider.fetch(&c, &c_h1, &s_p, Some(&app_h)).await
             }));
@@ -405,6 +407,34 @@ async fn fetch_all_alerts(
 }
 
 #[tauri::command]
+async fn fetch_all_alerts(
+    app: AppHandle,
+    sources: Option<Vec<String>>,
+) -> Result<Vec<UnifiedAlert>, String> {
+    fetch_all_alerts_internal(&app, sources).await
+}
+
+#[cfg(not(mobile))]
+fn start_background_monitoring(app: AppHandle) {
+    log::info!("Starting background monitoring task (interval: 30 minutes)");
+    tauri::async_runtime::spawn(async move {
+        // Use a slightly offset interval to avoid hitting everything exactly at once on startup
+        tokio::time::sleep(std::time::Duration::from_secs(60)).await;
+        
+        let mut interval = tokio::time::interval(std::time::Duration::from_secs(30 * 60));
+        loop {
+            interval.tick().await;
+            log::info!("Background monitoring: starting fetch cycle...");
+            match fetch_all_alerts_internal(&app, None).await {
+                Ok(alerts) => log::info!("Background monitoring: cycle completed successfully ({} alerts found).", alerts.len()),
+                Err(e) => log::error!("Background monitoring: cycle failed: {}", e),
+            }
+        }
+    });
+}
+
+
+#[tauri::command]
 fn get_app_version() -> String {
     env!("CARGO_PKG_VERSION").to_string()
 }
@@ -463,6 +493,10 @@ pub fn run() {
                         .build(),
                 )?;
             }
+
+            #[cfg(not(mobile))]
+            start_background_monitoring(app.handle().clone());
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -663,6 +697,116 @@ pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchCountFromRust(
             }
         }
     })
+}
+
+#[cfg(target_os = "android")]
+struct JniNotification;
+
+#[cfg(target_os = "android")]
+impl NotificationProvider for JniNotification {
+    fn show_notification(&self, title: String, body: String, hash: String) {
+        if let (Ok(vm_guard), Ok(context_guard)) = (RAW_VM.lock(), ANDROID_CONTEXT.lock()) {
+            if let (Some(vm_wrapper), Some(context_ref)) = (&*vm_guard, &*context_guard) {
+                let vm = unsafe { &*(vm_wrapper.0 as *const jni::JavaVM) };
+                if let Ok(mut env) = vm.attach_current_thread() {
+                    let title_j = env.new_string(title).unwrap();
+                    let body_j = env.new_string(body).unwrap();
+                    let hash_j = env.new_string(hash).unwrap();
+                    
+                    if let Ok(class) = env.find_class("xyz/eremef/awaria/WidgetUtils") {
+                        let _ = env.call_static_method(
+                            class,
+                            "showNotification",
+                            "(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V",
+                            &[
+                                jni::objects::JValue::Object(context_ref.as_obj()),
+                                jni::objects::JValue::Object(&title_j),
+                                jni::objects::JValue::Object(&body_j),
+                                jni::objects::JValue::Object(&hash_j),
+                            ],
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[cfg(target_os = "android")]
+#[allow(non_snake_case)]
+#[no_mangle]
+pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchAndNotifyFromRust(
+    mut env: JNIEnv,
+    _class: JClass,
+    context: JObject,
+    settings_json: JString,
+) {
+    ensure_verifier_initialized(&mut env, &context);
+    
+    let settings_str: String = match env.get_string(&settings_json) {
+        Ok(s) => s.into(),
+        Err(_) => return,
+    };
+
+    let settings: Settings = match serde_json::from_str(&settings_str) {
+        Ok(s) => s,
+        Err(_) => return,
+    };
+
+    let rt = match tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build() {
+            Ok(rt) => rt,
+            Err(_) => return,
+        };
+
+    rt.block_on(async {
+        let client = match network_state::NetworkState::build_client() {
+            Ok(c) => c,
+            Err(_) => return,
+        };
+        let client_http1 = match network_state::NetworkState::build_client_http1() {
+            Ok(c) => c,
+            Err(_) => return,
+        };
+
+        let providers = get_providers();
+        let enabled_sources = settings.enabled_sources.clone().unwrap_or_default();
+        
+        // Open DB manually
+        let files_dir: JObject = env.call_method(&context, "getFilesDir", "()Ljava/io/File;", &[]).unwrap().l().unwrap();
+        let path_obj: JObject = env.call_method(&files_dir, "getAbsolutePath", "()Ljava/lang/String;", &[]).unwrap().l().unwrap();
+        let path_j: JString = path_obj.into();
+        let path_str: String = env.get_string(&path_j).unwrap().into();
+        let db_path = std::path::PathBuf::from(path_str).join("state.db");
+        
+        let conn = match rusqlite::Connection::open(db_path) {
+            Ok(c) => c,
+            Err(_) => return,
+        };
+        
+        let db_adapter = RealDatabase(&Mutex::new(conn));
+        let notifier = JniNotification;
+        let engine = MonitorEngine::new(&db_adapter, &notifier, &settings);
+
+        let mut all_alerts = Vec::new();
+
+        for provider in providers {
+            if !enabled_sources.contains(&provider.id()) {
+                continue;
+            }
+
+            if !api_logic::is_provider_applicable(provider.source(), &settings) {
+                continue;
+            }
+
+            let (alerts, _) = provider.fetch(&client, &client_http1, &settings, None).await;
+            all_alerts.extend(alerts);
+        }
+
+        let deduplicated = api_logic::deduplicate_alerts(all_alerts);
+        engine.process_alerts(deduplicated);
+    });
 }
 
 #[cfg(target_os = "android")]

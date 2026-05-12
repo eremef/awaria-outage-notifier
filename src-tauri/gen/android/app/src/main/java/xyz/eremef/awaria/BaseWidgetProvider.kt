@@ -209,7 +209,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         return candidates.firstOrNull { it.exists() && it.canRead() }
     }
 
-    internal fun loadSettings(context: Context): List<WidgetSettings>? {
+    internal fun loadSettings(context: Context): Pair<List<WidgetSettings>, JSONObject?>? {
         val settingsFile = findSettingsFile(context) ?: return null
         return try {
             val jsonString = settingsFile.readText(Charsets.UTF_8)
@@ -234,7 +234,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                     }
 
             if (addresses != null && addresses.length() > 0) {
-                (0 until addresses.length()).map { i ->
+                val list = (0 until addresses.length()).map { i ->
                     val addr = addresses.getJSONObject(i)
                     WidgetSettings(
                             name = addr.optString("name", ""),
@@ -258,6 +258,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                             isPrimary = (i == primaryIndex)
                     )
                 }
+                Pair(list, json)
             } else {
                 null
             }
@@ -354,7 +355,10 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             appWidgetManager: AppWidgetManager,
             appWidgetId: Int
     ) {
-        val settingsList = loadSettings(context)
+        val settingsResult = loadSettings(context)
+        val settingsList = settingsResult?.first
+        val fullJson = settingsResult?.second
+        
         val language = settingsList?.firstOrNull()?.language ?: "system"
         val theme = settingsList?.firstOrNull()?.theme ?: "system"
         val dark = isDarkMode(context, theme)
@@ -379,7 +383,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                             if (sourceKey == "psg") {
                                 PsgWebViewFetcher.fetchCount(context, activeSettings)
                             } else {
-                                val settingsJson = WidgetUtils.serializeSettingsForRust(activeSettings)
+                                val settingsJson = WidgetUtils.serializeSettingsForRust(activeSettings, fullJson)
                                 WidgetUtils.fetchCountFromRust(context, sourceKey, settingsJson)
                             }
                         }

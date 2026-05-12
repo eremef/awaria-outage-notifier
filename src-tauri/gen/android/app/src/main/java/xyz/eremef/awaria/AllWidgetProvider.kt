@@ -22,7 +22,10 @@ class AllWidgetProvider : BaseWidgetProvider() {
             appWidgetManager: AppWidgetManager,
             appWidgetId: Int
     ) {
-        val allSettings = loadSettings(context)
+        val settingsResult = loadSettings(context)
+        val allSettings = settingsResult?.first
+        val fullJson = settingsResult?.second
+
         val primaryAddress =
                 allSettings?.find { it.isPrimary } ?: allSettings?.firstOrNull { it.isActive }
 
@@ -53,7 +56,7 @@ class AllWidgetProvider : BaseWidgetProvider() {
 
             try {
                 coroutineScope {
-                    val settingsJson = WidgetUtils.serializeSettingsForRust(activeSettings)
+                    val settingsJson = WidgetUtils.serializeSettingsForRust(activeSettings, fullJson)
                     val p = async {
                         val sources = listOf("tauron", "stoen", "energa", "enea", "pge")
                         sources
@@ -80,13 +83,29 @@ class AllWidgetProvider : BaseWidgetProvider() {
                                 .sum()
                     }
                     val h = async {
-                        try {
-                            ProviderCache.getOrFetch("fortum", hash) {
-                                WidgetUtils.fetchCountFromRust(context, "fortum", settingsJson)
-                            }
-                        } catch (e: Exception) {
-                            0
-                        }
+                        val heatSources = listOf("fortum", "tauron_heat")
+                        heatSources
+                                .map { source ->
+                                    async {
+                                        try {
+                                            ProviderCache.getOrFetch(source, hash) {
+                                                WidgetUtils.fetchCountFromRust(
+                                                        context,
+                                                        source,
+                                                        settingsJson
+                                                )
+                                            }
+                                        } catch (e: Exception) {
+                                            Log.w(
+                                                    "AllWidget",
+                                                    "Failed to fetch $source: ${e.message}"
+                                            )
+                                            0
+                                        }
+                                    }
+                                }
+                                .awaitAll()
+                                .sum()
                     }
                     val w = async {
                         val waterSources = listOf("mpwik_wroclaw", "wmk")

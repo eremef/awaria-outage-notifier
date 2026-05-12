@@ -153,8 +153,9 @@ class WidgetConfigActivity : ComponentActivity() {
         val names = mutableListOf<String>()
         names.add(getString(R.string.config_primary_address))
         
-        val settingsList = provider.loadSettings(this)
-        if (settingsList != null) {
+        val settingsResult = provider.loadSettings(this)
+        if (settingsResult != null) {
+            val settingsList = settingsResult.first
             // Only show active addresses
             val activeSettings = settingsList.filter { it.isActive }
             fullAddresses = activeSettings

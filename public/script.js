@@ -92,6 +92,7 @@ if (typeof document !== 'undefined') {
         { id: 'fortum', label: 'Fortum', category: 'heating', defaultNotify: true, i18nLabel: 'source_fortum_name', i18nShort: 'source_fortum_short' },
         { id: 'mpwik_wroclaw', label: 'MPWiK', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_wroclaw_name', i18nShort: 'source_mpwik_wroclaw_short' },
         { id: 'wmk', label: 'WMK', category: 'water', defaultNotify: true, i18nLabel: 'source_wmk_name', i18nShort: 'source_wmk_short' },
+        { id: 'tauron_heat', label: 'Tauron Ciepło', category: 'heating', defaultNotify: true, i18nLabel: 'source_tauron_heat_name', i18nShort: 'source_tauron_heat_short' },
     ];
 
     function renderSourcesUI() {

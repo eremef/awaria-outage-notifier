@@ -22,6 +22,8 @@ pub enum AlertSource {
     Stoen,
     Psg,
     Wmk,
+    #[serde(rename = "tauron_heat")]
+    TauronHeat,
 }
 
 impl AlertSource {
@@ -69,6 +71,11 @@ impl AlertSource {
                 "MAZOWIECKIE",
                 "WIELKOPOLSKIE",
                 "ŁÓDZKIE",
+            ]),
+            AlertSource::TauronHeat => Some(vec![
+                "ŚLĄSKIE",
+                "MAŁOPOLSKIE",
+                "DOLNOŚLĄSKIE",
             ]),
             AlertSource::Psg => None, // Nationwide
         }
@@ -218,7 +225,7 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         AlertSource::MpwikWroclaw | AlertSource::Wmk => {
             if is_pl { "awaria wody" } else { "water outage" }
         }
-        AlertSource::Fortum => {
+        AlertSource::Fortum | AlertSource::TauronHeat => {
             if is_pl { "awaria ogrzewania" } else { "heat outage" }
         }
         AlertSource::Psg => {
@@ -291,6 +298,7 @@ impl std::fmt::Display for AlertSource {
             AlertSource::Stoen => "stoen",
             AlertSource::Psg => "psg",
             AlertSource::Wmk => "wmk",
+            AlertSource::TauronHeat => "tauron_heat",
         };
         write!(f, "{}", s)
     }
