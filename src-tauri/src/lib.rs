@@ -30,9 +30,9 @@ use api_logic::{DatabaseInterface, NotificationProvider, MonitorEngine};
 
 #[cfg(target_os = "android")]
 use jni::{
-    objects::{JClass, JString, JObject},
+    objects::{Global, JClass, JObject, JString},
     sys::jint,
-    JNIEnv,
+    Env, EnvUnowned,
 };
 
 use std::fs;
@@ -47,19 +47,11 @@ use teryt::{TerytCity, TerytStreet};
 const MAX_CONCURRENT_REQUESTS: usize = 5;
 
 #[cfg(target_os = "android")]
-#[derive(Clone, Copy)]
-struct SendRawVM(usize);
+static ANDROID_CONTEXT: Mutex<Option<std::sync::Arc<Global<JObject<'static>>>>> = Mutex::new(None);
 #[cfg(target_os = "android")]
-unsafe impl Send for SendRawVM {}
+static PSG_FETCHER_CLASS: Mutex<Option<std::sync::Arc<Global<JClass<'static>>>>> = Mutex::new(None);
 #[cfg(target_os = "android")]
-unsafe impl Sync for SendRawVM {}
-
-#[cfg(target_os = "android")]
-static RAW_VM: Mutex<Option<SendRawVM>> = Mutex::new(None);
-#[cfg(target_os = "android")]
-static ANDROID_CONTEXT: Mutex<Option<std::sync::Arc<jni::objects::GlobalRef>>> = Mutex::new(None);
-#[cfg(target_os = "android")]
-static PSG_FETCHER_CLASS: Mutex<Option<std::sync::Arc<jni::objects::GlobalRef>>> = Mutex::new(None);
+static JAVA_VM: Mutex<Option<jni::JavaVM>> = Mutex::new(None);
 
 // ── Trait implementations for production ──────────────────
 
@@ -487,11 +479,11 @@ pub fn run() {
             app.manage(network_state::NetworkState::new()?);
 
             if cfg!(debug_assertions) || cfg!(target_os = "android") {
-                app.handle().plugin(
+                let _ = app.handle().plugin(
                     tauri_plugin_log::Builder::default()
                         .level(log::LevelFilter::Info)
                         .build(),
-                )?;
+                );
             }
 
             #[cfg(not(mobile))]
@@ -519,7 +511,7 @@ pub fn run() {
 // ── Android JNI exports ───────────────────────────────────
 
 #[cfg(target_os = "android")]
-fn ensure_verifier_initialized(env: &mut JNIEnv, context: &JObject) {
+fn ensure_verifier_initialized(env: &mut Env, context: &JObject) {
     static INITIALIZED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
     if INITIALIZED.load(std::sync::atomic::Ordering::SeqCst) {
         return;
@@ -531,31 +523,52 @@ fn ensure_verifier_initialized(env: &mut JNIEnv, context: &JObject) {
             .with_max_level(log::LevelFilter::Info)
             .with_tag("xyz.eremef.awaria"),
     );
-    let class_loader = match env.call_method(context, "getClassLoader", "()Ljava/lang/ClassLoader;", &[]) {
+    
+    let class_loader: JObject = match env.call_method(
+        &context, 
+        jni::jni_str!("getClassLoader"), 
+        jni::jni_sig!("()Ljava/lang/ClassLoader;"), 
+        &[]
+    ) {
         Ok(r) => r.l().expect("ClassLoader is not an object"),
         Err(e) => {
             log::error!("Failed to get ClassLoader: {:?}", e);
             return;
         }
     };
+    
+    let class_loader_wrapped = unsafe { jni::objects::JClassLoader::from_raw(env, class_loader.as_raw()) };
 
     let vm = match env.get_java_vm() {
-        Ok(vm) => vm,
+        Ok(vm) => {
+            if let Ok(mut g_vm) = JAVA_VM.lock() {
+                *g_vm = Some(vm.clone());
+            }
+            vm
+        },
         Err(e) => {
             log::error!("Failed to get JavaVM: {:?}", e);
             return;
         }
     };
 
-    let context_ref = match env.new_global_ref(context) {
+    let context_ref = match env.new_global_ref(&context) {
         Ok(r) => r,
         Err(e) => {
             log::error!("Failed to create global ref for context: {:?}", e);
             return;
         }
     };
+    
+    let context_clone = match env.new_global_ref(&context) {
+        Ok(r) => r,
+        Err(e) => {
+            log::error!("Failed to create global ref for context clone: {:?}", e);
+            return;
+        }
+    };
 
-    let loader_ref = match env.new_global_ref(class_loader) {
+    let loader_ref = match env.new_global_ref(class_loader_wrapped) {
         Ok(r) => r,
         Err(e) => {
             log::error!("Failed to create global ref for loader: {:?}", e);
@@ -565,17 +578,13 @@ fn ensure_verifier_initialized(env: &mut JNIEnv, context: &JObject) {
 
     log::info!("Calling rustls_platform_verifier::android::init_with_refs...");
     
-    // Store for our own use (before moving into init_with_refs)
-    if let Ok(mut g_vm) = RAW_VM.lock() {
-        *g_vm = Some(SendRawVM(vm.get_java_vm_pointer() as usize));
-    }
     if let Ok(mut g_ctx) = ANDROID_CONTEXT.lock() {
-        *g_ctx = Some(std::sync::Arc::new(context_ref.clone()));
+        *g_ctx = Some(std::sync::Arc::new(context_clone));
     }
 
     // Also find and cache our PsgWebViewFetcher class
     log::info!("Caching PsgWebViewFetcher class...");
-    match env.find_class("xyz/eremef/awaria/PsgWebViewFetcher") {
+    match env.find_class(jni::jni_str!("xyz/eremef/awaria/PsgWebViewFetcher")) {
         Ok(cls) => {
             if let Ok(cls_ref) = env.new_global_ref(cls) {
                 if let Ok(mut g_psg) = PSG_FETCHER_CLASS.lock() {
@@ -595,113 +604,74 @@ fn ensure_verifier_initialized(env: &mut JNIEnv, context: &JObject) {
 }
 
 #[cfg(target_os = "android")]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, deprecated)]
 #[no_mangle]
 pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchCountFromRust(
-    mut env: JNIEnv,
+    mut native_env: EnvUnowned,
     _class: JClass,
     context: JObject,
     provider_id: JString,
     settings_json: JString,
 ) -> jint {
-    ensure_verifier_initialized(&mut env, &context);
-    let provider_id: String = match env.get_string(&provider_id) {
-        Ok(s) => s.into(),
-        Err(_) => {
-            let _ = env.throw_new("java/lang/IllegalArgumentException", "Invalid providerId");
-            return -1;
-        }
-    };
+    let final_count = std::sync::Arc::new(std::sync::atomic::AtomicI32::new(-1));
+    let final_count_clone = final_count.clone();
 
-    let settings_str: String = match env.get_string(&settings_json) {
-        Ok(s) => s.into(),
-        Err(_) => {
-            let _ = env.throw_new("java/lang/IllegalArgumentException", "Invalid settings JSON");
-            return -1;
-        }
-    };
+    let _ = native_env.with_env(move |env| {
+        ensure_verifier_initialized(env, &context);
+        
+        let provider_id: String = env.get_string(&provider_id).map(|s| s.into()).unwrap_or_default();
+        let settings_str: String = env.get_string(&settings_json).map(|s| s.into()).unwrap_or_default();
 
-    let settings: Settings = match serde_json::from_str(&settings_str) {
-        Ok(s) => s,
-        Err(e) => {
-            let _ = env.throw_new("java/lang/IllegalArgumentException", format!("JSON parse error: {}", e));
-            return -1;
-        }
-    };
+        let settings: Settings = match serde_json::from_str(&settings_str) {
+            Ok(s) => s,
+            Err(_) => return Ok::<_, jni::errors::Error>(()),
+        };
 
-    let rt = match tokio::runtime::Builder::new_current_thread()
-        .enable_all()
-        .build() {
+        let rt = match tokio::runtime::Builder::new_current_thread().enable_all().build() {
             Ok(rt) => rt,
-            Err(e) => {
-                let _ = env.throw_new("java/lang/RuntimeException", format!("Tokio runtime error: {}", e));
-                return -1;
-            }
+            Err(_) => return Ok::<_, jni::errors::Error>(()),
         };
 
-    rt.block_on(async {
-        let client = match network_state::NetworkState::build_client() {
-            Ok(c) => c,
-            Err(e) => {
-                let _ = env.throw_new("java/io/IOException", format!("Failed to build HTTP client: {}", e));
-                return -1;
-            }
-        };
-        let client_http1 = match network_state::NetworkState::build_client_http1() {
-            Ok(c) => c,
-            Err(e) => {
-                let _ = env.throw_new("java/io/IOException", format!("Failed to build HTTP/1.1 client: {}", e));
-                return -1;
-            }
-        };
+        let count = rt.block_on(async {
+            let client = match network_state::NetworkState::build_client() {
+                Ok(c) => c,
+                Err(_) => return -1,
+            };
+            let client_http1 = match network_state::NetworkState::build_client_http1() {
+                Ok(c) => c,
+                Err(_) => return -1,
+            };
 
-        let providers = get_providers();
-        let provider = providers.iter().find(|p| p.id() == provider_id);
+            let providers = get_providers();
+            let provider = providers.iter().find(|p| p.id() == provider_id);
 
-        match provider {
-            Some(p) => {
-                // --- VOIVODESHIP PREFILTRATION ---
-                if !api_logic::is_provider_applicable(p.source(), &settings) {
-                    log::info!("WidgetUtils: skipping {}, not applicable", p.id());
-                    return 0;
-                }
-
-                let (mut alerts, errors) = p.fetch(&client, &client_http1, &settings, None).await;
-                if alerts.is_empty() && !errors.is_empty() {
-                    let _ = env.throw_new("java/io/IOException", errors.join("; "));
-                    return -1;
-                }
-                
-                let now = chrono::Utc::now();
-                
-                // 1. Assign hashes and filter out expired (past) outages
-                alerts.retain(|alert| {
-                    if let Some(end_str) = &alert.endDate {
-                        if let Some(end_dt) = utils::parse_date(end_str) {
-                            return end_dt >= now;
+            match provider {
+                Some(p) => {
+                    if !api_logic::is_provider_applicable(p.source(), &settings) {
+                        return 0;
+                    }
+                    let (mut alerts, _) = p.fetch(&client, &client_http1, &settings, None).await;
+                    let now = chrono::Utc::now();
+                    alerts.retain(|alert| {
+                        if let Some(end_str) = &alert.endDate {
+                            if let Some(end_dt) = utils::parse_date(end_str) {
+                                return end_dt >= now;
+                            }
                         }
-                    }
-                    true
-                });
-
-                // Deduplicate
-                let grouped_alerts = api_logic::deduplicate_alerts(alerts);
-
-                // --- COUNT LOCAL ALERTS ---
-                let mut count = 0;
-                for alert in &grouped_alerts {
-                    if alert.is_local == Some(true) {
-                        count += 1;
-                    }
+                        true
+                    });
+                    let grouped = api_logic::deduplicate_alerts(alerts);
+                    grouped.iter().filter(|a| a.is_local == Some(true)).count() as jint
                 }
-                count as jint
+                None => -1
             }
-            None => {
-                let _ = env.throw_new("java/lang/IllegalArgumentException", format!("Unknown provider: {}", provider_id));
-                -1
-            }
-        }
-    })
+        });
+        
+        final_count_clone.store(count, std::sync::atomic::Ordering::Relaxed);
+        Ok::<_, jni::errors::Error>(())
+    });
+    
+    final_count.load(std::sync::atomic::Ordering::Relaxed)
 }
 
 #[cfg(target_os = "android")]
@@ -710,26 +680,28 @@ struct JniNotification;
 #[cfg(target_os = "android")]
 impl NotificationProvider for JniNotification {
     fn show_notification(&self, title: String, body: String, hash: String) {
-        if let (Ok(vm_guard), Ok(context_guard)) = (RAW_VM.lock(), ANDROID_CONTEXT.lock()) {
-            if let (Some(vm_wrapper), Some(context_ref)) = (&*vm_guard, &*context_guard) {
-                let vm = unsafe { &*(vm_wrapper.0 as *const jni::JavaVM) };
-                if let Ok(mut env) = vm.attach_current_thread() {
-                    let title_j = env.new_string(title).unwrap();
-                    let body_j = env.new_string(body).unwrap();
-                    let hash_j = env.new_string(hash).unwrap();
-                    
-                    if let Ok(class) = env.find_class("xyz/eremef/awaria/WidgetUtils") {
-                        let _ = env.call_static_method(
-                            class,
-                            "showNotification",
-                            "(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V",
-                            &[
-                                jni::objects::JValue::Object(context_ref.as_obj()),
-                                jni::objects::JValue::Object(&title_j),
-                                jni::objects::JValue::Object(&body_j),
-                                jni::objects::JValue::Object(&hash_j),
-                            ],
-                        );
+        if let Ok(context_guard) = ANDROID_CONTEXT.lock() {
+             if let Some(context_ref) = &*context_guard {
+                if let Ok(vm_guard) = JAVA_VM.lock() {
+                    if let Some(vm) = &*vm_guard {
+                        let _ = vm.attach_current_thread(|env| {
+                            let title_j = env.new_string(&title).unwrap();
+                            let body_j = env.new_string(&body).unwrap();
+                            let hash_j = env.new_string(&hash).unwrap();
+                            
+                            let _ = env.call_static_method(
+                                jni::jni_str!("xyz/eremef/awaria/WidgetUtils"),
+                                jni::jni_str!("showNotification"),
+                                jni::jni_sig!("(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V"),
+                                &[
+                                    jni::objects::JValue::Object(context_ref.as_obj()),
+                                    jni::objects::JValue::Object(&title_j.into()),
+                                    jni::objects::JValue::Object(&body_j.into()),
+                                    jni::objects::JValue::Object(&hash_j.into()),
+                                ],
+                            );
+                            Ok::<(), jni::errors::Error>(())
+                        });
                     }
                 }
             }
@@ -738,149 +710,102 @@ impl NotificationProvider for JniNotification {
 }
 
 #[cfg(target_os = "android")]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, deprecated)]
 #[no_mangle]
 pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchAndNotifyFromRust(
-    mut env: JNIEnv,
+    mut native_env: EnvUnowned,
     _class: JClass,
     context: JObject,
     settings_json: JString,
 ) {
-    ensure_verifier_initialized(&mut env, &context);
-    log::info!("JNI: fetchAndNotifyFromRust started");
-    
-    let settings_str: String = match env.get_string(&settings_json) {
-        Ok(s) => s.into(),
-        Err(e) => {
-            log::error!("JNI: Failed to get settings string: {:?}", e);
-            return;
-        }
-    };
+    let _ = native_env.with_env(|env| {
+        ensure_verifier_initialized(env, &context);
+        
+        let settings_str: String = env.get_string(&settings_json).map(|s| s.into()).unwrap_or_default();
+        if settings_str.is_empty() { return Ok::<(), jni::errors::Error>(()); }
 
-    let settings: Settings = match serde_json::from_str(&settings_str) {
-        Ok(s) => s,
-        Err(e) => {
-            log::error!("JNI: Failed to parse settings: {:?}", e);
-            return;
-        }
-    };
+        let settings: Settings = match serde_json::from_str(&settings_str) {
+            Ok(s) => s,
+            Err(_) => return Ok(()),
+        };
 
-    let rt = match tokio::runtime::Builder::new_multi_thread()
-        .enable_all()
-        .build() {
+        let rt = match tokio::runtime::Builder::new_multi_thread().enable_all().build() {
             Ok(rt) => rt,
-            Err(e) => {
-                log::error!("JNI: Failed to create tokio runtime: {:?}", e);
-                return;
-            }
+            Err(_) => return Ok(()),
         };
 
-    rt.block_on(async {
-        log::info!("JNI: Building network clients...");
-        let client = match network_state::NetworkState::build_client() {
-            Ok(c) => c,
-            Err(e) => {
-                log::error!("JNI: Failed to build client: {:?}", e);
-                return;
-            }
-        };
-        let client_http1 = match network_state::NetworkState::build_client_http1() {
-            Ok(c) => c,
-            Err(e) => {
-                log::error!("JNI: Failed to build client_http1: {:?}", e);
-                return;
-            }
-        };
+        rt.block_on(async {
+            let client = match network_state::NetworkState::build_client() {
+                Ok(c) => c,
+                Err(_) => return,
+            };
+            let client_http1 = match network_state::NetworkState::build_client_http1() {
+                Ok(c) => c,
+                Err(_) => return,
+            };
 
-        let providers = get_providers();
-        let enabled_sources = settings.enabled_sources.clone().unwrap_or_default();
-        
-        // Open DB manually
-        log::info!("JNI: Locating database...");
-        let files_dir: JObject = match env.call_method(&context, "getFilesDir", "()Ljava/io/File;", &[]) {
-            Ok(v) => v.l().unwrap(),
-            Err(e) => {
-                log::error!("JNI: Failed to get files dir: {:?}", e);
-                return;
+            let providers = get_providers();
+            let enabled_sources = settings.enabled_sources.clone().unwrap_or_default();
+            
+            let files_dir: JObject = match env.call_method(&context, jni::jni_str!("getFilesDir"), jni::jni_sig!("()Ljava/io/File;"), &[]) {
+                Ok(v) => v.l().expect("getFilesDir returned non-object"),
+                Err(_) => return,
+            };
+            let path_j: JObject = match env.call_method(&files_dir, jni::jni_str!("getAbsolutePath"), jni::jni_sig!("()Ljava/lang/String;"), &[]) {
+                Ok(v) => v.l().expect("getAbsolutePath returned non-object"),
+                Err(_) => return,
+            };
+            let path_jstr = unsafe { jni::objects::JString::from_raw(env, path_j.as_raw()) };
+            let path_str: String = env.get_string(&path_jstr).map(|s| s.into()).unwrap_or_default();
+            let files_dir_path = std::path::PathBuf::from(path_str);
+            
+            let mut db_path = files_dir_path.join("state.db");
+            if !db_path.exists() {
+                let app_data_path = files_dir_path.join("app_data");
+                if app_data_path.exists() {
+                    db_path = app_data_path.join("state.db");
+                }
             }
-        };
-        let path_obj: JObject = match env.call_method(&files_dir, "getAbsolutePath", "()Ljava/lang/String;", &[]) {
-            Ok(v) => v.l().unwrap(),
-            Err(e) => {
-                log::error!("JNI: Failed to get absolute path: {:?}", e);
-                return;
-            }
-        };
-        let path_j: JString = path_obj.into();
-        let path_str: String = env.get_string(&path_j).unwrap().into();
-        let files_dir_path = std::path::PathBuf::from(path_str);
-        
-        // Match Tauri's app_data_dir logic (it usually appends app_data or uses filesDir directly)
-        let mut db_path = files_dir_path.join("state.db");
-        if !db_path.exists() {
-            let app_data_path = files_dir_path.join("app_data");
-            if app_data_path.exists() {
-                db_path = app_data_path.join("state.db");
-            }
-        }
-        
-        log::info!("JNI: Opening database at {:?}", db_path);
-        let conn = match rusqlite::Connection::open(db_path) {
-            Ok(c) => c,
-            Err(e) => {
-                log::error!("JNI: Failed to open DB: {:?}", e);
-                return;
-            }
-        };
-        
-        let db_adapter = RealDatabase(&Mutex::new(conn));
-        let notifier = JniNotification;
-        let engine = MonitorEngine::new(&db_adapter, &notifier, &settings);
+            
+            let conn = match rusqlite::Connection::open(db_path) {
+                Ok(c) => c,
+                Err(_) => return,
+            };
+            
+            let db_adapter = RealDatabase(&Mutex::new(conn));
+            let notifier = JniNotification;
+            let engine = MonitorEngine::new(&db_adapter, &notifier, &settings);
 
-        let mut tasks = Vec::new();
-        let s_arc = std::sync::Arc::new(settings.clone());
+            let mut tasks = Vec::new();
+            let s_arc = std::sync::Arc::new(settings.clone());
 
-        for provider in providers {
-            if !enabled_sources.contains(&provider.id()) {
-                continue;
+            for provider in providers {
+                if !enabled_sources.contains(&provider.id()) {
+                    continue;
+                }
+                if !api_logic::is_provider_applicable(provider.source(), &s_arc) {
+                    continue;
+                }
+                let c = client.clone();
+                let ch1 = client_http1.clone();
+                let s = s_arc.clone();
+                tasks.push(tokio::spawn(async move {
+                    provider.fetch(&c, &ch1, &s, None).await
+                }));
             }
 
-            if !api_logic::is_provider_applicable(provider.source(), &s_arc) {
-                continue;
-            }
-
-            let c = client.clone();
-            let ch1 = client_http1.clone();
-            let s = s_arc.clone();
-            tasks.push(tokio::spawn(async move {
-                provider.fetch(&c, &ch1, &s, None).await
-            }));
-        }
-
-        log::info!("JNI: Executing {} provider tasks in parallel...", tasks.len());
-        let results = futures::future::join_all(tasks).await;
-        let mut all_alerts = Vec::new();
-
-        for res in results {
-            match res {
-                Ok((alerts, errs)) => {
-                    if !errs.is_empty() {
-                        log::warn!("JNI: Provider reported errors: {:?}", errs);
-                    }
+            let results = futures::future::join_all(tasks).await;
+            let mut all_alerts = Vec::new();
+            for res in results {
+                if let Ok((alerts, _)) = res {
                     all_alerts.extend(alerts);
                 }
-                Err(e) => {
-                    log::error!("JNI: Provider task failed: {:?}", e);
-                }
             }
-        }
 
-        log::info!("JNI: Deduplicating {} alerts...", all_alerts.len());
-        let deduplicated = api_logic::deduplicate_alerts(all_alerts);
-        
-        log::info!("JNI: Processing alerts and triggering notifications...");
-        engine.process_alerts(deduplicated);
-        log::info!("JNI: fetchAndNotifyFromRust finished");
+            let deduplicated = api_logic::deduplicate_alerts(all_alerts);
+            engine.process_alerts(deduplicated);
+        });
+        Ok(())
     });
 }
 
@@ -888,43 +813,55 @@ pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchAndNotifyFromRust(
 #[allow(non_snake_case)]
 #[no_mangle]
 pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_initVerifier(
-    mut env: JNIEnv,
+    mut native_env: EnvUnowned,
     _class: JClass,
     context: JObject,
 ) {
-    ensure_verifier_initialized(&mut env, &context);
+    let _ = native_env.with_env(|env| {
+        ensure_verifier_initialized(env, &context);
+        Ok::<(), jni::errors::Error>(())
+    });
 }
 
 #[cfg(target_os = "android")]
 pub async fn get_psg_html_android() -> Result<String, String> {
-    let raw_vm_wrapper = RAW_VM.lock().map_err(|e| e.to_string())?.ok_or("JavaVM not initialized")?;
-    let context_ref = ANDROID_CONTEXT.lock().map_err(|e| e.to_string())?.clone().ok_or("Android Context not initialized")?;
-    let class_ref = PSG_FETCHER_CLASS.lock().map_err(|e| e.to_string())?.clone().ok_or("PsgWebViewFetcher class not cached")?;
+    let context_ref = ANDROID_CONTEXT.lock().map_err(|_| "Android Context lock poisoned".to_string())?.clone().ok_or("Android Context not initialized")?;
+    let class_ref = PSG_FETCHER_CLASS.lock().map_err(|_| "PsgWebViewFetcher lock poisoned".to_string())?.clone().ok_or("PsgWebViewFetcher class not cached")?;
     
-    tokio::task::spawn_blocking(move || {
-        let vm = unsafe { jni::JavaVM::from_raw(raw_vm_wrapper.0 as *mut jni::sys::JavaVM).map_err(|e| e.to_string())? };
-        let mut env = vm.attach_current_thread().map_err(|e: jni::errors::Error| e.to_string())?;
-        let context = context_ref.as_obj();
-        let class = class_ref.as_obj();
+    #[allow(deprecated)]
+    tokio::task::spawn_blocking(move || -> Result<String, String> {
+        let vm_guard = JAVA_VM.lock().unwrap();
+        let vm = vm_guard.as_ref().unwrap();
+        let res: Result<String, jni::errors::Error> = vm.attach_current_thread(|env| {
+            let context = context_ref.as_obj();
+            
+            let result = env.call_static_method(
+                &*class_ref,
+                jni::jni_str!("fetchHtmlNative"),
+                jni::jni_sig!("(Landroid/content/Context;)Ljava/lang/String;"),
+                &[jni::objects::JValue::Object(context)]
+            )?;
+            
+            let html_obj = result.l()?;
+            if html_obj.is_null() {
+                return Ok(String::new());
+            }
+            
+            let html_jstr = unsafe { jni::objects::JString::from_raw(env, html_obj.as_raw()) };
+            let html: String = env.get_string(&html_jstr).map(|s| s.into()).unwrap_or_default();
+            
+            Ok(html)
+        });
         
-        // Convert to JClass for call_static_method
-        let class = unsafe { jni::objects::JClass::from_raw(class.as_raw()) };
-        
-        let result = env.call_static_method(
-            &class,
-            "fetchHtmlNative",
-            "(Landroid/content/Context;)Ljava/lang/String;",
-            &[jni::objects::JValue::Object(context)]
-        ).map_err(|e: jni::errors::Error| e.to_string())?;
-        
-        let html_obj = result.l().map_err(|e: jni::errors::Error| e.to_string())?;
-        if html_obj.is_null() {
-            return Err("Native PSG fetch returned null".to_string());
+        match res {
+            Ok(html) => {
+                if html.is_empty() {
+                    Err("Native PSG fetch returned null".to_string())
+                } else {
+                    Ok(html)
+                }
+            },
+            Err(e) => Err(e.to_string())
         }
-        
-        let html_jstr: jni::objects::JString = html_obj.into();
-        let html: String = env.get_string(&html_jstr).map_err(|e: jni::errors::Error| e.to_string())?.into();
-        
-        Ok(html)
-    }).await.map_err(|e| e.to_string())?
+    }).await.map_err(|e: tokio::task::JoinError| e.to_string())?
 }

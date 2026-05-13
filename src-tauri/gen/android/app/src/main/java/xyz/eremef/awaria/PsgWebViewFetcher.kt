@@ -354,6 +354,10 @@ object PsgWebViewFetcher {
                             count++
                             break // Count each outage only once
                         }
+                    } else {
+                        // If no street specified, count all in city
+                        count++
+                        break
                     }
                 }
             }

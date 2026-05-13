@@ -33,10 +33,12 @@ impl NetworkState {
     }
 
     pub fn build_client() -> Result<Client, Error> {
+        let _ = rustls::crypto::ring::default_provider().install_default();
         Client::builder().build()
     }
 
     pub fn build_client_http1() -> Result<Client, Error> {
+        let _ = rustls::crypto::ring::default_provider().install_default();
         Client::builder().http1_only().build()
     }
 }
