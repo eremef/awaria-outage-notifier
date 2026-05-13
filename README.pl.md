@@ -12,7 +12,7 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
 
 [https://eremef.xyz/awaria](https://eremef.xyz/awaria)
 
-## Wspierane Źródła
+## Wspierani Dostawcy
 
 - **⚡ Prąd**
   - **Tauron**: Planowane konserwacje i awaryjne wyłączenia prądu.

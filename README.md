@@ -12,7 +12,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
 
 [https://eremef.xyz/awaria](https://eremef.xyz/awaria)
 
-## Supported Sources
+## Supported Providers
 
 - **⚡ Power**
   - **Tauron**: Planned maintenance and emergency power outages.
