@@ -849,12 +849,11 @@ pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchAndNotifyFromRust(
                 continue;
             }
 
-            let p = provider.clone();
             let c = client.clone();
             let ch1 = client_http1.clone();
             let s = s_arc.clone();
             tasks.push(tokio::spawn(async move {
-                p.fetch(&c, &ch1, &s, None).await
+                provider.fetch(&c, &ch1, &s, None).await
             }));
         }
 
