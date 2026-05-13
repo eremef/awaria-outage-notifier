@@ -525,7 +525,12 @@ fn ensure_verifier_initialized(env: &mut JNIEnv, context: &JObject) {
         return;
     }
 
-    log::info!("Attempting to initialize rustls-platform-verifier...");
+    log::info!("Attempting to initialize rustls-platform-verifier and android_logger...");
+    android_logger::init_once(
+        android_logger::Config::default()
+            .with_max_level(log::LevelFilter::Info)
+            .with_tag("xyz.eremef.awaria"),
+    );
     let class_loader = match env.call_method(context, "getClassLoader", "()Ljava/lang/ClassLoader;", &[]) {
         Ok(r) => r.l().expect("ClassLoader is not an object"),
         Err(e) => {
@@ -742,70 +747,141 @@ pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchAndNotifyFromRust(
     settings_json: JString,
 ) {
     ensure_verifier_initialized(&mut env, &context);
+    log::info!("JNI: fetchAndNotifyFromRust started");
     
     let settings_str: String = match env.get_string(&settings_json) {
         Ok(s) => s.into(),
-        Err(_) => return,
+        Err(e) => {
+            log::error!("JNI: Failed to get settings string: {:?}", e);
+            return;
+        }
     };
 
     let settings: Settings = match serde_json::from_str(&settings_str) {
         Ok(s) => s,
-        Err(_) => return,
+        Err(e) => {
+            log::error!("JNI: Failed to parse settings: {:?}", e);
+            return;
+        }
     };
 
-    let rt = match tokio::runtime::Builder::new_current_thread()
+    let rt = match tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build() {
             Ok(rt) => rt,
-            Err(_) => return,
+            Err(e) => {
+                log::error!("JNI: Failed to create tokio runtime: {:?}", e);
+                return;
+            }
         };
 
     rt.block_on(async {
+        log::info!("JNI: Building network clients...");
         let client = match network_state::NetworkState::build_client() {
             Ok(c) => c,
-            Err(_) => return,
+            Err(e) => {
+                log::error!("JNI: Failed to build client: {:?}", e);
+                return;
+            }
         };
         let client_http1 = match network_state::NetworkState::build_client_http1() {
             Ok(c) => c,
-            Err(_) => return,
+            Err(e) => {
+                log::error!("JNI: Failed to build client_http1: {:?}", e);
+                return;
+            }
         };
 
         let providers = get_providers();
         let enabled_sources = settings.enabled_sources.clone().unwrap_or_default();
         
         // Open DB manually
-        let files_dir: JObject = env.call_method(&context, "getFilesDir", "()Ljava/io/File;", &[]).unwrap().l().unwrap();
-        let path_obj: JObject = env.call_method(&files_dir, "getAbsolutePath", "()Ljava/lang/String;", &[]).unwrap().l().unwrap();
+        log::info!("JNI: Locating database...");
+        let files_dir: JObject = match env.call_method(&context, "getFilesDir", "()Ljava/io/File;", &[]) {
+            Ok(v) => v.l().unwrap(),
+            Err(e) => {
+                log::error!("JNI: Failed to get files dir: {:?}", e);
+                return;
+            }
+        };
+        let path_obj: JObject = match env.call_method(&files_dir, "getAbsolutePath", "()Ljava/lang/String;", &[]) {
+            Ok(v) => v.l().unwrap(),
+            Err(e) => {
+                log::error!("JNI: Failed to get absolute path: {:?}", e);
+                return;
+            }
+        };
         let path_j: JString = path_obj.into();
         let path_str: String = env.get_string(&path_j).unwrap().into();
-        let db_path = std::path::PathBuf::from(path_str).join("state.db");
+        let files_dir_path = std::path::PathBuf::from(path_str);
         
+        // Match Tauri's app_data_dir logic (it usually appends app_data or uses filesDir directly)
+        let mut db_path = files_dir_path.join("state.db");
+        if !db_path.exists() {
+            let app_data_path = files_dir_path.join("app_data");
+            if app_data_path.exists() {
+                db_path = app_data_path.join("state.db");
+            }
+        }
+        
+        log::info!("JNI: Opening database at {:?}", db_path);
         let conn = match rusqlite::Connection::open(db_path) {
             Ok(c) => c,
-            Err(_) => return,
+            Err(e) => {
+                log::error!("JNI: Failed to open DB: {:?}", e);
+                return;
+            }
         };
         
         let db_adapter = RealDatabase(&Mutex::new(conn));
         let notifier = JniNotification;
         let engine = MonitorEngine::new(&db_adapter, &notifier, &settings);
 
-        let mut all_alerts = Vec::new();
+        let mut tasks = Vec::new();
+        let s_arc = std::sync::Arc::new(settings.clone());
 
         for provider in providers {
             if !enabled_sources.contains(&provider.id()) {
                 continue;
             }
 
-            if !api_logic::is_provider_applicable(provider.source(), &settings) {
+            if !api_logic::is_provider_applicable(provider.source(), &s_arc) {
                 continue;
             }
 
-            let (alerts, _) = provider.fetch(&client, &client_http1, &settings, None).await;
-            all_alerts.extend(alerts);
+            let p = provider.clone();
+            let c = client.clone();
+            let ch1 = client_http1.clone();
+            let s = s_arc.clone();
+            tasks.push(tokio::spawn(async move {
+                p.fetch(&c, &ch1, &s, None).await
+            }));
         }
 
+        log::info!("JNI: Executing {} provider tasks in parallel...", tasks.len());
+        let results = futures::future::join_all(tasks).await;
+        let mut all_alerts = Vec::new();
+
+        for res in results {
+            match res {
+                Ok((alerts, errs)) => {
+                    if !errs.is_empty() {
+                        log::warn!("JNI: Provider reported errors: {:?}", errs);
+                    }
+                    all_alerts.extend(alerts);
+                }
+                Err(e) => {
+                    log::error!("JNI: Provider task failed: {:?}", e);
+                }
+            }
+        }
+
+        log::info!("JNI: Deduplicating {} alerts...", all_alerts.len());
         let deduplicated = api_logic::deduplicate_alerts(all_alerts);
+        
+        log::info!("JNI: Processing alerts and triggering notifications...");
         engine.process_alerts(deduplicated);
+        log::info!("JNI: fetchAndNotifyFromRust finished");
     });
 }
 

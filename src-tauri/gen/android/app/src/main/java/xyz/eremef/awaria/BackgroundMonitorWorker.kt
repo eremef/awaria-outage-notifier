@@ -13,15 +13,21 @@ class BackgroundMonitorWorker(
 
     override suspend fun doWork(): androidx.work.ListenableWorker.Result {
         try {
-            val settingsFile = findSettingsFile(context) ?: return androidx.work.ListenableWorker.Result.success()
+            android.util.Log.i("AwariaBgMonitor", "Background worker execution started")
+            val settingsFile = findSettingsFile(context) ?: run {
+                android.util.Log.w("AwariaBgMonitor", "Settings file not found, skipping background fetch")
+                return androidx.work.ListenableWorker.Result.success()
+            }
             val jsonString = settingsFile.readText(Charsets.UTF_8)
+            android.util.Log.d("AwariaBgMonitor", "Settings loaded (length: ${jsonString.length}), calling Rust...")
             
             // Trigger the full fetch and notify logic in Rust
             WidgetUtils.fetchAndNotifyFromRust(context, jsonString)
             
+            android.util.Log.i("AwariaBgMonitor", "Rust background fetch/notify completed successfully")
             return androidx.work.ListenableWorker.Result.success()
         } catch (e: Exception) {
-            android.util.Log.e("AwariaBgMonitor", "Error in background monitoring", e)
+            android.util.Log.e("AwariaBgMonitor", "CRITICAL ERROR in background monitoring", e)
             return androidx.work.ListenableWorker.Result.retry()
         }
     }

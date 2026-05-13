@@ -33,10 +33,22 @@ impl NetworkState {
     }
 
     pub fn build_client() -> Result<Client, Error> {
-        Client::builder().build()
+        let builder = Client::builder();
+        #[cfg(target_os = "android")]
+        let builder = {
+            use rustls_platform_verifier::BuilderExt;
+            builder.use_platform_verifier()
+        };
+        builder.build()
     }
 
     pub fn build_client_http1() -> Result<Client, Error> {
-        Client::builder().http1_only().build()
+        let builder = Client::builder().http1_only();
+        #[cfg(target_os = "android")]
+        let builder = {
+            use rustls_platform_verifier::BuilderExt;
+            builder.use_platform_verifier()
+        };
+        builder.build()
     }
 }
