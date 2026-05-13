@@ -21,10 +21,12 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
   - **PGE**: Planowane wyłączenia prądu (Wschodnia i Centralna Polska).
   - **Stoen**: Planowane wyłączenia prądu (Warszawa i okolice).
 - **🔥 Gaz - PSG**: Planowane i bieżące wyłączenia gazu.
-- **🌡️ Ciepło - Fortum**: Planowane i bieżące wyłączenia ogrzewania oraz ciepłej wody.
-- **🌡️ Ciepło - Tauron Ciepło**: Przerwy w dostawie ciepła (Południowa Polska).
-- **💧 Woda - MPWiK**: Awarie wodociągowe i prace konserwacyjne we Wrocławiu.
-- **💧 Woda - WMK**: Awarie i konserwacje wodociągowe w Krakowie.
+- **🌡️ Ciepło**
+  - **Fortum**: Planowane i bieżące wyłączenia ogrzewania oraz ciepłej wody.
+  - **Tauron Ciepło**: Przerwy w dostawie ciepła (Południowa Polska).
+- **💧 Woda**
+  - **MPWiK Wrocław**: Awarie wodociągowe i prace konserwacyjne we Wrocławiu.
+  - **WMK**: Awarie i konserwacje wodociągowe w Krakowie.
 
 ## Aplikacja Android
 
