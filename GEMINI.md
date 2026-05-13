@@ -45,6 +45,8 @@
 - **Android WorkManager**: Uses `BackgroundMonitorWorker` and `WidgetUpdateWorker`. Ensure `ensure_verifier_initialized` is called in each worker's entry point.
 - **Settings Sync**: Kotlin side uses `loadSettings(context)` which returns `Pair<Settings, String>` (object + raw JSON). The raw JSON is passed to Rust to avoid double serialization.
 - **Rust MonitorEngine**: The `MonitorEngine::process_alerts` handles deduplication and notification triggers. It relies on `ProviderCache` to avoid redundant network calls.
+- **Notification Formatting**: Excessive whitespace in notifications (especially PSG) is caused by raw HTML remnants and newlines. Use `split_whitespace().collect::<Vec<_>>().join(" ")` in Rust or `replace(Regex("\\s+"), " ")` in Kotlin to normalize strings.
+- **Date Parsing**: Polish providers often use dots (`.`) and "godz." prefixes. `utils.rs::parse_date` should be extended to handle these by cleaning the string (dots to hyphens, remove "godz.") before parsing with `NaiveDateTime`.
 
 ### Browser Automation & Scraping
 - **Dynamic Dropdowns**: For sites with autocomplete (like Tauron), `type_text` must be followed by an explicit click on the suggested item `uid`.
@@ -55,6 +57,7 @@
 
 - **Android Release Build**: `npx tauri android build -- --target aarch64 --apk`
 - **Log Monitoring**: `adb logcat | grep awaria`
+- **Isolated Rust Tests**: To avoid file locks during active builds, always run tests with a separate target directory: `cargo test --target-dir target_test`. Clean up after completion.
 - **Knowledge Persistence**: The project uses MemPalace for memory storage. Ensure git hooks are active to automate `mempalace sync`.
 
 

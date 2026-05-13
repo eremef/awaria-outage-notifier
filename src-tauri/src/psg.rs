@@ -46,7 +46,8 @@ impl AlertProvider for PsgProvider {
             // 2. Try direct fetch with cached cookies (25 min TTL)
             if let Ok(html) = try_direct_fetch_with_cache(app).await {
                 let alerts = parse_psg_html(&html, settings);
-                if !alerts.is_empty() || html.contains("województwo") || html.contains("Polska Spółka Gazownictwa") || html.contains("Przerwy w dostawie gazu") {
+                // Stricter check: must look like the real table page
+                if !alerts.is_empty() || (html.contains("Wyłączenie od") && html.contains("Miejscowość")) {
                     log::info!("PSG: Data fetched from direct successfully");
                     let _ = save_cached_html(app, &html).await;
                     return (alerts, Vec::new());
@@ -57,7 +58,9 @@ impl AlertProvider for PsgProvider {
             match fetch_via_webview(app).await {
                 Ok(html) => {
                     let alerts = parse_psg_html(&html, settings);
-                    let _ = save_cached_html(app, &html).await;
+                    if !alerts.is_empty() || (html.contains("Wyłączenie od") && html.contains("Miejscowość")) {
+                        let _ = save_cached_html(app, &html).await;
+                    }
                     (alerts, Vec::new())
                 }
                 Err(e) => {
@@ -129,63 +132,127 @@ async fn try_direct_fetch_with_cache(app: &AppHandle) -> Result<String, String> 
         let script = r#"
             (function() {
                 console.log('PSG-FETCH: Script injected');
+                
+                function trySwitchToPlanned() {
+                    // Specific ID provided by user
+                    const checkbox1 = document.getElementById('checkbox1');
+                    if (checkbox1) {
+                        console.log('PSG-FETCH: Found #checkbox1, checked=' + checkbox1.checked);
+                        if (!checkbox1.checked) {
+                            console.log('PSG-FETCH: Clicking #checkbox1...');
+                            checkbox1.click();
+                            
+                            // Sometimes we need to click the label or a submit button if click doesn't trigger AJAX
+                            // But usually checkboxes on these forms have onchange=submit()
+                            window._waitingForRefresh = true;
+                            window._triedPlanned = true;
+                            setTimeout(() => { window._waitingForRefresh = false; }, 3000); 
+                            return true;
+                        }
+                    }
+
+                    const interactive = Array.from(document.querySelectorAll('button, a, span, li, label, input'));
+                    const plannedBtn = interactive.find(el => {
+                        const text = el.innerText || (el.value && typeof el.value === 'string' ? el.value : '');
+                        return /planowane/i.test(text.trim());
+                    });
+                    
+                    if (plannedBtn) {
+                        const isAlreadyActive = plannedBtn.classList.contains('active') || 
+                                               plannedBtn.classList.contains('selected') ||
+                                               (plannedBtn.parentElement && plannedBtn.parentElement.classList.contains('active')) ||
+                                               (plannedBtn.tagName === 'INPUT' && plannedBtn.checked);
+                        
+                        if (!isAlreadyActive) {
+                            console.log('PSG-FETCH: Clicking button:', plannedBtn.tagName, 'Text:', plannedBtn.innerText);
+                            plannedBtn.click();
+                            window._waitingForRefresh = true;
+                            window._triedPlanned = true;
+                            setTimeout(() => { window._waitingForRefresh = false; }, 3000); 
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+
+                window._psgState = 'capture_active';
+                window._activeHtml = '';
+                window._plannedHtml = '';
+                window._startTime = Date.now();
+                window._lastSwitchTime = 0;
+
                 function check() {
+                    const now = Date.now();
                     const body = document.body ? document.body.innerHTML : '';
-                    // Stricter check: must contain table headers to avoid false positives on Cloudflare challenge pages
-                    if ((body.includes('województwo') || body.includes('miejscowość')) && (body.includes('obszar') || body.includes('<table'))) {
-                        console.log('PSG-FETCH: Data found, emitting...');
-                        const data = {
-                            cookies: document.cookie,
-                            html: document.documentElement.outerHTML
-                        };
-                        
-                        const payload = JSON.stringify(data);
-                        
-                        // Try to emit via all possible channels
-                        try {
-                            if (window.__TAURI__ && window.__TAURI__.event) {
-                                window.__TAURI__.event.emit('psg_data_ready', data);
-                            }
-                        } catch(e) {}
-                        
-                        try {
-                            if (window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.emit) {
-                                window.__TAURI_INTERNALS__.emit('psg_data_ready', data);
-                            }
-                        } catch(e) {}
+                    const text = document.body ? document.body.innerText : '';
+                    const hasTable = body.includes('<table') || body.includes('<tbody>') || body.includes('supply-interruptions');
+                    const isBrak = text.includes('Brak') || text.includes('przerw');
 
-                        // Low-level IPC fallback for remote pages where Tauri might not be fully injected
-                        try {
-                            const ipcMsg = JSON.stringify({
-                                cmd: 'emit',
-                                event: 'psg_data_ready',
-                                payload: data
-                            });
-                            if (window.chrome && window.chrome.webview && window.chrome.webview.postMessage) {
-                                window.chrome.webview.postMessage(ipcMsg);
-                            } else if (window.ipc && window.ipc.postMessage) {
-                                window.ipc.postMessage(ipcMsg);
-                            }
-                        } catch(e) {}
+                    if (window._waitingForRefresh && (now - window._lastSwitchTime < 5000)) {
+                        return false; 
+                    }
+                    window._waitingForRefresh = false;
 
-                        return true;
+                    switch(window._psgState) {
+                        case 'capture_active':
+                            if (hasTable || isBrak || (now - window._startTime > 5000)) {
+                                console.log('PSG-FETCH: Captured Active view');
+                                window._activeHtml = body;
+                                window._psgState = 'switching';
+                            }
+                            break;
+
+                        case 'switching':
+                            console.log('PSG-FETCH: Attempting switch to Planned...');
+                            if (trySwitchToPlanned()) {
+                                window._psgState = 'capture_planned';
+                                window._waitingForRefresh = true;
+                                window._lastSwitchTime = now;
+                            } else {
+                                // If can't switch, just emit what we have
+                                window._psgState = 'emit';
+                            }
+                            break;
+
+                        case 'capture_planned':
+                            if (hasTable || isBrak || (now - window._lastSwitchTime > 5000)) {
+                                console.log('PSG-FETCH: Captured Planned view');
+                                window._plannedHtml = body;
+                                window._psgState = 'emit';
+                            }
+                            break;
+
+                        case 'emit':
+                            console.log('PSG-FETCH: Final emission');
+                            try {
+                                const data = {
+                                    html: (window._activeHtml || '') + "\n<hr>\n" + (window._plannedHtml || ''),
+                                    cookies: document.cookie
+                                };
+                                if (window.__TAURI__ && window.__TAURI__.event) {
+                                    window.__TAURI__.event.emit('psg_data_ready', data);
+                                } else if (window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.emit) {
+                                    window.__TAURI_INTERNALS__.emit('psg_data_ready', data);
+                                }
+                            } catch(e) {
+                                console.error('PSG-FETCH: Emit failed', e);
+                            }
+                            return true;
                     }
                     
                     if (body.includes('Checking your browser') || body.includes('Verify you are human') || body.includes('Cloudflare')) {
                         console.log('PSG-FETCH: Cloudflare challenge detected...');
                     }
-                    
                     return false;
                 }
 
                 let attempts = 0;
                 const interval = setInterval(() => {
                     attempts++;
-                    if (check() || attempts > 80) {
+                    if (check() || attempts > 120) {
                         clearInterval(interval);
                     }
                 }, 1000);
-                check();
             })();
         "#;
 
@@ -195,7 +262,12 @@ async fn try_direct_fetch_with_cache(app: &AppHandle) -> Result<String, String> 
 
         #[cfg(desktop)]
         {
-            builder = builder.title("PSG Fetcher").visible(false);
+            #[cfg(debug_assertions)]
+            let visible = true;
+            #[cfg(not(debug_assertions))]
+            let visible = false;
+
+            builder = builder.title("PSG Fetcher").visible(visible);
         }
 
         let window = builder.build()
@@ -203,9 +275,20 @@ async fn try_direct_fetch_with_cache(app: &AppHandle) -> Result<String, String> 
 
         let (tx, rx) = tokio::sync::oneshot::channel::<String>();
         let tx = std::sync::Arc::new(std::sync::Mutex::new(Some(tx)));
-        
+
+        // Helper to log state (screenshot removed due to compilation error in core Tauri v2)
+        let log_state = move |label: &str| {
+            log::info!("PSG-FETCH: Debugging state: {}", label);
+        };
+
+        let ls_clone = log_state.clone();
         let app_clone = app.clone();
-        // Listen globally since events from remote pages might be weirdly scoped
+        
+        // Periodic debug listener
+        let _ts_id = app.listen("psg_debug_screenshot", move |_event: Event| {
+            log::info!("PSG-FETCH: Periodic check triggered...");
+        });
+
         let _id = app.listen("psg_data_ready", move |event: Event| {
             log::info!("PSG-FETCH: Received psg_data_ready event!");
             if let Ok(data) = serde_json::from_str::<serde_json::Value>(event.payload()) {
@@ -213,6 +296,8 @@ async fn try_direct_fetch_with_cache(app: &AppHandle) -> Result<String, String> 
                     let _ = save_cookies(&app_clone, cookies);
                 }
                 if let Some(html) = data.get("html").and_then(|v| v.as_str()) {
+                    ls_clone("success");
+                    
                     if let Some(tx) = tx.lock().unwrap().take() {
                         let _ = tx.send(html.to_string());
                     }
@@ -226,7 +311,10 @@ async fn try_direct_fetch_with_cache(app: &AppHandle) -> Result<String, String> 
                 Ok(html)
             },
             Ok(Err(_)) => Err("Channel closed".to_string()),
-            Err(_) => Err("Timeout waiting for PSG data (Cloudflare challenge might be too slow or blocking JS)".to_string()),
+            Err(_) => {
+                log_state("timeout");
+                Err("Timeout waiting for PSG data (Cloudflare challenge might be too slow or blocking JS)".to_string())
+            },
         };
         
         #[cfg(desktop)]
@@ -257,7 +345,7 @@ async fn get_cached_html(app: &AppHandle) -> Result<Option<String>, String> {
         .unwrap_or(0);
     
     let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
-    if now - cache_time < 60 * 60 { // 1 hour
+    if now - cache_time < 60 { // 1 minute during debug
         return state_db::get_kv(&conn, "psg_html_cache");
     }
     
@@ -277,16 +365,20 @@ async fn save_cached_html(app: &AppHandle, html: &str) -> Result<(), String> {
 
 fn normalize(s: &str) -> String {
     s.to_lowercase()
-        .replace('ą', "a")
-        .replace('ć', "c")
-        .replace('ę', "e")
-        .replace('ł', "l")
-        .replace('ń', "n")
-        .replace('ó', "o")
-        .replace('ś', "s")
-        .replace(['ź', 'ż'], "z")
-        .trim()
-        .to_string()
+        .chars()
+        .filter(|c| c.is_alphanumeric())
+        .map(|c| match c {
+            'ą' => 'a',
+            'ć' => 'c',
+            'ę' => 'e',
+            'ł' => 'l',
+            'ń' => 'n',
+            'ó' => 'o',
+            'ś' => 's',
+            'ź' | 'ż' => 'z',
+            _ => c,
+        })
+        .collect()
 }
 
 pub fn parse_psg_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAlert> {
@@ -296,16 +388,47 @@ pub fn parse_psg_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAle
     let row_selector = Selector::parse("tr").unwrap();
     let td_selector = Selector::parse("td").unwrap();
 
+    let mut row_count = 0;
     for row in document.select(&row_selector) {
+        row_count += 1;
         let cells: Vec<_> = row.select(&td_selector).collect();
-        if cells.len() >= 8 {
-            let city = cells[1].text().collect::<Vec<_>>().join(" ").trim().to_string();
-            let area = cells[2].text().collect::<Vec<_>>().join(" ").trim().to_string();
-            let start_date = cells[3].text().collect::<Vec<_>>().join(" ").trim().to_string();
-            let end_date = cells[4].text().collect::<Vec<_>>().join(" ").trim().to_string();
-            let message = cells[5].text().collect::<Vec<_>>().join(" ").trim().to_string();
-            let status = cells[7].text().collect::<Vec<_>>().join(" ").trim().to_string();
+        let cell_texts: Vec<String> = cells.iter()
+            .map(|c| {
+                c.text()
+                    .collect::<Vec<_>>()
+                    .join(" ")
+                    .replace("&nbsp;", " ")
+                    .replace("&amp;", "&")
+                    .split_whitespace()
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            })
+            .collect();
+        
+        println!("[PSG] Row {}: cells (count={})={:?}", row_count, cells.len(), cell_texts);
+
+        if cells.len() >= 7 {
+            let city = cell_texts[1].clone();
+            let area = cell_texts[2].clone();
+            
+            // Skip header row
+            if city.contains("Miejscowość") || area.contains("Obszar") {
+                continue;
+            }
+            
+            // Skip empty rows
+            if cell_texts.iter().any(|t| t.contains("Brak trwających przerw") || t.contains("Brak przerw")) {
+                continue;
+            }
+
+            let start_date = cell_texts[3].clone();
+            let end_date = cell_texts[4].clone();
+            let message = cell_texts[5].clone();
+            
+            // Status is usually the last or second to last cell
+            let status = if cells.len() >= 8 { cell_texts[7].clone() } else { cell_texts[cells.len() - 1].clone() };
             let status_low = status.to_lowercase();
+
             if status_low.contains("zakończona") || status_low.contains("zakonczona") {
                 continue;
             }
@@ -324,19 +447,31 @@ pub fn parse_psg_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAle
                 let city_match = norm_city == addr_city || norm_city.contains(&addr_city) || addr_city.contains(&norm_city);
                 
                 // If city didn't match directly, check if the city name is mentioned in the AREA field
-                // This happens when PSG puts the commune in the city column and village in the area column
-                let city_in_area = !city_match && norm_area.contains(&addr_city);
+                let city_in_area = !city_match && (norm_area.contains(&addr_city) || addr_city.contains(&norm_area));
                 
-                let street_match = if addr_street.is_empty() {
-                    true // City-level match
+                // Check if the outage is locality-wide
+                let is_locality_wide = {
+                    let city_with_prefix = format!("m{}", norm_city);
+                    norm_area == norm_city 
+                        || norm_area == city_with_prefix
+                        || norm_area.contains(&city_with_prefix)
+                        || norm_area.contains("calamiejscowosc")
+                        || norm_area.contains("calyobszarmiejscowosci")
+                };
+
+                let street_match = if addr_street.is_empty() || is_locality_wide {
+                    true 
                 } else {
                     norm_area.contains(&addr_street)
                 };
 
                 if (city_match || city_in_area) && street_match {
+                    println!("[PSG] Match found for addr {}: city={}, area={}", addr.city_name, city, area);
                     matched_index = Some(idx);
                     is_local = true;
                     break;
+                } else if city_match || city_in_area {
+                    println!("[PSG] City match only for addr {}: city={}, area={}", addr.city_name, city, area);
                 }
             }
 
@@ -354,7 +489,8 @@ pub fn parse_psg_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAle
             }
         }
     }
-
+    
+    println!("[PSG] Found {} rows, parsed {} alerts", row_count, alerts.len());
     alerts
 }
 
@@ -395,5 +531,71 @@ mod tests {
         let alerts = parse_psg_html(html, &settings);
         assert_eq!(alerts.len(), 1);
         assert_eq!(alerts[0].source, AlertSource::Psg);
+    }
+
+    #[test]
+    fn test_brzezowka_no_streets() {
+        let html = r#"
+            <table>
+                <tr>
+                    <td>Podkarpackie</td>
+                    <td>Brzezówka</td>
+                    <td>m. Brzezówka gm. Ropczyce</td>
+                    <td>2024-05-20 10:00</td>
+                    <td>2024-05-20 14:00</td>
+                    <td>Info</td>
+                    <td>Planowana</td>
+                    <td>Aktywna</td>
+                </tr>
+            </table>
+        "#;
+        
+        let settings = Settings {
+            addresses: vec![
+                AddressEntry {
+                    city_name: "Brzezówka".to_string(),
+                    street_name_1: "".to_string(), // No streets
+                    is_active: true,
+                    ..Default::default()
+                }
+            ],
+            ..Default::default()
+        };
+        
+        let alerts = parse_psg_html(html, &settings);
+        assert_eq!(alerts.len(), 1, "Should match city without streets");
+    }
+
+    #[test]
+    fn test_brzezowka_with_street_locality_wide() {
+        let html = r#"
+            <table>
+                <tr>
+                    <td>Podkarpackie</td>
+                    <td>Brzezówka</td>
+                    <td>m. Brzezówka gm. Ropczyce</td>
+                    <td>2024-05-20 10:00</td>
+                    <td>2024-05-20 14:00</td>
+                    <td>Info</td>
+                    <td>Planowana</td>
+                    <td>Aktywna</td>
+                </tr>
+            </table>
+        "#;
+        
+        let settings = Settings {
+            addresses: vec![
+                AddressEntry {
+                    city_name: "Brzezówka".to_string(),
+                    street_name_1: "Główna".to_string(), // Specific street
+                    is_active: true,
+                    ..Default::default()
+                }
+            ],
+            ..Default::default()
+        };
+        
+        let alerts = parse_psg_html(html, &settings);
+        assert_eq!(alerts.len(), 1, "Locality-wide outage should match specific street");
     }
 }

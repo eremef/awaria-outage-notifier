@@ -185,49 +185,123 @@ object PsgWebViewFetcher {
 
                 webView.webViewClient = object : WebViewClient() {
                     override fun onPageFinished(view: WebView, url: String) {
-                        // Wait a moment for any JS to settle, then extract HTML
-                        Handler(Looper.getMainLooper()).postDelayed({
+                        Log.d(TAG, "PSG-FETCH: Page finished loading: $url")
+                        
+                        var pollAttempts = 0
+                        val maxPollAttempts = 90 // 90 seconds max
+
+                        fun pollState() {
+                            if (deferred.isCompleted) return
+                            pollAttempts++
+                            if (pollAttempts > maxPollAttempts) {
+                                Log.e(TAG, "PSG-FETCH: Timeout waiting for state machine")
+                                deferred.complete(null)
+                                return
+                            }
+
                             view.evaluateJavascript(
-                                "(function() { return document.documentElement.outerHTML; })()"
-                            ) { html ->
-                                try {
-                                    if (html != null && html != "null") {
-                                        // JS returns JSON-escaped string, unescape it
-                                        val unescaped = unescapeJsString(html)
-                                        if (unescaped.contains("województwo") || unescaped.contains("supply-interruptions") || unescaped.contains("Polska Spółka Gazownictwa") || unescaped.contains("Wyszukiwarka") || unescaped.contains("Przerwy w dostawie gazu") || unescaped.contains("Brak przerw")) {
-                                            // Cache cookies for future direct fetches
-                                            cacheCookies(context)
-                                            deferred.complete(unescaped)
-                                        } else {
-                                            Log.w(TAG, "WebView loaded but no outage table found, might be CF challenge page")
-                                            // Try again after more delay (CF challenge solving)
-                                            Handler(Looper.getMainLooper()).postDelayed({
-                                                view.evaluateJavascript(
-                                                    "(function() { return document.documentElement.outerHTML; })()"
-                                                ) { retryHtml ->
-                                                    val retryUnescaped = if (retryHtml != null && retryHtml != "null") unescapeJsString(retryHtml) else null
-                                                    if (retryUnescaped != null && (retryUnescaped.contains("województwo") || retryUnescaped.contains("supply-interruptions") || retryUnescaped.contains("Polska Spółka Gazownictwa") || retryUnescaped.contains("Przerwy w dostawie gazu"))) {
-                                                        cacheCookies(context)
-                                                        deferred.complete(retryUnescaped)
-                                                    } else {
-                                                        deferred.complete(null)
-                                                    }
-                                                    view.destroy()
-                                                }
-                                            }, 3000)
-                                            return@evaluateJavascript
+                                """
+                                (function() {
+                                    function trySwitch() {
+                                        const checkbox1 = document.getElementById('checkbox1');
+                                        if (checkbox1 && !checkbox1.checked) {
+                                            checkbox1.click();
+                                            window._waiting = true;
+                                            window._lastSwitchTime = Date.now();
+                                            setTimeout(() => { window._waiting = false; }, 3000);
+                                            return true;
                                         }
+                                        
+                                        const interactive = Array.from(document.querySelectorAll('button, a, span, li, label, input'));
+                                        const plannedBtn = interactive.find(el => {
+                                            const text = el.innerText || (el.value && typeof el.value === 'string' ? el.value : '');
+                                            return /planowane/i.test(text.trim());
+                                        });
+                                        
+                                        if (plannedBtn) {
+                                            const isAlreadyActive = plannedBtn.classList.contains('active') || 
+                                                                  plannedBtn.classList.contains('selected') ||
+                                                                  (plannedBtn.parentElement && plannedBtn.parentElement.classList.contains('active')) ||
+                                                                  (plannedBtn.tagName === 'INPUT' && plannedBtn.checked);
+                                            
+                                            if (!isAlreadyActive) {
+                                                plannedBtn.click();
+                                                window._waiting = true;
+                                                window._lastSwitchTime = Date.now();
+                                                setTimeout(() => { window._waiting = false; }, 3000);
+                                                return true;
+                                            }
+                                        }
+                                        return false;
+                                    }
+                                    
+                                    if (window._psgState === undefined) {
+                                        window._psgState = 'capture_active';
+                                        window._activeHtml = '';
+                                        window._plannedHtml = '';
+                                        window._startTime = Date.now();
+                                    }
+
+                                    const now = Date.now();
+                                    const text = document.body ? document.body.innerText : '';
+                                    const body = document.body ? document.body.innerHTML : '';
+                                    const hasTable = body.includes('<table') || body.includes('<tbody>') || body.includes('supply-interruptions');
+                                    const isBrak = text.includes('Brak') || text.includes('przerw');
+
+                                    if (window._waiting && (now - window._lastSwitchTime < 5000)) {
+                                        return 'waiting'; 
+                                    }
+                                    window._waiting = false;
+
+                                    switch(window._psgState) {
+                                        case 'capture_active':
+                                            if (hasTable || isBrak || (now - window._startTime > 5000)) {
+                                                window._activeHtml = body;
+                                                window._psgState = 'switching';
+                                            }
+                                            return 'waiting';
+
+                                        case 'switching':
+                                            if (trySwitch()) {
+                                                window._psgState = 'capture_planned';
+                                                window._waiting = true;
+                                                window._lastSwitchTime = now;
+                                            } else {
+                                                window._psgState = 'done';
+                                            }
+                                            return 'waiting';
+
+                                        case 'capture_planned':
+                                            if (hasTable || isBrak || (now - window._lastSwitchTime > 5000)) {
+                                                window._plannedHtml = body;
+                                                window._psgState = 'done';
+                                            }
+                                            return 'waiting';
+
+                                        case 'done':
+                                            return (window._activeHtml || '') + "\n<hr>\n" + (window._plannedHtml || '');
+                                    }
+                                    
+                                    return 'waiting';
+                                })()
+                                """.trimIndent()
+                            ) { result ->
+                                val res = if (result != null && result != "null") unescapeJsString(result) else "waiting"
+                                if (res == "waiting") {
+                                    Handler(Looper.getMainLooper()).postDelayed({ pollState() }, 1000)
+                                } else {
+                                    if (res.isNotEmpty()) {
+                                        Log.d(TAG, "PSG-FETCH: Done! Length: ${res.length}")
+                                        cacheCookies(context)
+                                        deferred.complete(res)
                                     } else {
                                         deferred.complete(null)
                                     }
-                                    view.destroy()
-                                } catch (e: Exception) {
-                                    Log.e(TAG, "Error extracting HTML: ${e.message}")
-                                    deferred.complete(null)
-                                    view.destroy()
                                 }
                             }
-                        }, 2000) // 2s delay for CF challenge to resolve
+                        }
+                        
+                        pollState()
                     }
 
                     override fun onReceivedHttpError(
@@ -293,24 +367,30 @@ object PsgWebViewFetcher {
         val outages = mutableListOf<PsgOutage>()
 
         // Find all <tr> rows and extract <td> cells
-        val trPattern = Pattern.compile("<tr[^>]*>(.*?)</tr>", Pattern.DOTALL)
-        val tdPattern = Pattern.compile("<td[^>]*>(.*?)</td>", Pattern.DOTALL)
+        val trPattern = Pattern.compile("<tr[^>]*?>(.*?)</tr>", Pattern.DOTALL)
+        val tdPattern = Pattern.compile("<td[^>]*?>(.*?)</td>", Pattern.DOTALL)
         val tagStripper = Pattern.compile("<[^>]+>")
 
         val trMatcher = trPattern.matcher(html)
+        var rowCount = 0
         while (trMatcher.find()) {
+            rowCount++
             val rowHtml = trMatcher.group(1) ?: continue
             val cells = mutableListOf<String>()
             val tdMatcher = tdPattern.matcher(rowHtml)
             while (tdMatcher.find()) {
                 val cellHtml = tdMatcher.group(1) ?: ""
-                val text = tagStripper.matcher(cellHtml).replaceAll("").trim()
+                val text = tagStripper.matcher(cellHtml).replaceAll("")
+                    .replace("&nbsp;", " ")
+                    .replace("&amp;", "&")
                     .replace("\\s+".toRegex(), " ")
+                    .trim()
                 cells.add(text)
             }
 
-            if (cells.size >= 8) {
-                val status = cells[7].lowercase()
+            // Relaxed check: at least 7 columns (Status might be missing or optional in some views)
+            if (cells.size >= 7) {
+                val status = if (cells.size >= 8) cells[7].lowercase() else ""
                 // Skip completed outages
                 if (status.contains("zakończona") || status.contains("zakonczona")) {
                     continue
@@ -325,39 +405,75 @@ object PsgWebViewFetcher {
                         endDate = cells[4],
                         info = cells[5],
                         type = cells[6],
-                        status = cells[7]
+                        status = status
                     )
                 )
             }
         }
 
-        Log.i(TAG, "Parsed ${outages.size} active PSG outages")
+        Log.i(TAG, "PSG-PARSE: Found $rowCount HTML rows, parsed ${outages.size} PSG outages")
         return outages
     }
 
     /**
-     * Counts outages matching the user's configured addresses.
+     * Normalizes a string by converting to lowercase, replacing Polish characters,
+     * and keeping only alphanumeric characters.
      */
+    private fun normalize(s: String): String {
+        return s.lowercase().map { c ->
+            when (c) {
+                'ą' -> 'a'
+                'ć' -> 'c'
+                'ę' -> 'e'
+                'ł' -> 'l'
+                'ń' -> 'n'
+                'ó' -> 'o'
+                'ś' -> 's'
+                'ź', 'ż' -> 'z'
+                else -> c
+            }
+        }.filter { it.isLetterOrDigit() }.joinToString("")
+    }
+
     fun countMatchingOutages(outages: List<PsgOutage>, settingsList: List<WidgetSettings>): Int {
         var count = 0
 
         for (outage in outages) {
+            val normOutageCity = normalize(outage.city)
+            val normOutageArea = normalize(outage.area)
+
             for (settings in settingsList) {
                 if (!settings.isActive) continue
 
-                // City match
-                if (outage.city.equals(settings.cityName, ignoreCase = true)) {
-                    // Street match within the area field
-                    if (settings.streetName1.isNotEmpty()) {
-                        val matcher = WidgetUtils.CompiledMatcher(settings)
-                        if (matcher.matchesStreet(outage.area)) {
-                            count++
-                            break // Count each outage only once
-                        }
-                    } else {
-                        // If no street specified, count all in city
+                val normSettingsCity = normalize(settings.cityName)
+                val cityMatch = normOutageCity == normSettingsCity || 
+                               normOutageCity.contains(normSettingsCity) || 
+                               normSettingsCity.contains(normOutageCity)
+
+                // Sometimes city is in the area field and city field contains gmina or district
+                val cityInArea = !cityMatch && (normOutageArea.contains(normSettingsCity) || normSettingsCity.contains(normOutageArea))
+
+                if (cityMatch || cityInArea) {
+                    val normSettingsStreet = if (settings.streetName1.isNotEmpty()) normalize(settings.streetName1) else ""
+
+                    // Check if the outage is locality-wide (e.g. "m. Brzezówka", "cała miejscowość")
+                    val isLocalityWide = run {
+                        val cityWithPrefix = "m$normSettingsCity"
+                        normOutageArea == normSettingsCity
+                                || normOutageArea == cityWithPrefix
+                                || normOutageArea.contains(cityWithPrefix)
+                                || normOutageArea.contains("calamiejscowosc")
+                                || normOutageArea.contains("calyobszarmiejscowosci")
+                    }
+
+                    val streetMatch = normSettingsStreet.isEmpty() || isLocalityWide || normOutageArea.contains(normSettingsStreet)
+
+                    if (streetMatch) {
+                        Log.d(TAG, "[PSG] Match found for ${settings.cityName}: city=${outage.city}, area=${outage.area}")
                         count++
-                        break
+                        break // Count each outage only once for these settings
+                    } else {
+                        Log.d(TAG, "[PSG] City match but street mismatch for ${settings.cityName}: expected=${settings.streetName1}, area=${outage.area}")
                     }
                 }
             }

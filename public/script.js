@@ -1367,7 +1367,9 @@ if (typeof document !== 'undefined') {
 
         // Sources that provide addressIndex and isLocal from backend
         if (['tauron', 'energa', 'enea', 'pge', 'stoen', 'fortum', 'mpwik_wroclaw', 'wmk', 'psg'].includes(alert.source)) {
-            return alert.isLocal === true && alert.addressIndex === addrIdx;
+            if (alert.isLocal === true && (alert.addressIndex === addrIdx || alert.addressIndex === -1)) {
+                return true;
+            }
         }
 
         // Sources that might need frontend matching (e.g. if backend doesn't provide enough detail)
@@ -1382,12 +1384,20 @@ if (typeof document !== 'undefined') {
         const message = alert.message;
         const streetName1 = addr.streetName1 || '';
         const streetName2 = addr.streetName2 || null;
+        const cityName = addr.cityName || '';
 
         const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        
+        // Check if the message indicates a locality-wide outage
+        // Patterns like "m. Kraków", "cała miejscowość Kraków", "całe miasto Kraków"
+        if (cityName) {
+            const cityEscaped = escapeRegExp(cityName);
+            const localityWideRegex = new RegExp(`(^|[^\\p{L}])(m\\.|cała miejscowość|całe miasto|cały obszar miejscowości)\\s*${cityEscaped}([^\\p{L}]|$)`, 'iu');
+            if (localityWideRegex.test(message)) return true;
+        }
 
         if (!streetName1) {
             // Fallback for cities without streets: match by city name in the message
-            const cityName = addr.cityName || '';
             if (!cityName) return false;
             const regex = new RegExp(`(^|[^\\p{L}])${escapeRegExp(cityName)}([^\\p{L}]|$)`, 'iu');
             return regex.test(message);

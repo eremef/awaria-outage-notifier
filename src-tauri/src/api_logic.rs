@@ -248,7 +248,10 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
 }
 
 pub fn format_notification_body(alert: &UnifiedAlert, settings: &Settings) -> String {
-    let mut body = alert.message.clone().unwrap_or_default();
+    let mut body = alert.message.clone().unwrap_or_default()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ");
     
     let mut time_info = Vec::new();
     if let Some(start) = &alert.startDate {
