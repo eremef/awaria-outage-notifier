@@ -17,6 +17,7 @@
     "rust:check": "cd src-tauri && cargo check",
     "rust:clippy": "cd src-tauri && cargo clippy",
     "test:android": "cd src-tauri/gen/android && gradlew.bat :app:testUniversalDebugUnitTest",
+    "android:lint": "cd src-tauri/gen/android && gradlew.bat :app:lintUniversalDebug",
     "load:teryt": "node scripts/load-teryt.mjs",
     "mempalace:mine": "mempalace mine .",
     "mempalace:sync": "mempalace sync --apply --wing awaria",

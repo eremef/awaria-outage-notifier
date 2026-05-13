@@ -38,4 +38,7 @@
     <string name="provider_wmk">WMK</string>
     <string name="notif_channel_name">Outage Alerts</string>
     <string name="notif_channel_desc">Notifications about new and upcoming power, water, heat, and gas outages.</string>
+    <string name="placeholder_time">--:--</string>
+    <string name="placeholder_dash">–</string>
+    <string name="config_cancel">Cancel</string>
 </resources>
