@@ -210,7 +210,7 @@ impl AlertProvider for WmkProvider {
                         source: AlertSource::Wmk,
                         startDate: start_dt,
                         endDate: end_dt,
-                        message: Some(item.title),
+                        message: Some(format!("{} - {}", item.title, item.place.replace("&nbsp;", " "))),
                         description: Some(item.desc.replace("&nbsp;", " ")),
                         address_index: None,
                         is_local: None,

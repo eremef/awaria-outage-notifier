@@ -247,7 +247,7 @@ fn get_providers() -> Vec<Box<dyn AlertProvider>> {
 async fn fetch_all_alerts_internal(
     app: &AppHandle,
     sources: Option<Vec<String>>,
-) -> Result<Vec<UnifiedAlert>, String> {
+) -> Result<api_logic::AlertsResponse, String> {
     let db_state = app.state::<DbState>();
     let cache_state = app.state::<cache::CacheState>();
 
@@ -255,7 +255,7 @@ async fn fetch_all_alerts_internal(
     if sources.is_none() {
         if let Some(cached) = cache_state.get() {
             log::info!("Serving fetch_all_alerts from cache ({} items)", cached.len());
-            return Ok(cached);
+            return Ok(api_logic::AlertsResponse { alerts: cached, is_stale: false });
         }
     }
     let path = settings_path(app)?;
@@ -353,7 +353,11 @@ async fn fetch_all_alerts_internal(
     }
 
     if all_alerts.is_empty() && !errors.is_empty() {
-        return Err(errors.join("; "));
+        if let Some(cached) = cache_state.get_stale() {
+            log::warn!("Fetch failed ({} errors), falling back to stale cache ({} items)", errors.len(), cached.len());
+            return Ok(api_logic::AlertsResponse { alerts: cached, is_stale: true });
+        }
+        return Err("ERR_NO_INTERNET".to_string());
     }
 
     // Final filter to ensure no alerts from disabled addresses/cities slip through
@@ -395,14 +399,14 @@ async fn fetch_all_alerts_internal(
         cache_state.set(all_alerts.clone());
     }
 
-    Ok(all_alerts)
+    Ok(api_logic::AlertsResponse { alerts: all_alerts, is_stale: false })
 }
 
 #[tauri::command]
 async fn fetch_all_alerts(
     app: AppHandle,
     sources: Option<Vec<String>>,
-) -> Result<Vec<UnifiedAlert>, String> {
+) -> Result<api_logic::AlertsResponse, String> {
     fetch_all_alerts_internal(&app, sources).await
 }
 
@@ -418,7 +422,7 @@ fn start_background_monitoring(app: AppHandle) {
             interval.tick().await;
             log::info!("Background monitoring: starting fetch cycle...");
             match fetch_all_alerts_internal(&app, None).await {
-                Ok(alerts) => log::info!("Background monitoring: cycle completed successfully ({} alerts found).", alerts.len()),
+                Ok(response) => log::info!("Background monitoring: cycle completed successfully ({} alerts found).", response.alerts.len()),
                 Err(e) => log::error!("Background monitoring: cycle failed: {}", e),
             }
         }

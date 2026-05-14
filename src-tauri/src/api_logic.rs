@@ -109,6 +109,12 @@ pub struct UnifiedAlert {
     pub hash: Option<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq)]
+pub struct AlertsResponse {
+    pub alerts: Vec<UnifiedAlert>,
+    pub is_stale: bool,
+}
+
 impl UnifiedAlert {
     pub fn to_hash(&self) -> String {
         let mut hasher = Sha256::new();
@@ -134,8 +140,11 @@ pub fn deduplicate_alerts(alerts: Vec<UnifiedAlert>) -> Vec<UnifiedAlert> {
             if alert.is_local == Some(true) && existing.is_local != Some(true) {
                 existing.is_local = Some(true);
                 existing.address_index = alert.address_index;
+                if alert.message.is_some() {
+                    existing.message = alert.message.clone();
+                }
                 if alert.description.is_some() {
-                    existing.description = alert.description;
+                    existing.description = alert.description.clone();
                 }
             }
         } else {
@@ -344,7 +353,25 @@ pub fn is_provider_applicable(source: AlertSource, settings: &Settings) -> bool 
             return true;
         }
         let v = a.voivodeship.trim().to_uppercase();
-        voivodeships.iter().any(|&sv| sv == v)
+        voivodeships.iter().any(|&sv| {
+            if sv == v { return true; }
+            let sv_norm = sv.replace("Ł", "L").replace("Ś", "S");
+            let v_norm = v.replace("Ł", "L").replace("Ś", "S");
+            if sv_norm == v_norm { return true; }
+            
+            // Handle `?` corruption (e.g. MA?OPOLSKIE)
+            if v.contains('?') && v.len() == sv.len() {
+                let mut match_with_wildcard = true;
+                for (c1, c2) in v.chars().zip(sv.chars()) {
+                    if c1 != '?' && c1 != c2 {
+                        match_with_wildcard = false;
+                        break;
+                    }
+                }
+                if match_with_wildcard { return true; }
+            }
+            false
+        })
     })
 }
 

@@ -134,7 +134,9 @@ const translations = {
         "widget_config_primary": "Follow primary address",
         "widget_config_confirm": "Confirm",
         "settings_close": "Close settings",
-        "settings_show_other_outages": "Show other outages list for other locations"
+        "settings_show_other_outages": "Show other outages list for other locations",
+        "err_no_internet": "No internet connection. Please check your network.",
+        "msg_using_cache": "Offline mode: Showing cached data."
     },
     pl: {
         "title": "Awaria",
@@ -268,7 +270,9 @@ const translations = {
         "widget_config_primary": "Używaj adresu głównego",
         "widget_config_confirm": "Zatwierdź",
         "settings_close": "Zamknij ustawienia",
-        "settings_show_other_outages": "Pokaż listę pozostałych wyłączeń dla innych lokalizacji"
+        "settings_show_other_outages": "Pokaż listę pozostałych wyłączeń dla innych lokalizacji",
+        "err_no_internet": "Brak połączenia z internetem. Sprawdź swoje połączenie sieciowe.",
+        "msg_using_cache": "Tryb offline: Pokazywanie zapamiętanych danych."
     }
 };
 

@@ -1288,7 +1288,9 @@ if (typeof document !== 'undefined') {
         const container = document.getElementById('outages-container');
         try {
             const invokeArgs = specificSource ? { sources: [specificSource] } : { sources: null };
-            let newAlerts = await window.__TAURI__.core.invoke('fetch_all_alerts', invokeArgs);
+            const response = await window.__TAURI__.core.invoke('fetch_all_alerts', invokeArgs);
+            let newAlerts = response.alerts;
+            const isStale = response.is_stale;
 
             if (Array.isArray(newAlerts)) {
                 const seen = new Set();
@@ -1307,13 +1309,14 @@ if (typeof document !== 'undefined') {
                 lastAlerts = newAlerts;
             }
 
-            updateLastUpdated(new Date());
+            updateLastUpdated(new Date(), isStale);
             renderAlerts(lastAlerts || [], container, currentSettings, selectedAddressIndex);
         } catch (error) {
             console.error('Error fetching data:', error);
             // Only show full error message on full fetch
             if (!specificSource) {
-                container.innerHTML = `<div class="error">${typeof t !== 'undefined' ? t('err_load_failed') : 'Failed to load alert data. Error: '}${error}</div>`;
+                const errorMsg = error === 'ERR_NO_INTERNET' ? (typeof t !== 'undefined' ? t('err_no_internet') : 'No internet connection.') : `${typeof t !== 'undefined' ? t('err_load_failed') : 'Failed to load alert data. Error: '}${error}`;
+                container.innerHTML = `<div class="error">${errorMsg}</div>`;
             }
         } finally {
             if (specificSource) {
@@ -1324,7 +1327,7 @@ if (typeof document !== 'undefined') {
         }
     }
 
-    function updateLastUpdated(date) {
+    function updateLastUpdated(date, isStale = false) {
         if (date) lastFetchDate = date;
         const el = document.getElementById('last-updated');
         if (!el) return;
@@ -1339,7 +1342,19 @@ if (typeof document !== 'undefined') {
 
         const localeStr = typeof getLocaleString !== 'undefined' ? getLocaleString() : 'pl-PL';
         const label = typeof t !== 'undefined' ? t('last_updated') : 'Last updated';
-        el.textContent = `${label}: ${lastFetchDate.toLocaleTimeString(localeStr)}`;
+        let text = `${label}: ${lastFetchDate.toLocaleTimeString(localeStr)}`;
+        
+        if (isStale) {
+            const staleLabel = typeof t !== 'undefined' ? t('msg_using_cache') : 'Offline mode';
+            text = `${staleLabel} (${lastFetchDate.toLocaleTimeString(localeStr)})`;
+            el.style.color = 'var(--text-secondary)';
+            el.style.fontStyle = 'italic';
+        } else {
+            el.style.color = '';
+            el.style.fontStyle = '';
+        }
+        
+        el.textContent = text;
     }
 
     function filterAlerts(alerts, streetName) {

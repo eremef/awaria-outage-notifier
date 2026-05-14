@@ -30,6 +30,11 @@ impl CacheState {
         None
     }
 
+    pub fn get_stale(&self) -> Option<Vec<UnifiedAlert>> {
+        let lock = self.cache.lock().unwrap();
+        lock.as_ref().map(|c| c.alerts.clone())
+    }
+
     pub fn set(&self, alerts: Vec<UnifiedAlert>) {
         let mut lock = self.cache.lock().unwrap();
         *lock = Some(AlertCache {
