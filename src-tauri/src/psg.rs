@@ -281,7 +281,7 @@ async fn try_direct_fetch_with_cache(app: &AppHandle) -> Result<String, String> 
             log::info!("PSG-FETCH: Debugging state: {}", label);
         };
 
-        let ls_clone = log_state.clone();
+        let ls_clone = log_state;
         let app_clone = app.clone();
         
         // Periodic debug listener
