@@ -111,8 +111,16 @@ object PsgWebViewFetcher {
         val webViewResult = fetchViaWebView(context)
         if (webViewResult != null) {
             saveHtmlCache(context, webViewResult)
+            return webViewResult
         }
-        return webViewResult
+
+        // 4. LAST RESORT: Return stale cache if everything else failed
+        if (cachedHtml != null) {
+            Log.w(TAG, "All fetch methods failed. Returning STALE cache data (last good state).")
+            return cachedHtml
+        }
+
+        return null
     }
 
     private fun saveHtmlCache(context: Context, html: String) {

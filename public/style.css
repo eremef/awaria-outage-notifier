@@ -360,7 +360,7 @@ body {
     overflow-x: hidden;
     overscroll-behavior: none;
     padding-top: 0;
-    padding-bottom: calc(0.25rem + var(--safe-area-inset-bottom));
+    padding-bottom: 0.25rem;
     padding-left: var(--safe-area-inset-left);
     padding-right: var(--safe-area-inset-right);
     transition: background-color 0.3s ease, color 0.3s ease;

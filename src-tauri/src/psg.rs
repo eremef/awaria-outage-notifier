@@ -64,7 +64,12 @@ impl AlertProvider for PsgProvider {
                     (alerts, Vec::new())
                 }
                 Err(e) => {
-                    log::error!("PSG Fetch Error: {}", e);
+                    log::error!("PSG Fetch Error: {}. Trying to use stale cache...", e);
+                    if let Ok(Some(stale_html)) = get_stale_html(app).await {
+                        log::info!("PSG: Using stale HTML cache as fallback");
+                        let alerts = parse_psg_html(&stale_html, settings);
+                        return (alerts, vec![format!("PSG fetch error: {}. Showing stale data.", e)]);
+                    }
                     (Vec::new(), vec![format!("PSG WebView error: {}", e)])
                 }
             }
@@ -345,11 +350,17 @@ async fn get_cached_html(app: &AppHandle) -> Result<Option<String>, String> {
         .unwrap_or(0);
     
     let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
-    if now - cache_time < 60 { // 1 minute during debug
+    if now - cache_time < 3600 { // 1 hour TTL
         return state_db::get_kv(&conn, "psg_html_cache");
     }
     
     Ok(None)
+}
+
+async fn get_stale_html(app: &AppHandle) -> Result<Option<String>, String> {
+    let db = app.state::<crate::state_db::DbState>();
+    let conn = db.conn.lock().map_err(|e| e.to_string())?;
+    state_db::get_kv(&conn, "psg_html_cache")
 }
 
 async fn save_cached_html(app: &AppHandle, html: &str) -> Result<(), String> {

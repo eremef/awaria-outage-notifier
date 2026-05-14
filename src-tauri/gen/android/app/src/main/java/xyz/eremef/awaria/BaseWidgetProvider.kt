@@ -1,7 +1,5 @@
 package xyz.eremef.awaria
 
-import android.util.Log
-
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
@@ -9,8 +7,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
-import android.graphics.Color
 import android.os.Build
+import android.util.Log
 import android.util.SizeF
 import android.widget.RemoteViews
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -57,15 +55,16 @@ object ProviderCache {
         val now = System.currentTimeMillis()
         val key = "$providerId:$hash"
 
-        val deferred = mutex.withLock {
-            // Clear cache if stale
-            if (now - lastClearTime > CACHE_TTL_MS) {
-                cache.clear()
-                lastClearTime = now
-            }
+        val deferred =
+                mutex.withLock {
+                    // Clear cache if stale
+                    if (now - lastClearTime > CACHE_TTL_MS) {
+                        cache.clear()
+                        lastClearTime = now
+                    }
 
-            cache.getOrPut(key) { CoroutineScope(Dispatchers.IO).async { fetch() } }
-        }
+                    cache.getOrPut(key) { CoroutineScope(Dispatchers.IO).async { fetch() } }
+                }
         return deferred.await()
     }
 }
@@ -83,7 +82,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         private const val DARK_PRIMARY = "#FF4DA6"
         private const val DARK_LABEL = "#A0A0A0"
         private const val DARK_UPDATED = "#777777"
-        
+
         private const val PREFS_NAME = "xyz.eremef.awaria.WidgetPrefs"
         private const val PREF_PREFIX_KEY = "address_"
 
@@ -113,19 +112,24 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
-        
+
         val mgr = AppWidgetManager.getInstance(context)
         val allIds = mgr.getAppWidgetIds(ComponentName(context, this::class.java))
-        
+
         if (intent.action == refreshAction) {
-            val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
+            val appWidgetId =
+                    intent.getIntExtra(
+                            AppWidgetManager.EXTRA_APPWIDGET_ID,
+                            AppWidgetManager.INVALID_APPWIDGET_ID
+                    )
             if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
                 onUpdate(context, mgr, intArrayOf(appWidgetId))
             } else if (allIds.isNotEmpty()) {
                 onUpdate(context, mgr, allIds)
             }
         } else if (intent.action == Intent.ACTION_BOOT_COMPLETED ||
-                   intent.action == Intent.ACTION_CONFIGURATION_CHANGED) {
+                        intent.action == Intent.ACTION_CONFIGURATION_CHANGED
+        ) {
             if (allIds.isNotEmpty()) {
                 onUpdate(context, mgr, allIds)
             }
@@ -142,12 +146,12 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 // Parallelize widget updates with a timeout to avoid ANR in goAsync()
-                withTimeoutOrNull(15000L) {
+                withTimeoutOrNull(30000L) {
                     appWidgetIds
-                        .map { appWidgetId ->
-                            async { updateWidget(context, appWidgetManager, appWidgetId) }
-                        }
-                        .awaitAll()
+                            .map { appWidgetId ->
+                                async { updateWidget(context, appWidgetManager, appWidgetId) }
+                            }
+                            .awaitAll()
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Immediate update timed out or failed: ${e.message}")
@@ -234,30 +238,31 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                     }
 
             if (addresses != null && addresses.length() > 0) {
-                val list = (0 until addresses.length()).map { i ->
-                    val addr = addresses.getJSONObject(i)
-                    WidgetSettings(
-                            name = addr.optString("name", ""),
-                            cityName = addr.optString("cityName", ""),
-                            voivodeship = addr.optString("voivodeship", ""),
-                            district = addr.optString("district", ""),
-                            commune = addr.optString("commune", ""),
-                            streetName = addr.optString("streetName", ""),
-                            streetName1 = addr.optString("streetName1", ""),
-                            streetName2 =
-                                    addr.optString("streetName2", "").let {
-                                        if (it.isEmpty() || it == "null") null else it
-                                    },
-                            houseNo = addr.optString("houseNo", ""),
-                            cityId = addr.optLong("cityId", 0),
-                            streetId = addr.optLong("streetId", 0),
-                            theme = json.optString("theme", "system"),
-                            language = json.optString("language", "system"),
-                            isActive = addr.optBoolean("isActive", true),
-                            sourceEnabled = isSourceEnabled,
-                            isPrimary = (i == primaryIndex)
-                    )
-                }
+                val list =
+                        (0 until addresses.length()).map { i ->
+                            val addr = addresses.getJSONObject(i)
+                            WidgetSettings(
+                                    name = addr.optString("name", ""),
+                                    cityName = addr.optString("cityName", ""),
+                                    voivodeship = addr.optString("voivodeship", ""),
+                                    district = addr.optString("district", ""),
+                                    commune = addr.optString("commune", ""),
+                                    streetName = addr.optString("streetName", ""),
+                                    streetName1 = addr.optString("streetName1", ""),
+                                    streetName2 =
+                                            addr.optString("streetName2", "").let {
+                                                if (it.isEmpty() || it == "null") null else it
+                                            },
+                                    houseNo = addr.optString("houseNo", ""),
+                                    cityId = addr.optLong("cityId", 0),
+                                    streetId = addr.optLong("streetId", 0),
+                                    theme = json.optString("theme", "system"),
+                                    language = json.optString("language", "system"),
+                                    isActive = addr.optBoolean("isActive", true),
+                                    sourceEnabled = isSourceEnabled,
+                                    isPrimary = (i == primaryIndex)
+                            )
+                        }
                 Pair(list, json)
             } else {
                 null
@@ -279,25 +284,39 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    private fun applyTheme(context: Context, views: RemoteViews, themeSetting: String, dark: Boolean) {
+    private fun applyTheme(
+            context: Context,
+            views: RemoteViews,
+            themeSetting: String,
+            dark: Boolean
+    ) {
         // If system theme is selected, the XML handles background and text colors automatically
         // via resource qualifiers (values/ vs values-night/). We only explicitly set them here
-        // to support manual theme overrides (forcing dark/light) and to tint brand-specific elements.
-        
+        // to support manual theme overrides (forcing dark/light) and to tint brand-specific
+        // elements.
+
         if (themeSetting != "system") {
-            val bgRes = if (dark) R.drawable.widget_background_dark else R.drawable.widget_background
+            val bgRes =
+                    if (dark) R.drawable.widget_background_dark else R.drawable.widget_background
             if (bgRes != 0) {
                 views.setInt(R.id.widget_root, "setBackgroundResource", bgRes)
             }
-            
-            val label = context.getColor(if (dark) R.color.widget_text_label else R.color.widget_text_label)
-            val updated = context.getColor(if (dark) R.color.widget_text_updated else R.color.widget_text_updated)
-            
+
+            val label =
+                    context.getColor(
+                            if (dark) R.color.widget_text_label else R.color.widget_text_label
+                    )
+            val updated =
+                    context.getColor(
+                            if (dark) R.color.widget_text_updated else R.color.widget_text_updated
+                    )
+
             views.setTextColor(R.id.widget_label, label)
             views.setTextColor(R.id.widget_updated, updated)
         }
-        
-        // Brand color and icon tinting always need programmatic application since they differ per provider
+
+        // Brand color and icon tinting always need programmatic application since they differ per
+        // provider
         val primary = context.getColor(primaryColorRes)
         views.setTextColor(R.id.widget_count, primary)
         views.setInt(R.id.widget_icon, "setColorFilter", primary)
@@ -342,7 +361,6 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         }
     }
 
-
     protected fun calculateHash(settingsList: List<WidgetSettings>): String {
         return settingsList
                 .joinToString("|") { "${it.cityId}-${it.streetId}-${it.houseNo}" }
@@ -358,7 +376,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         val settingsResult = loadSettings(context)
         val settingsList = settingsResult?.first
         val fullJson = settingsResult?.second
-        
+
         val language = settingsList?.firstOrNull()?.language ?: "system"
         val theme = settingsList?.firstOrNull()?.theme ?: "system"
         val dark = isDarkMode(context, theme)
@@ -383,7 +401,11 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                             if (sourceKey == "psg") {
                                 PsgWebViewFetcher.fetchCount(context, activeSettings)
                             } else {
-                                val settingsJson = WidgetUtils.serializeSettingsForRust(activeSettings, fullJson)
+                                val settingsJson =
+                                        WidgetUtils.serializeSettingsForRust(
+                                                activeSettings,
+                                                fullJson
+                                        )
                                 WidgetUtils.fetchCountFromRust(context, sourceKey, settingsJson)
                             }
                         }
@@ -449,7 +471,17 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                     if (minWidth < 100 || minHeight < 100) R.layout.widget_outage_small
                     else if (minWidth < 200 || minHeight < 200) R.layout.widget_outage
                     else R.layout.widget_outage_large
-            val views = createRemoteViews(context, appWidgetId, layoutId, count, updatedAt, language, theme, dark)
+            val views =
+                    createRemoteViews(
+                            context,
+                            appWidgetId,
+                            layoutId,
+                            count,
+                            updatedAt,
+                            language,
+                            theme,
+                            dark
+                    )
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
     }
@@ -465,10 +497,11 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             dark: Boolean
     ): RemoteViews {
         val views = RemoteViews(context.packageName, layoutId)
-        val refreshIntent = Intent(context, this::class.java).apply { 
-            action = refreshAction 
-            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-        }
+        val refreshIntent =
+                Intent(context, this::class.java).apply {
+                    action = refreshAction
+                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                }
         val refreshPending =
                 PendingIntent.getBroadcast(
                         context,
