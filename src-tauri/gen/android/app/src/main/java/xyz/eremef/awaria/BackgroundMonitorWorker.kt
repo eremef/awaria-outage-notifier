@@ -14,20 +14,26 @@ class BackgroundMonitorWorker(
     override suspend fun doWork(): androidx.work.ListenableWorker.Result {
         try {
             android.util.Log.i("AwariaBgMonitor", "Background worker execution started")
+            
+            // CRITICAL: Initialize TLS verifier for Rust network requests.
+            // Without this, background fetches will fail with SSL errors if the app process was freshly started.
+            WidgetUtils.initVerifier(context)
+            android.util.Log.d("AwariaBgMonitor", "TLS Verifier initialized")
+
             val settingsFile = findSettingsFile(context) ?: run {
                 android.util.Log.w("AwariaBgMonitor", "Settings file not found, skipping background fetch")
                 return androidx.work.ListenableWorker.Result.success()
             }
             val jsonString = settingsFile.readText(Charsets.UTF_8)
-            android.util.Log.d("AwariaBgMonitor", "Settings loaded (length: ${jsonString.length}), calling Rust...")
+            android.util.Log.d("AwariaBgMonitor", "Settings loaded (length: ${jsonString.length}), calling Rust fetchAndNotifyFromRust...")
             
             // Trigger the full fetch and notify logic in Rust
             WidgetUtils.fetchAndNotifyFromRust(context, jsonString)
             
-            android.util.Log.i("AwariaBgMonitor", "Rust background fetch/notify completed successfully")
+            android.util.Log.i("AwariaBgMonitor", "Rust background fetch/notify call finished.")
             return androidx.work.ListenableWorker.Result.success()
         } catch (e: Exception) {
-            android.util.Log.e("AwariaBgMonitor", "CRITICAL ERROR in background monitoring", e)
+            android.util.Log.e("AwariaBgMonitor", "CRITICAL ERROR in background monitoring: ${e.message}", e)
             return androidx.work.ListenableWorker.Result.retry()
         }
     }

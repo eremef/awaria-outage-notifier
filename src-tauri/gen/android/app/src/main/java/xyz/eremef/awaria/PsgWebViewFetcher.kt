@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -43,6 +44,8 @@ object PsgWebViewFetcher {
     private const val KEY_COOKIES_TIME = "cookies_cache_time"
     private const val HTML_TTL_MS = 60 * 60 * 1000L // 1 hour
     private const val COOKIE_TTL_MS = 25 * 60 * 1000L // 25 minutes
+
+    private const val MOBILE_USER_AGENT = "Mozilla/5.0 (Linux; Android 13; SM-G998B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
 
     data class PsgOutage(
         val province: String,
@@ -136,7 +139,7 @@ object PsgWebViewFetcher {
         return try {
             val conn = URL(PSG_URL).openConnection() as HttpURLConnection
             conn.requestMethod = "GET"
-            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36")
+            conn.setRequestProperty("User-Agent", MOBILE_USER_AGENT)
             conn.setRequestProperty("Cookie", cookies)
             conn.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
             conn.setRequestProperty("Accept-Language", "pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7")
@@ -176,9 +179,14 @@ object PsgWebViewFetcher {
         withContext(Dispatchers.Main) {
             try {
                 val webView = WebView(context).apply {
+                    // Give the WebView a physical size to satisfy scripts that check for visibility
+                    layoutParams = ViewGroup.LayoutParams(1080, 1920)
+                    
                     settings.javaScriptEnabled = true
                     settings.domStorageEnabled = true
-                    settings.userAgentString = "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36"
+                    settings.useWideViewPort = true
+                    settings.loadWithOverviewMode = true
+                    settings.userAgentString = MOBILE_USER_AGENT
                 }
 
                 CookieManager.getInstance().setAcceptCookie(true)

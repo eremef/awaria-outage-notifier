@@ -12,6 +12,9 @@ class WidgetUpdateWorker(
 ) : CoroutineWorker(context, workerParams) {
 
     override suspend fun doWork(): androidx.work.ListenableWorker.Result {
+        // CRITICAL: Initialize TLS verifier for Rust network requests.
+        WidgetUtils.initVerifier(context)
+        
         val appWidgetManager = AppWidgetManager.getInstance(context)
         
         // Update Tauron widgets

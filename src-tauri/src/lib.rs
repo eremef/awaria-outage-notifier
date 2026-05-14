@@ -726,7 +726,10 @@ pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchAndNotifyFromRust(
 
         let settings: Settings = match serde_json::from_str(&settings_str) {
             Ok(s) => s,
-            Err(_) => return Ok(()),
+            Err(e) => {
+                log::error!("Background monitoring: failed to deserialize settings JSON: {}. JSON prefix: {}", e, &settings_str[..settings_str.len().min(100)]);
+                return Ok(());
+            }
         };
 
         let rt = match tokio::runtime::Builder::new_multi_thread().enable_all().build() {
@@ -737,11 +740,17 @@ pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchAndNotifyFromRust(
         rt.block_on(async {
             let client = match network_state::NetworkState::build_client() {
                 Ok(c) => c,
-                Err(_) => return,
+                Err(e) => {
+                    log::error!("Background monitoring: failed to build client: {}", e);
+                    return;
+                }
             };
             let client_http1 = match network_state::NetworkState::build_client_http1() {
                 Ok(c) => c,
-                Err(_) => return,
+                Err(e) => {
+                    log::error!("Background monitoring: failed to build http1 client: {}", e);
+                    return;
+                }
             };
 
             let providers = get_providers();
@@ -749,32 +758,48 @@ pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchAndNotifyFromRust(
             
             let files_dir: JObject = match env.call_method(&context, jni::jni_str!("getFilesDir"), jni::jni_sig!("()Ljava/io/File;"), &[]) {
                 Ok(v) => v.l().expect("getFilesDir returned non-object"),
-                Err(_) => return,
+                Err(e) => {
+                    log::error!("Background monitoring: failed to call getFilesDir: {:?}", e);
+                    return;
+                },
             };
             let path_j: JObject = match env.call_method(&files_dir, jni::jni_str!("getAbsolutePath"), jni::jni_sig!("()Ljava/lang/String;"), &[]) {
                 Ok(v) => v.l().expect("getAbsolutePath returned non-object"),
-                Err(_) => return,
+                Err(e) => {
+                    log::error!("Background monitoring: failed to call getAbsolutePath: {:?}", e);
+                    return;
+                },
             };
             let path_jstr = unsafe { jni::objects::JString::from_raw(env, path_j.as_raw()) };
             let path_str: String = env.get_string(&path_jstr).map(|s| s.into()).unwrap_or_default();
             let files_dir_path = std::path::PathBuf::from(path_str);
             
+            // Try all common Tauri app data paths on Android
             let mut db_path = files_dir_path.join("state.db");
             if !db_path.exists() {
-                let app_data_path = files_dir_path.join("app_data");
-                if app_data_path.exists() {
-                    db_path = app_data_path.join("state.db");
+                let p2 = files_dir_path.join("app_data").join("state.db");
+                if p2.exists() {
+                    db_path = p2;
+                } else {
+                    log::warn!("Background monitoring: state.db not found at expected paths. Using default: {:?}", db_path);
                 }
             }
             
-            let conn = match rusqlite::Connection::open(db_path) {
+            log::info!("Background monitoring: using database at {:?}", db_path);
+            
+            let conn = match rusqlite::Connection::open(&db_path) {
                 Ok(c) => c,
-                Err(_) => return,
+                Err(e) => {
+                    log::error!("Background monitoring: failed to open database at {:?}: {}", db_path, e);
+                    return;
+                },
             };
             
             let db_adapter = RealDatabase(&Mutex::new(conn));
             let notifier = JniNotification;
             let engine = MonitorEngine::new(&db_adapter, &notifier, &settings);
+
+            log::info!("Background monitoring (Rust): starting fetch tasks for {} providers...", enabled_sources.len());
 
             let mut tasks = Vec::new();
             let s_arc = std::sync::Arc::new(settings.clone());
@@ -797,13 +822,29 @@ pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchAndNotifyFromRust(
             let results = futures::future::join_all(tasks).await;
             let mut all_alerts = Vec::new();
             for res in results {
-                if let Ok((alerts, _)) = res {
-                    all_alerts.extend(alerts);
+                match res {
+                    Ok((alerts, _)) => all_alerts.extend(alerts),
+                    Err(e) => log::error!("Provider task panicked: {:?}", e),
                 }
             }
 
+            log::info!("Background monitoring (Rust): fetched {} raw alerts. Filtering expired...", all_alerts.len());
+            
+            // Filter out expired alerts
+            let now = chrono::Utc::now();
+            all_alerts.retain(|alert| {
+                if let Some(end_str) = &alert.endDate {
+                    if let Some(end_dt) = utils::parse_date(end_str) {
+                        return end_dt >= now;
+                    }
+                }
+                true
+            });
+
             let deduplicated = api_logic::deduplicate_alerts(all_alerts);
+            log::info!("Background monitoring (Rust): processing {} deduplicated alerts.", deduplicated.len());
             engine.process_alerts(deduplicated);
+            log::info!("Background monitoring (Rust): monitoring cycle complete.");
         });
         Ok(())
     });

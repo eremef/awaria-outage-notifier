@@ -184,6 +184,7 @@ impl<'a> MonitorEngine<'a> {
                             if diff_hours >= 0 && diff_hours <= self.settings.upcoming_notification_hours as i64 {
                                 let upcoming_hash = format!("upcoming_{}", hash);
                                 if let Ok(false) = self.db.is_alert_seen(&source_key, &upcoming_hash) {
+                                    log::info!("Triggering UPCOMING notification for alert {}", hash);
                                     let title = format_notification_title(&alert, self.settings, true);
                                     let body = format_notification_body(&alert, self.settings);
                                     self.notifier.show_notification(title, body, hash.clone());
@@ -196,10 +197,13 @@ impl<'a> MonitorEngine<'a> {
 
                 // --- NEW ALERT NOTIFICATION ---
                 if let Ok(false) = self.db.is_alert_seen(&source_key, &hash) {
+                    log::info!("Triggering NEW alert notification for hash {}", hash);
                     let title = format_notification_title(&alert, self.settings, false);
                     let body = format_notification_body(&alert, self.settings);
                     self.notifier.show_notification(title, body, hash.clone());
                     self.db.mark_alert_as_seen(&source_key, &hash).ok();
+                } else {
+                    log::debug!("Alert {} already seen, skipping notification.", hash);
                 }
             }
         }
