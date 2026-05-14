@@ -165,6 +165,22 @@ if (typeof document !== 'undefined') {
         }
     }
 
+    async function checkAndRequestBatteryOptimization() {
+        if (!window.__TAURI__ || !currentSettings) return;
+        
+        const enabledNotifyCount = Object.values(currentSettings.notificationPreferences || {}).filter(v => v === true).length;
+        const upcomingEnabled = !!currentSettings.upcomingNotificationEnabled;
+        
+        // Trigger if this is the first time any notification is being enabled
+        if (enabledNotifyCount + (upcomingEnabled ? 1 : 0) === 1) {
+            try {
+                await window.__TAURI__.core.invoke('request_battery_optimization_ignore');
+            } catch (e) {
+                console.error('Failed to request battery optimization ignore:', e);
+            }
+        }
+    }
+
     function updateUpcomingStatus() {
         const upcomingNotifyCheck = document.getElementById('upcoming-notify-check');
         const upcomingHoursInput = document.getElementById('upcoming-hours-input');
@@ -328,6 +344,41 @@ if (typeof document !== 'undefined') {
         const bottomCloseBtn = document.getElementById('close-settings-btn');
         if (bottomCloseBtn) {
             bottomCloseBtn.addEventListener('click', () => toggleSettings(false));
+        }
+
+        const exportBtn = document.getElementById('export-settings-btn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', async () => {
+                try {
+                    const saved = await window.__TAURI__.core.invoke('export_settings');
+                    if (saved) {
+                        alert(t('msg_export_success'));
+                    }
+                } catch (err) {
+                    console.error('Export failed:', err);
+                    if (err !== 'cancel' && err !== 'User cancelled') {
+                        alert(t('err_export_failed') || 'Export failed');
+                    }
+                }
+            });
+        }
+
+        const importBtn = document.getElementById('import-settings-btn');
+        if (importBtn) {
+            importBtn.addEventListener('click', async () => {
+                try {
+                    const imported = await window.__TAURI__.core.invoke('import_settings');
+                    if (imported) {
+                        alert(t('msg_import_success'));
+                        window.location.reload();
+                    }
+                } catch (err) {
+                    console.error('Import failed:', err);
+                    if (err !== 'cancel' && err !== 'User cancelled') {
+                        alert(t('err_import_failed'));
+                    }
+                }
+            });
         }
 
         saveBtn.addEventListener('click', saveNewAddress);
@@ -551,6 +602,7 @@ if (typeof document !== 'undefined') {
 
                     if (notifyCheckbox.checked) {
                         await checkAndRequestNotificationPermission();
+                        await checkAndRequestBatteryOptimization();
                     }
 
                     updateUpcomingStatus();
@@ -572,6 +624,9 @@ if (typeof document !== 'undefined') {
                 }
                 if (currentSettings) {
                     currentSettings.upcomingNotificationEnabled = upcomingNotifyCheck.checked;
+                    if (upcomingNotifyCheck.checked) {
+                        await checkAndRequestBatteryOptimization();
+                    }
                     await autoSaveSettings();
                 }
             });

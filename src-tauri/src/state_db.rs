@@ -14,17 +14,19 @@ pub fn get_state_db_path(app: &AppHandle) -> Result<PathBuf, String> {
         .app_data_dir()
         .map_err(|e| format!("Cannot resolve app data dir: {}", e))?;
     std::fs::create_dir_all(&app_data).map_err(|e| e.to_string())?;
-    Ok(app_data.join("state.db"))
+    let db_path = app_data.join("state.db");
+    log::info!("State DB path resolved to: {:?}", db_path);
+    Ok(db_path)
 }
 
 pub fn init_db(app: &AppHandle) -> Result<Connection, String> {
     let path = get_state_db_path(app)?;
     let mut conn = Connection::open(path).map_err(|e| e.to_string())?;
-    _init_db(&mut conn)?;
+    ensure_schema(&mut conn)?;
     Ok(conn)
 }
 
-fn _init_db(conn: &mut Connection) -> Result<(), String> {
+pub fn ensure_schema(conn: &mut Connection) -> Result<(), String> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS seen_alerts (
             provider TEXT,

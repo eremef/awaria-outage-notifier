@@ -42,6 +42,8 @@ class BackgroundMonitorWorker(
         val candidates = mutableListOf<File>()
         candidates.add(File(context.filesDir, "settings.json"))
         candidates.add(File(context.dataDir, "settings.json"))
+        candidates.add(File(context.filesDir, "xyz.eremef.awaria/settings.json"))
+        candidates.add(File(context.filesDir, "Awaria/settings.json"))
         context.filesDir.parentFile?.let { parent ->
             candidates.add(File(parent, "app_data/settings.json"))
         }

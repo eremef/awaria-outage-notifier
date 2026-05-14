@@ -2,12 +2,45 @@ package xyz.eremef.awaria
 
 import android.util.Log
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.os.PowerManager
+import android.provider.Settings
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.regex.Pattern
 
 object WidgetUtils {
     private const val TAG = "AwariaWidgetUtils"
+
+    @JvmStatic
+    fun shareFile(context: Context, filePath: String, mimeType: String, title: String) {
+        try {
+            val file = java.io.File(filePath)
+            if (!file.exists()) {
+                Log.e(TAG, "File not found: $filePath")
+                return
+            }
+
+            val uri: Uri = androidx.core.content.FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file
+            )
+
+            val intent = Intent(Intent.ACTION_SEND)
+            intent.type = mimeType
+            intent.putExtra(Intent.EXTRA_STREAM, uri)
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            
+            val chooser = Intent.createChooser(intent, title)
+            chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(chooser)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to share file: ${e.message}", e)
+        }
+    }
 
     @JvmStatic
     external fun fetchCountFromRust(context: Context, providerId: String, settingsJson: String): Int
@@ -204,6 +237,21 @@ object WidgetUtils {
             androidx.work.ExistingPeriodicWorkPolicy.KEEP,
             request
         )
+    }
+
+    @JvmStatic
+    fun requestIgnoreBatteryOptimizations(context: Context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+            val packageName = context.packageName
+            
+            if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+                android.util.Log.i("AwariaBgMonitor", "Requesting battery optimization exclusion (polite way)")
+                val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                context.startActivity(intent)
+            }
+        }
     }
 
     fun serializeSettingsForRust(settingsList: List<WidgetSettings>, fullJson: org.json.JSONObject?): String {

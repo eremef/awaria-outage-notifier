@@ -26,6 +26,8 @@ use tauri::command;
 use tauri::AppHandle;
 use tauri::Manager;
 use tauri_plugin_notification::NotificationExt;
+use tauri_plugin_dialog::DialogExt;
+// share extension is not used as we call the plugin directly
 use api_logic::{DatabaseInterface, NotificationProvider, MonitorEngine};
 
 #[cfg(target_os = "android")]
@@ -50,6 +52,8 @@ const MAX_CONCURRENT_REQUESTS: usize = 5;
 static ANDROID_CONTEXT: Mutex<Option<std::sync::Arc<Global<JObject<'static>>>>> = Mutex::new(None);
 #[cfg(target_os = "android")]
 static PSG_FETCHER_CLASS: Mutex<Option<std::sync::Arc<Global<JClass<'static>>>>> = Mutex::new(None);
+#[cfg(target_os = "android")]
+static WIDGET_UTILS_CLASS: Mutex<Option<std::sync::Arc<Global<JClass<'static>>>>> = Mutex::new(None);
 #[cfg(target_os = "android")]
 static JAVA_VM: Mutex<Option<jni::JavaVM>> = Mutex::new(None);
 
@@ -132,6 +136,30 @@ async fn load_settings(app: AppHandle) -> Result<Option<Settings>, String> {
         log::info!("load_settings: addresses={}", s.addresses.len());
     }
     Ok(settings)
+}
+
+#[command]
+async fn request_battery_optimization_ignore(_app: AppHandle) -> Result<(), String> {
+    #[cfg(target_os = "android")]
+    {
+        let vm_guard = JAVA_VM.lock().unwrap();
+        if let Some(vm) = &*vm_guard {
+            let _ = vm.attach_current_thread(|env| {
+                if let Ok(context_guard) = ANDROID_CONTEXT.lock() {
+                    if let Some(context_ref) = &*context_guard {
+                        let _ = env.call_static_method(
+                            jni::jni_str!("xyz/eremef/awaria/WidgetUtils"),
+                            jni::jni_str!("requestIgnoreBatteryOptimizations"),
+                            jni::jni_sig!("(Landroid/content/Context;)V"),
+                            &[jni::objects::JValue::Object(context_ref.as_obj())],
+                        );
+                    }
+                }
+                Ok::<(), jni::errors::Error>(())
+            });
+        }
+    }
+    Ok(())
 }
 
 #[command]
@@ -226,6 +254,156 @@ async fn update_address(
     save_settings_to_path(&path, &settings)?;
     cache_state.clear();
     Ok(settings)
+}
+
+#[command]
+async fn export_settings(app: tauri::AppHandle<tauri::Wry>) -> Result<bool, String> {
+    let settings_path = settings_path(&app).map_err(|e| {
+        log::error!("Export: settings_path failed: {}", e);
+        e
+    })?;
+    
+    if !settings_path.exists() {
+        log::error!("Export: settings file not found at {:?}", settings_path);
+        return Err("No settings found to export".to_string());
+    }
+
+    #[cfg(target_os = "android")]
+    {
+        log::info!("Export (Android): triggering share dialog for {:?}", settings_path);
+        
+        let ctx_guard = ANDROID_CONTEXT.lock().unwrap();
+        if let Some(ctx) = ctx_guard.as_ref() {
+            let vm_guard = JAVA_VM.lock().unwrap();
+            let wu_class_guard = WIDGET_UTILS_CLASS.lock().unwrap();
+            if let (Some(vm), Some(wu_class)) = (vm_guard.as_ref(), wu_class_guard.as_ref()) {
+                vm.attach_current_thread(|env| {
+                    let path_jstring = env.new_string(settings_path.to_string_lossy())?;
+                    let mime_jstring = env.new_string("application/json")?;
+                    let title_jstring = env.new_string("Export Settings")?;
+                    
+                    env.call_static_method(
+                        &**wu_class,
+                        jni::jni_str!("shareFile"),
+                        jni::jni_sig!("(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V"),
+                        &[
+                            jni::objects::JValue::Object(ctx.as_obj()),
+                            jni::objects::JValue::Object(path_jstring.as_ref()),
+                            jni::objects::JValue::Object(mime_jstring.as_ref()),
+                            jni::objects::JValue::Object(title_jstring.as_ref()),
+                        ],
+                    )?;
+                    
+                    log::info!("Export (Android): JNI share success!");
+                    Ok(())
+                }).map_err(|e: jni::errors::Error| {
+                    log::error!("Export (Android): JNI share failed: {}", e);
+                    e.to_string()
+                })?;
+                return Ok(true);
+            }
+        }
+        
+        log::error!("Export (Android): Android context or VM not initialized");
+        return Err("Android environment not ready".to_string());
+    }
+
+    #[cfg(not(target_os = "android"))]
+    {
+        let settings_json = fs::read_to_string(&settings_path).map_err(|e| {
+            log::error!("Export: read_to_string failed: {}", e);
+            e.to_string()
+        })?;
+        
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        
+        log::info!("Export: triggering save_file dialog...");
+        app.dialog()
+            .file()
+            .set_title("Export Settings")
+            .set_file_name("awaria_settings.json")
+            .add_filter("JSON", &["json"])
+            .save_file(move |path| {
+                let _ = tx.send(path);
+            });
+
+        let file_path = rx.await.map_err(|e| {
+            log::error!("Export: channel receive failed: {}", e);
+            e.to_string()
+        })?;
+
+        if let Some(path) = file_path {
+            log::info!("Export: file path selected: {:?}", path);
+            let path_buf = path.as_path().ok_or_else(|| {
+                log::error!("Export: path.as_path() returned None");
+                "Invalid path".to_string()
+            })?.to_path_buf();
+            
+            fs::write(&path_buf, settings_json).map_err(|e| {
+                log::error!("Export: fs::write to {:?} failed: {}", path_buf, e);
+                e.to_string()
+            })?;
+            log::info!("Export: success!");
+            Ok(true)
+        } else {
+            log::info!("Export: user cancelled dialog");
+            Ok(false)
+        }
+    }
+}
+
+#[command]
+async fn import_settings(app: tauri::AppHandle<tauri::Wry>, cache_state: tauri::State<'_, cache::CacheState>) -> Result<Option<Settings>, String> {
+    let (tx, rx) = tokio::sync::oneshot::channel();
+
+    log::info!("Import: triggering pick_file dialog...");
+    app.dialog()
+        .file()
+        .set_title("Import Settings")
+        .add_filter("JSON", &["json"])
+        .pick_file(move |path| {
+            let _ = tx.send(path);
+        });
+
+    let file_path = rx.await.map_err(|e| {
+        log::error!("Import: channel receive failed: {}", e);
+        e.to_string()
+    })?;
+
+    if let Some(path) = file_path {
+        log::info!("Import: file path selected: {:?}", path);
+        let path_buf = path.as_path().ok_or_else(|| {
+            log::error!("Import: path.as_path() returned None");
+            "Invalid path".to_string()
+        })?.to_path_buf();
+        
+        let json = fs::read_to_string(&path_buf).map_err(|e| {
+            log::error!("Import: read_to_string failed: {}", e);
+            e.to_string()
+        })?;
+        
+        let settings: Settings = serde_json::from_str(&json).map_err(|e| {
+            log::error!("Import: JSON deserialization failed: {}", e);
+            format!("Invalid settings file: {}", e)
+        })?;
+        
+        let path = settings_path(&app).map_err(|e| {
+            log::error!("Import: settings_path resolution failed: {}", e);
+            e
+        })?;
+        
+        save_settings_to_path(&path, &settings).map_err(|e| {
+            log::error!("Import: save_settings_to_path failed: {}", e);
+            e
+        })?;
+        
+        cache_state.clear();
+        log::info!("Import: success!");
+        return Ok(Some(settings));
+    }
+    
+    log::info!("Import: user cancelled dialog");
+    Ok(None)
 }
 
 
@@ -473,6 +651,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
         .setup(|app| {
             let conn = state_db::init_db(app.handle())?;
@@ -506,7 +685,10 @@ pub fn run() {
             remove_address,
             set_primary_address,
             update_address,
-            get_app_version
+            get_app_version,
+            request_battery_optimization_ignore,
+            export_settings,
+            import_settings
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -602,6 +784,21 @@ fn ensure_verifier_initialized(env: &mut Env, context: &JObject) {
         }
     }
 
+    log::info!("Caching WidgetUtils class...");
+    match env.find_class(jni::jni_str!("xyz/eremef/awaria/WidgetUtils")) {
+        Ok(cls) => {
+            if let Ok(cls_ref) = env.new_global_ref(cls) {
+                if let Ok(mut g_wu) = WIDGET_UTILS_CLASS.lock() {
+                    *g_wu = Some(std::sync::Arc::new(cls_ref));
+                    log::info!("WidgetUtils class cached successfully.");
+                }
+            }
+        }
+        Err(e) => {
+            log::error!("Failed to find WidgetUtils class: {:?}", e);
+        }
+    }
+
     rustls_platform_verifier::android::init_with_refs(vm, context_ref, loader_ref);
     INITIALIZED.store(true, std::sync::atomic::Ordering::SeqCst);
     log::info!("rustls-platform-verifier initialized successfully.");
@@ -684,31 +881,48 @@ struct JniNotification;
 #[cfg(target_os = "android")]
 impl NotificationProvider for JniNotification {
     fn show_notification(&self, title: String, body: String, hash: String) {
-        if let Ok(context_guard) = ANDROID_CONTEXT.lock() {
-             if let Some(context_ref) = &*context_guard {
-                if let Ok(vm_guard) = JAVA_VM.lock() {
-                    if let Some(vm) = &*vm_guard {
-                        let _ = vm.attach_current_thread(|env| {
-                            let title_j = env.new_string(&title).unwrap();
-                            let body_j = env.new_string(&body).unwrap();
-                            let hash_j = env.new_string(&hash).unwrap();
-                            
-                            let _ = env.call_static_method(
-                                jni::jni_str!("xyz/eremef/awaria/WidgetUtils"),
-                                jni::jni_str!("showNotification"),
-                                jni::jni_sig!("(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V"),
-                                &[
-                                    jni::objects::JValue::Object(context_ref.as_obj()),
-                                    jni::objects::JValue::Object(&title_j.into()),
-                                    jni::objects::JValue::Object(&body_j.into()),
-                                    jni::objects::JValue::Object(&hash_j.into()),
-                                ],
-                            );
-                            Ok::<(), jni::errors::Error>(())
-                        });
-                    }
-                }
+        let context_guard = ANDROID_CONTEXT.lock().unwrap();
+        let context_ref = match &*context_guard {
+            Some(r) => r,
+            None => {
+                log::error!("JniNotification: ANDROID_CONTEXT is None");
+                return;
             }
+        };
+
+        let vm_guard = JAVA_VM.lock().unwrap();
+        let vm = match &*vm_guard {
+            Some(v) => v,
+            None => {
+                log::error!("JniNotification: JAVA_VM is None");
+                return;
+            }
+        };
+
+        let res = vm.attach_current_thread(|env| {
+            let title_j = env.new_string(&title).unwrap();
+            let body_j = env.new_string(&body).unwrap();
+            let hash_j = env.new_string(&hash).unwrap();
+            
+            log::info!("JniNotification: Calling WidgetUtils.showNotification via JNI...");
+            let res = env.call_static_method(
+                jni::jni_str!("xyz/eremef/awaria/WidgetUtils"),
+                jni::jni_str!("showNotification"),
+                jni::jni_sig!("(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V"),
+                &[
+                    jni::objects::JValue::Object(context_ref.as_obj()),
+                    jni::objects::JValue::Object(&title_j.into()),
+                    jni::objects::JValue::Object(&body_j.into()),
+                    jni::objects::JValue::Object(&hash_j.into()),
+                ],
+            );
+            if let Err(e) = res {
+                log::error!("JniNotification: JNI call failed: {:?}", e);
+            }
+            Ok::<(), jni::errors::Error>(())
+        });
+        if let Err(e) = res {
+            log::error!("JniNotification: Failed to attach thread: {:?}", e);
         }
     }
 }
@@ -782,8 +996,15 @@ pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchAndNotifyFromRust(
             let mut db_path = files_dir_path.join("state.db");
             if !db_path.exists() {
                 let p2 = files_dir_path.join("app_data").join("state.db");
+                let p3 = files_dir_path.join("xyz.eremef.awaria").join("state.db");
+                let p4 = files_dir_path.join("Awaria").join("state.db");
+                
                 if p2.exists() {
                     db_path = p2;
+                } else if p3.exists() {
+                    db_path = p3;
+                } else if p4.exists() {
+                    db_path = p4;
                 } else {
                     log::warn!("Background monitoring: state.db not found at expected paths. Using default: {:?}", db_path);
                 }
@@ -792,18 +1013,27 @@ pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchAndNotifyFromRust(
             log::info!("Background monitoring: using database at {:?}", db_path);
             
             let conn = match rusqlite::Connection::open(&db_path) {
-                Ok(c) => c,
+                Ok(c) => {
+                    let mut c = c;
+                    let _ = state_db::ensure_schema(&mut c);
+                    c
+                },
                 Err(e) => {
                     log::error!("Background monitoring: failed to open database at {:?}: {}", db_path, e);
                     return;
                 },
             };
             
-            let db_adapter = RealDatabase(&Mutex::new(conn));
+            let conn_mutex = Mutex::new(conn);
+            let db_adapter = RealDatabase(&conn_mutex);
             let notifier = JniNotification;
             let engine = MonitorEngine::new(&db_adapter, &notifier, &settings);
 
-            log::info!("Background monitoring (Rust): starting fetch tasks for {} providers...", enabled_sources.len());
+            log::info!("Background monitoring (Rust): starting fetch tasks for {} providers. addresses={}, preferences={}", 
+                enabled_sources.len(), 
+                settings.addresses.len(),
+                settings.notification_preferences.len()
+            );
 
             let mut tasks = Vec::new();
             let s_arc = std::sync::Arc::new(settings.clone());

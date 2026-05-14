@@ -849,6 +849,24 @@ h1 {
     color: var(--success-text);
 }
 
+.settings-divider {
+    border: none;
+    border-top: 1px solid var(--message-border);
+    margin: 1.5rem 0;
+    opacity: 0.5;
+}
+
+.backup-settings-section {
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.small-btn {
+    padding: 0.6rem !important;
+    font-size: 0.85rem !important;
+    margin-top: 0 !important;
+}
+
 .settings-close-btn {
     width: 100%;
     padding: 0.9rem;

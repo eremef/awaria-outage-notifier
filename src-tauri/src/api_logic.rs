@@ -168,21 +168,23 @@ impl<'a> MonitorEngine<'a> {
     pub fn process_alerts(&self, alerts: Vec<UnifiedAlert>) {
         let enabled_sources: Vec<String> = self.settings.enabled_sources.clone().unwrap_or_default();
         
+        log::info!("MonitorEngine: processing {} alerts", alerts.len());
         for alert in alerts {
+            let hash = alert.hash.clone().unwrap_or_else(|| alert.to_hash());
             if alert.is_local != Some(true) {
+                log::debug!("Alert {} skipped: not local (is_local={:?})", hash, alert.is_local);
                 continue;
             }
 
             let source_key = alert.source.to_string();
             if !enabled_sources.contains(&source_key) {
+                log::debug!("Alert {} skipped: source {} not enabled", hash, source_key);
                 continue;
             }
 
             let notified_enabled = self.settings.notification_preferences.get(&source_key).copied().unwrap_or(false);
 
             if notified_enabled {
-                let hash = alert.hash.clone().unwrap_or_else(|| alert.to_hash());
-                
                 // --- UPCOMING NOTIFICATION ---
                 if self.settings.upcoming_notification_enabled {
                     if let Some(start_str) = &alert.startDate {
@@ -192,28 +194,38 @@ impl<'a> MonitorEngine<'a> {
                             
                             if diff_hours >= 0 && diff_hours <= self.settings.upcoming_notification_hours as i64 {
                                 let upcoming_hash = format!("upcoming_{}", hash);
-                                if let Ok(false) = self.db.is_alert_seen(&source_key, &upcoming_hash) {
-                                    log::info!("Triggering UPCOMING notification for alert {}", hash);
-                                    let title = format_notification_title(&alert, self.settings, true);
-                                    let body = format_notification_body(&alert, self.settings);
-                                    self.notifier.show_notification(title, body, hash.clone());
-                                    self.db.mark_alert_as_seen(&source_key, &upcoming_hash).ok();
+                                match self.db.is_alert_seen(&source_key, &upcoming_hash) {
+                                    Ok(false) => {
+                                        log::info!("Triggering UPCOMING notification for alert {}", hash);
+                                        let title = format_notification_title(&alert, self.settings, true);
+                                        let body = format_notification_body(&alert, self.settings);
+                                        self.notifier.show_notification(title, body, hash.clone());
+                                        self.db.mark_alert_as_seen(&source_key, &upcoming_hash).ok();
+                                    },
+                                    Ok(true) => log::debug!("Upcoming alert {} already seen", hash),
+                                    Err(e) => log::error!("Database error checking upcoming seen status for {}: {}", hash, e),
                                 }
+                            } else {
+                                log::debug!("Upcoming alert {} skipped: diff_hours={} not in window", hash, diff_hours);
                             }
                         }
                     }
                 }
 
                 // --- NEW ALERT NOTIFICATION ---
-                if let Ok(false) = self.db.is_alert_seen(&source_key, &hash) {
-                    log::info!("Triggering NEW alert notification for hash {}", hash);
-                    let title = format_notification_title(&alert, self.settings, false);
-                    let body = format_notification_body(&alert, self.settings);
-                    self.notifier.show_notification(title, body, hash.clone());
-                    self.db.mark_alert_as_seen(&source_key, &hash).ok();
-                } else {
-                    log::debug!("Alert {} already seen, skipping notification.", hash);
+                match self.db.is_alert_seen(&source_key, &hash) {
+                    Ok(false) => {
+                        log::info!("Triggering NEW alert notification for hash {}", hash);
+                        let title = format_notification_title(&alert, self.settings, false);
+                        let body = format_notification_body(&alert, self.settings);
+                        self.notifier.show_notification(title, body, hash.clone());
+                        self.db.mark_alert_as_seen(&source_key, &hash).ok();
+                    },
+                    Ok(true) => log::debug!("Alert {} already seen, skipping notification.", hash),
+                    Err(e) => log::error!("Database error checking seen status for {}: {}", hash, e),
                 }
+            } else {
+                log::debug!("Alert {} skipped: notifications disabled for {}", hash, source_key);
             }
         }
     }
