@@ -44,7 +44,6 @@ fn main() {
     
     let check_commands = [
         ["run", "test"],
-        ["run", "rust:check"],
         ["run", "rust:clippy"],
     ];
 
