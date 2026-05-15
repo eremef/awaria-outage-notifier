@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "1.0.50-alpha.7"
+version = "1.0.50-alpha.8"
 description = "Awaria"
 authors = ["eremef.xyz"]
 license = ""
