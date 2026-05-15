@@ -9,8 +9,8 @@
 A modern desktop (Tauri) and Android application providing real-time alerts for planned and emergency outages. **AWARIA** aggregates data from multiple utility providers into a centralized interface.
 
 ## Downloads
-
-[https://eremef.xyz/awaria](https://eremef.xyz/awaria)
+- [Google Play store](https://play.google.com/store/apps/details?id=xyz.eremef.awaria)
+- [https://eremef.xyz/awaria](https://eremef.xyz/awaria)
 
 ## Supported Sources
 
