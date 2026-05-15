@@ -49,6 +49,8 @@
         android:layout_height="wrap_content"
         android:text=""
         android:textColor="@color/widget_text_updated"
-        android:textSize="12sp" />
+        android:textSize="10sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
 
 </LinearLayout>

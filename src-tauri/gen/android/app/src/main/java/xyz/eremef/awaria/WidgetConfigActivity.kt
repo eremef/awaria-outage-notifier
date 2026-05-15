@@ -15,6 +15,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import kotlinx.coroutines.*
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 
 class WidgetConfigActivity : ComponentActivity() {
     private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
@@ -22,15 +24,7 @@ class WidgetConfigActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Enable edge-to-edge for Android 15+ (API 35+) compatibility.
-        enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT),
-            navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT)
-        )
-        
-        // Set layout in display cutout mode to use the full screen including notch areas.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-        }
+        enableEdgeToEdge()
 
         super.onCreate(savedInstanceState)
         
@@ -121,16 +115,14 @@ class WidgetConfigActivity : ComponentActivity() {
             }
             setResult(RESULT_OK, resultValue)
 
-            // Trigger an immediate update and finish
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    provider.updateWidget(context, appWidgetManager, appWidgetId)
-                } finally {
-                    withContext(Dispatchers.Main) {
-                        finish()
-                    }
-                }
-            }
+            // Immediately render a placeholder — never leave the widget slot blank.
+            provider.showLoadingPlaceholder(context, appWidgetManager, appWidgetId)
+
+            // Let WorkManager do the actual fetch (no time limit, survives Activity finish).
+            val request = androidx.work.OneTimeWorkRequestBuilder<WidgetUpdateWorker>().build()
+            androidx.work.WorkManager.getInstance(context).enqueue(request)
+
+            finish()
         }
     }
 
@@ -153,8 +145,9 @@ class WidgetConfigActivity : ComponentActivity() {
         val names = mutableListOf<String>()
         names.add(getString(R.string.config_primary_address))
         
-        val settingsList = provider.loadSettings(this)
-        if (settingsList != null) {
+        val settingsResult = provider.loadSettings(this)
+        if (settingsResult != null) {
+            val settingsList = settingsResult.first
             // Only show active addresses
             val activeSettings = settingsList.filter { it.isActive }
             fullAddresses = activeSettings

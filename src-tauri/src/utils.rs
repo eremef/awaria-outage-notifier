@@ -29,6 +29,13 @@ pub fn parse_date(date_str: &str) -> Option<chrono::DateTime<chrono::Utc>> {
                 .ok()
                 .map(|nd| Utc.from_utc_datetime(&nd))
         })
+        .or_else(|| {
+            // Handle "14.05.2026 godz. 08:00" or "14.05.2026 08:00"
+            let cleaned = date_str.replace("godz.", "").replace(".", "-").trim().to_string();
+            NaiveDateTime::parse_from_str(&cleaned, "%d-%m-%Y %H:%M")
+                .ok()
+                .map(|nd| Utc.from_utc_datetime(&nd))
+        })
 }
 
 pub fn format_date(dt: chrono::DateTime<chrono::Utc>) -> String {

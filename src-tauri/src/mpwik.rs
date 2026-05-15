@@ -93,7 +93,7 @@ impl CompiledMpwikRegex {
 impl MpwikFailureItem {
     pub fn to_unified(&self) -> UnifiedAlert {
         UnifiedAlert {
-            source: AlertSource::Water,
+            source: AlertSource::MpwikWroclaw,
             startDate: self.date_start.as_deref().and_then(parse_mpwik_date),
             endDate: self.date_end.as_deref().and_then(parse_mpwik_date),
             message: self.content.clone(),
@@ -134,7 +134,11 @@ pub struct MpwikProvider;
 #[async_trait]
 impl AlertProvider for MpwikProvider {
     fn id(&self) -> String {
-        "water".to_string()
+        "mpwik_wroclaw".to_string()
+    }
+
+    fn source(&self) -> AlertSource {
+        AlertSource::MpwikWroclaw
     }
 
     async fn fetch(
@@ -144,10 +148,6 @@ impl AlertProvider for MpwikProvider {
         settings: &Settings,
         _app_handle: Option<&tauri::AppHandle>,
     ) -> (Vec<UnifiedAlert>, Vec<String>) {
-        if !settings.addresses.iter().any(|a| a.is_active && is_wroclaw(a)) {
-            return (Vec::new(), Vec::new());
-        }
-
         match retry(|| fetch_water_alerts(client_http1), 3).await {
             Ok(items) => {
                 let mut alerts = Vec::new();
@@ -209,7 +209,7 @@ mod tests {
             date_end: Some("12-03-2026 16:00".to_string()),
         };
         let unified = item.to_unified();
-        assert_eq!(unified.source, AlertSource::Water);
+        assert_eq!(unified.source, AlertSource::MpwikWroclaw);
         assert_eq!(unified.message, Some("Test water outage".to_string()));
         assert_eq!(unified.startDate, Some("2026-03-12T08:30:00".to_string()));
         assert_eq!(unified.endDate, Some("2026-03-12T16:00:00".to_string()));

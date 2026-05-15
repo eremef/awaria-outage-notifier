@@ -225,4 +225,21 @@ mod tests {
         assert!(_city_has_streets(&conn, 969400).unwrap());
         assert!(!_city_has_streets(&conn, 12345).unwrap());
     }
+    #[test]
+    fn test_waligorskiego_krakow() {
+        let dev_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("assets")
+            .join("teryt");
+        if !dev_path.exists() { return; }
+        let conn = Connection::open_with_flags(dev_path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY).unwrap();
+        
+        // Use the ID we found for Kraków (950463)
+        let city_id = 950463;
+        let results = _lookup_streets(&conn, city_id, "Waligórskiego").unwrap();
+        assert!(!results.is_empty(), "Should find Waligórskiego in Kraków");
+        
+        let w = &results[0];
+        assert_eq!(w.street_name_1, "Waligórskiego");
+        assert_eq!(w.street_name_2.as_deref(), Some("Andrzeja"));
+    }
 }

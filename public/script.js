@@ -90,7 +90,9 @@ if (typeof document !== 'undefined') {
         { id: 'stoen', label: 'Stoen', category: 'power', defaultNotify: true, i18nLabel: 'source_stoen_name', i18nShort: 'source_stoen_short' },
         { id: 'psg', label: 'PSG', category: 'gas', defaultNotify: true, i18nLabel: 'source_psg_name', i18nShort: 'source_psg_short' },
         { id: 'fortum', label: 'Fortum', category: 'heating', defaultNotify: true, i18nLabel: 'source_fortum_name', i18nShort: 'source_fortum_short' },
-        { id: 'water', label: 'MPWiK', category: 'water', defaultNotify: true, i18nLabel: 'source_water_short', i18nShort: 'source_water_short' },
+        { id: 'mpwik_wroclaw', label: 'MPWiK', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_wroclaw_name', i18nShort: 'source_mpwik_wroclaw_short' },
+        { id: 'wmk', label: 'WMK', category: 'water', defaultNotify: true, i18nLabel: 'source_wmk_name', i18nShort: 'source_wmk_short' },
+        { id: 'tauron_heat', label: 'Tauron Ciepło', category: 'heating', defaultNotify: true, i18nLabel: 'source_tauron_heat_name', i18nShort: 'source_tauron_heat_short' },
     ];
 
     function renderSourcesUI() {
@@ -152,7 +154,11 @@ if (typeof document !== 'undefined') {
 
             const warning = document.getElementById('notification-permission-warning');
             if (warning) {
-                if (granted) {
+                const settings = currentSettings || {};
+                const notifyPrefs = settings.notificationPreferences || {};
+                const hasAnyNotify = Object.values(notifyPrefs).some(v => v === true) || !!settings.upcomingNotificationEnabled;
+
+                if (granted || !hasAnyNotify) {
                     warning.classList.add('hidden');
                 } else {
                     warning.classList.remove('hidden');
@@ -160,6 +166,33 @@ if (typeof document !== 'undefined') {
             }
         } catch (error) {
             console.error('Failed to check notification permission:', error);
+        }
+    }
+
+    async function checkAndRequestBatteryOptimization(requestIfMissing = false) {
+        if (!window.__TAURI__) return;
+
+        try {
+            const ignored = await window.__TAURI__.core.invoke('is_battery_optimization_ignored');
+
+            const warning = document.getElementById('battery-optimization-warning');
+            if (warning) {
+                const settings = currentSettings || {};
+                const notifyPrefs = settings.notificationPreferences || {};
+                const hasAnyNotify = Object.values(notifyPrefs).some(v => v === true) || !!settings.upcomingNotificationEnabled;
+
+                if (ignored || !hasAnyNotify) {
+                    warning.classList.add('hidden');
+                } else {
+                    warning.classList.remove('hidden');
+                }
+            }
+
+            if (!ignored && requestIfMissing) {
+                await window.__TAURI__.core.invoke('request_battery_optimization_ignore');
+            }
+        } catch (error) {
+            console.error('Failed to check/request battery optimization:', error);
         }
     }
 
@@ -295,6 +328,7 @@ if (typeof document !== 'undefined') {
         if (isOpen) {
             // No need to reset settingsView.scrollTop as main window handles it now
             checkAndRequestNotificationPermission(); // Update permission warning state
+            checkAndRequestBatteryOptimization(); // Update battery warning state
         }
     }
 
@@ -326,6 +360,41 @@ if (typeof document !== 'undefined') {
         const bottomCloseBtn = document.getElementById('close-settings-btn');
         if (bottomCloseBtn) {
             bottomCloseBtn.addEventListener('click', () => toggleSettings(false));
+        }
+
+        const exportBtn = document.getElementById('export-settings-btn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', async () => {
+                try {
+                    const msg = await window.__TAURI__.core.invoke('export_settings');
+                    if (msg) {
+                        alert(msg);
+                    }
+                } catch (err) {
+                    console.error('Export failed:', err);
+                    if (err !== 'cancel' && err !== 'User cancelled') {
+                        alert(t('err_export_failed') || 'Export failed');
+                    }
+                }
+            });
+        }
+
+        const importBtn = document.getElementById('import-settings-btn');
+        if (importBtn) {
+            importBtn.addEventListener('click', async () => {
+                try {
+                    const imported = await window.__TAURI__.core.invoke('import_settings');
+                    if (imported) {
+                        alert(t('msg_import_success'));
+                        window.location.reload();
+                    }
+                } catch (err) {
+                    console.error('Import failed:', err);
+                    if (err !== 'cancel' && err !== 'User cancelled') {
+                        alert(t('err_import_failed'));
+                    }
+                }
+            });
         }
 
         saveBtn.addEventListener('click', saveNewAddress);
@@ -472,7 +541,8 @@ if (typeof document !== 'undefined') {
                     primaryAddressIndex: null,
                     theme: newTheme,
                     language: 'system',
-                    enabledSources: []
+                    enabledSources: [],
+                    showOtherOutages: true
                 };
             } else {
                 currentSettings.theme = newTheme;
@@ -495,7 +565,8 @@ if (typeof document !== 'undefined') {
                     primaryAddressIndex: null,
                     theme: 'system',
                     language: newLang,
-                    enabledSources: []
+                    enabledSources: [],
+                    showOtherOutages: true
                 };
             } else {
                 currentSettings.language = newLang;
@@ -547,6 +618,9 @@ if (typeof document !== 'undefined') {
 
                     if (notifyCheckbox.checked) {
                         await checkAndRequestNotificationPermission();
+                        await checkAndRequestBatteryOptimization(true);
+                    } else {
+                        await checkAndRequestBatteryOptimization();
                     }
 
                     updateUpcomingStatus();
@@ -568,6 +642,11 @@ if (typeof document !== 'undefined') {
                 }
                 if (currentSettings) {
                     currentSettings.upcomingNotificationEnabled = upcomingNotifyCheck.checked;
+                    if (upcomingNotifyCheck.checked) {
+                        await checkAndRequestBatteryOptimization(true);
+                    } else {
+                        await checkAndRequestBatteryOptimization();
+                    }
                     await autoSaveSettings();
                 }
             });
@@ -598,6 +677,18 @@ if (typeof document !== 'undefined') {
                     upcomingHoursInput.value = val;
                     currentSettings.upcomingNotificationHours = val;
                     await autoSaveSettings();
+                }
+            });
+        }
+
+        const showOtherCheck = document.getElementById('show-other-outages-check');
+        if (showOtherCheck) {
+            showOtherCheck.addEventListener('change', async () => {
+                if (currentSettings) {
+                    currentSettings.showOtherOutages = showOtherCheck.checked;
+                    await autoSaveSettings();
+                    const container = document.getElementById('outages-container');
+                    renderAlerts(lastAlerts || [], container, currentSettings, selectedAddressIndex);
                 }
             });
         }
@@ -1039,11 +1130,13 @@ if (typeof document !== 'undefined') {
                     updateUpcomingStatus();
                 }
 
-                // Also check permissions on load if notifications are enabled
-                const hasAnyNotify = Object.values(notifyPrefs).some(v => v === true) || !!settings.upcomingNotificationEnabled;
-                if (hasAnyNotify) {
-                    checkAndRequestNotificationPermission();
+                if (document.getElementById('show-other-outages-check')) {
+                    document.getElementById('show-other-outages-check').checked = settings.showOtherOutages !== false;
                 }
+
+                // Check permissions/optimization warnings on load
+                checkAndRequestNotificationPermission();
+                checkAndRequestBatteryOptimization();
 
                 updateAddressFilter();
                 renderAddressesList();
@@ -1066,7 +1159,8 @@ if (typeof document !== 'undefined') {
                     primaryAddressIndex: null,
                     theme: 'system',
                     language: 'system',
-                    enabledSources: []
+                    enabledSources: [],
+                    showOtherOutages: true
                 };
 
                 // Explicitly uncheck and disable all source/notify pairs on first run
@@ -1267,7 +1361,9 @@ if (typeof document !== 'undefined') {
         const container = document.getElementById('outages-container');
         try {
             const invokeArgs = specificSource ? { sources: [specificSource] } : { sources: null };
-            let newAlerts = await window.__TAURI__.core.invoke('fetch_all_alerts', invokeArgs);
+            const response = await window.__TAURI__.core.invoke('fetch_all_alerts', invokeArgs);
+            let newAlerts = response.alerts;
+            const isStale = response.is_stale;
 
             if (Array.isArray(newAlerts)) {
                 const seen = new Set();
@@ -1286,13 +1382,14 @@ if (typeof document !== 'undefined') {
                 lastAlerts = newAlerts;
             }
 
-            updateLastUpdated(new Date());
+            updateLastUpdated(new Date(), isStale);
             renderAlerts(lastAlerts || [], container, currentSettings, selectedAddressIndex);
         } catch (error) {
             console.error('Error fetching data:', error);
             // Only show full error message on full fetch
             if (!specificSource) {
-                container.innerHTML = `<div class="error">${typeof t !== 'undefined' ? t('err_load_failed') : 'Failed to load alert data. Error: '}${error}</div>`;
+                const errorMsg = error === 'ERR_NO_INTERNET' ? (typeof t !== 'undefined' ? t('err_no_internet') : 'No internet connection.') : `${typeof t !== 'undefined' ? t('err_load_failed') : 'Failed to load alert data. Error: '}${error}`;
+                container.innerHTML = `<div class="error">${errorMsg}</div>`;
             }
         } finally {
             if (specificSource) {
@@ -1303,7 +1400,7 @@ if (typeof document !== 'undefined') {
         }
     }
 
-    function updateLastUpdated(date) {
+    function updateLastUpdated(date, isStale = false) {
         if (date) lastFetchDate = date;
         const el = document.getElementById('last-updated');
         if (!el) return;
@@ -1318,7 +1415,19 @@ if (typeof document !== 'undefined') {
 
         const localeStr = typeof getLocaleString !== 'undefined' ? getLocaleString() : 'pl-PL';
         const label = typeof t !== 'undefined' ? t('last_updated') : 'Last updated';
-        el.textContent = `${label}: ${lastFetchDate.toLocaleTimeString(localeStr)}`;
+        let text = `${label}: ${lastFetchDate.toLocaleTimeString(localeStr)}`;
+
+        if (isStale) {
+            const staleLabel = typeof t !== 'undefined' ? t('msg_using_cache') : 'Offline mode';
+            text = `${staleLabel} (${lastFetchDate.toLocaleTimeString(localeStr)})`;
+            el.style.color = 'var(--text-secondary)';
+            el.style.fontStyle = 'italic';
+        } else {
+            el.style.color = '';
+            el.style.fontStyle = '';
+        }
+
+        el.textContent = text;
     }
 
     function filterAlerts(alerts, streetName) {
@@ -1345,8 +1454,10 @@ if (typeof document !== 'undefined') {
         if (!addr || addr.isActive === false) return false;
 
         // Sources that provide addressIndex and isLocal from backend
-        if (['tauron', 'energa', 'enea', 'pge', 'stoen', 'fortum', 'water', 'psg'].includes(alert.source)) {
-            return alert.isLocal === true && alert.addressIndex === addrIdx;
+        if (['tauron', 'energa', 'enea', 'pge', 'stoen', 'fortum', 'mpwik_wroclaw', 'wmk', 'psg'].includes(alert.source)) {
+            if (alert.isLocal === true && (alert.addressIndex === addrIdx || alert.addressIndex === -1)) {
+                return true;
+            }
         }
 
         // Sources that might need frontend matching (e.g. if backend doesn't provide enough detail)
@@ -1361,12 +1472,20 @@ if (typeof document !== 'undefined') {
         const message = alert.message;
         const streetName1 = addr.streetName1 || '';
         const streetName2 = addr.streetName2 || null;
+        const cityName = addr.cityName || '';
 
         const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+        // Check if the message indicates a locality-wide outage
+        // Patterns like "m. Kraków", "cała miejscowość Kraków", "całe miasto Kraków"
+        if (cityName) {
+            const cityEscaped = escapeRegExp(cityName);
+            const localityWideRegex = new RegExp(`(^|[^\\p{L}])(m\\.|cała miejscowość|całe miasto|cały obszar miejscowości)\\s*${cityEscaped}([^\\p{L}]|$)`, 'iu');
+            if (localityWideRegex.test(message)) return true;
+        }
+
         if (!streetName1) {
             // Fallback for cities without streets: match by city name in the message
-            const cityName = addr.cityName || '';
             if (!cityName) return false;
             const regex = new RegExp(`(^|[^\\p{L}])${escapeRegExp(cityName)}([^\\p{L}]|$)`, 'iu');
             return regex.test(message);
@@ -1394,8 +1513,7 @@ if (typeof document !== 'undefined') {
 
     function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         const now = new Date();
-
-        const enabledSources = (settings && settings.enabledSources) ? settings.enabledSources : ['tauron', 'water', 'fortum', 'energa', 'enea', 'pge', 'stoen', 'psg'];
+        const enabledSources = (settings && settings.enabledSources) ? settings.enabledSources : ['tauron', 'mpwik_wroclaw', 'wmk', 'fortum', 'energa', 'enea', 'pge', 'stoen', 'psg'];
         const activeAlerts = alerts.filter(item => {
             if (!enabledSources.includes(item.source)) return false;
             if (!item.endDate) return true;
@@ -1493,17 +1611,23 @@ if (typeof document !== 'undefined') {
 
         const isWarszawa = (addr) => {
             if (!addr) return false;
-            const city = (addr.cityName || '').toLowerCase();
-            return city === 'warszawa' || city === 'warsaw' || addr.cityId === 918123;
+            const city = (addr.cityName || '').trim().toLowerCase();
+            return city.startsWith('warszawa') || city.startsWith('warsaw') || addr.cityId === 918123;
         };
         const isWroclaw = (addr) => {
             if (!addr) return false;
-            const city = (addr.cityName || '').toLowerCase();
-            return city === 'wrocław' || city === 'wroclaw' || addr.cityId === 969400;
+            const city = (addr.cityName || '').trim().toLowerCase();
+            return city.startsWith('wrocław') || city.startsWith('wroclaw') || addr.cityId === 986283;
+        };
+        const isKrakow = (addr) => {
+            if (!addr) return false;
+            const city = (addr.cityName || '').trim().toLowerCase();
+            return city.startsWith('kraków') || city.startsWith('krakow') || addr.cityId === 950463;
         };
 
         const hasAnyWarszawa = addresses.some(isWarszawa);
         const hasAnyWroclaw = addresses.some(isWroclaw);
+        const hasAnyKrakow = addresses.some(isKrakow);
 
         const localLists = {};
         const otherLists = {};
@@ -1521,8 +1645,10 @@ if (typeof document !== 'undefined') {
                 if (matchesAddress(item, addresses, selectedAddrIdx)) {
                     localLists[item.source].push(item);
                 } else {
-                    if (item.source === 'water') {
+                    if (item.source === 'mpwik_wroclaw') {
                         if (isWroclaw(addr)) otherLists[item.source].push(item);
+                    } else if (item.source === 'wmk') {
+                        if (isKrakow(addr)) otherLists[item.source].push(item);
                     } else if (item.source === 'stoen') {
                         if (isWarszawa(addr)) otherLists[item.source].push(item);
                     } else {
@@ -1537,8 +1663,10 @@ if (typeof document !== 'undefined') {
                 if (isLocal) {
                     localLists[item.source].push(item);
                 } else {
-                    if (item.source === 'water') {
+                    if (item.source === 'mpwik_wroclaw') {
                         if (hasAnyWroclaw) otherLists[item.source].push(item);
+                    } else if (item.source === 'wmk') {
+                        if (hasAnyKrakow) otherLists[item.source].push(item);
                     } else if (item.source === 'stoen') {
                         if (hasAnyWarszawa) otherLists[item.source].push(item);
                     } else {
@@ -1550,7 +1678,8 @@ if (typeof document !== 'undefined') {
 
         const hasLocalAlerts = Object.values(localLists).some(l => l.length > 0);
         const hasOtherAlerts = Object.values(otherLists).some(l => l.length > 0);
-        const hasAnyAlerts = hasLocalAlerts || hasOtherAlerts;
+        const showOther = settings.showOtherOutages !== false;
+        const hasAnyAlerts = hasLocalAlerts || (hasOtherAlerts && showOther);
 
         let html = '';
         if (!hasAnyAlerts) {
@@ -1628,7 +1757,7 @@ if (typeof document !== 'undefined') {
         container.innerHTML = html;
 
         // Step 2: Defer "Other Alerts" to keep UI interactive
-        if (hasOtherAlerts) {
+        if (hasOtherAlerts && showOther) {
             setTimeout(() => {
                 let otherHtml = '';
                 const lblDivider = typeof t !== 'undefined' ? t('lbl_other_alerts_divider') : 'Other alerts';

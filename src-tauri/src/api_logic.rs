@@ -13,13 +13,73 @@ use mockall::{automock, predicate::*};
 pub enum AlertSource {
     #[default]
     Tauron,
-    Water,
+    #[serde(rename = "mpwik_wroclaw")]
+    MpwikWroclaw,
     Fortum,
     Energa,
     Enea,
     Pge,
     Stoen,
     Psg,
+    Wmk,
+    #[serde(rename = "tauron_heat")]
+    TauronHeat,
+}
+
+impl AlertSource {
+    pub fn service_voivodeships(&self) -> Option<Vec<&'static str>> {
+        match self {
+            AlertSource::Tauron => Some(vec![
+                "DOLNOŚLĄSKIE",
+                "MAŁOPOLSKIE",
+                "OPOLSKIE",
+                "ŚLĄSKIE",
+                "ŚWIĘTOKRZYSKIE",
+                "PODKARPACKIE",
+            ]),
+            AlertSource::Energa => Some(vec![
+                "POMORSKIE",
+                "WARMIŃSKO-MAZURSKIE",
+                "KUJAWSKO-POMORSKIE",
+                "ZACHODNIOPOMORSKIE",
+                "MAZOWIECKIE",
+                "WIELKOPOLSKIE",
+                "ŁÓDZKIE",
+            ]),
+            AlertSource::Enea => Some(vec![
+                "WIELKOPOLSKIE",
+                "LUBUSKIE",
+                "ZACHODNIOPOMORSKIE",
+                "KUJAWSKO-POMORSKIE",
+            ]),
+            AlertSource::Pge => Some(vec![
+                "PODLASKIE",
+                "LUBELSKIE",
+                "PODKARPACKIE",
+                "ŚWIĘTOKRZYSKIE",
+                "ŁÓDZKIE",
+                "MAZOWIECKIE",
+                "MAŁOPOLSKIE",
+                "WIELKOPOLSKIE",
+            ]),
+            AlertSource::Stoen => Some(vec!["MAZOWIECKIE"]),
+            AlertSource::MpwikWroclaw => Some(vec!["DOLNOŚLĄSKIE"]),
+            AlertSource::Wmk => Some(vec!["MAŁOPOLSKIE"]),
+            AlertSource::Fortum => Some(vec![
+                "DOLNOŚLĄSKIE",
+                "ŚLĄSKIE",
+                "MAZOWIECKIE",
+                "WIELKOPOLSKIE",
+                "ŁÓDZKIE",
+            ]),
+            AlertSource::TauronHeat => Some(vec![
+                "ŚLĄSKIE",
+                "MAŁOPOLSKIE",
+                "DOLNOŚLĄSKIE",
+            ]),
+            AlertSource::Psg => None, // Nationwide
+        }
+    }
 }
 
 #[cfg_attr(test, automock)]
@@ -49,6 +109,12 @@ pub struct UnifiedAlert {
     pub hash: Option<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq)]
+pub struct AlertsResponse {
+    pub alerts: Vec<UnifiedAlert>,
+    pub is_stale: bool,
+}
+
 impl UnifiedAlert {
     pub fn to_hash(&self) -> String {
         let mut hasher = Sha256::new();
@@ -74,8 +140,11 @@ pub fn deduplicate_alerts(alerts: Vec<UnifiedAlert>) -> Vec<UnifiedAlert> {
             if alert.is_local == Some(true) && existing.is_local != Some(true) {
                 existing.is_local = Some(true);
                 existing.address_index = alert.address_index;
+                if alert.message.is_some() {
+                    existing.message = alert.message.clone();
+                }
                 if alert.description.is_some() {
-                    existing.description = alert.description;
+                    existing.description = alert.description.clone();
                 }
             }
         } else {
@@ -99,21 +168,25 @@ impl<'a> MonitorEngine<'a> {
     pub fn process_alerts(&self, alerts: Vec<UnifiedAlert>) {
         let enabled_sources: Vec<String> = self.settings.enabled_sources.clone().unwrap_or_default();
         
+        log::info!("MonitorEngine: processing {} alerts", alerts.len());
         for alert in alerts {
+            let hash = alert.hash.clone().unwrap_or_else(|| alert.to_hash());
             if alert.is_local != Some(true) {
+                log::debug!("Alert {} skipped: not local (is_local={:?})", hash, alert.is_local);
                 continue;
             }
 
             let source_key = alert.source.to_string();
             if !enabled_sources.contains(&source_key) {
+                log::debug!("Alert {} skipped: source {} not enabled", hash, source_key);
                 continue;
             }
 
             let notified_enabled = self.settings.notification_preferences.get(&source_key).copied().unwrap_or(false);
 
             if notified_enabled {
-                let hash = alert.hash.clone().unwrap_or_else(|| alert.to_hash());
-                
+                let mut already_notified_as_upcoming = false;
+
                 // --- UPCOMING NOTIFICATION ---
                 if self.settings.upcoming_notification_enabled {
                     if let Some(start_str) = &alert.startDate {
@@ -123,24 +196,43 @@ impl<'a> MonitorEngine<'a> {
                             
                             if diff_hours >= 0 && diff_hours <= self.settings.upcoming_notification_hours as i64 {
                                 let upcoming_hash = format!("upcoming_{}", hash);
-                                if let Ok(false) = self.db.is_alert_seen(&source_key, &upcoming_hash) {
-                                    let title = format_notification_title(&alert, self.settings, true);
-                                    let body = format_notification_body(&alert, self.settings);
-                                    self.notifier.show_notification(title, body, hash.clone());
-                                    self.db.mark_alert_as_seen(&source_key, &upcoming_hash).ok();
+                                match self.db.is_alert_seen(&source_key, &upcoming_hash) {
+                                    Ok(false) => {
+                                        log::info!("Triggering UPCOMING notification for alert {}", hash);
+                                        let title = format_notification_title(&alert, self.settings, true);
+                                        let body = format_notification_body(&alert, self.settings);
+                                        self.notifier.show_notification(title, body, hash.clone());
+                                        self.db.mark_alert_as_seen(&source_key, &upcoming_hash).ok();
+                                        already_notified_as_upcoming = true;
+                                    },
+                                    Ok(true) => log::debug!("Upcoming alert {} already seen", hash),
+                                    Err(e) => log::error!("Database error checking upcoming seen status for {}: {}", hash, e),
                                 }
+                            } else {
+                                log::debug!("Upcoming alert {} skipped: diff_hours={} not in window", hash, diff_hours);
                             }
                         }
                     }
                 }
 
                 // --- NEW ALERT NOTIFICATION ---
-                if let Ok(false) = self.db.is_alert_seen(&source_key, &hash) {
-                    let title = format_notification_title(&alert, self.settings, false);
-                    let body = format_notification_body(&alert, self.settings);
-                    self.notifier.show_notification(title, body, hash.clone());
-                    self.db.mark_alert_as_seen(&source_key, &hash).ok();
+                match self.db.is_alert_seen(&source_key, &hash) {
+                    Ok(false) => {
+                        if !already_notified_as_upcoming {
+                            log::info!("Triggering NEW alert notification for hash {}", hash);
+                            let title = format_notification_title(&alert, self.settings, false);
+                            let body = format_notification_body(&alert, self.settings);
+                            self.notifier.show_notification(title, body, hash.clone());
+                        } else {
+                            log::info!("Skipping NEW alert notification for hash {} (already notified as upcoming)", hash);
+                        }
+                        self.db.mark_alert_as_seen(&source_key, &hash).ok();
+                    },
+                    Ok(true) => log::debug!("Alert {} already seen, skipping notification.", hash),
+                    Err(e) => log::error!("Database error checking seen status for {}: {}", hash, e),
                 }
+            } else {
+                log::debug!("Alert {} skipped: notifications disabled for {}", hash, source_key);
             }
         }
     }
@@ -162,10 +254,10 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea | AlertSource::Pge | AlertSource::Stoen => {
             if is_pl { "awaria prądu" } else { "power outage" }
         }
-        AlertSource::Water => {
+        AlertSource::MpwikWroclaw | AlertSource::Wmk => {
             if is_pl { "awaria wody" } else { "water outage" }
         }
-        AlertSource::Fortum => {
+        AlertSource::Fortum | AlertSource::TauronHeat => {
             if is_pl { "awaria ogrzewania" } else { "heat outage" }
         }
         AlertSource::Psg => {
@@ -188,7 +280,10 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
 }
 
 pub fn format_notification_body(alert: &UnifiedAlert, settings: &Settings) -> String {
-    let mut body = alert.message.clone().unwrap_or_default();
+    let mut body = alert.message.clone().unwrap_or_default()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ");
     
     let mut time_info = Vec::new();
     if let Some(start) = &alert.startDate {
@@ -230,13 +325,15 @@ impl std::fmt::Display for AlertSource {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
             AlertSource::Tauron => "tauron",
-            AlertSource::Water => "water",
+            AlertSource::MpwikWroclaw => "mpwik_wroclaw",
             AlertSource::Fortum => "fortum",
             AlertSource::Energa => "energa",
             AlertSource::Enea => "enea",
             AlertSource::Pge => "pge",
             AlertSource::Stoen => "stoen",
             AlertSource::Psg => "psg",
+            AlertSource::Wmk => "wmk",
+            AlertSource::TauronHeat => "tauron_heat",
         };
         write!(f, "{}", s)
     }
@@ -245,6 +342,7 @@ impl std::fmt::Display for AlertSource {
 #[async_trait]
 pub trait AlertProvider: Send + Sync {
     fn id(&self) -> String;
+    fn source(&self) -> AlertSource;
     async fn fetch(
         &self,
         client: &Client,
@@ -254,14 +352,61 @@ pub trait AlertProvider: Send + Sync {
     ) -> (Vec<UnifiedAlert>, Vec<String>);
 }
 
+pub fn is_provider_applicable(source: AlertSource, settings: &Settings) -> bool {
+    let voivodeships = match source.service_voivodeships() {
+        Some(v) => v,
+        None => return true, // Nationwide
+    };
+
+    let active_addresses: Vec<_> = settings.addresses.iter().filter(|a| a.is_active).collect();
+    if active_addresses.is_empty() {
+        // If there are no active addresses, we don't have a basis for pre-filtration.
+        // We return true to allow fetching (likely resulting in 0 alerts if addresses are empty,
+        // or general city alerts if applicable).
+        return true;
+    }
+
+    active_addresses.iter().any(|a| {
+        if a.voivodeship.is_empty() {
+            // Fallback for missing voivodeship data
+            return true;
+        }
+        let v = a.voivodeship.trim().to_uppercase();
+        voivodeships.iter().any(|&sv| {
+            if sv == v { return true; }
+            let sv_norm = sv.replace("Ł", "L").replace("Ś", "S");
+            let v_norm = v.replace("Ł", "L").replace("Ś", "S");
+            if sv_norm == v_norm { return true; }
+            
+            // Handle `?` corruption (e.g. MA?OPOLSKIE)
+            if v.contains('?') && v.len() == sv.len() {
+                let mut match_with_wildcard = true;
+                for (c1, c2) in v.chars().zip(sv.chars()) {
+                    if c1 != '?' && c1 != c2 {
+                        match_with_wildcard = false;
+                        break;
+                    }
+                }
+                if match_with_wildcard { return true; }
+            }
+            false
+        })
+    })
+}
+
 pub fn is_wroclaw(addr: &AddressEntry) -> bool {
-    let name = addr.city_name.to_lowercase();
-    name == "wrocław" || name == "wroclaw" || addr.city_id == Some(969400)
+    let name = addr.city_name.trim().to_lowercase();
+    name.starts_with("wrocław") || name.starts_with("wroclaw") || addr.city_id == Some(986283)
 }
 
 pub fn is_warszawa(addr: &AddressEntry) -> bool {
-    let name = addr.city_name.to_lowercase();
-    name == "warszawa" || name == "warsaw" || addr.city_id == Some(918123)
+    let name = addr.city_name.trim().to_lowercase();
+    name.starts_with("warszawa") || name.starts_with("warsaw") || addr.city_id == Some(918123)
+}
+
+pub fn is_krakow(addr: &AddressEntry) -> bool {
+    let name = addr.city_name.trim().to_lowercase();
+    name.starts_with("kraków") || name.starts_with("krakow") || addr.city_id == Some(950463)
 }
 
 
@@ -315,6 +460,8 @@ pub struct Settings {
     pub upcoming_notification_enabled: bool,
     #[serde(default = "default_upcoming_hours")]
     pub upcoming_notification_hours: u32,
+    #[serde(default = "default_true")]
+    pub show_other_outages: bool,
 }
 
 fn default_upcoming_hours() -> u32 {
@@ -332,6 +479,7 @@ impl Default for Settings {
             notification_preferences: HashMap::new(),
             upcoming_notification_enabled: false,
             upcoming_notification_hours: 24,
+            show_other_outages: true,
         }
     }
 }
@@ -482,7 +630,7 @@ mod tests {
                 hash: None,
             },
             UnifiedAlert {
-                source: AlertSource::Water,
+                source: AlertSource::MpwikWroclaw,
                 startDate: None,
                 endDate: None,
                 message: None,
@@ -508,7 +656,7 @@ mod tests {
 
         assert_eq!(alerts[0].source, AlertSource::Energa); // 10:00
         assert_eq!(alerts[1].source, AlertSource::Tauron); // 12:00
-        assert_eq!(alerts[2].source, AlertSource::Water);  // None
+        assert_eq!(alerts[2].source, AlertSource::MpwikWroclaw);  // None
     }
 
     #[test]
@@ -644,7 +792,7 @@ mod tests {
             .times(1)
             .returning(|_, _| Ok(false));
 
-        mock_notifier.expect_show_notification().times(2)
+        mock_notifier.expect_show_notification().times(1)
             .returning(|_, _, _| ());
 
         mock_db.expect_mark_alert_as_seen().times(2).returning(|_, _| Ok(()));
@@ -670,5 +818,44 @@ mod tests {
         assert!(body.contains("20-05-2024 10:00"));
         assert!(body.contains("termin zostanie podany wkrótce"));
         assert!(body.contains("Prace serwisowe"));
+    }
+
+    #[test]
+    fn test_is_provider_applicable() {
+        let mut settings = Settings::default();
+        settings.addresses.push(AddressEntry {
+            city_name: "Wrocław".to_string(),
+            voivodeship: "Dolnośląskie".to_string(),
+            is_active: true,
+            ..Default::default()
+        });
+
+        // Tauron is nationwide (basically) but serves Wrocław
+        assert!(is_provider_applicable(AlertSource::Tauron, &settings));
+        
+        // MPWiK Wrocław is local to Wrocław
+        assert!(is_provider_applicable(AlertSource::MpwikWroclaw, &settings));
+        
+        // Stoen is Warsaw only
+        assert!(!is_provider_applicable(AlertSource::Stoen, &settings));
+        
+        // Energa does not serve Dolnośląskie
+        assert!(!is_provider_applicable(AlertSource::Energa, &settings));
+
+        // Now add a Warsaw address
+        settings.addresses.push(AddressEntry {
+            city_name: "Warszawa".to_string(),
+            voivodeship: "Mazowieckie".to_string(),
+            is_active: true,
+            ..Default::default()
+        });
+
+        // Now Stoen and Energa should be applicable
+        assert!(is_provider_applicable(AlertSource::Stoen, &settings));
+        assert!(is_provider_applicable(AlertSource::Energa, &settings));
+        
+        // If address is inactive, it shouldn't count
+        settings.addresses[1].is_active = false;
+        assert!(!is_provider_applicable(AlertSource::Stoen, &settings));
     }
 }

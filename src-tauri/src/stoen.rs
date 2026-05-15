@@ -90,6 +90,10 @@ impl AlertProvider for StoenProvider {
         "stoen".to_string()
     }
 
+    fn source(&self) -> AlertSource {
+        AlertSource::Stoen
+    }
+
     async fn fetch(
         &self,
         client: &Client,
@@ -97,10 +101,6 @@ impl AlertProvider for StoenProvider {
         settings: &Settings,
         _app_handle: Option<&tauri::AppHandle>,
     ) -> (Vec<UnifiedAlert>, Vec<String>) {
-        if !settings.addresses.iter().any(|a| a.is_active && is_warszawa(a)) {
-            return (Vec::new(), Vec::new());
-        }
-
         match retry(|| fetch_stoen_outages(client), 3).await {
             Ok(outages) => {
                 let mut alerts = Vec::new();

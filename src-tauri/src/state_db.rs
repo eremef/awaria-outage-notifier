@@ -8,23 +8,38 @@ pub struct DbState {
     pub conn: Mutex<Connection>,
 }
 
+pub const STATE_DB_NAME: &str = "state.db";
+
 pub fn get_state_db_path(app: &AppHandle) -> Result<PathBuf, String> {
     let app_data = app
         .path()
         .app_data_dir()
         .map_err(|e| format!("Cannot resolve app data dir: {}", e))?;
     std::fs::create_dir_all(&app_data).map_err(|e| e.to_string())?;
-    Ok(app_data.join("state.db"))
+    let db_path = app_data.join(STATE_DB_NAME);
+    log::info!("State DB path resolved to: {:?}", db_path);
+    Ok(db_path)
+}
+
+#[cfg(target_os = "android")]
+pub fn get_db_path_from_files_dir(files_dir: PathBuf) -> PathBuf {
+    // Tauri v2 standard app data dir on Android is <files_dir>/<identifier>
+    // This matches what app.path().app_data_dir() returns in the main app.
+    let identifier = "xyz.eremef.awaria";
+    files_dir.join(identifier).join(STATE_DB_NAME)
 }
 
 pub fn init_db(app: &AppHandle) -> Result<Connection, String> {
     let path = get_state_db_path(app)?;
     let mut conn = Connection::open(path).map_err(|e| e.to_string())?;
-    _init_db(&mut conn)?;
+    ensure_schema(&mut conn)?;
     Ok(conn)
 }
 
-fn _init_db(conn: &mut Connection) -> Result<(), String> {
+pub fn ensure_schema(conn: &mut Connection) -> Result<(), String> {
+    // Enable WAL mode for better concurrency between app and background monitor
+    let _ = conn.execute("PRAGMA journal_mode=WAL", []);
+
     conn.execute(
         "CREATE TABLE IF NOT EXISTS seen_alerts (
             provider TEXT,
@@ -125,7 +140,7 @@ mod tests {
     #[test]
     fn test_state_db_basic_flow() {
         let mut conn = Connection::open_in_memory().unwrap();
-        _init_db(&mut conn).unwrap();
+        ensure_schema(&mut conn).unwrap();
 
         assert!(!_is_alert_seen(&conn, "tauron", "hash1").unwrap());
 
@@ -140,7 +155,7 @@ mod tests {
     #[test]
     fn test_pruning() {
         let mut conn = Connection::open_in_memory().unwrap();
-        _init_db(&mut conn).unwrap();
+        ensure_schema(&mut conn).unwrap();
 
         _mark_alert_as_seen(&mut conn, "energa", "old").unwrap();
         

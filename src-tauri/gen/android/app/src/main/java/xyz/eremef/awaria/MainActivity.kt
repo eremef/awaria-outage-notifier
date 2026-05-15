@@ -14,18 +14,9 @@ import androidx.core.view.WindowInsetsCompat
 class MainActivity : TauriActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     // Enable edge-to-edge for Android 15+ (API 35+) compatibility.
-    // This replaces manual status/navigation bar color settings which are deprecated.
-    enableEdgeToEdge(
-      statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT),
-      navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT)
-    )
-    
-    // Set layout in display cutout mode to use the full screen including notch areas.
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-      window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-    }
+    // This replaces manual status/navigation bar color settings and cutout modes.
+    enableEdgeToEdge()
 
-    super.onCreate(savedInstanceState)
     try {
         android.util.Log.i("AWARIA", "Calling initVerifier from onCreate")
         WidgetUtils.initVerifier(this.applicationContext)
@@ -33,6 +24,8 @@ class MainActivity : TauriActivity() {
     } catch (e: Exception) {
         android.util.Log.e("AWARIA", "Failed to call initVerifier: ${e.message}", e)
     }
+
+    super.onCreate(savedInstanceState)
 
     val decorView = this.window.decorView
     ViewCompat.setOnApplyWindowInsetsListener(decorView) { _, insets: WindowInsetsCompat ->
@@ -56,6 +49,8 @@ class MainActivity : TauriActivity() {
       }
       insets
     }
+
+    WidgetUtils.scheduleBackgroundMonitoring(this.applicationContext)
   }
 
   private fun findWebView(view: ViewGroup): WebView? {

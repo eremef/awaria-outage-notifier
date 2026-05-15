@@ -25,6 +25,10 @@ fn get_base_url() -> String {
 pub struct GeoItem {
     pub GAID: u64,
     pub Name: String,
+    pub FullName: Option<String>,
+    pub Prefix: Option<String>,
+    pub PostFix: Option<String>,
+    pub ShortName: Option<String>,
     pub ProvinceName: Option<String>,
     pub DistrictName: Option<String>,
     pub CommuneName: Option<String>,
@@ -230,6 +234,33 @@ pub async fn fetch_tauron_outages(
         streets = lookup_street(client, &address.street_name, city.GAID).await.unwrap_or_default();
     }
 
+    // Fallback 3: Try stripping common prefixes from street_name_1 or street_query
+    if streets.is_empty() {
+        let base_name = if !address.street_name_1.is_empty() { &address.street_name_1 } else { &street_query };
+        let prefixes = ["Plac ", "Pl. ", "ul. ", "ulica ", "Aleja ", "Al. "];
+        for p in prefixes {
+            if base_name.to_lowercase().starts_with(&p.to_lowercase()) {
+                let clean_name = base_name[p.len()..].trim().to_string();
+                if !clean_name.is_empty() {
+                    log::info!("Tauron: trying cleaned name '{}'", clean_name);
+                    streets = lookup_street(client, &clean_name, city.GAID).await.unwrap_or_default();
+                }
+                if !streets.is_empty() { break; }
+            }
+        }
+    }
+
+    // Fallback 4: Try just the last word (often the surname)
+    if streets.is_empty() {
+        let base_name = if !address.street_name_1.is_empty() { &address.street_name_1 } else { &street_query };
+        if let Some(last_word) = base_name.split_whitespace().last() {
+            if last_word != base_name {
+                log::info!("Tauron: trying last word fallback '{}'", last_word);
+                streets = lookup_street(client, last_word, city.GAID).await.unwrap_or_default();
+            }
+        }
+    }
+
     if streets.is_empty() {
         log::warn!(
             "Street '{}' not found in Tauron for city GAID {}. Returning empty result instead of error.",
@@ -246,7 +277,19 @@ pub async fn fetch_tauron_outages(
         log::info!("Tauron: street candidate: '{}' (GAID={})", s.Name, s.GAID);
     }
 
-    let street = streets.into_iter().next().unwrap();
+    let street = if streets.len() > 1 {
+        // Try to find the best match
+        let target_1 = address.street_name_1.to_lowercase();
+        let target_full = address.street_name.to_lowercase();
+        
+        streets.clone().into_iter().find(|s| {
+            s.Name.to_lowercase() == target_1 || 
+            s.FullName.as_ref().map(|f| f.to_lowercase() == target_1).unwrap_or(false) ||
+            s.FullName.as_ref().map(|f| f.to_lowercase() == target_full).unwrap_or(false)
+        }).unwrap_or_else(|| streets.into_iter().next().unwrap())
+    } else {
+        streets.into_iter().next().unwrap()
+    };
 
     log::info!(
         "Tauron: found street '{}' GAID={} (queried as '{}')",
@@ -344,6 +387,10 @@ impl AlertProvider for TauronProvider {
         "tauron".to_string()
     }
 
+    fn source(&self) -> AlertSource {
+        AlertSource::Tauron
+    }
+
     async fn fetch(
         &self,
         client: &Client,
@@ -357,7 +404,7 @@ impl AlertProvider for TauronProvider {
             let addr = addr.clone();
             let compiled = Arc::new(CompiledTauronRegex::new(&addr.city_name, &addr.street_name_1, &addr.street_name_2));
             let client_c = client.clone();
-            tasks.push(tokio::spawn(async move {
+            tasks.push(tauri::async_runtime::spawn(async move {
                 match retry(|| fetch_tauron_outages(&client_c, &addr), 3).await {
                     Ok(response) => {
                         let alerts: Vec<UnifiedAlert> = response
@@ -408,6 +455,8 @@ impl AlertProvider for TauronProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Mutex;
+    static TEST_MUTEX: Mutex<()> = Mutex::new(());
 
     #[test]
     fn test_tauron_to_unified() {
@@ -455,6 +504,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_fetch_tauron_mocked() {
+        let _guard = TEST_MUTEX.lock().unwrap();
         let mut server = mockito::Server::new_async().await;
         let url = server.url();
         std::env::set_var("TAURON_BASE_URL", format!("{}/waapi", url));
@@ -498,6 +548,96 @@ mod tests {
         assert!(errors.is_empty(), "Expected no errors but got: {:?}", errors);
         assert_eq!(alerts.len(), 1, "Alerts found: {:?}, Errors: {:?}", alerts, errors);
         assert_eq!(alerts[0].message, Some("Brak pradu".to_string()));
+        
+        std::env::remove_var("TAURON_BASE_URL");
+    }
+
+    #[tokio::test]
+    async fn test_fetch_tauron_street_fallback() {
+        let _guard = TEST_MUTEX.lock().unwrap();
+        let mut server = mockito::Server::new_async().await;
+        let url = server.url();
+        std::env::set_var("TAURON_BASE_URL", format!("{}/waapi", url));
+
+        // Mock city lookup
+        let _m1 = server.mock("GET", mockito::Matcher::Regex(r"^/waapi/enum/geo/cities.*".to_string()))
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"[{"GAID": 106173, "Name": "Kraków"}]"#)
+            .create_async().await;
+
+        // Mock street lookup - first call fails (Full name with "Plac")
+        let _m2 = server.mock("GET", mockito::Matcher::Regex(r"^/waapi/enum/geo/streets\?partName=Plac%20Juliusza%20Kossaka.*".to_string()))
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"[]"#)
+            .create_async().await;
+
+        // Mock street lookup - fallback succeeds (Stripped name)
+        let _m3 = server.mock("GET", mockito::Matcher::Regex(r"^/waapi/enum/geo/streets\?partName=Juliusza%20Kossaka.*".to_string()))
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"[{"GAID": 903554, "Name": "Kossaka", "FullName": "Plac Juliusza Kossaka"}]"#)
+            .create_async().await;
+
+        // Mock outage lookup
+        let _m4 = server.mock("GET", mockito::Matcher::Regex(r"^/waapi/outages/address.*streetGAID=903554.*".to_string()))
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"OutageItems": []}"#)
+            .create_async().await;
+
+        let client = Client::new();
+        let addr = crate::api_logic::AddressEntry {
+            city_name: "Kraków".to_string(),
+            street_name_1: "Plac Juliusza Kossaka".to_string(),
+            ..Default::default()
+        };
+
+        let result = fetch_tauron_outages(&client, &addr).await;
+        assert!(result.is_ok());
+        
+        std::env::remove_var("TAURON_BASE_URL");
+    }
+
+    #[tokio::test]
+    async fn test_fetch_tauron_last_word_fallback() {
+        let _guard = TEST_MUTEX.lock().unwrap();
+        let mut server = mockito::Server::new_async().await;
+        let url = server.url();
+        std::env::set_var("TAURON_BASE_URL", format!("{}/waapi", url));
+
+        let _m1 = server.mock("GET", mockito::Matcher::Regex(r"^/waapi/enum/geo/cities.*".to_string()))
+            .with_status(200)
+            .with_body(r#"[{"GAID": 106173, "Name": "Kraków"}]"#)
+            .create_async().await;
+
+        // All prefix fallbacks fail
+        let _m2 = server.mock("GET", mockito::Matcher::Regex(r"^/waapi/enum/geo/streets\?partName=(Plac%20)?Juliusza%20Kossaka.*".to_string()))
+            .with_status(200)
+            .with_body(r#"[]"#)
+            .create_async().await;
+
+        // Last word succeeds
+        let _m3 = server.mock("GET", mockito::Matcher::Regex(r"^/waapi/enum/geo/streets\?partName=Kossaka.*".to_string()))
+            .with_status(200)
+            .with_body(r#"[{"GAID": 903554, "Name": "Kossaka"}]"#)
+            .create_async().await;
+
+        let _m4 = server.mock("GET", mockito::Matcher::Regex(r"^/waapi/outages/address.*streetGAID=903554.*".to_string()))
+            .with_status(200)
+            .with_body(r#"{"OutageItems": []}"#)
+            .create_async().await;
+
+        let client = Client::new();
+        let addr = crate::api_logic::AddressEntry {
+            city_name: "Kraków".to_string(),
+            street_name_1: "Juliusza Kossaka".to_string(),
+            ..Default::default()
+        };
+
+        let result = fetch_tauron_outages(&client, &addr).await;
+        assert!(result.is_ok());
         
         std::env::remove_var("TAURON_BASE_URL");
     }

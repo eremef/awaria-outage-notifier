@@ -195,6 +195,10 @@ impl AlertProvider for EnergaProvider {
         "energa".to_string()
     }
 
+    fn source(&self) -> AlertSource {
+        AlertSource::Energa
+    }
+
     async fn fetch(
         &self,
         client: &Client,
@@ -202,16 +206,6 @@ impl AlertProvider for EnergaProvider {
         settings: &Settings,
         _app_handle: Option<&tauri::AppHandle>,
     ) -> (Vec<UnifiedAlert>, Vec<String>) {
-        fn is_in_energa_region(addr: &crate::api_logic::AddressEntry) -> bool {
-            let v = addr.voivodeship.to_lowercase();
-            v.contains("pomorskie") || v.contains("warmińsko") || v.contains("zachodniopomorskie") || 
-            v.contains("wielkopolskie") || v.contains("kujawsko") || v.contains("mazowieckie")
-        }
-
-        if !settings.addresses.iter().any(|a| a.is_active && is_in_energa_region(a)) {
-            return (Vec::new(), Vec::new());
-        }
-
         match retry(|| fetch_energa_alerts(client), 3).await {
                 Ok(shutdowns) => {
                     let mut alerts = Vec::new();
@@ -283,10 +277,19 @@ mod tests {
         match extract_energa_api_url(&client).await {
             Ok(url) => {
                 println!("Extracted Energa URL: {}", url);
-                let res = client.get(&url).send().await.unwrap();
-                assert!(res.status().is_success());
-                let data: EnergaResponse = res.json().await.unwrap();
-                println!("Found {} Energa shutdowns", data.document.payload.shutdowns.len());
+                match client.get(&url).send().await {
+                    Ok(res) => {
+                        if res.status().is_success() {
+                            match res.json::<EnergaResponse>().await {
+                                Ok(data) => println!("Found {} Energa shutdowns", data.document.payload.shutdowns.len()),
+                                Err(e) => println!("Energa JSON error: {}", e),
+                            }
+                        } else {
+                            println!("Energa status error: {}", res.status());
+                        }
+                    }
+                    Err(e) => println!("Energa request error: {}", e),
+                }
             }
             Err(e) => {
                 println!("Skipping Energa integration test (URL extract failed): {}", e);

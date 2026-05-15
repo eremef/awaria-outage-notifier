@@ -5,7 +5,7 @@
     <string name="config_primary_address">Używaj adresu głównego</string>
     <string name="config_confirm">Zatwierdź</string>
     <string name="label_power">Prąd</string>
-    <string name="label_heat">Ciepło</string>
+    <string name="label_heat">CO</string>
     <string name="label_water">Woda</string>
     <string name="label_gas">Gaz</string>
     <string name="label_provider">Dostawca</string>
@@ -19,6 +19,7 @@
     <string name="widget_label_pge">PGE</string>
     <string name="widget_label_stoen">Stoen</string>
     <string name="widget_label_psg">PSG</string>
+    <string name="widget_label_wmk">WMK</string>
     <string name="widget_label_tri">Adres: prąd, ciepło, woda</string>
     <string name="widget_label_all">Adres: wszystkie media</string>
     <string name="msg_setup_needed">Skonfiguruj</string>
@@ -26,6 +27,7 @@
     <string name="msg_inactive">Nieaktywne</string>
     <string name="msg_no_address">Brak adresu</string>
     <string name="msg_error">Błąd</string>
+    <string name="msg_offline">Brak sieci</string>
     <string name="provider_tauron">Tauron</string>
     <string name="provider_stoen">Stoen</string>
     <string name="provider_enea">Enea</string>
@@ -34,6 +36,7 @@
     <string name="provider_fortum">Fortum</string>
     <string name="provider_water">MPWiK</string>
     <string name="provider_psg">PSG</string>
+    <string name="provider_wmk">WMK</string>
     <string name="notif_channel_name">Alerty o wyłączeniach</string>
     <string name="notif_channel_desc">Powiadomienia o nowych i nadchodzących awariach oraz wyłączeniach (prąd, woda, ciepło, gaz).</string>
     <string name="placeholder_time">--:--</string>

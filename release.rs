@@ -41,20 +41,28 @@ fn main() {
 
     println!("Running tests...");
     let npm_cmd = if cfg!(windows) { "npm.cmd" } else { "npm" };
-    let test_status = Command::new(npm_cmd)
-        .args(&["run", "test"])
-        .current_dir(".")
-        .status();
+    
+    let check_commands = [
+        ["run", "test"],
+        ["run", "rust:clippy"],
+    ];
 
-    match test_status {
-        Ok(s) if s.success() => println!("Tests passed successfully."),
-        Ok(s) => {
-            eprintln!("Error: Tests failed with exit code: {:?}. Stopping release.", s.code());
-            std::process::exit(1);
-        }
-        Err(e) => {
-            eprintln!("Error: Failed to execute npm run test: {}. Stopping release.", e);
-            std::process::exit(1);
+    for args in check_commands {
+        let status = Command::new(npm_cmd)
+            .args(&args)
+            .current_dir(".")
+            .status();
+
+        match status {
+            Ok(s) if s.success() => println!("Successfully ran npm {}", args.join(" ")),
+            Ok(s) => {
+                eprintln!("Error: npm {} failed with exit code: {:?}. Stopping release.", args.join(" "), s.code());
+                std::process::exit(1);
+            }
+            Err(e) => {
+                eprintln!("Error: Failed to execute npm {}: {}. Stopping release.", args.join(" "), e);
+                std::process::exit(1);
+            }
         }
     }
 

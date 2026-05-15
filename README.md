@@ -12,17 +12,21 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
 - [Google Play store](https://play.google.com/store/apps/details?id=xyz.eremef.awaria)
 - [https://eremef.xyz/awaria](https://eremef.xyz/awaria)
 
-## Supported Sources
+## Supported Providers
 
-- **Power**
-  - **⚡ Tauron**: Planned maintenance and emergency power outages.
-  - **⚡ Energa**: Planned power outages (Northern Poland).
-  - **⚡ Enea**: Planned maintenance (Western Poland).
-  - **⚡ PGE**: Planned power outages (Eastern/Central Poland).
-  - **⚡ Stoen**: Planned power outages (Warsaw area).
+- **⚡ Power**
+  - **Tauron**: Planned maintenance and emergency power outages.
+  - **Energa**: Planned power outages (Northern Poland).
+  - **Enea**: Planned maintenance (Western Poland).
+  - **PGE**: Planned power outages (Eastern/Central Poland).
+  - **Stoen**: Planned power outages (Warsaw area).
 - **🔥 Gas - PSG**: Planned and current gas outages.
-- **🌡️ Heat - Fortum**: Planned and current heat/hot water outages.
-- **💧 Water - MPWiK**: Water failures and maintenance work in Wrocław.
+- **🌡️ Heat**
+  - **Fortum**: Planned and current heat/hot water outages.
+  - **Tauron Ciepło**: Heat outages (Southern Poland).
+- **💧 Water**
+  - **MPWiK Wrocław**: Water failures and maintenance work in Wrocław.
+  - **WMK**: Water maintenance and failures in Kraków.
 
 ## Android app
 
@@ -37,7 +41,8 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
 - **Multi-Address Support**: Monitor up to 20 different locations simultaneously.
 - **Smart Address Matching**: Highlights alerts affecting your specific address (or addresses). **Note**: Currently, matching is performed at the city and street level; building-specific filtering by house number is not yet implemented.
 - **Real-time Push Notifications**: Receive instant alerts on your desktop or mobile device when a new outage is detected for your location.
-- **Background Monitoring**: Automatically checks for updates in the background, even when the app is minimized or closed.
+- **Background Monitoring**: Automatically checks for updates in the background (30-minute interval on desktop).
+- **Smart Prefiltration**: Optimizes network usage by only querying providers applicable to your selected voivodeships.
 - **Throttled Parallelism**: Modern backend logic that fetches from all providers simultaneously with smart retries for maximum reliability.
 - **Premium Design**:
   - **Modern Interface**: Indigo-based "friendly" UI with vibrant source indicators (Rose/Sky).

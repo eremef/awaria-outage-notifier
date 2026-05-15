@@ -21,7 +21,7 @@
 
 ## Development Commands
 
-- `npm run tauri dev`: Start desktop development server (usually on http://localhost:1430).
+- `npm run tauri dev`: Start desktop development server (usually on <http://localhost:1430>).
 - `npm run android:dev`: Start Android development server.
 - `npm run build`: Build web assets and desktop application.
 - `npm run android:build`: Build Android application.
@@ -30,3 +30,42 @@
 
 - When you bump version, update it in `src-tauri/Cargo.toml`, `src-tauri/Cargo.lock`, `package.json` using semver versioning, even when git tag is in other format, like 1.0.0b
 - when bumping `src-tauri/tauri.conf.json` use only X.X.X format, without any additional suffixes
+
+## Project Learnings
+
+### JNI 0.22 Migration & Android Stabilization
+
+- **JNI 0.22 API**: `JNIEnv` is now `Env`. `JavaVM` must be stored in a global static (e.g., `Mutex<Option<JavaVM>>`).
+- **JNI Strings**: Use `jni::jni_str!("...")` for all literal method/class names and signatures to satisfy JNI 0.22 trait bounds.
+- **Global State**: Critical globals (`JAVA_VM`, `ANDROID_CONTEXT`, `PSG_FETCHER_CLASS`) must be initialized during `JNI_OnLoad` or the first bridge call. Always lock and check `Option` before use.
+- **Thread Attachment**: Use the closure-based `vm.attach_current_thread(|env| { ... })` for background tasks.
+- **`EnvUnowned::with_env`**: Requires the `native_env` variable to be declared `mut`.
+- **Widget Filtering**: Counters MUST filter by `is_local == Some(true)` to avoid showing city-wide outages that don't affect the user's specific street.
+- **Provider Scrapers (Kotlin)**: Fixed PSG count logic to include city-wide outages even when no street is configured.
+
+### Background Monitoring & Notifications
+
+- **Android WorkManager**: Uses `BackgroundMonitorWorker` and `WidgetUpdateWorker`. Ensure `ensure_verifier_initialized` is called in each worker's entry point.
+- **Settings Sync**: Kotlin side uses `loadSettings(context)` which returns `Pair<Settings, String>` (object + raw JSON). The raw JSON is passed to Rust to avoid double serialization.
+- **Rust MonitorEngine**: The `MonitorEngine::process_alerts` handles deduplication and notification triggers. It relies on `ProviderCache` to avoid redundant network calls.
+- **Notification Formatting**: Excessive whitespace in notifications (especially PSG) is caused by raw HTML remnants and newlines. Use `split_whitespace().collect::<Vec<_>>().join(" ")` in Rust or `replace(Regex("\\s+"), " ")` in Kotlin to normalize strings.
+- **Date Parsing**: Polish providers often use dots (`.`) and "godz." prefixes. `utils.rs::parse_date` should be extended to handle these by cleaning the string (dots to hyphens, remove "godz.") before parsing with `NaiveDateTime`.
+
+### Browser Automation & Scraping
+
+- **Dynamic Dropdowns**: For sites with autocomplete (like Tauron), `type_text` must be followed by an explicit click on the suggested item `uid`.
+- **API Discovery**: Use `list_network_requests` to find direct `/api/` endpoints instead of perfecting UI scrapers. Direct HTTP requests (via `reqwest`) are more robust.
+- **CMP/Cookie Popups**: Often can be ignored for pixel-based input targeting, but "Accept" buttons should be clicked if they overlay target elements.
+
+### Android Sharing & File Access
+
+- **Internal File Sharing**: To share files from the app's internal storage (e.g., `settings.json`), `res/xml/file_paths.xml` MUST include `<files-path name="..." path="." />`.
+- **Share Intent**: When starting a Share Intent from `ApplicationContext`, `Intent.FLAG_ACTIVITY_NEW_TASK` is required for the chooser activity.
+- **Plugin Bug (tauri-plugin-share v2.0.5)**: Rust wrapper uses snake_case (`share_file`) while Kotlin registers camelCase (`shareFile`), causing "No command found" errors. Use direct JNI or manual command invocation as a workaround.
+
+## Common Development Workflows
+
+- **Android Release Build**: `npx tauri android build -- --target aarch64 --apk`
+- **Log Monitoring**: `adb logcat | grep awaria`
+- **Isolated Rust Tests**: To avoid file locks during active builds, always run tests with a separate target directory: `cargo test --target-dir target_test`. Clean up after completion.
+- **Knowledge Persistence**: The project uses MemPalace for memory storage. Ensure git hooks are active to automate `mempalace sync`. Ensure to use it during programming.

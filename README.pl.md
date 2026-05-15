@@ -13,7 +13,7 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
 - [Sklep Google Play](https://play.google.com/store/apps/details?id=xyz.eremef.awaria)
 - [https://eremef.xyz/awaria](https://eremef.xyz/awaria)
 
-## Wspierane Źródła
+## Wspierani Dostawcy
 
 - **⚡ Prąd**
   - **Tauron**: Planowane konserwacje i awaryjne wyłączenia prądu.
@@ -22,8 +22,12 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
   - **PGE**: Planowane wyłączenia prądu (Wschodnia i Centralna Polska).
   - **Stoen**: Planowane wyłączenia prądu (Warszawa i okolice).
 - **🔥 Gaz - PSG**: Planowane i bieżące wyłączenia gazu.
-- **🌡️ Ciepło - Fortum**: Planowane i bieżące wyłączenia ogrzewania oraz ciepłej wody.
-- **💧 Woda - MPWiK**: Awarie wodociągowe i prace konserwacyjne we Wrocławiu.
+- **🌡️ Ciepło**
+  - **Fortum**: Planowane i bieżące wyłączenia ogrzewania oraz ciepłej wody.
+  - **Tauron Ciepło**: Przerwy w dostawie ciepła (Południowa Polska).
+- **💧 Woda**
+  - **MPWiK Wrocław**: Awarie wodociągowe i prace konserwacyjne we Wrocławiu.
+  - **WMK**: Awarie i konserwacje wodociągowe w Krakowie.
 
 ## Aplikacja Android
 
@@ -38,7 +42,8 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
 - **Wsparcie dla wielu adresów**: Monitoruj do 20 różnych lokalizacji jednocześnie.
 - **Inteligentne Dopasowanie Adresu**: Wyróżnia alerty dotyczące konkretnego adresu (lub adresów). **Uwaga**: Obecnie dopasowanie odbywa się na poziomie miasta i ulicy; filtrowanie według konkretnego numeru domu nie jest jeszcze zaimplementowane.
 - **Powiadomienia Push w Czasie Rzeczywistym**: Otrzymuj natychmiastowe alerty na komputerze lub urządzeniu mobilnym, gdy wykryta zostanie nowa awaria dla Twojej lokalizacji.
-- **Monitorowanie w Tle**: Automatyczne sprawdzanie aktualizacji w tle, nawet gdy aplikacja jest zminimalizowana lub zamknięta.
+- **Monitorowanie w Tle**: Automatyczne sprawdzanie aktualizacji w tle (interwał 30 minut na desktopie).
+- **Inteligentna Pre-filtracja**: Optymalizuje użycie sieci poprzez odpytywanie tylko tych dostawców, którzy obsługują Twoje województwa.
 - **Zrównoleglona Logika**: Nowoczesny backend pobierający dane od wszystkich dostawców jednocześnie z inteligentnym systemem ponawiania prób.
 - **Design Premium**:
   - **Nowoczesny Interfejs**: System Indigo - przyjazny UI z żywymi wskaźnikami źródeł.

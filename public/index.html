@@ -26,50 +26,50 @@
 <body>
     <div id="main-view" class="view active container">
         <div class="sticky-nav">
-                <button id="settings-btn" class="settings-btn" title="Settings" data-i18n-title="settings">
-                    <svg class="icon-settings" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path
-                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
-                        </path>
-                    </svg>
-                </button>
-                <header>
-                    <h1 data-i18n="title">Outage Alerts</h1>
-                    <p class="last-updated-row">
-                        <span id="last-updated" data-i18n="checking_updates">Checking for updates...</span>
-                        <button id="refresh-btn" class="refresh-btn" title="Refresh">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <path d="M21 2v6h-6"></path>
-                                <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
-                                <path d="M3 22v-6h6"></path>
-                                <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
-                            </svg>
-                        </button>
-                    </p>
-                    <select id="address-filter" class="address-filter">
-                        <option value="-1" data-i18n="addr_filter_all">All addresses</option>
-                    </select>
-                </header>
-            </div>
+            <button id="settings-btn" class="settings-btn" title="Settings" data-i18n-title="settings">
+                <svg class="icon-settings" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                    </path>
+                </svg>
+            </button>
+            <header>
+                <h1 data-i18n="title">Outage Alerts</h1>
+                <p class="last-updated-row">
+                    <span id="last-updated" data-i18n="checking_updates">Checking for updates...</span>
+                    <button id="refresh-btn" class="refresh-btn" title="Refresh">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 2v6h-6"></path>
+                            <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+                            <path d="M3 22v-6h6"></path>
+                            <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+                        </svg>
+                    </button>
+                </p>
+                <select id="address-filter" class="address-filter">
+                    <option value="-1" data-i18n="addr_filter_all">All addresses</option>
+                </select>
+            </header>
+        </div>
 
-            <div id="pull-indicator" class="pull-indicator" data-i18n="refresh_pull">↻ Release to refresh</div>
+        <div id="pull-indicator" class="pull-indicator" data-i18n="refresh_pull">↻ Release to refresh</div>
 
-            <main id="outages-container">
-                <div class="loading" data-i18n="loading_data">Loading alert data...</div>
-            </main>
+        <main id="outages-container">
+            <div class="loading" data-i18n="loading_data">Loading alert data...</div>
+        </main>
     </div>
 
     <div id="settings-view" class="view settings-view">
         <div class="container">
             <div class="sticky-nav">
-                <button id="settings-close-x" class="settings-btn open" title="Close Settings" data-i18n-title="settings_close">
-                    <svg class="icon-settings hidden" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <button id="settings-close-x" class="settings-btn open" title="Close Settings"
+                    data-i18n-title="settings_close">
+                    <svg class="icon-settings hidden" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
                         <circle cx="12" cy="12" r="3"></circle>
                         <path
                             d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
@@ -90,6 +90,11 @@
                 <div id="notification-permission-warning" class="permission-warning hidden"
                     data-i18n="settings_notification_permission_warning">
                     System notifications are disabled. Please enable them in Android settings to receive alerts.
+                </div>
+                <div id="battery-optimization-warning" class="permission-warning hidden"
+                    data-i18n="settings_battery_optimization_warning">
+                    Battery optimizations are enabled. Please set to "Unrestricted" in Android settings to ensure
+                    reliable background updates.
                 </div>
                 <div class="settings-title" data-i18n="settings_appearance">Appearance</div>
                 <div class="settings-field">
@@ -117,6 +122,11 @@
                         <option value="latte" data-i18n="theme_latte">Latte (Pastel Light)</option>
                     </select>
                 </div>
+                <div class="settings-checkbox-row">
+                    <input type="checkbox" id="show-other-outages-check">
+                    <label for="show-other-outages-check" data-i18n="settings_show_other_outages">Show other outages
+                        list for other locations</label>
+                </div>
 
                 <div id="sources-settings-title" class="settings-title" data-i18n="settings_sources">Alert Sources</div>
                 <div class="settings-field-row header">
@@ -132,8 +142,10 @@
                     <div id="upcoming-row-container" class="checkbox-pair upcoming-row">
                         <input type="checkbox" id="upcoming-notify-check">
                         <div id="upcoming-adjust-container" class="upcoming-adjust-container">
-                            <label for="upcoming-notify-check" data-i18n="settings_upcoming_prefix" class="upcoming-notify-label">Notify</label>
-                            <input type="number" id="upcoming-hours-input" min="1" max="168" value="24" class="upcoming-hours-input">
+                            <label for="upcoming-notify-check" data-i18n="settings_upcoming_prefix"
+                                class="upcoming-notify-label">Notify</label>
+                            <input type="number" id="upcoming-hours-input" min="1" max="168" value="24"
+                                class="upcoming-hours-input">
                             <span data-i18n="settings_upcoming_suffix" class="upcoming-suffix">h before</span>
                         </div>
                     </div>
@@ -182,6 +194,18 @@
                                 <button id="cancel-address-btn" class="cancel-btn" data-i18n="cancel">Cancel</button>
                             </div>
                         </div>
+                    </div>
+                </div>
+                <hr class="settings-divider">
+                <div id="backup-settings-section" class="backup-settings-section">
+                    <div class="settings-title" data-i18n="settings_backup">
+                        <span>Backup & Restore</span>
+                    </div>
+                    <div class="button-row">
+                        <button id="export-settings-btn" class="cancel-btn small-btn" data-i18n="settings_export">Export
+                            Settings</button>
+                        <button id="import-settings-btn" class="cancel-btn small-btn" data-i18n="settings_import">Import
+                            Settings</button>
                     </div>
                 </div>
                 <button id="close-settings-btn" class="settings-close-btn" data-i18n="settings_close">Close

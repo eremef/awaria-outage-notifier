@@ -9,6 +9,8 @@ import android.widget.RemoteViews
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.*
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 
 class TriWidgetProvider : BaseWidgetProvider() {
     override val refreshAction: String = "xyz.eremef.awaria.ACTION_REFRESH_TRI"
@@ -17,12 +19,56 @@ class TriWidgetProvider : BaseWidgetProvider() {
     override val labelKey: String = "status"
     override val sourceKey: String = "tri_status"
 
+    override fun showLoadingPlaceholder(
+            context: Context,
+            appWidgetManager: AppWidgetManager,
+            appWidgetId: Int
+    ) {
+        val views = RemoteViews(context.packageName, R.layout.widget_tri_outage)
+        val refreshIntent = Intent(context, this::class.java).apply {
+            action = refreshAction
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+        }
+        val pending = PendingIntent.getBroadcast(
+                context, appWidgetId, refreshIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        views.setOnClickPendingIntent(R.id.widget_root, pending)
+        views.setTextViewText(R.id.count_power, "–")
+        views.setTextViewText(R.id.count_heat, "–")
+        views.setTextViewText(R.id.count_water, "–")
+        views.setTextViewText(R.id.widget_updated, context.getString(R.string.msg_updating))
+        views.setTextViewText(R.id.widget_address_name, "")
+        views.setTextViewText(R.id.label_power, context.getString(R.string.label_power))
+        views.setTextViewText(R.id.label_heat, context.getString(R.string.label_heat))
+        views.setTextViewText(R.id.label_water, context.getString(R.string.label_water))
+        appWidgetManager.updateAppWidget(appWidgetId, views)
+    }
+
+    override fun onUpdate(
+            context: Context,
+            appWidgetManager: AppWidgetManager,
+            appWidgetIds: IntArray
+    ) {
+        WidgetUtils.initVerifier(context)
+        scheduleWork(context)
+        // Show placeholder immediately — no goAsync needed, WorkManager does the actual fetch.
+        for (appWidgetId in appWidgetIds) {
+            showLoadingPlaceholder(context, appWidgetManager, appWidgetId)
+        }
+        val request = OneTimeWorkRequestBuilder<WidgetUpdateWorker>().build()
+        WorkManager.getInstance(context).enqueue(request)
+    }
+
     override suspend fun updateWidget(
             context: Context,
             appWidgetManager: AppWidgetManager,
             appWidgetId: Int
     ) {
-        val allSettings = loadSettings(context)
+        val settingsResult = loadSettings(context)
+        val allSettings = settingsResult?.first
+        val fullJson = settingsResult?.second
+
         val primaryAddress =
                 allSettings?.find { it.isPrimary } ?: allSettings?.firstOrNull { it.isActive }
 
@@ -50,61 +96,115 @@ class TriWidgetProvider : BaseWidgetProvider() {
             val settingsList = listOf(selectedAddress)
             val hash = calculateHash(settingsList)
 
-            try {
-                coroutineScope {
-                    val settingsJson = WidgetUtils.serializeSettingsForRust(settingsList)
-                    val p = async {
-                        val sources = listOf("tauron", "stoen", "energa", "enea", "pge")
-                        sources.map { source ->
-                            async {
-                                try {
-                                    ProviderCache.getOrFetch(source, hash) {
-                                        WidgetUtils.fetchCountFromRust(context, source, settingsJson)
-                                    }
-                                } catch (e: Exception) {
-                                    Log.w("TriWidget", "Failed to fetch $source: ${e.message}")
-                                    0
-                                }
-                            }
-                        }.awaitAll().sum()
-                    }
-                    val h = async {
-                        try {
-                                ProviderCache.getOrFetch("fortum", hash) {
-                                    WidgetUtils.fetchCountFromRust(context, "fortum", settingsJson)
-                                }
-                        } catch (e: Exception) {
-                            0
-                        }
-                    }
-                    val w = async {
-                        try {
-                                ProviderCache.getOrFetch("water", hash) {
-                                    WidgetUtils.fetchCountFromRust(context, "water", settingsJson)
-                                }
-                        } catch (e: Exception) {
-                            0
-                        }
-                    }
-
-                    val resP = p.await()
-                    val resH = h.await()
-                    val resW = w.await()
-
-                    powerCount = resP.toString()
-                    heatCount = resH.toString()
-                    waterCount = resW.toString()
-                    totalOutages = resP + resH + resW
-                }
-            } catch (e: Exception) {
-                Log.e("TriWidget", "Error fetching counts", e)
+            if (!WidgetUtils.isNetworkAvailable(context)) {
                 powerCount = "!"
                 heatCount = "!"
                 waterCount = "!"
+            } else {
+                try {
+                    coroutineScope {
+                        val settingsJson =
+                                WidgetUtils.serializeSettingsForRust(settingsList, fullJson)
+                        val p = async {
+                            val sources = listOf("tauron", "stoen", "energa", "enea", "pge")
+                            sources
+                                    .map { source ->
+                                        async {
+                                            try {
+                                                ProviderCache.getOrFetch(source, hash) {
+                                                    WidgetUtils.fetchCountFromRust(
+                                                            context,
+                                                            source,
+                                                            settingsJson
+                                                    )
+                                                }
+                                            } catch (e: Exception) {
+                                                Log.w(
+                                                        "TriWidget",
+                                                        "Failed to fetch $source: ${e.message}"
+                                                )
+                                                0
+                                            }
+                                        }
+                                    }
+                                    .awaitAll()
+                                    .sum()
+                        }
+                        val h = async {
+                            val heatSources = listOf("fortum", "tauron_heat")
+                            heatSources
+                                    .map { source ->
+                                        async {
+                                            try {
+                                                ProviderCache.getOrFetch(source, hash) {
+                                                    WidgetUtils.fetchCountFromRust(
+                                                            context,
+                                                            source,
+                                                            settingsJson
+                                                    )
+                                                }
+                                            } catch (e: Exception) {
+                                                Log.w(
+                                                        "TriWidget",
+                                                        "Failed to fetch $source: ${e.message}"
+                                                )
+                                                0
+                                            }
+                                        }
+                                    }
+                                    .awaitAll()
+                                    .sum()
+                        }
+                        val w = async {
+                            val waterSources = listOf("mpwik_wroclaw", "wmk")
+                            waterSources
+                                    .map { source ->
+                                        async {
+                                            try {
+                                                ProviderCache.getOrFetch(source, hash) {
+                                                    WidgetUtils.fetchCountFromRust(
+                                                            context,
+                                                            source,
+                                                            settingsJson
+                                                    )
+                                                }
+                                            } catch (e: Exception) {
+                                                Log.w(
+                                                        "TriWidget",
+                                                        "Failed to fetch $source: ${e.message}"
+                                                )
+                                                0
+                                            }
+                                        }
+                                    }
+                                    .awaitAll()
+                                    .sum()
+                        }
+
+                        val resP = p.await()
+                        val resH = h.await()
+                        val resW = w.await()
+
+                        powerCount = resP.toString()
+                        heatCount = resH.toString()
+                        waterCount = resW.toString()
+                        totalOutages = resP + resH + resW
+                    }
+                } catch (e: Exception) {
+                    Log.e("TriWidget", "Error fetching counts", e)
+                    powerCount = "!"
+                    heatCount = "!"
+                    waterCount = "!"
+                }
             }
         }
 
-        val updatedAt = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+        val updatedAt =
+                if (!WidgetUtils.isNetworkAvailable(context)) {
+                    getTranslation(context, "offline")
+                } else {
+                    SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+                }
         val prefsAddressId = getStoredAddressId(context, appWidgetId)
         val addressName =
                 if (selectedAddress != null) {
@@ -118,10 +218,11 @@ class TriWidgetProvider : BaseWidgetProvider() {
         val views = RemoteViews(context.packageName, R.layout.widget_tri_outage)
 
         // Clicks
-        val refreshIntent = Intent(context, this::class.java).apply { 
-            action = refreshAction 
-            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-        }
+        val refreshIntent =
+                Intent(context, this::class.java).apply {
+                    action = refreshAction
+                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                }
         val refreshPending =
                 PendingIntent.getBroadcast(
                         context,
@@ -169,18 +270,42 @@ class TriWidgetProvider : BaseWidgetProvider() {
         views.setTextViewText(R.id.label_heat, getTranslation(context, "heat"))
         views.setTextViewText(R.id.label_water, getTranslation(context, "water"))
 
+        // Check enabled utilities
+        val enabledSources = getEnabledSources(fullJson)
+        val allEnabledByDefault = fullJson?.has("enabledSources") == false
+
+        val powerEnabled =
+                allEnabledByDefault ||
+                        listOf("tauron", "stoen", "energa", "enea", "pge").any {
+                            it in enabledSources
+                        }
+        val heatEnabled =
+                allEnabledByDefault || listOf("fortum", "tauron_heat").any { it in enabledSources }
+        val waterEnabled =
+                allEnabledByDefault || listOf("mpwik_wroclaw", "wmk").any { it in enabledSources }
+
         // Theme
-        applyTriTheme(context, views, theme, dark)
+        applyTriTheme(context, views, theme, dark, powerEnabled, heatEnabled, waterEnabled)
 
         appWidgetManager.updateAppWidget(appWidgetId, views)
     }
 
-    private fun applyTriTheme(context: Context, views: RemoteViews, themeSetting: String, dark: Boolean) {
-        // If system theme is selected, the XML handles background and generic label colors automatically.
+    private fun applyTriTheme(
+            context: Context,
+            views: RemoteViews,
+            themeSetting: String,
+            dark: Boolean,
+            powerEnabled: Boolean,
+            heatEnabled: Boolean,
+            waterEnabled: Boolean
+    ) {
+        // If system theme is selected, the XML handles background and generic label colors
+        // automatically.
         // We only explicitly set them here to support manual theme overrides.
 
         if (themeSetting != "system") {
-            val bgRes = if (dark) R.drawable.widget_background_dark else R.drawable.widget_background
+            val bgRes =
+                    if (dark) R.drawable.widget_background_dark else R.drawable.widget_background
             if (bgRes != 0) {
                 views.setInt(R.id.widget_root, "setBackgroundResource", bgRes)
             }
@@ -195,8 +320,8 @@ class TriWidgetProvider : BaseWidgetProvider() {
             views.setTextColor(R.id.label_water, labelColor)
         }
 
-        // Utility Colors Pull from theme-aware resources. 
-        // We set these in code because they can be tinted/forced per address logic, 
+        // Utility Colors Pull from theme-aware resources.
+        // We set these in code because they can be tinted/forced per address logic,
         // but we use the resource ID to let context resolve it.
         val colorPower = context.getColor(R.color.utility_power)
         val colorHeat = context.getColor(R.color.utility_heat)
@@ -209,5 +334,11 @@ class TriWidgetProvider : BaseWidgetProvider() {
         views.setInt(R.id.icon_power, "setColorFilter", colorPower)
         views.setInt(R.id.icon_heat, "setColorFilter", colorHeat)
         views.setInt(R.id.icon_water, "setColorFilter", colorWater)
+
+        // Gray out disabled utilities
+        val disabledAlpha = 0.3f
+        views.setFloat(R.id.section_power, "setAlpha", if (powerEnabled) 1.0f else disabledAlpha)
+        views.setFloat(R.id.section_heat, "setAlpha", if (heatEnabled) 1.0f else disabledAlpha)
+        views.setFloat(R.id.section_water, "setAlpha", if (waterEnabled) 1.0f else disabledAlpha)
     }
 }

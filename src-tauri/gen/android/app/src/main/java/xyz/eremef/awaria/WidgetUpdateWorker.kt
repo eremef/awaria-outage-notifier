@@ -3,6 +3,7 @@ package xyz.eremef.awaria
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
+import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 
@@ -12,14 +13,22 @@ class WidgetUpdateWorker(
 ) : CoroutineWorker(context, workerParams) {
 
     override suspend fun doWork(): androidx.work.ListenableWorker.Result {
+        // CRITICAL: Initialize TLS verifier for Rust network requests.
+        WidgetUtils.initVerifier(context)
+        
         val appWidgetManager = AppWidgetManager.getInstance(context)
         
         // Update Tauron widgets
         val tauronName = ComponentName(context, TauronWidgetProvider::class.java)
         val tauronIds = appWidgetManager.getAppWidgetIds(tauronName)
         val tauronProvider = TauronWidgetProvider()
+        Log.d("WidgetWorker", "Updating ${tauronIds.size} Tauron widgets")
         for (id in tauronIds) {
-            tauronProvider.updateWidget(context, appWidgetManager, id)
+            try {
+                tauronProvider.updateWidget(context, appWidgetManager, id)
+            } catch (e: Exception) {
+                Log.e("WidgetWorker", "Failed to update Tauron widget $id", e)
+            }
         }
 
         // Update MPWiK widgets
@@ -74,16 +83,26 @@ class WidgetUpdateWorker(
         val triName = ComponentName(context, TriWidgetProvider::class.java)
         val triIds = appWidgetManager.getAppWidgetIds(triName)
         val triProvider = TriWidgetProvider()
+        Log.d("WidgetWorker", "Updating ${triIds.size} Tri-Status widgets")
         for (id in triIds) {
-            triProvider.updateWidget(context, appWidgetManager, id)
+            try {
+                triProvider.updateWidget(context, appWidgetManager, id)
+            } catch (e: Exception) {
+                Log.e("WidgetWorker", "Failed to update Tri-Status widget $id", e)
+            }
         }
 
         // Update All-Status widgets
         val allName = ComponentName(context, AllWidgetProvider::class.java)
         val allIds = appWidgetManager.getAppWidgetIds(allName)
         val allProvider = AllWidgetProvider()
+        Log.d("WidgetWorker", "Updating ${allIds.size} All-Status widgets")
         for (id in allIds) {
-            allProvider.updateWidget(context, appWidgetManager, id)
+            try {
+                allProvider.updateWidget(context, appWidgetManager, id)
+            } catch (e: Exception) {
+                Log.e("WidgetWorker", "Failed to update All-Status widget $id", e)
+            }
         }
 
         // Update PSG widgets
@@ -92,6 +111,14 @@ class WidgetUpdateWorker(
         val psgProvider = PsgWidgetProvider()
         for (id in psgIds) {
             psgProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update WMK widgets
+        val wmkName = ComponentName(context, WmkWidgetProvider::class.java)
+        val wmkIds = appWidgetManager.getAppWidgetIds(wmkName)
+        val wmkProvider = WmkWidgetProvider()
+        for (id in wmkIds) {
+            wmkProvider.updateWidget(context, appWidgetManager, id)
         }
 
         return androidx.work.ListenableWorker.Result.success()
