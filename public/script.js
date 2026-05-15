@@ -154,7 +154,11 @@ if (typeof document !== 'undefined') {
 
             const warning = document.getElementById('notification-permission-warning');
             if (warning) {
-                if (granted) {
+                const settings = currentSettings || {};
+                const notifyPrefs = settings.notificationPreferences || {};
+                const hasAnyNotify = Object.values(notifyPrefs).some(v => v === true) || !!settings.upcomingNotificationEnabled;
+
+                if (granted || !hasAnyNotify) {
                     warning.classList.add('hidden');
                 } else {
                     warning.classList.remove('hidden');
@@ -173,7 +177,11 @@ if (typeof document !== 'undefined') {
 
             const warning = document.getElementById('battery-optimization-warning');
             if (warning) {
-                if (ignored) {
+                const settings = currentSettings || {};
+                const notifyPrefs = settings.notificationPreferences || {};
+                const hasAnyNotify = Object.values(notifyPrefs).some(v => v === true) || !!settings.upcomingNotificationEnabled;
+
+                if (ignored || !hasAnyNotify) {
                     warning.classList.add('hidden');
                 } else {
                     warning.classList.remove('hidden');
@@ -611,6 +619,8 @@ if (typeof document !== 'undefined') {
                     if (notifyCheckbox.checked) {
                         await checkAndRequestNotificationPermission();
                         await checkAndRequestBatteryOptimization(true);
+                    } else {
+                        await checkAndRequestBatteryOptimization();
                     }
 
                     updateUpcomingStatus();
@@ -634,6 +644,8 @@ if (typeof document !== 'undefined') {
                     currentSettings.upcomingNotificationEnabled = upcomingNotifyCheck.checked;
                     if (upcomingNotifyCheck.checked) {
                         await checkAndRequestBatteryOptimization(true);
+                    } else {
+                        await checkAndRequestBatteryOptimization();
                     }
                     await autoSaveSettings();
                 }
@@ -1122,12 +1134,9 @@ if (typeof document !== 'undefined') {
                     document.getElementById('show-other-outages-check').checked = settings.showOtherOutages !== false;
                 }
 
-                // Also check permissions on load if notifications are enabled
-                const hasAnyNotify = Object.values(notifyPrefs).some(v => v === true) || !!settings.upcomingNotificationEnabled;
-                if (hasAnyNotify) {
-                    checkAndRequestNotificationPermission();
-                    checkAndRequestBatteryOptimization();
-                }
+                // Check permissions/optimization warnings on load
+                checkAndRequestNotificationPermission();
+                checkAndRequestBatteryOptimization();
 
                 updateAddressFilter();
                 renderAddressesList();

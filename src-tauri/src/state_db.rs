@@ -8,15 +8,25 @@ pub struct DbState {
     pub conn: Mutex<Connection>,
 }
 
+pub const STATE_DB_NAME: &str = "state.db";
+
 pub fn get_state_db_path(app: &AppHandle) -> Result<PathBuf, String> {
     let app_data = app
         .path()
         .app_data_dir()
         .map_err(|e| format!("Cannot resolve app data dir: {}", e))?;
     std::fs::create_dir_all(&app_data).map_err(|e| e.to_string())?;
-    let db_path = app_data.join("state.db");
+    let db_path = app_data.join(STATE_DB_NAME);
     log::info!("State DB path resolved to: {:?}", db_path);
     Ok(db_path)
+}
+
+#[cfg(target_os = "android")]
+pub fn get_db_path_from_files_dir(files_dir: PathBuf) -> PathBuf {
+    // Tauri v2 standard app data dir on Android is <files_dir>/<identifier>
+    // This matches what app.path().app_data_dir() returns in the main app.
+    let identifier = "xyz.eremef.awaria";
+    files_dir.join(identifier).join(STATE_DB_NAME)
 }
 
 pub fn init_db(app: &AppHandle) -> Result<Connection, String> {
@@ -27,6 +37,9 @@ pub fn init_db(app: &AppHandle) -> Result<Connection, String> {
 }
 
 pub fn ensure_schema(conn: &mut Connection) -> Result<(), String> {
+    // Enable WAL mode for better concurrency between app and background monitor
+    let _ = conn.execute("PRAGMA journal_mode=WAL", []);
+
     conn.execute(
         "CREATE TABLE IF NOT EXISTS seen_alerts (
             provider TEXT,

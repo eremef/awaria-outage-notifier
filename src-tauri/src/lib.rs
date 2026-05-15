@@ -1080,23 +1080,33 @@ pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchAndNotifyFromRust(
             let path_str: String = env.get_string(&path_jstr).map(|s| s.into()).unwrap_or_default();
             let files_dir_path = std::path::PathBuf::from(path_str);
             
-            // Try all common Tauri app data paths on Android
-            let mut db_path = files_dir_path.join("state.db");
-            if !db_path.exists() {
-                let p2 = files_dir_path.join("app_data").join("state.db");
-                let p3 = files_dir_path.join("xyz.eremef.awaria").join("state.db");
-                let p4 = files_dir_path.join("Awaria").join("state.db");
-                
-                if p2.exists() {
-                    db_path = p2;
-                } else if p3.exists() {
-                    db_path = p3;
-                } else if p4.exists() {
-                    db_path = p4;
-                } else {
-                    log::warn!("Background monitoring: state.db not found at expected paths. Using default: {:?}", db_path);
+            // Standard Tauri v2 path on Android is <files_dir>/<identifier>/state.db
+            let tauri_path = state_db::get_db_path_from_files_dir(files_dir_path.clone());
+            // Legacy path used by previous versions of background monitor was <files_dir>/state.db
+            let legacy_path = files_dir_path.join(state_db::STATE_DB_NAME);
+            
+            let db_path = if tauri_path.exists() {
+                tauri_path
+            } else if legacy_path.exists() {
+                log::info!("Background monitoring: found legacy state.db at {:?}. Migrating to {:?}", legacy_path, tauri_path);
+                if let Some(parent) = tauri_path.parent() {
+                    let _ = std::fs::create_dir_all(parent);
                 }
-            }
+                // Try to migrate
+                match std::fs::rename(&legacy_path, &tauri_path) {
+                    Ok(_) => tauri_path,
+                    Err(e) => {
+                        log::error!("Background monitoring: failed to migrate state.db: {}. Falling back to legacy path.", e);
+                        legacy_path
+                    }
+                }
+            } else {
+                // New install or first run: ensure directory exists and use standard path
+                if let Some(parent) = tauri_path.parent() {
+                    let _ = std::fs::create_dir_all(parent);
+                }
+                tauri_path
+            };
             
             log::info!("Background monitoring: using database at {:?}", db_path);
             
