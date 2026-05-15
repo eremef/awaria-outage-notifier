@@ -25,6 +25,7 @@ use api_logic::{
 use tauri::command;
 use tauri::AppHandle;
 use tauri::Manager;
+// use tauri::Url; // unused
 use tauri_plugin_notification::NotificationExt;
 use tauri_plugin_dialog::DialogExt;
 // share extension is not used as we call the plugin directly
@@ -33,7 +34,7 @@ use api_logic::{DatabaseInterface, NotificationProvider, MonitorEngine};
 #[cfg(target_os = "android")]
 use jni::{
     objects::{Global, JClass, JObject, JString},
-    sys::jint,
+    sys::{jint, jstring},
     Env, EnvUnowned,
 };
 
@@ -139,26 +140,74 @@ async fn load_settings(app: AppHandle) -> Result<Option<Settings>, String> {
 }
 
 #[command]
-async fn request_battery_optimization_ignore(_app: AppHandle) -> Result<(), String> {
+async fn is_battery_optimization_ignored(_app: AppHandle) -> Result<bool, String> {
     #[cfg(target_os = "android")]
     {
         let vm_guard = JAVA_VM.lock().unwrap();
         if let Some(vm) = &*vm_guard {
-            let _ = vm.attach_current_thread(|env| {
-                if let Ok(context_guard) = ANDROID_CONTEXT.lock() {
-                    if let Some(context_ref) = &*context_guard {
-                        let _ = env.call_static_method(
-                            jni::jni_str!("xyz/eremef/awaria/WidgetUtils"),
-                            jni::jni_str!("requestIgnoreBatteryOptimizations"),
-                            jni::jni_sig!("(Landroid/content/Context;)V"),
-                            &[jni::objects::JValue::Object(context_ref.as_obj())],
-                        );
-                    }
-                }
-                Ok::<(), jni::errors::Error>(())
+            return vm.attach_current_thread(|env| {
+                let context_guard = ANDROID_CONTEXT.lock().unwrap();
+                let context_ref = context_guard.as_ref().ok_or_else(|| jni::errors::Error::JavaException)?;
+                
+                let class_guard = WIDGET_UTILS_CLASS.lock().unwrap();
+                let class_ref = class_guard.as_ref().ok_or_else(|| jni::errors::Error::JavaException)?;
+                let class_obj = class_ref.as_obj();
+                let class_local = env.new_local_ref(class_obj)?;
+
+                let result = env.call_static_method(
+                    unsafe { jni::objects::JClass::from_raw(env, class_local.as_raw()) },
+                    jni::jni_str!("isIgnoringBatteryOptimizations"),
+                    jni::jni_sig!("(Landroid/content/Context;)Z"),
+                    &[jni::objects::JValue::Object(context_ref.as_obj())],
+                )?;
+                let ignored = result.z()?;
+                log::info!("Battery optimization check: ignored={}", ignored);
+                Ok(ignored)
+            }).map_err(|e: jni::errors::Error| {
+                log::error!("Battery optimization check failed: {:?}", e);
+                e.to_string()
             });
         }
+        log::warn!("Battery optimization check: JAVA_VM not available, returning false fallback");
+        return Ok(false);
     }
+
+    #[cfg(not(target_os = "android"))]
+    Ok(true)
+}
+
+#[command]
+async fn request_battery_optimization_ignore(_app: AppHandle) -> Result<(), String> {
+    #[cfg(target_os = "android")]
+    {
+        log::info!("request_battery_optimization_ignore command called");
+        let vm_guard = JAVA_VM.lock().unwrap();
+        if let Some(vm) = &*vm_guard {
+            return vm.attach_current_thread(|env| {
+                let context_guard = ANDROID_CONTEXT.lock().unwrap();
+                let context_ref = context_guard.as_ref().ok_or_else(|| jni::errors::Error::JavaException)?;
+                
+                let class_guard = WIDGET_UTILS_CLASS.lock().unwrap();
+                let class_ref = class_guard.as_ref().ok_or_else(|| jni::errors::Error::JavaException)?;
+                let class_obj = class_ref.as_obj();
+                let class_local = env.new_local_ref(class_obj)?;
+
+                env.call_static_method(
+                    unsafe { jni::objects::JClass::from_raw(env, class_local.as_raw()) },
+                    jni::jni_str!("requestIgnoreBatteryOptimizations"),
+                    jni::jni_sig!("(Landroid/content/Context;)V"),
+                    &[jni::objects::JValue::Object(context_ref.as_obj())],
+                )?;
+                Ok(())
+            }).map_err(|e: jni::errors::Error| {
+                log::error!("Battery optimization request failed: {:?}", e);
+                e.to_string()
+            });
+        }
+        return Err("JAVA_VM not initialized".to_string());
+    }
+
+    #[cfg(not(target_os = "android"))]
     Ok(())
 }
 
@@ -257,50 +306,51 @@ async fn update_address(
 }
 
 #[command]
-async fn export_settings(app: tauri::AppHandle<tauri::Wry>) -> Result<bool, String> {
-    let settings_path = settings_path(&app).map_err(|e| {
-        log::error!("Export: settings_path failed: {}", e);
-        e
-    })?;
-    
-    if !settings_path.exists() {
-        log::error!("Export: settings file not found at {:?}", settings_path);
-        return Err("No settings found to export".to_string());
-    }
+async fn export_settings(app: AppHandle) -> Result<String, String> {
+    let settings_path = app.path().app_data_dir()
+        .map_err(|e| e.to_string())?
+        .join("settings.json");
 
     #[cfg(target_os = "android")]
     {
-        log::info!("Export (Android): triggering share dialog for {:?}", settings_path);
+        log::info!("Export (Android): triggering export for {:?}", settings_path);
         
         let ctx_guard = ANDROID_CONTEXT.lock().unwrap();
         if let Some(ctx) = ctx_guard.as_ref() {
             let vm_guard = JAVA_VM.lock().unwrap();
             let wu_class_guard = WIDGET_UTILS_CLASS.lock().unwrap();
             if let (Some(vm), Some(wu_class)) = (vm_guard.as_ref(), wu_class_guard.as_ref()) {
-                vm.attach_current_thread(|env| {
+                let msg = vm.attach_current_thread(|env| {
                     let path_jstring = env.new_string(settings_path.to_string_lossy())?;
-                    let mime_jstring = env.new_string("application/json")?;
-                    let title_jstring = env.new_string("Export Settings")?;
+                    let name_jstring = env.new_string("settings.json")?;
                     
-                    env.call_static_method(
+                    let result = env.call_static_method(
                         &**wu_class,
-                        jni::jni_str!("shareFile"),
-                        jni::jni_sig!("(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V"),
+                        jni::jni_str!("exportSettings"),
+                        jni::jni_sig!("(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"),
                         &[
                             jni::objects::JValue::Object(ctx.as_obj()),
                             jni::objects::JValue::Object(path_jstring.as_ref()),
-                            jni::objects::JValue::Object(mime_jstring.as_ref()),
-                            jni::objects::JValue::Object(title_jstring.as_ref()),
+                            jni::objects::JValue::Object(name_jstring.as_ref()),
                         ],
                     )?;
                     
-                    log::info!("Export (Android): JNI share success!");
-                    Ok(())
+                    let msg_obj = result.l()?;
+                    let msg_rust = if !msg_obj.is_null() {
+                        let msg_jstr = unsafe { jni::objects::JString::from_raw(env, msg_obj.as_raw() as jstring) };
+                        #[allow(deprecated)]
+                        env.get_string(&msg_jstr).map(|s| s.into()).unwrap_or_else(|_| "Export successful (could not parse path)".to_string())
+                    } else {
+                        "Export failed (null response)".to_string()
+                    };
+                    
+                    log::info!("Export (Android): JNI export success: {}", msg_rust);
+                    Ok(msg_rust)
                 }).map_err(|e: jni::errors::Error| {
-                    log::error!("Export (Android): JNI share failed: {}", e);
+                    log::error!("Export (Android): JNI export failed: {}", e);
                     e.to_string()
                 })?;
-                return Ok(true);
+                return Ok(msg);
             }
         }
         
@@ -310,45 +360,24 @@ async fn export_settings(app: tauri::AppHandle<tauri::Wry>) -> Result<bool, Stri
 
     #[cfg(not(target_os = "android"))]
     {
-        let settings_json = fs::read_to_string(&settings_path).map_err(|e| {
-            log::error!("Export: read_to_string failed: {}", e);
-            e.to_string()
-        })?;
-        
+        use tauri_plugin_dialog::DialogExt;
         let (tx, rx) = tokio::sync::oneshot::channel();
         
-        log::info!("Export: triggering save_file dialog...");
         app.dialog()
             .file()
             .set_title("Export Settings")
-            .set_file_name("awaria_settings.json")
+            .set_file_name("settings.json")
             .add_filter("JSON", &["json"])
             .save_file(move |path| {
                 let _ = tx.send(path);
             });
 
-        let file_path = rx.await.map_err(|e| {
-            log::error!("Export: channel receive failed: {}", e);
-            e.to_string()
-        })?;
-
-        if let Some(path) = file_path {
-            log::info!("Export: file path selected: {:?}", path);
-            let path_buf = path.as_path().ok_or_else(|| {
-                log::error!("Export: path.as_path() returned None");
-                "Invalid path".to_string()
-            })?.to_path_buf();
-            
-            fs::write(&path_buf, settings_json).map_err(|e| {
-                log::error!("Export: fs::write to {:?} failed: {}", path_buf, e);
-                e.to_string()
-            })?;
-            log::info!("Export: success!");
-            Ok(true)
-        } else {
-            log::info!("Export: user cancelled dialog");
-            Ok(false)
+        if let Some(path) = rx.await.map_err(|e| e.to_string())? {
+            let dest_path = path.into_path().map_err(|e| e.to_string())?;
+            std::fs::copy(&settings_path, &dest_path).map_err(|e| e.to_string())?;
+            return Ok(format!("Saved to {:?}", dest_path));
         }
+        return Err("cancel".to_string());
     }
 }
 
@@ -371,16 +400,70 @@ async fn import_settings(app: tauri::AppHandle<tauri::Wry>, cache_state: tauri::
     })?;
 
     if let Some(path) = file_path {
-        log::info!("Import: file path selected: {:?}", path);
-        let path_buf = path.as_path().ok_or_else(|| {
-            log::error!("Import: path.as_path() returned None");
-            "Invalid path".to_string()
-        })?.to_path_buf();
         
-        let json = fs::read_to_string(&path_buf).map_err(|e| {
-            log::error!("Import: read_to_string failed: {}", e);
-            e.to_string()
-        })?;
+        #[cfg(target_os = "android")]
+        let json = {
+            // On Android, we might get a content:// URI
+            let is_content = match &path {
+                tauri_plugin_dialog::FilePath::Url(u) => u.as_str().starts_with("content:"),
+                _ => false,
+            };
+            
+            if is_content {
+                let url_str = match &path {
+                    tauri_plugin_dialog::FilePath::Url(u) => u.to_string(),
+                    _ => unreachable!(),
+                };
+                
+                let ctx_guard = ANDROID_CONTEXT.lock().unwrap();
+                let vm_guard = JAVA_VM.lock().unwrap();
+                let wu_class_guard = WIDGET_UTILS_CLASS.lock().unwrap();
+                
+                if let (Some(ctx), Some(vm), Some(wu_class)) = (ctx_guard.as_ref(), vm_guard.as_ref(), wu_class_guard.as_ref()) {
+                    let content = vm.attach_current_thread(|env| {
+                        let url_j = env.new_string(&url_str)?;
+                        let result = env.call_static_method(
+                            &**wu_class,
+                            jni::jni_str!("readUri"),
+                            jni::jni_sig!("(Landroid/content/Context;Ljava/lang/String;)Ljava/lang/String;"),
+                            &[
+                                jni::objects::JValue::Object(ctx.as_obj()),
+                                jni::objects::JValue::Object(url_j.as_ref()),
+                            ],
+                        )?;
+                        
+                        let msg_obj = result.l()?;
+                        if msg_obj.is_null() {
+                            return Ok("".to_string());
+                        }
+                        let msg_jstr = unsafe { jni::objects::JString::from_raw(env, msg_obj.as_raw() as jstring) };
+                        #[allow(deprecated)]
+                        let msg_rust: String = env.get_string(&msg_jstr).map(|s| s.into()).unwrap_or_default();
+                        Ok(msg_rust)
+                    }).map_err(|e: jni::errors::Error| {
+                        log::error!("Import (Android): JNI readUri failed: {}", e);
+                        e.to_string()
+                    })?;
+                    
+                    if content.is_empty() {
+                        return Err("Failed to read settings file (empty content)".to_string());
+                    }
+                    content
+                } else {
+                    return Err("Android environment not ready for import".to_string());
+                }
+            } else {
+                // Not a content URI, try normal path
+                let path_buf = path.as_path().ok_or_else(|| "Invalid path".to_string())?.to_path_buf();
+                fs::read_to_string(&path_buf).map_err(|e| e.to_string())?
+            }
+        };
+        
+        #[cfg(not(target_os = "android"))]
+        let json = {
+            let path_buf = path.as_path().ok_or_else(|| "Invalid path".to_string())?.to_path_buf();
+            fs::read_to_string(&path_buf).map_err(|e| e.to_string())?
+        };
         
         let settings: Settings = serde_json::from_str(&json).map_err(|e| {
             log::error!("Import: JSON deserialization failed: {}", e);
@@ -686,6 +769,7 @@ pub fn run() {
             set_primary_address,
             update_address,
             get_app_version,
+            is_battery_optimization_ignored,
             request_battery_optimization_ignore,
             export_settings,
             import_settings
@@ -820,7 +904,9 @@ pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchCountFromRust(
     let _ = native_env.with_env(move |env| {
         ensure_verifier_initialized(env, &context);
         
+        #[allow(deprecated)]
         let provider_id: String = env.get_string(&provider_id).map(|s| s.into()).unwrap_or_default();
+        #[allow(deprecated)]
         let settings_str: String = env.get_string(&settings_json).map(|s| s.into()).unwrap_or_default();
 
         let settings: Settings = match serde_json::from_str(&settings_str) {
@@ -939,6 +1025,7 @@ pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchAndNotifyFromRust(
     let _ = native_env.with_env(|env| {
         ensure_verifier_initialized(env, &context);
         
+        #[allow(deprecated)]
         let settings_str: String = env.get_string(&settings_json).map(|s| s.into()).unwrap_or_default();
         if settings_str.is_empty() { return Ok::<(), jni::errors::Error>(()); }
 
@@ -989,6 +1076,7 @@ pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchAndNotifyFromRust(
                 },
             };
             let path_jstr = unsafe { jni::objects::JString::from_raw(env, path_j.as_raw()) };
+            #[allow(deprecated)]
             let path_str: String = env.get_string(&path_jstr).map(|s| s.into()).unwrap_or_default();
             let files_dir_path = std::path::PathBuf::from(path_str);
             
@@ -1122,7 +1210,8 @@ pub async fn get_psg_html_android() -> Result<String, String> {
                 return Ok(String::new());
             }
             
-            let html_jstr = unsafe { jni::objects::JString::from_raw(env, html_obj.as_raw()) };
+            let html_jstr = unsafe { jni::objects::JString::from_raw(env, html_obj.as_raw() as jstring) };
+            #[allow(deprecated)]
             let html: String = env.get_string(&html_jstr).map(|s| s.into()).unwrap_or_default();
             
             Ok(html)

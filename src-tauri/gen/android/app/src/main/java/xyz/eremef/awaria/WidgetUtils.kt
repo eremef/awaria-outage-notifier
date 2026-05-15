@@ -15,6 +15,72 @@ object WidgetUtils {
     private const val TAG = "AwariaWidgetUtils"
 
     @JvmStatic
+    fun readUri(context: Context, uriString: String): String {
+        return try {
+            val uri = Uri.parse(uriString)
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                input.bufferedReader().use { it.readText() }
+            } ?: ""
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to read URI: ${e.message}", e)
+            ""
+        }
+    }
+
+    @JvmStatic
+    fun exportSettings(context: Context, filePath: String, fileName: String): String {
+        try {
+            val sourceFile = java.io.File(filePath)
+            if (!sourceFile.exists()) return "Source file not found"
+
+            val resolver = context.contentResolver
+            val contentValues = android.content.ContentValues().apply {
+                put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "application/json")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS + "/Awaria")
+                    put(android.provider.MediaStore.MediaColumns.IS_PENDING, 1)
+                }
+            }
+
+            val collection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI
+            } else {
+                // Fallback for older versions - we'll just use the share sheet
+                // as direct writing to Downloads without SAF/permissions is restricted
+                shareFile(context, filePath, "application/json", "Export Settings")
+                return "Exporting via share sheet..."
+            }
+
+            val uri = resolver.insert(collection, contentValues)
+            if (uri != null) {
+                resolver.openOutputStream(uri)?.use { output ->
+                    sourceFile.inputStream().use { input ->
+                        input.copyTo(output)
+                    }
+                }
+                
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    contentValues.clear()
+                    contentValues.put(android.provider.MediaStore.MediaColumns.IS_PENDING, 0)
+                    resolver.update(uri, contentValues, null, null)
+                }
+                
+                return "Saved to Downloads/Awaria/$fileName"
+            } else {
+                // Fallback to share sheet if MediaStore fails
+                shareFile(context, filePath, "application/json", "Export Settings")
+                return "Exporting via share sheet..."
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Export failed: ${e.message}", e)
+            // Final fallback
+            shareFile(context, filePath, "application/json", "Export Settings")
+            return "Exporting via share sheet..."
+        }
+    }
+
+    @JvmStatic
     fun shareFile(context: Context, filePath: String, mimeType: String, title: String) {
         try {
             val file = java.io.File(filePath)
@@ -30,7 +96,8 @@ object WidgetUtils {
             )
 
             val intent = Intent(Intent.ACTION_SEND)
-            intent.type = mimeType
+            // Use */* or application/octet-stream to ensure more apps handle it if application/json fails
+            intent.type = if (mimeType == "application/json") "text/plain" else mimeType
             intent.putExtra(Intent.EXTRA_STREAM, uri)
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             
@@ -237,6 +304,23 @@ object WidgetUtils {
             androidx.work.ExistingPeriodicWorkPolicy.KEEP,
             request
         )
+    }
+
+    @JvmStatic
+    fun isIgnoringBatteryOptimizations(context: Context): Boolean {
+        // Check for "Restricted" background status on Android 9+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            val am = context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+            if (am.isBackgroundRestricted) {
+                return false
+            }
+        }
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+            return pm.isIgnoringBatteryOptimizations(context.packageName)
+        }
+        return true
     }
 
     @JvmStatic

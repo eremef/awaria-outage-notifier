@@ -127,7 +127,7 @@ mod tests {
     #[test]
     fn test_state_db_basic_flow() {
         let mut conn = Connection::open_in_memory().unwrap();
-        _init_db(&mut conn).unwrap();
+        ensure_schema(&mut conn).unwrap();
 
         assert!(!_is_alert_seen(&conn, "tauron", "hash1").unwrap());
 
@@ -142,7 +142,7 @@ mod tests {
     #[test]
     fn test_pruning() {
         let mut conn = Connection::open_in_memory().unwrap();
-        _init_db(&mut conn).unwrap();
+        ensure_schema(&mut conn).unwrap();
 
         _mark_alert_as_seen(&mut conn, "energa", "old").unwrap();
         

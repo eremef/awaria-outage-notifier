@@ -185,6 +185,8 @@ impl<'a> MonitorEngine<'a> {
             let notified_enabled = self.settings.notification_preferences.get(&source_key).copied().unwrap_or(false);
 
             if notified_enabled {
+                let mut already_notified_as_upcoming = false;
+
                 // --- UPCOMING NOTIFICATION ---
                 if self.settings.upcoming_notification_enabled {
                     if let Some(start_str) = &alert.startDate {
@@ -201,6 +203,7 @@ impl<'a> MonitorEngine<'a> {
                                         let body = format_notification_body(&alert, self.settings);
                                         self.notifier.show_notification(title, body, hash.clone());
                                         self.db.mark_alert_as_seen(&source_key, &upcoming_hash).ok();
+                                        already_notified_as_upcoming = true;
                                     },
                                     Ok(true) => log::debug!("Upcoming alert {} already seen", hash),
                                     Err(e) => log::error!("Database error checking upcoming seen status for {}: {}", hash, e),
@@ -215,10 +218,14 @@ impl<'a> MonitorEngine<'a> {
                 // --- NEW ALERT NOTIFICATION ---
                 match self.db.is_alert_seen(&source_key, &hash) {
                     Ok(false) => {
-                        log::info!("Triggering NEW alert notification for hash {}", hash);
-                        let title = format_notification_title(&alert, self.settings, false);
-                        let body = format_notification_body(&alert, self.settings);
-                        self.notifier.show_notification(title, body, hash.clone());
+                        if !already_notified_as_upcoming {
+                            log::info!("Triggering NEW alert notification for hash {}", hash);
+                            let title = format_notification_title(&alert, self.settings, false);
+                            let body = format_notification_body(&alert, self.settings);
+                            self.notifier.show_notification(title, body, hash.clone());
+                        } else {
+                            log::info!("Skipping NEW alert notification for hash {} (already notified as upcoming)", hash);
+                        }
                         self.db.mark_alert_as_seen(&source_key, &hash).ok();
                     },
                     Ok(true) => log::debug!("Alert {} already seen, skipping notification.", hash),
@@ -453,6 +460,8 @@ pub struct Settings {
     pub upcoming_notification_enabled: bool,
     #[serde(default = "default_upcoming_hours")]
     pub upcoming_notification_hours: u32,
+    #[serde(default = "default_true")]
+    pub show_other_outages: bool,
 }
 
 fn default_upcoming_hours() -> u32 {
@@ -470,6 +479,7 @@ impl Default for Settings {
             notification_preferences: HashMap::new(),
             upcoming_notification_enabled: false,
             upcoming_notification_hours: 24,
+            show_other_outages: true,
         }
     }
 }
@@ -782,7 +792,7 @@ mod tests {
             .times(1)
             .returning(|_, _| Ok(false));
 
-        mock_notifier.expect_show_notification().times(2)
+        mock_notifier.expect_show_notification().times(1)
             .returning(|_, _, _| ());
 
         mock_db.expect_mark_alert_as_seen().times(2).returning(|_, _| Ok(()));

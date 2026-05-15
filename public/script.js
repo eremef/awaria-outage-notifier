@@ -165,19 +165,26 @@ if (typeof document !== 'undefined') {
         }
     }
 
-    async function checkAndRequestBatteryOptimization() {
-        if (!window.__TAURI__ || !currentSettings) return;
-        
-        const enabledNotifyCount = Object.values(currentSettings.notificationPreferences || {}).filter(v => v === true).length;
-        const upcomingEnabled = !!currentSettings.upcomingNotificationEnabled;
-        
-        // Trigger if this is the first time any notification is being enabled
-        if (enabledNotifyCount + (upcomingEnabled ? 1 : 0) === 1) {
-            try {
-                await window.__TAURI__.core.invoke('request_battery_optimization_ignore');
-            } catch (e) {
-                console.error('Failed to request battery optimization ignore:', e);
+    async function checkAndRequestBatteryOptimization(requestIfMissing = false) {
+        if (!window.__TAURI__) return;
+
+        try {
+            const ignored = await window.__TAURI__.core.invoke('is_battery_optimization_ignored');
+
+            const warning = document.getElementById('battery-optimization-warning');
+            if (warning) {
+                if (ignored) {
+                    warning.classList.add('hidden');
+                } else {
+                    warning.classList.remove('hidden');
+                }
             }
+
+            if (!ignored && requestIfMissing) {
+                await window.__TAURI__.core.invoke('request_battery_optimization_ignore');
+            }
+        } catch (error) {
+            console.error('Failed to check/request battery optimization:', error);
         }
     }
 
@@ -313,6 +320,7 @@ if (typeof document !== 'undefined') {
         if (isOpen) {
             // No need to reset settingsView.scrollTop as main window handles it now
             checkAndRequestNotificationPermission(); // Update permission warning state
+            checkAndRequestBatteryOptimization(); // Update battery warning state
         }
     }
 
@@ -350,9 +358,9 @@ if (typeof document !== 'undefined') {
         if (exportBtn) {
             exportBtn.addEventListener('click', async () => {
                 try {
-                    const saved = await window.__TAURI__.core.invoke('export_settings');
-                    if (saved) {
-                        alert(t('msg_export_success'));
+                    const msg = await window.__TAURI__.core.invoke('export_settings');
+                    if (msg) {
+                        alert(msg);
                     }
                 } catch (err) {
                     console.error('Export failed:', err);
@@ -526,7 +534,7 @@ if (typeof document !== 'undefined') {
                     theme: newTheme,
                     language: 'system',
                     enabledSources: [],
-                    show_other_outages: true
+                    showOtherOutages: true
                 };
             } else {
                 currentSettings.theme = newTheme;
@@ -550,7 +558,7 @@ if (typeof document !== 'undefined') {
                     theme: 'system',
                     language: newLang,
                     enabledSources: [],
-                    show_other_outages: true
+                    showOtherOutages: true
                 };
             } else {
                 currentSettings.language = newLang;
@@ -602,7 +610,7 @@ if (typeof document !== 'undefined') {
 
                     if (notifyCheckbox.checked) {
                         await checkAndRequestNotificationPermission();
-                        await checkAndRequestBatteryOptimization();
+                        await checkAndRequestBatteryOptimization(true);
                     }
 
                     updateUpcomingStatus();
@@ -625,7 +633,7 @@ if (typeof document !== 'undefined') {
                 if (currentSettings) {
                     currentSettings.upcomingNotificationEnabled = upcomingNotifyCheck.checked;
                     if (upcomingNotifyCheck.checked) {
-                        await checkAndRequestBatteryOptimization();
+                        await checkAndRequestBatteryOptimization(true);
                     }
                     await autoSaveSettings();
                 }
@@ -665,7 +673,7 @@ if (typeof document !== 'undefined') {
         if (showOtherCheck) {
             showOtherCheck.addEventListener('change', async () => {
                 if (currentSettings) {
-                    currentSettings.show_other_outages = showOtherCheck.checked;
+                    currentSettings.showOtherOutages = showOtherCheck.checked;
                     await autoSaveSettings();
                     const container = document.getElementById('outages-container');
                     renderAlerts(lastAlerts || [], container, currentSettings, selectedAddressIndex);
@@ -1111,13 +1119,14 @@ if (typeof document !== 'undefined') {
                 }
 
                 if (document.getElementById('show-other-outages-check')) {
-                    document.getElementById('show-other-outages-check').checked = settings.show_other_outages !== false;
+                    document.getElementById('show-other-outages-check').checked = settings.showOtherOutages !== false;
                 }
 
                 // Also check permissions on load if notifications are enabled
                 const hasAnyNotify = Object.values(notifyPrefs).some(v => v === true) || !!settings.upcomingNotificationEnabled;
                 if (hasAnyNotify) {
                     checkAndRequestNotificationPermission();
+                    checkAndRequestBatteryOptimization();
                 }
 
                 updateAddressFilter();
@@ -1142,7 +1151,7 @@ if (typeof document !== 'undefined') {
                     theme: 'system',
                     language: 'system',
                     enabledSources: [],
-                    show_other_outages: true
+                    showOtherOutages: true
                 };
 
                 // Explicitly uncheck and disable all source/notify pairs on first run
@@ -1398,7 +1407,7 @@ if (typeof document !== 'undefined') {
         const localeStr = typeof getLocaleString !== 'undefined' ? getLocaleString() : 'pl-PL';
         const label = typeof t !== 'undefined' ? t('last_updated') : 'Last updated';
         let text = `${label}: ${lastFetchDate.toLocaleTimeString(localeStr)}`;
-        
+
         if (isStale) {
             const staleLabel = typeof t !== 'undefined' ? t('msg_using_cache') : 'Offline mode';
             text = `${staleLabel} (${lastFetchDate.toLocaleTimeString(localeStr)})`;
@@ -1408,7 +1417,7 @@ if (typeof document !== 'undefined') {
             el.style.color = '';
             el.style.fontStyle = '';
         }
-        
+
         el.textContent = text;
     }
 
@@ -1457,7 +1466,7 @@ if (typeof document !== 'undefined') {
         const cityName = addr.cityName || '';
 
         const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        
+
         // Check if the message indicates a locality-wide outage
         // Patterns like "m. Kraków", "cała miejscowość Kraków", "całe miasto Kraków"
         if (cityName) {
@@ -1660,7 +1669,7 @@ if (typeof document !== 'undefined') {
 
         const hasLocalAlerts = Object.values(localLists).some(l => l.length > 0);
         const hasOtherAlerts = Object.values(otherLists).some(l => l.length > 0);
-        const showOther = settings.show_other_outages !== false;
+        const showOther = settings.showOtherOutages !== false;
         const hasAnyAlerts = hasLocalAlerts || (hasOtherAlerts && showOther);
 
         let html = '';
