@@ -10,7 +10,8 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
 
 ## Pobieranie
 
-[https://eremef.xyz/awaria](https://eremef.xyz/awaria)
+- [Sklep Google Play](https://play.google.com/store/apps/details?id=xyz.eremef.awaria)
+- [https://eremef.xyz/awaria](https://eremef.xyz/awaria)
 
 ## Wspierane Źródła
 
