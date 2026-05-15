@@ -102,6 +102,15 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             return prefs.getString(PREF_PREFIX_KEY + appWidgetId, null)
         }
+
+        internal fun getEnabledSources(json: JSONObject?): Set<String> {
+            val enabledSources = json?.optJSONArray("enabledSources") ?: return emptySet()
+            val set = mutableSetOf<String>()
+            for (i in 0 until enabledSources.length()) {
+                set.add(enabledSources.getString(i))
+            }
+            return set
+        }
     }
 
     abstract val refreshAction: String
@@ -141,25 +150,34 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             appWidgetManager: AppWidgetManager,
             appWidgetIds: IntArray
     ) {
+        WidgetUtils.initVerifier(context)
         scheduleWork(context)
         val pendingResult = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // Parallelize widget updates with a timeout to avoid ANR in goAsync()
-                withTimeoutOrNull(30000L) {
+                withTimeoutOrNull(9000L) {
                     appWidgetIds
                             .map { appWidgetId ->
                                 async { updateWidget(context, appWidgetManager, appWidgetId) }
                             }
                             .awaitAll()
-                }
+                } ?: Log.w(TAG, "Update timed out for $appWidgetIds")
             } catch (e: Exception) {
-                Log.e(TAG, "Immediate update timed out or failed: ${e.message}")
+                Log.e(TAG, "Update failed: ${e.message}")
             } finally {
                 pendingResult.finish()
             }
         }
     }
+
+    open fun showLoadingPlaceholder(
+            context: Context,
+            appWidgetManager: AppWidgetManager,
+            appWidgetId: Int
+    ) {
+        // Subclasses override this for their layout.
+    }
+
 
     override fun onAppWidgetOptionsChanged(
             context: Context,
@@ -194,7 +212,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         super.onDisabled(context)
     }
 
-    private fun scheduleWork(context: Context) {
+    internal fun scheduleWork(context: Context) {
         val request = PeriodicWorkRequestBuilder<WidgetUpdateWorker>(1, TimeUnit.HOURS).build()
         WorkManager.getInstance(context)
                 .enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, request)
@@ -357,6 +375,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             "gas" -> context.getString(R.string.label_gas)
             "no_address" -> context.getString(R.string.msg_no_address)
             "error" -> context.getString(R.string.msg_error)
+            "offline" -> context.getString(R.string.msg_offline)
             else -> key
         }
     }
@@ -392,6 +411,9 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         } else if (settingsList == null || activeSettings.isEmpty()) {
             count = "?"
             statusMessage = getTranslation(context, "setup")
+        } else if (!WidgetUtils.isNetworkAvailable(context)) {
+            count = "!"
+            statusMessage = getTranslation(context, "offline")
         } else {
             try {
                 // Shared fetch result between widgets

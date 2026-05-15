@@ -13,6 +13,30 @@ import java.util.regex.Pattern
 
 object WidgetUtils {
     private const val TAG = "AwariaWidgetUtils"
+    
+    @JvmStatic
+    fun isNetworkAvailable(context: Context): Boolean {
+        return try {
+            val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                val nw = cm.activeNetwork ?: return false
+                val actNw = cm.getNetworkCapabilities(nw) ?: return false
+                when {
+                    actNw.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) -> true
+                    actNw.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR) -> true
+                    actNw.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET) -> true
+                    else -> false
+                }
+            } else {
+                @Suppress("DEPRECATION")
+                val nwInfo = cm.activeNetworkInfo ?: return false
+                nwInfo.isConnected
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "isNetworkAvailable failed, assuming online: ${e.message}")
+            true // fail open — let the fetch attempt proceed
+        }
+    }
 
     @JvmStatic
     fun readUri(context: Context, uriString: String): String {

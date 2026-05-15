@@ -27,6 +27,7 @@
     <string name="msg_inactive">Nieaktywne</string>
     <string name="msg_no_address">Brak adresu</string>
     <string name="msg_error">Błąd</string>
+    <string name="msg_offline">Brak sieci</string>
     <string name="provider_tauron">Tauron</string>
     <string name="provider_stoen">Stoen</string>
     <string name="provider_enea">Enea</string>

@@ -15,6 +15,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import kotlinx.coroutines.*
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 
 class WidgetConfigActivity : ComponentActivity() {
     private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
@@ -113,16 +115,14 @@ class WidgetConfigActivity : ComponentActivity() {
             }
             setResult(RESULT_OK, resultValue)
 
-            // Trigger an immediate update and finish
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    provider.updateWidget(context, appWidgetManager, appWidgetId)
-                } finally {
-                    withContext(Dispatchers.Main) {
-                        finish()
-                    }
-                }
-            }
+            // Immediately render a placeholder — never leave the widget slot blank.
+            provider.showLoadingPlaceholder(context, appWidgetManager, appWidgetId)
+
+            // Let WorkManager do the actual fetch (no time limit, survives Activity finish).
+            val request = androidx.work.OneTimeWorkRequestBuilder<WidgetUpdateWorker>().build()
+            androidx.work.WorkManager.getInstance(context).enqueue(request)
+
+            finish()
         }
     }
 

@@ -36,7 +36,9 @@
             android:paddingTop="1dp"
             android:text="@string/placeholder_time"
             android:textColor="@color/widget_text_updated"
-            android:textSize="8sp" />
+            android:textSize="8sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
     </RelativeLayout>
 
     <LinearLayout
