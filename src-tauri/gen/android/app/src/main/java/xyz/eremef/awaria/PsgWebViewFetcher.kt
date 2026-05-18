@@ -130,6 +130,40 @@ object PsgWebViewFetcher {
             .apply()
     }
 
+    private fun executePost(cookies: String, body: String): String? {
+        return try {
+            val conn = URL(PSG_URL).openConnection() as HttpURLConnection
+            conn.requestMethod = "POST"
+            conn.doOutput = true
+            conn.setRequestProperty("User-Agent", MOBILE_USER_AGENT)
+            conn.setRequestProperty("Cookie", cookies)
+            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
+            conn.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+            conn.setRequestProperty("Accept-Language", "pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7")
+            conn.connectTimeout = 10000
+            conn.readTimeout = 10000
+            conn.instanceFollowRedirects = true
+
+            conn.outputStream.use { os ->
+                os.write(body.toByteArray(kotlin.text.Charsets.UTF_8))
+            }
+
+            val code = conn.responseCode
+            if (code in 200..299) {
+                val html = conn.inputStream.bufferedReader().use { it.readText() }
+                conn.disconnect()
+                html
+            } else {
+                Log.d(TAG, "Direct POST failed: HTTP $code")
+                conn.disconnect()
+                null
+            }
+        } catch (e: Exception) {
+            Log.d(TAG, "Direct POST error: ${e.message}")
+            null
+        }
+    }
+
     /**
      * Try fetching the PSG page directly using HttpURLConnection with cached cookies.
      */
@@ -144,35 +178,15 @@ object PsgWebViewFetcher {
             return null
         }
 
-        return try {
-            val conn = URL(PSG_URL).openConnection() as HttpURLConnection
-            conn.requestMethod = "GET"
-            conn.setRequestProperty("User-Agent", MOBILE_USER_AGENT)
-            conn.setRequestProperty("Cookie", cookies)
-            conn.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-            conn.setRequestProperty("Accept-Language", "pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7")
-            conn.connectTimeout = 10000
-            conn.readTimeout = 10000
-            conn.instanceFollowRedirects = true
+        val activeHtml = executePost(cookies, "state=active&sort_col=shutdownDateTime&sort_ord=asc&title=") ?: return null
+        val plannedHtml = executePost(cookies, "state=disabled&sort_col=shutdownDateTime&sort_ord=asc&title=") ?: return null
 
-            val code = conn.responseCode
-            if (code in 200..299) {
-                val html = conn.inputStream.bufferedReader().use { it.readText() }
-                conn.disconnect()
-                // Verify the HTML actually contains the outage table
-                if (html.contains("supply-interruptions") || html.contains("województwo") || html.contains("Polska Spółka Gazownictwa") || html.contains("Przerwy w dostawie gazu")) {
-                    html
-                } else {
-                    Log.w(TAG, "Direct fetch returned $code but no outage table found")
-                    null
-                }
-            } else {
-                Log.d(TAG, "Direct fetch returned HTTP $code")
-                conn.disconnect()
-                null
-            }
-        } catch (e: Exception) {
-            Log.d(TAG, "Direct fetch error: ${e.message}")
+        val combinedHtml = "$activeHtml\n<hr>\n$plannedHtml"
+
+        return if (combinedHtml.contains("supply-interruptions") || combinedHtml.contains("województwo") || combinedHtml.contains("Polska Spółka Gazownictwa") || combinedHtml.contains("Przerwy w dostawie gazu")) {
+            combinedHtml
+        } else {
+            Log.w(TAG, "Direct fetch returned HTML but no outage table found")
             null
         }
     }
@@ -449,6 +463,11 @@ object PsgWebViewFetcher {
                     continue
                 }
 
+                // Skip expired outages
+                if (isExpired(cells[4])) {
+                    continue
+                }
+
                 outages.add(
                     PsgOutage(
                         province = cells[0],
@@ -562,6 +581,7 @@ object PsgWebViewFetcher {
      */
     private fun isExpired(endDate: String): Boolean {
         if (endDate.isEmpty() || endDate.contains("termin zostanie")) return false
+        val cleanStr = endDate.replace("godz.", "").replace("\\s+".toRegex(), " ").trim()
         return try {
             val formats = listOf(
                 SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()),
@@ -570,7 +590,7 @@ object PsgWebViewFetcher {
             )
             for (fmt in formats) {
                 try {
-                    val date = fmt.parse(endDate)
+                    val date = fmt.parse(cleanStr)
                     if (date != null) return date.before(java.util.Date())
                 } catch (_: Exception) { }
             }

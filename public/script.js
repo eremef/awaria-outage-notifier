@@ -1260,7 +1260,7 @@ if (typeof document !== 'undefined') {
             setTimeout(() => {
                 status.textContent = '';
                 if (currentSettings.addresses.length === 1) {
-                    document.getElementById('settings-panel').classList.add('hidden');
+                    document.getElementById('settings-view').classList.remove('open');
                 }
             }, 1500);
 

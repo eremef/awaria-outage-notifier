@@ -731,6 +731,7 @@ async fn teryt_city_has_streets(app: AppHandle, city_id: u64) -> Result<bool, St
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let _ = rustls::crypto::ring::default_provider().install_default();
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_fs::init())
@@ -782,6 +783,7 @@ pub fn run() {
 
 #[cfg(target_os = "android")]
 fn ensure_verifier_initialized(env: &mut Env, context: &JObject) {
+    let _ = rustls::crypto::ring::default_provider().install_default();
     static INITIALIZED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
     if INITIALIZED.load(std::sync::atomic::Ordering::SeqCst) {
         return;
