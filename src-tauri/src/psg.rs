@@ -519,6 +519,7 @@ pub fn parse_psg_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAle
             
             // Reason / Cause
             let reason = cell_texts[5].clone();
+            let outage_type = cell_texts[6].clone();
             
             // Status is usually the last or second to last cell
             let status = if cells.len() >= 8 { cell_texts[7].clone() } else { cell_texts[cells.len() - 1].clone() };
@@ -575,9 +576,9 @@ pub fn parse_psg_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAle
             if !matched_indices.is_empty() {
                 let reason_trimmed = reason.trim();
                 let final_message = if reason_trimmed.is_empty() || reason_trimmed == "Info Button Text" || reason_trimmed == "Info" {
-                    area.clone()
+                    outage_type.clone() + " - " + &area.clone()
                 } else {
-                    format!("{}: {}", reason_trimmed, area)
+                    format!("{}: {}", reason_trimmed, outage_type + " - " + &area)
                 };
 
                 for &idx in &matched_indices {
@@ -586,7 +587,7 @@ pub fn parse_psg_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAle
                         startDate: Some(start_date.clone()),
                         endDate: Some(end_date.clone()),
                         message: Some(final_message.clone()),
-                        description: Some(format!("Miejscowość: {}, Obszar: {}", city, area)),
+                        description: Some(format!("Miejscowość: {}", city)),
                         address_index: Some(idx),
                         is_local: Some(true),
                         hash: None,
