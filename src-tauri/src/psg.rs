@@ -44,25 +44,25 @@ impl AlertProvider for PsgProvider {
             }
 
             // 2. Try direct fetch with cached cookies (25 min TTL)
-            if let Ok(html) = try_direct_fetch_with_cache(app).await {
+            if let Ok(html) = try_direct_fetch_both(app).await {
                 let alerts = parse_psg_html(&html, settings);
-                // Stricter check: must look like the real table page
-                if !alerts.is_empty() || (html.contains("Wyłączenie od") && html.contains("Miejscowość")) {
+                // Stricter check: must look like the real table page or successful empty response
+                if !alerts.is_empty() || html.contains("supply-interruptions") || html.contains("Brak trwających") || html.contains("Brak planowanych") {
                     log::info!("PSG: Data fetched from direct successfully");
                     let _ = save_cached_html(app, &html).await;
                     return (alerts, Vec::new());
                 }
             }
             
-            // 3. Fallback to WebView
-            match fetch_via_webview(app).await {
-                Ok(html) => {
-                    let alerts = parse_psg_html(&html, settings);
-                    if !alerts.is_empty() || (html.contains("Wyłączenie od") && html.contains("Miejscowość")) {
-                        let _ = save_cached_html(app, &html).await;
-                    }
-                    (alerts, Vec::new())
-                }
+             // 3. Fallback to WebView
+             match fetch_via_webview(app).await {
+                 Ok(html) => {
+                     let alerts = parse_psg_html(&html, settings);
+                     if !alerts.is_empty() || html.contains("supply-interruptions") || html.contains("Brak trwających") || html.contains("Brak planowanych") {
+                         let _ = save_cached_html(app, &html).await;
+                     }
+                     (alerts, Vec::new())
+                 }
                 Err(e) => {
                     log::error!("PSG Fetch Error: {}. Trying to use stale cache...", e);
                     if let Ok(Some(stale_html)) = get_stale_html(app).await {
@@ -79,7 +79,7 @@ impl AlertProvider for PsgProvider {
     }
 }
 
-async fn try_direct_fetch_with_cache(app: &AppHandle) -> Result<String, String> {
+async fn try_direct_fetch_both(app: &AppHandle) -> Result<String, String> {
     let (cookies, cache_time) = {
         let db = app.state::<crate::state_db::DbState>();
         let conn = db.conn.lock().map_err(|e| e.to_string())?;
@@ -93,7 +93,7 @@ async fn try_direct_fetch_with_cache(app: &AppHandle) -> Result<String, String> 
     };
     
     let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
-    if now - cache_time > 25 * 60 {
+    if now < cache_time || now - cache_time > 25 * 60 {
         return Err("Cookies expired".to_string());
     }
 
@@ -102,22 +102,38 @@ async fn try_direct_fetch_with_cache(app: &AppHandle) -> Result<String, String> 
         .build()
         .map_err(|e| e.to_string())?;
 
-    let res = client.get(PSG_URL)
-        .header("Cookie", cookies)
+    // Fetch active outages via POST
+    let res_active = client.post(PSG_URL)
+        .header("Cookie", &cookies)
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .body("state=active&sort_col=shutdownDateTime&sort_ord=asc&title=")
         .send()
         .await
         .map_err(|e| e.to_string())?;
 
-    let status = res.status();
-    if status.is_success() {
-        let text = res.text().await.map_err(|e| e.to_string())?;
-        // Stricter check: must contain table headers to be considered successful
-        if (text.contains("województwo") || text.contains("miejscowość")) && (text.contains("obszar") || text.contains("<table")) {
-            return Ok(text);
-        }
+    if !res_active.status().is_success() {
+        return Err(format!("Active direct POST failed: {}", res_active.status()));
     }
+    let html_active = res_active.text().await.map_err(|e| e.to_string())?;
+
+    // Fetch planned outages via POST
+    let res_planned = client.post(PSG_URL)
+        .header("Cookie", &cookies)
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .body("state=disabled&sort_col=shutdownDateTime&sort_ord=asc&title=")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if !res_planned.status().is_success() {
+        return Err(format!("Planned direct POST failed: {}", res_planned.status()));
+    }
+    let html_planned = res_planned.text().await.map_err(|e| e.to_string())?;
+
+    // Combine them with <hr> separator so that parse_psg_html can parse both tables
+    let combined_html = format!("{}\n<hr>\n{}", html_active, html_planned);
     
-    Err(format!("Direct fetch failed (or blocked by Cloudflare): {}", status))
+    Ok(combined_html)
 }async fn fetch_via_webview(#[allow(unused_variables)] app: &AppHandle) -> Result<String, String> {
     #[cfg(target_os = "android")]
     {
@@ -137,117 +153,145 @@ async fn try_direct_fetch_with_cache(app: &AppHandle) -> Result<String, String> 
         let script = r#"
             (function() {
                 console.log('PSG-FETCH: Script injected');
-                
-                function trySwitchToPlanned() {
-                    // Specific ID provided by user
-                    const checkbox1 = document.getElementById('checkbox1');
-                    if (checkbox1) {
-                        console.log('PSG-FETCH: Found #checkbox1, checked=' + checkbox1.checked);
-                        if (!checkbox1.checked) {
-                            console.log('PSG-FETCH: Clicking #checkbox1...');
-                            checkbox1.click();
-                            
-                            // Sometimes we need to click the label or a submit button if click doesn't trigger AJAX
-                            // But usually checkboxes on these forms have onchange=submit()
-                            window._waitingForRefresh = true;
-                            window._triedPlanned = true;
-                            setTimeout(() => { window._waitingForRefresh = false; }, 3000); 
-                            return true;
-                        }
-                    }
 
-                    const interactive = Array.from(document.querySelectorAll('button, a, span, li, label, input'));
-                    const plannedBtn = interactive.find(el => {
-                        const text = el.innerText || (el.value && typeof el.value === 'string' ? el.value : '');
-                        return /planowane/i.test(text.trim());
-                    });
+                let activeCaptured = sessionStorage.getItem('psg_activeCaptured') === 'true';
+                let plannedCaptured = sessionStorage.getItem('psg_plannedCaptured') === 'true';
+                let activeHtml = sessionStorage.getItem('psg_activeHtml') || '';
+                let plannedHtml = sessionStorage.getItem('psg_plannedHtml') || '';
+                
+                let startTimeStr = sessionStorage.getItem('psg_startTime');
+                if (!startTimeStr) {
+                    startTimeStr = Date.now().toString();
+                    sessionStorage.setItem('psg_startTime', startTimeStr);
+                }
+                let startTime = parseInt(startTimeStr);
+
+                function isTableMatchingState(state) {
+                    const container = document.getElementById('supply-interruptions-filter-form') || document.body;
+                    const text = container.innerText || '';
                     
-                    if (plannedBtn) {
-                        const isAlreadyActive = plannedBtn.classList.contains('active') || 
-                                               plannedBtn.classList.contains('selected') ||
-                                               (plannedBtn.parentElement && plannedBtn.parentElement.classList.contains('active')) ||
-                                               (plannedBtn.tagName === 'INPUT' && plannedBtn.checked);
-                        
-                        if (!isAlreadyActive) {
-                            console.log('PSG-FETCH: Clicking button:', plannedBtn.tagName, 'Text:', plannedBtn.innerText);
-                            plannedBtn.click();
-                            window._waitingForRefresh = true;
-                            window._triedPlanned = true;
-                            setTimeout(() => { window._waitingForRefresh = false; }, 3000); 
+                    if (state === 'active') {
+                        if (text.includes('Brak trwających') || text.includes('Brak przerw')) {
+                            return true;
+                        }
+                    } else {
+                        if (text.includes('Brak planowanych')) {
                             return true;
                         }
                     }
+                    
+                    const rows = document.querySelectorAll('table tr');
+                    for (let i = 1; i < rows.length; i++) {
+                        const rowText = rows[i].innerText || '';
+                        if (state === 'active') {
+                            if (rowText.toLowerCase().includes('awaria') || rowText.toLowerCase().includes('aktywna')) {
+                                return true;
+                            }
+                        } else {
+                            if (rowText.toLowerCase().includes('planowane') || rowText.toLowerCase().includes('planowana')) {
+                                return true;
+                            }
+                        }
+                    }
+                    
+                    // Fallback: if we have waited more than 5 seconds after clicking, assume it loaded
+                    const lastAction = parseInt(sessionStorage.getItem('psg_lastActionTime') || '0');
+                    if (lastAction > 0 && (Date.now() - lastAction > 5000)) {
+                        console.log('PSG-FETCH: Matching state fallback triggered');
+                        return true;
+                    }
+                    
                     return false;
                 }
 
-                window._psgState = 'capture_active';
-                window._activeHtml = '';
-                window._plannedHtml = '';
-                window._startTime = Date.now();
-                window._lastSwitchTime = 0;
+                function emitData() {
+                    console.log('PSG-FETCH: Final emission');
+                    try {
+                        const data = {
+                            html: (activeHtml || '') + "\n<hr>\n" + (plannedHtml || ''),
+                            cookies: document.cookie
+                        };
+                        if (window.__TAURI__ && window.__TAURI__.event) {
+                            window.__TAURI__.event.emit('psg_data_ready', data);
+                        } else if (window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.emit) {
+                            window.__TAURI_INTERNALS__.emit('psg_data_ready', data);
+                        }
+                    } catch(e) {
+                        console.error('PSG-FETCH: Emit failed', e);
+                    }
+                    
+                    sessionStorage.removeItem('psg_activeCaptured');
+                    sessionStorage.removeItem('psg_plannedCaptured');
+                    sessionStorage.removeItem('psg_activeHtml');
+                    sessionStorage.removeItem('psg_plannedHtml');
+                    sessionStorage.removeItem('psg_startTime');
+                    sessionStorage.removeItem('psg_lastActionTime');
+                }
 
                 function check() {
                     const now = Date.now();
                     const body = document.body ? document.body.innerHTML : '';
-                    const text = document.body ? document.body.innerText : '';
-                    const hasTable = body.includes('<table') || body.includes('<tbody>') || body.includes('supply-interruptions');
-                    const isBrak = text.includes('Brak') || text.includes('przerw');
 
-                    if (window._waitingForRefresh && (now - window._lastSwitchTime < 5000)) {
-                        return false; 
-                    }
-                    window._waitingForRefresh = false;
-
-                    switch(window._psgState) {
-                        case 'capture_active':
-                            if (hasTable || isBrak || (now - window._startTime > 5000)) {
-                                console.log('PSG-FETCH: Captured Active view');
-                                window._activeHtml = body;
-                                window._psgState = 'switching';
-                            }
-                            break;
-
-                        case 'switching':
-                            console.log('PSG-FETCH: Attempting switch to Planned...');
-                            if (trySwitchToPlanned()) {
-                                window._psgState = 'capture_planned';
-                                window._waitingForRefresh = true;
-                                window._lastSwitchTime = now;
-                            } else {
-                                // If can't switch, just emit what we have
-                                window._psgState = 'emit';
-                            }
-                            break;
-
-                        case 'capture_planned':
-                            if (hasTable || isBrak || (now - window._lastSwitchTime > 5000)) {
-                                console.log('PSG-FETCH: Captured Planned view');
-                                window._plannedHtml = body;
-                                window._psgState = 'emit';
-                            }
-                            break;
-
-                        case 'emit':
-                            console.log('PSG-FETCH: Final emission');
-                            try {
-                                const data = {
-                                    html: (window._activeHtml || '') + "\n<hr>\n" + (window._plannedHtml || ''),
-                                    cookies: document.cookie
-                                };
-                                if (window.__TAURI__ && window.__TAURI__.event) {
-                                    window.__TAURI__.event.emit('psg_data_ready', data);
-                                } else if (window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.emit) {
-                                    window.__TAURI_INTERNALS__.emit('psg_data_ready', data);
-                                }
-                            } catch(e) {
-                                console.error('PSG-FETCH: Emit failed', e);
-                            }
-                            return true;
-                    }
-                    
                     if (body.includes('Checking your browser') || body.includes('Verify you are human') || body.includes('Cloudflare')) {
                         console.log('PSG-FETCH: Cloudflare challenge detected...');
+                        return false;
                     }
+
+                    const checkbox0 = document.getElementById('checkbox0'); // active (aktywna)
+                    const checkbox1 = document.getElementById('checkbox1'); // planned (planowana)
+
+                    const isActiveChecked = checkbox0 && checkbox0.checked;
+                    const isPlannedChecked = checkbox1 && checkbox1.checked;
+
+                    if (isActiveChecked) {
+                        if (!activeCaptured && isTableMatchingState('active')) {
+                            console.log('PSG-FETCH: Captured Active view');
+                            activeHtml = body;
+                            activeCaptured = true;
+                            sessionStorage.setItem('psg_activeHtml', body);
+                            sessionStorage.setItem('psg_activeCaptured', 'true');
+                        }
+                    } else if (isPlannedChecked) {
+                        if (!plannedCaptured && isTableMatchingState('planned')) {
+                            console.log('PSG-FETCH: Captured Planned view');
+                            plannedHtml = body;
+                            plannedCaptured = true;
+                            sessionStorage.setItem('psg_plannedHtml', body);
+                            sessionStorage.setItem('psg_plannedCaptured', 'true');
+                        }
+                    }
+
+                    if (activeCaptured && plannedCaptured) {
+                        emitData();
+                        return true;
+                    }
+
+                    if (!activeCaptured && !isActiveChecked) {
+                        if (checkbox0) {
+                            console.log('PSG-FETCH: Switching to Active...');
+                            sessionStorage.setItem('psg_lastActionTime', now.toString());
+                            checkbox0.click();
+                            checkbox0.dispatchEvent(new Event('change', { bubbles: true }));
+                            return false;
+                        }
+                    }
+
+                    if (!plannedCaptured && !isPlannedChecked) {
+                        if (checkbox1) {
+                            console.log('PSG-FETCH: Switching to Planned...');
+                            sessionStorage.setItem('psg_lastActionTime', now.toString());
+                            checkbox1.click();
+                            checkbox1.dispatchEvent(new Event('change', { bubbles: true }));
+                            return false;
+                        }
+                    }
+
+                    if (now - startTime > 45000) {
+                        console.log('PSG-FETCH: Safety timeout. Emitting partial data.');
+                        emitData();
+                        return true;
+                    }
+
                     return false;
                 }
 
@@ -350,7 +394,7 @@ async fn get_cached_html(app: &AppHandle) -> Result<Option<String>, String> {
         .unwrap_or(0);
     
     let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
-    if now - cache_time < 3600 { // 1 hour TTL
+    if now >= cache_time && now - cache_time < 3600 { // 1 hour TTL
         return state_db::get_kv(&conn, "psg_html_cache");
     }
     
@@ -390,6 +434,44 @@ fn normalize(s: &str) -> String {
             _ => c,
         })
         .collect()
+}
+
+fn strip_street_prefixes(s: &str) -> &str {
+    let prefixes = [
+        "ulica", "ul",
+        "plac", "pl",
+        "aleja", "al",
+        "osiedle", "os",
+        "rondo", "skwer",
+    ];
+    for prefix in &prefixes {
+        if s.starts_with(prefix) && s.len() > prefix.len() {
+            return &s[prefix.len()..];
+        }
+    }
+    s
+}
+
+fn get_core_street_name(street: &str) -> String {
+    let words: Vec<&str> = street.split_whitespace().collect();
+    if words.is_empty() {
+        return String::new();
+    }
+    for &word in words.iter().rev() {
+        let normalized_word = normalize(word);
+        if normalized_word.is_empty() {
+            continue;
+        }
+        let is_roman = match normalized_word.as_str() {
+            "i" | "ii" | "iii" | "iv" | "v" | "vi" | "vii" | "viii" | "ix" | "x" => true,
+            _ => false,
+        };
+        let is_numeric = normalized_word.chars().all(|c| c.is_numeric());
+        if !is_roman && !is_numeric && normalized_word.len() >= 3 {
+            return normalized_word;
+        }
+    }
+    normalize(words.last().unwrap())
 }
 
 pub fn parse_psg_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAlert> {
@@ -434,7 +516,9 @@ pub fn parse_psg_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAle
 
             let start_date = cell_texts[3].clone();
             let end_date = cell_texts[4].clone();
-            let message = cell_texts[5].clone();
+            
+            // Reason / Cause
+            let reason = cell_texts[5].clone();
             
             // Status is usually the last or second to last cell
             let status = if cells.len() >= 8 { cell_texts[7].clone() } else { cell_texts[cells.len() - 1].clone() };
@@ -444,8 +528,7 @@ pub fn parse_psg_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAle
                 continue;
             }
 
-            let mut matched_index = None;
-            let mut is_local = false;
+            let mut matched_indices = Vec::new();
 
             let norm_city = normalize(&city);
             let norm_area = normalize(&area);
@@ -470,33 +553,45 @@ pub fn parse_psg_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAle
                         || norm_area.contains("calyobszarmiejscowosci")
                 };
 
+                let clean_addr_street = strip_street_prefixes(&addr_street);
+                let core_street = get_core_street_name(&addr.street_name_1);
+
                 let street_match = if addr_street.is_empty() || is_locality_wide {
                     true 
                 } else {
                     norm_area.contains(&addr_street)
+                        || (!clean_addr_street.is_empty() && norm_area.contains(clean_addr_street))
+                        || (!core_street.is_empty() && norm_area.contains(&core_street))
                 };
 
                 if (city_match || city_in_area) && street_match {
                     println!("[PSG] Match found for addr {}: city={}, area={}", addr.city_name, city, area);
-                    matched_index = Some(idx);
-                    is_local = true;
-                    break;
+                    matched_indices.push(idx);
                 } else if city_match || city_in_area {
                     println!("[PSG] City match only for addr {}: city={}, area={}", addr.city_name, city, area);
                 }
             }
 
-            if is_local {
-                alerts.push(UnifiedAlert {
-                    source: AlertSource::Psg,
-                    startDate: Some(start_date),
-                    endDate: Some(end_date),
-                    message: Some(message.clone()),
-                    description: Some(format!("Miejscowość: {}, Obszar: {}", city, area)),
-                    address_index: matched_index,
-                    is_local: Some(true),
-                    hash: None,
-                });
+            if !matched_indices.is_empty() {
+                let reason_trimmed = reason.trim();
+                let final_message = if reason_trimmed.is_empty() || reason_trimmed == "Info Button Text" || reason_trimmed == "Info" {
+                    area.clone()
+                } else {
+                    format!("{}: {}", reason_trimmed, area)
+                };
+
+                for &idx in &matched_indices {
+                    alerts.push(UnifiedAlert {
+                        source: AlertSource::Psg,
+                        startDate: Some(start_date.clone()),
+                        endDate: Some(end_date.clone()),
+                        message: Some(final_message.clone()),
+                        description: Some(format!("Miejscowość: {}, Obszar: {}", city, area)),
+                        address_index: Some(idx),
+                        is_local: Some(true),
+                        hash: None,
+                    });
+                }
             }
         }
     }
@@ -543,6 +638,80 @@ mod tests {
         assert_eq!(alerts.len(), 1);
         assert_eq!(alerts[0].source, AlertSource::Psg);
     }
+
+    #[test]
+    fn test_wschowa_active_outage() {
+        let html = r#"
+            <table>
+                <tr>
+                    <td>Lubuskie</td>
+                    <td>Wschowa</td>
+                    <td>Wschowa ul 31 – go Stycznia 1-19, ul Grunwaldu 1,3 ul Wolsztyńska 11, 13,15.</td>
+                    <td>17.05.2026 godz. 17:30</td>
+                    <td>termin zostanie podany wkrótce</td>
+                    <td>Info Button Text</td>
+                    <td>awaria</td>
+                    <td>aktywna</td>
+                </tr>
+            </table>
+        "#;
+        
+        let settings = Settings {
+            addresses: vec![
+                AddressEntry {
+                    city_name: "Wschowa".to_string(),
+                    street_name_1: "Wolsztyńska".to_string(),
+                    is_active: true,
+                    ..Default::default()
+                },
+                AddressEntry {
+                    city_name: "Wschowa".to_string(),
+                    street_name_1: "Plac Grunwaldu".to_string(),
+                    is_active: true,
+                    ..Default::default()
+                }
+            ],
+            ..Default::default()
+        };
+        
+        let alerts = parse_psg_html(html, &settings);
+        assert_eq!(alerts.len(), 2, "Both streets should match the outage");
+    }
+
+    #[test]
+    fn test_bialystok_abbreviated_outage() {
+        let html = r#"
+            <table>
+                <tr>
+                    <td>Podlaskie</td>
+                    <td>Białystok</td>
+                    <td>BIAŁYSTOK ul. L.Mierosławskiego, W.Lewandowskiego, Wąska, Fabryczna, W.Siedleckiego, Węglowa, Błękitna, Wasilkowska, W.Łokietka, K.Chodakowskiego, K.Z.Agusta, S.Żółkiewskiego, WŁ.Jagiełły, W.Warneńczyka, Królowej Jadwigi, S.Batorego, gen.W.Andersa.</td>
+                    <td>18.05.2026 godz. 10:00</td>
+                    <td>18.05.2026 godz. 14:00</td>
+                    <td>Planowane</td>
+                    <td>Planowana</td>
+                    <td>Aktywna</td>
+                </tr>
+            </table>
+        "#;
+        
+        let settings = Settings {
+            addresses: vec![
+                AddressEntry {
+                    city_name: "Białystok".to_string(),
+                    street_name_1: "Stanisława Żółkiewskiego".to_string(),
+                    is_active: true,
+                    ..Default::default()
+                }
+            ],
+            ..Default::default()
+        };
+        
+        let alerts = parse_psg_html(html, &settings);
+        assert_eq!(alerts.len(), 1, "Stanisława Żółkiewskiego should match S.Żółkiewskiego in Bialystok");
+    }
+
+
 
     #[test]
     fn test_brzezowka_no_streets() {

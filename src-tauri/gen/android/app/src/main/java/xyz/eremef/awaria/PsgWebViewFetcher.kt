@@ -215,91 +215,128 @@ object PsgWebViewFetcher {
                                 return
                             }
 
-                            view.evaluateJavascript(
+                             view.evaluateJavascript(
                                 """
                                 (function() {
-                                    function trySwitch() {
-                                        const checkbox1 = document.getElementById('checkbox1');
-                                        if (checkbox1 && !checkbox1.checked) {
-                                            checkbox1.click();
-                                            window._waiting = true;
-                                            window._lastSwitchTime = Date.now();
-                                            setTimeout(() => { window._waiting = false; }, 3000);
-                                            return true;
-                                        }
-                                        
-                                        const interactive = Array.from(document.querySelectorAll('button, a, span, li, label, input'));
-                                        const plannedBtn = interactive.find(el => {
-                                            const text = el.innerText || (el.value && typeof el.value === 'string' ? el.value : '');
-                                            return /planowane/i.test(text.trim());
-                                        });
-                                        
-                                        if (plannedBtn) {
-                                            const isAlreadyActive = plannedBtn.classList.contains('active') || 
-                                                                  plannedBtn.classList.contains('selected') ||
-                                                                  (plannedBtn.parentElement && plannedBtn.parentElement.classList.contains('active')) ||
-                                                                  (plannedBtn.tagName === 'INPUT' && plannedBtn.checked);
-                                            
-                                            if (!isAlreadyActive) {
-                                                plannedBtn.click();
-                                                window._waiting = true;
-                                                window._lastSwitchTime = Date.now();
-                                                setTimeout(() => { window._waiting = false; }, 3000);
-                                                return true;
-                                            }
-                                        }
-                                        return false;
-                                    }
-                                    
-                                    if (window._psgState === undefined) {
-                                        window._psgState = 'capture_active';
-                                        window._activeHtml = '';
-                                        window._plannedHtml = '';
-                                        window._startTime = Date.now();
-                                    }
+                                     let activeCaptured = sessionStorage.getItem('psg_activeCaptured') === 'true';
+                                     let plannedCaptured = sessionStorage.getItem('psg_plannedCaptured') === 'true';
+                                     let activeHtml = sessionStorage.getItem('psg_activeHtml') || '';
+                                     let plannedHtml = sessionStorage.getItem('psg_plannedHtml') || '';
+                                     
+                                     let startTimeStr = sessionStorage.getItem('psg_startTime');
+                                     if (!startTimeStr) {
+                                         startTimeStr = Date.now().toString();
+                                         sessionStorage.setItem('psg_startTime', startTimeStr);
+                                     }
+                                     let startTime = parseInt(startTimeStr);
 
-                                    const now = Date.now();
-                                    const text = document.body ? document.body.innerText : '';
-                                    const body = document.body ? document.body.innerHTML : '';
-                                    const hasTable = body.includes('<table') || body.includes('<tbody>') || body.includes('supply-interruptions');
-                                    const isBrak = text.includes('Brak') || text.includes('przerw');
+                                     function isTableMatchingState(state) {
+                                         const container = document.getElementById('supply-interruptions-filter-form') || document.body;
+                                         const text = container.innerText || '';
+                                         
+                                         if (state === 'active') {
+                                             if (text.includes('Brak trwających') || text.includes('Brak przerw')) {
+                                                 return true;
+                                             }
+                                         } else {
+                                             if (text.includes('Brak planowanych')) {
+                                                 return true;
+                                             }
+                                         }
+                                         
+                                         const rows = document.querySelectorAll('table tr');
+                                         for (let i = 1; i < rows.length; i++) {
+                                             const rowText = rows[i].innerText || '';
+                                             if (state === 'active') {
+                                                 if (rowText.toLowerCase().includes('awaria') || rowText.toLowerCase().includes('aktywna')) {
+                                                     return true;
+                                                 }
+                                             } else {
+                                                 if (rowText.toLowerCase().includes('planowane') || rowText.toLowerCase().includes('planowana')) {
+                                                     return true;
+                                                 }
+                                             }
+                                         }
+                                         
+                                         // Fallback: if we have waited more than 5 seconds after clicking, assume it loaded
+                                         const lastAction = parseInt(sessionStorage.getItem('psg_lastActionTime') || '0');
+                                         if (lastAction > 0 && (Date.now() - lastAction > 5000)) {
+                                             console.log('PSG-FETCH: Matching state fallback triggered');
+                                             return true;
+                                         }
+                                         
+                                         return false;
+                                     }
 
-                                    if (window._waiting && (now - window._lastSwitchTime < 5000)) {
-                                        return 'waiting'; 
-                                    }
-                                    window._waiting = false;
+                                     const now = Date.now();
+                                     const body = document.body ? document.body.innerHTML : '';
 
-                                    switch(window._psgState) {
-                                        case 'capture_active':
-                                            if (hasTable || isBrak || (now - window._startTime > 5000)) {
-                                                window._activeHtml = body;
-                                                window._psgState = 'switching';
-                                            }
-                                            return 'waiting';
+                                     if (body.includes('Checking your browser') || body.includes('Verify you are human') || body.includes('Cloudflare')) {
+                                         return 'waiting';
+                                     }
 
-                                        case 'switching':
-                                            if (trySwitch()) {
-                                                window._psgState = 'capture_planned';
-                                                window._waiting = true;
-                                                window._lastSwitchTime = now;
-                                            } else {
-                                                window._psgState = 'done';
-                                            }
-                                            return 'waiting';
+                                     const checkbox0 = document.getElementById('checkbox0'); // active (aktywna)
+                                     const checkbox1 = document.getElementById('checkbox1'); // planned (planowana)
 
-                                        case 'capture_planned':
-                                            if (hasTable || isBrak || (now - window._lastSwitchTime > 5000)) {
-                                                window._plannedHtml = body;
-                                                window._psgState = 'done';
-                                            }
-                                            return 'waiting';
+                                     const isActiveChecked = checkbox0 && checkbox0.checked;
+                                     const isPlannedChecked = checkbox1 && checkbox1.checked;
 
-                                        case 'done':
-                                            return (window._activeHtml || '') + "\n<hr>\n" + (window._plannedHtml || '');
-                                    }
-                                    
-                                    return 'waiting';
-                                })()
+                                     if (isActiveChecked) {
+                                         if (!activeCaptured && isTableMatchingState('active')) {
+                                             activeHtml = body;
+                                             activeCaptured = true;
+                                             sessionStorage.setItem('psg_activeHtml', body);
+                                             sessionStorage.setItem('psg_activeCaptured', 'true');
+                                         }
+                                     } else if (isPlannedChecked) {
+                                         if (!plannedCaptured && isTableMatchingState('planned')) {
+                                             plannedHtml = body;
+                                             plannedCaptured = true;
+                                             sessionStorage.setItem('psg_plannedHtml', body);
+                                             sessionStorage.setItem('psg_plannedCaptured', 'true');
+                                         }
+                                     }
+
+                                     if (activeCaptured && plannedCaptured) {
+                                         sessionStorage.removeItem('psg_activeCaptured');
+                                         sessionStorage.removeItem('psg_plannedCaptured');
+                                         sessionStorage.removeItem('psg_activeHtml');
+                                         sessionStorage.removeItem('psg_plannedHtml');
+                                         sessionStorage.removeItem('psg_startTime');
+                                         sessionStorage.removeItem('psg_lastActionTime');
+                                         return (activeHtml || '') + "\n<hr>\n" + (plannedHtml || '');
+                                     }
+
+                                     if (!activeCaptured && !isActiveChecked) {
+                                         if (checkbox0) {
+                                             sessionStorage.setItem('psg_lastActionTime', now.toString());
+                                             checkbox0.click();
+                                             checkbox0.dispatchEvent(new Event('change', { bubbles: true }));
+                                             return 'waiting';
+                                         }
+                                     }
+
+                                     if (!plannedCaptured && !isPlannedChecked) {
+                                         if (checkbox1) {
+                                             sessionStorage.setItem('psg_lastActionTime', now.toString());
+                                             checkbox1.click();
+                                             checkbox1.dispatchEvent(new Event('change', { bubbles: true }));
+                                             return 'waiting';
+                                         }
+                                     }
+
+                                     if (now - startTime > 45000) {
+                                         sessionStorage.removeItem('psg_activeCaptured');
+                                         sessionStorage.removeItem('psg_plannedCaptured');
+                                         sessionStorage.removeItem('psg_activeHtml');
+                                         sessionStorage.removeItem('psg_plannedHtml');
+                                         sessionStorage.removeItem('psg_startTime');
+                                         sessionStorage.removeItem('psg_lastActionTime');
+                                         return (activeHtml || '') + "\n<hr>\n" + (plannedHtml || '');
+                                     }
+
+                                     return 'waiting';
+                                 })()
                                 """.trimIndent()
                             ) { result ->
                                 val res = if (result != null && result != "null") unescapeJsString(result) else "waiting"
@@ -451,6 +488,22 @@ object PsgWebViewFetcher {
         }.filter { it.isLetterOrDigit() }.joinToString("")
     }
 
+    private fun stripStreetPrefixes(s: String): String {
+        val prefixes = listOf(
+            "ulica", "ul",
+            "plac", "pl",
+            "aleja", "al",
+            "osiedle", "os",
+            "rondo", "skwer"
+        )
+        for (prefix in prefixes) {
+            if (s.startsWith(prefix) && s.length > prefix.length) {
+                return s.substring(prefix.length)
+            }
+        }
+        return s
+    }
+
     fun countMatchingOutages(outages: List<PsgOutage>, settingsList: List<WidgetSettings>): Int {
         var count = 0
 
@@ -482,7 +535,13 @@ object PsgWebViewFetcher {
                                 || normOutageArea.contains("calyobszarmiejscowosci")
                     }
 
-                    val streetMatch = normSettingsStreet.isEmpty() || isLocalityWide || normOutageArea.contains(normSettingsStreet)
+                    val cleanSettingsStreet = stripStreetPrefixes(normSettingsStreet)
+                    val cleanOutageArea = stripStreetPrefixes(normOutageArea)
+
+                    val streetMatch = normSettingsStreet.isEmpty() || isLocalityWide || 
+                                     normOutageArea.contains(normSettingsStreet) ||
+                                     (cleanSettingsStreet.isNotEmpty() && 
+                                      (normOutageArea.contains(cleanSettingsStreet) || cleanOutageArea.contains(cleanSettingsStreet)))
 
                     if (streetMatch) {
                         Log.d(TAG, "[PSG] Match found for ${settings.cityName}: city=${outage.city}, area=${outage.area}")
