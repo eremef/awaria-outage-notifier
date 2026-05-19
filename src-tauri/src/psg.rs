@@ -462,10 +462,9 @@ fn get_core_street_name(street: &str) -> String {
         if normalized_word.is_empty() {
             continue;
         }
-        let is_roman = match normalized_word.as_str() {
-            "i" | "ii" | "iii" | "iv" | "v" | "vi" | "vii" | "viii" | "ix" | "x" => true,
-            _ => false,
-        };
+        let is_roman = matches!(normalized_word.as_str(),
+            "i" | "ii" | "iii" | "iv" | "v" | "vi" | "vii" | "viii" | "ix" | "x"
+        );
         let is_numeric = normalized_word.chars().all(|c| c.is_numeric());
         if !is_roman && !is_numeric && normalized_word.len() >= 3 {
             return normalized_word;

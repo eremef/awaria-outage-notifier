@@ -377,7 +377,7 @@ async fn export_settings(app: AppHandle) -> Result<String, String> {
             std::fs::copy(&settings_path, &dest_path).map_err(|e| e.to_string())?;
             return Ok(format!("Saved to {:?}", dest_path));
         }
-        return Err("cancel".to_string());
+        Err("cancel".to_string())
     }
 }
 
