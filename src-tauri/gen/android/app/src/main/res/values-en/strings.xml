@@ -20,6 +20,7 @@
     <string name="widget_label_stoen">Stoen</string>
     <string name="widget_label_psg">PSG</string>
     <string name="widget_label_wmk">WMK</string>
+    <string name="widget_label_aquanet">Aquanet</string>
     <string name="widget_label_tri">Address: power, heat, water</string>
     <string name="widget_label_all">Address: all utilities</string>
     <string name="msg_setup_needed">Setup needed</string>
@@ -36,6 +37,7 @@
     <string name="provider_water">MPWiK</string>
     <string name="provider_psg">PSG</string>
     <string name="provider_wmk">WMK</string>
+    <string name="provider_aquanet">Aquanet</string>
     <string name="notif_channel_name">Outage Alerts</string>
     <string name="notif_channel_desc">Notifications about new and upcoming power, water, heat, and gas outages.</string>
     <string name="placeholder_time">--:--</string>

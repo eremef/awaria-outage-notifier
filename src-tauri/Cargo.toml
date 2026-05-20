@@ -1,5 +1,5 @@
 [package]
-name = "app"
+name = "Awaria"
 version = "1.0.51"
 description = "Awaria"
 authors = ["eremef.xyz"]
@@ -7,7 +7,7 @@ license = ""
 repository = "https://github.com/eremef/awaria-outage-notifier"
 edition = "2021"
 rust-version = "1.77.2"
-default-run = "app"
+default-run = "Awaria"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

@@ -121,6 +121,14 @@ class WidgetUpdateWorker(
             wmkProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        // Update Aquanet widgets
+        val aquanetName = ComponentName(context, AquanetWidgetProvider::class.java)
+        val aquanetIds = appWidgetManager.getAppWidgetIds(aquanetName)
+        val aquanetProvider = AquanetWidgetProvider()
+        for (id in aquanetIds) {
+            aquanetProvider.updateWidget(context, appWidgetManager, id)
+        }
+
         return androidx.work.ListenableWorker.Result.success()
     }
 }

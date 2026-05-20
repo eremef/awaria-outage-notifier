@@ -3,6 +3,41 @@
 version = 3
 
 [[package]]
+name = "Awaria"
+version = "1.0.51"
+dependencies = [
+ "android_logger",
+ "async-trait",
+ "chrono",
+ "chrono-tz",
+ "dirs 5.0.1",
+ "futures",
+ "jni 0.22.4",
+ "log",
+ "mockall",
+ "mockito",
+ "quick-xml 0.39.4",
+ "regex",
+ "reqwest",
+ "rusqlite",
+ "rustls",
+ "rustls-platform-verifier",
+ "scraper",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-fs",
+ "tauri-plugin-log",
+ "tauri-plugin-notification",
+ "tauri-plugin-opener",
+ "tokio",
+ "urlencoding",
+]
+
+[[package]]
 name = "adler2"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -92,41 +127,6 @@ name = "anyhow"
 version = "1.0.102"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
-
-[[package]]
-name = "app"
-version = "1.0.51"
-dependencies = [
- "android_logger",
- "async-trait",
- "chrono",
- "chrono-tz",
- "dirs 5.0.1",
- "futures",
- "jni 0.22.4",
- "log",
- "mockall",
- "mockito",
- "quick-xml 0.39.4",
- "regex",
- "reqwest",
- "rusqlite",
- "rustls",
- "rustls-platform-verifier",
- "scraper",
- "serde",
- "serde_json",
- "sha2",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-fs",
- "tauri-plugin-log",
- "tauri-plugin-notification",
- "tauri-plugin-opener",
- "tokio",
- "urlencoding",
-]
 
 [[package]]
 name = "arrayvec"

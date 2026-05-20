@@ -1,4 +1,5 @@
 mod api_logic;
+mod aquanet;
 mod enea;
 mod energa;
 mod fortum;
@@ -502,6 +503,7 @@ fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(psg::PsgProvider),
         Box::new(wmk::WmkProvider),
         Box::new(tauron_heat::TauronHeatProvider),
+        Box::new(aquanet::AquanetProvider),
     ]
 }
 
@@ -936,7 +938,9 @@ pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchCountFromRust(
 
             match provider {
                 Some(p) => {
+                    log::info!("Provider: {}", p.source());
                     if !api_logic::is_provider_applicable(p.source(), &settings) {
+                        log::info!("is_provider_applicable: provider not applicable for this region");
                         return 0;
                     }
                     let (mut alerts, _) = p.fetch(&client, &client_http1, &settings, None).await;
@@ -944,12 +948,14 @@ pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchCountFromRust(
                     alerts.retain(|alert| {
                         if let Some(end_str) = &alert.endDate {
                             if let Some(end_dt) = utils::parse_date(end_str) {
+                                log::debug!("end_dt: {}, now: {}", end_dt, now);
                                 return end_dt >= now;
                             }
                         }
                         true
                     });
                     let grouped = api_logic::deduplicate_alerts(alerts);
+                    log::info!("Alerts count after filtering (is_local): {}", grouped.iter().filter(|a| a.is_local == Some(true)).count());
                     grouped.iter().filter(|a| a.is_local == Some(true)).count() as jint
                 }
                 None => -1

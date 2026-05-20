@@ -92,6 +92,7 @@ if (typeof document !== 'undefined') {
         { id: 'fortum', label: 'Fortum', category: 'heating', defaultNotify: true, i18nLabel: 'source_fortum_name', i18nShort: 'source_fortum_short' },
         { id: 'mpwik_wroclaw', label: 'MPWiK', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_wroclaw_name', i18nShort: 'source_mpwik_wroclaw_short' },
         { id: 'wmk', label: 'WMK', category: 'water', defaultNotify: true, i18nLabel: 'source_wmk_name', i18nShort: 'source_wmk_short' },
+        { id: 'aquanet', label: 'Aquanet', category: 'water', defaultNotify: true, i18nLabel: 'source_aquanet_name', i18nShort: 'source_aquanet_short' },
         { id: 'tauron_heat', label: 'Tauron Ciepło', category: 'heating', defaultNotify: true, i18nLabel: 'source_tauron_heat_name', i18nShort: 'source_tauron_heat_short' },
     ];
 
@@ -1454,7 +1455,7 @@ if (typeof document !== 'undefined') {
         if (!addr || addr.isActive === false) return false;
 
         // Sources that provide addressIndex and isLocal from backend
-        if (['tauron', 'energa', 'enea', 'pge', 'stoen', 'fortum', 'mpwik_wroclaw', 'wmk', 'psg'].includes(alert.source)) {
+        if (['tauron', 'energa', 'enea', 'pge', 'stoen', 'fortum', 'mpwik_wroclaw', 'wmk', 'psg', 'aquanet'].includes(alert.source)) {
             if (alert.isLocal === true && (alert.addressIndex === addrIdx || alert.addressIndex === -1)) {
                 return true;
             }
@@ -1513,7 +1514,7 @@ if (typeof document !== 'undefined') {
 
     function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         const now = new Date();
-        const enabledSources = (settings && settings.enabledSources) ? settings.enabledSources : ['tauron', 'mpwik_wroclaw', 'wmk', 'fortum', 'energa', 'enea', 'pge', 'stoen', 'psg'];
+        const enabledSources = (settings && settings.enabledSources) ? settings.enabledSources : ['tauron', 'mpwik_wroclaw', 'wmk', 'fortum', 'energa', 'enea', 'pge', 'stoen', 'psg', 'aquanet'];
         const activeAlerts = alerts.filter(item => {
             if (!enabledSources.includes(item.source)) return false;
             if (!item.endDate) return true;
@@ -1624,10 +1625,23 @@ if (typeof document !== 'undefined') {
             const city = (addr.cityName || '').trim().toLowerCase();
             return city.startsWith('kraków') || city.startsWith('krakow') || addr.cityId === 950463;
         };
+        const isPoznan = (addr) => {
+            if (!addr) return false;
+            const city = (addr.cityName || '').trim().toLowerCase();
+            const commune = (addr.commune || '').trim().toLowerCase();
+            const poznanCommunes = [
+                'poznań', 'poznan', 'czerwonak', 'dopiewo', 'kleszczewo', 'komorniki',
+                'kórnik', 'kornik', 'luboń', 'lubon', 'mosina', 'murowana goślina',
+                'murowana goslina', 'puszczykowo', 'rokietnica', 'suchy las', 'swarzędz',
+                'swarzedz', 'tarnowo podgórne', 'tarnowo podgorne', 'brodnica'
+            ];
+            return poznanCommunes.some(c => city.startsWith(c) || commune.startsWith(c));
+        };
 
         const hasAnyWarszawa = addresses.some(isWarszawa);
         const hasAnyWroclaw = addresses.some(isWroclaw);
         const hasAnyKrakow = addresses.some(isKrakow);
+        const hasAnyPoznan = addresses.some(isPoznan);
 
         const localLists = {};
         const otherLists = {};
@@ -1649,6 +1663,8 @@ if (typeof document !== 'undefined') {
                         if (isWroclaw(addr)) otherLists[item.source].push(item);
                     } else if (item.source === 'wmk') {
                         if (isKrakow(addr)) otherLists[item.source].push(item);
+                    } else if (item.source === 'aquanet') {
+                        if (isPoznan(addr)) otherLists[item.source].push(item);
                     } else if (item.source === 'stoen') {
                         if (isWarszawa(addr)) otherLists[item.source].push(item);
                     } else {
@@ -1667,6 +1683,8 @@ if (typeof document !== 'undefined') {
                         if (hasAnyWroclaw) otherLists[item.source].push(item);
                     } else if (item.source === 'wmk') {
                         if (hasAnyKrakow) otherLists[item.source].push(item);
+                    } else if (item.source === 'aquanet') {
+                        if (hasAnyPoznan) otherLists[item.source].push(item);
                     } else if (item.source === 'stoen') {
                         if (hasAnyWarszawa) otherLists[item.source].push(item);
                     } else {

@@ -27,3 +27,4 @@ target_check*/
 mempalace.yaml
 entities.json
 src-tauri/target_clippy/.rustc_info.json
+.antigravitycli/

@@ -52,6 +52,7 @@
     --stoen-color: #ea1b0a;
     --psg-color: #38bdf8;
     --wmk-color: #01618F;
+    --aquanet-color: #00A3D7;
     --nav-bg: rgba(248, 250, 252, 0.85);
 }
 
@@ -88,6 +89,7 @@
     --stoen-color: #f87171;
     --psg-color: #38bdf8;
     --wmk-color: #38bdf8;
+    --aquanet-color: #4DA6FF;
     --nav-bg: rgba(15, 23, 42, 0.85);
 }
 
@@ -119,6 +121,7 @@
     --stoen-color: #be123c;
     --psg-color: #3b82f6;
     --wmk-color: #0284c7;
+    --aquanet-color: #0284c7;
     --nav-bg: rgba(240, 253, 244, 0.85);
 }
 
@@ -151,6 +154,7 @@
     --stoen-color: #fb7185;
     --psg-color: #38bdf8;
     --wmk-color: #38bdf8;
+    --aquanet-color: #38bdf8;
     --nav-bg: rgba(8, 51, 68, 0.85);
 }
 
@@ -182,6 +186,7 @@
     --stoen-color: #bf616a;
     --psg-color: #88c0d0;
     --wmk-color: #81a1c1;
+    --aquanet-color: #81a1c1;
     --nav-bg: rgba(46, 52, 64, 0.85);
 }
 
@@ -213,6 +218,7 @@
     --stoen-color: #ff5555;
     --psg-color: #8be9fd;
     --wmk-color: #8be9fd;
+    --aquanet-color: #8be9fd;
 }
 
 [data-theme="sepia"] {
@@ -243,6 +249,7 @@
     --stoen-color: #9b2226;
     --psg-color: #2a4d69;
     --wmk-color: #3d5a80;
+    --aquanet-color: #3d5a80;
 }
 
 [data-theme="latte"] {
@@ -273,6 +280,7 @@
     --stoen-color: #c1121f;
     --psg-color: #3d405b;
     --wmk-color: #2a6f97;
+    --aquanet-color: #2a6f97;
 }
 
 [data-theme="monochrome-light"] {
@@ -305,6 +313,7 @@
     --stoen-color: #525252;
     --psg-color: #525252;
     --wmk-color: #525252;
+    --aquanet-color: #525252;
 }
 
 [data-theme="monochrome-dark"] {
@@ -337,6 +346,7 @@
     --stoen-color: #a3a3a3;
     --psg-color: #a3a3a3;
     --wmk-color: #a3a3a3;
+    --aquanet-color: #a3a3a3;
 }
 
 * {
@@ -949,12 +959,15 @@ h1 {
 .card.source-wmk {
     border-top: 4px solid var(--wmk-color);
 }
+.card.source-aquanet {
+    border-top: 4px solid var(--aquanet-color);
+}
 
 .card.source-tauron_heat {
     border-top: 4px solid var(--tauron_heat-color);
 }
 
-.card:not(.source-tauron):not(.source-mpwik_wroclaw):not(.source-fortum):not(.source-energa):not(.source-enea):not(.source-pge):not(.source-stoen):not(.source-psg):not(.source-wmk):not(.source-tauron_heat) {
+.card:not(.source-tauron):not(.source-mpwik_wroclaw):not(.source-fortum):not(.source-energa):not(.source-enea):not(.source-pge):not(.source-stoen):not(.source-psg):not(.source-wmk):not(.source-tauron_heat):not(.source-aquanet) {
     border-top: 4px solid #7c7c7c;
 }
 
@@ -992,6 +1005,9 @@ h1 {
 
 .card.source-wmk .outage-type {
     color: var(--wmk-color);
+}
+.card.source-aquanet .outage-type {
+    color: var(--aquanet-color);
 }
 
 .outage-time {
@@ -1123,6 +1139,10 @@ h1 {
 
 .collapsible.source-wmk .section-label.other {
     color: var(--wmk-color);
+}
+
+.collapsible.source-aquanet .section-label.other {
+    color: var(--aquanet-color);
 }
 
 .collapsible.source-tauron_heat .section-label.other {

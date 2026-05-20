@@ -51,6 +51,10 @@
 - **Notification Formatting**: Excessive whitespace in notifications (especially PSG) is caused by raw HTML remnants and newlines. Use `split_whitespace().collect::<Vec<_>>().join(" ")` in Rust or `replace(Regex("\\s+"), " ")` in Kotlin to normalize strings.
 - **Date Parsing**: Polish providers often use dots (`.`) and "godz." prefixes. `utils.rs::parse_date` should be extended to handle these by cleaning the string (dots to hyphens, remove "godz.") before parsing with `NaiveDateTime`.
 
+### Aquanet Matching & Local Outage Verification
+
+- **Street & City Fields Inclusion**: In `aquanet::fetch`, matching of addresses relies on a compiled regex (generated from the user's `streetName1` / `streetName2` and matched against a `combined_text` string). Initially, this `combined_text` was constructed using only `item.title`, `item.location`, and `item.description`. However, `Aquanet` detail scraping populates `item.city` and `item.streets` separately. Because these fields were missing from `combined_text`, the regex matching failed, resulting in `is_local` being incorrectly set to `Some(false)`. This caused Android widgets (which only count `is_local == Some(true)` outages) to report 0 outages. Fixing this requires including `item.city` and `item.streets` in `combined_text`.
+
 ### Browser Automation & Scraping
 
 - **Dynamic Dropdowns**: For sites with autocomplete (like Tauron), `type_text` must be followed by an explicit click on the suggested item `uid`.

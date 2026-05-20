@@ -137,6 +137,8 @@ class WidgetConfigActivity : ComponentActivity() {
             className.contains("FortumWidgetProvider") -> FortumWidgetProvider()
             className.contains("MpwikWidgetProvider") -> MpwikWidgetProvider()
             className.contains("PsgWidgetProvider") -> PsgWidgetProvider()
+            className.contains("WmkWidgetProvider") -> WmkWidgetProvider()
+            className.contains("AquanetWidgetProvider") -> AquanetWidgetProvider()
             else -> TriWidgetProvider()
         }
     }
