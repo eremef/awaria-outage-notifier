@@ -93,6 +93,7 @@ if (typeof document !== 'undefined') {
         { id: 'mpwik_wroclaw', label: 'MPWiK', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_wroclaw_name', i18nShort: 'source_mpwik_wroclaw_short' },
         { id: 'wmk', label: 'WMK', category: 'water', defaultNotify: true, i18nLabel: 'source_wmk_name', i18nShort: 'source_wmk_short' },
         { id: 'aquanet', label: 'Aquanet', category: 'water', defaultNotify: true, i18nLabel: 'source_aquanet_name', i18nShort: 'source_aquanet_short' },
+        { id: 'katowickie_wodociagi', label: 'Katowickie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_katowickie_wodociagi_name', i18nShort: 'source_katowickie_wodociagi_short' },
         { id: 'tauron_heat', label: 'Tauron Ciepło', category: 'heating', defaultNotify: true, i18nLabel: 'source_tauron_heat_name', i18nShort: 'source_tauron_heat_short' },
     ];
 
@@ -1455,7 +1456,7 @@ if (typeof document !== 'undefined') {
         if (!addr || addr.isActive === false) return false;
 
         // Sources that provide addressIndex and isLocal from backend
-        if (['tauron', 'energa', 'enea', 'pge', 'stoen', 'fortum', 'mpwik_wroclaw', 'wmk', 'psg', 'aquanet'].includes(alert.source)) {
+        if (['tauron', 'energa', 'enea', 'pge', 'stoen', 'fortum', 'mpwik_wroclaw', 'wmk', 'psg', 'aquanet', 'katowickie_wodociagi'].includes(alert.source)) {
             if (alert.isLocal === true && (alert.addressIndex === addrIdx || alert.addressIndex === -1)) {
                 return true;
             }
@@ -1514,7 +1515,7 @@ if (typeof document !== 'undefined') {
 
     function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         const now = new Date();
-        const enabledSources = (settings && settings.enabledSources) ? settings.enabledSources : ['tauron', 'mpwik_wroclaw', 'wmk', 'fortum', 'energa', 'enea', 'pge', 'stoen', 'psg', 'aquanet'];
+        const enabledSources = (settings && settings.enabledSources) ? settings.enabledSources : ['tauron', 'mpwik_wroclaw', 'wmk', 'fortum', 'energa', 'enea', 'pge', 'stoen', 'psg', 'aquanet', 'katowickie_wodociagi'];
         const activeAlerts = alerts.filter(item => {
             if (!enabledSources.includes(item.source)) return false;
             if (!item.endDate) return true;

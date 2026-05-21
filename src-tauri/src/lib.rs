@@ -15,6 +15,7 @@ mod cache;
 mod psg;
 mod wmk;
 mod tauron_heat;
+mod katowickie_wodociagi;
 
 use crate::network_state::NetworkState;
 use api_logic::{
@@ -504,6 +505,7 @@ fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(wmk::WmkProvider),
         Box::new(tauron_heat::TauronHeatProvider),
         Box::new(aquanet::AquanetProvider),
+        Box::new(katowickie_wodociagi::KatowickieWodociagiProvider),
     ]
 }
 

@@ -356,6 +356,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             "psg" -> context.getString(R.string.provider_psg)
             "wmk" -> context.getString(R.string.provider_wmk)
             "aquanet" -> context.getString(R.string.provider_aquanet)
+            "katowickie_wodociagi" -> context.getString(R.string.provider_katowickie_wodociagi)
             else ->
                     key.replaceFirstChar {
                         if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()

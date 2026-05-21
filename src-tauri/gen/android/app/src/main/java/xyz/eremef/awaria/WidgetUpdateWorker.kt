@@ -129,6 +129,14 @@ class WidgetUpdateWorker(
             aquanetProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        // Update Katowickie Wodociagi widgets
+        val katowickieWodociagiName = ComponentName(context, KatowickieWodociagiWidgetProvider::class.java)
+        val katowickieWodociagiIds = appWidgetManager.getAppWidgetIds(katowickieWodociagiName)
+        val katowickieWodociagiProvider = KatowickieWodociagiWidgetProvider()
+        for (id in katowickieWodociagiIds) {
+            katowickieWodociagiProvider.updateWidget(context, appWidgetManager, id)
+        }
+
         return androidx.work.ListenableWorker.Result.success()
     }
 }

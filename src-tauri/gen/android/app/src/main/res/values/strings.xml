@@ -21,6 +21,7 @@
     <string name="widget_label_psg">PSG</string>
     <string name="widget_label_wmk">WMK</string>
     <string name="widget_label_aquanet">Aquanet</string>
+    <string name="widget_label_katowickiewodociagi">Kat. Wodociągi</string>
     <string name="widget_label_tri">Adres: prąd, ciepło, woda</string>
     <string name="widget_label_all">Adres: wszystkie media</string>
     <string name="msg_setup_needed">Skonfiguruj</string>
@@ -39,6 +40,7 @@
     <string name="provider_psg">PSG</string>
     <string name="provider_wmk">WMK</string>
     <string name="provider_aquanet">Aquanet</string>
+    <string name="provider_katowickie_wodociagi">Katowickie Wodociągi</string>
     <string name="notif_channel_name">Alerty o wyłączeniach</string>
     <string name="notif_channel_desc">Powiadomienia o nowych i nadchodzących awariach oraz wyłączeniach (prąd, woda, ciepło, gaz).</string>
     <string name="placeholder_time">--:--</string>

@@ -25,6 +25,8 @@ pub enum AlertSource {
     #[serde(rename = "tauron_heat")]
     TauronHeat,
     Aquanet,
+    #[serde(rename = "katowickie_wodociagi")]
+    KatowickieWodociagi,
 }
 
 impl AlertSource {
@@ -67,6 +69,7 @@ impl AlertSource {
             AlertSource::MpwikWroclaw => Some(vec!["DOLNOŚLĄSKIE"]),
             AlertSource::Wmk => Some(vec!["MAŁOPOLSKIE"]),
             AlertSource::Aquanet => Some(vec!["WIELKOPOLSKIE"]),
+            AlertSource::KatowickieWodociagi => Some(vec!["ŚLĄSKIE"]),
             AlertSource::Fortum => Some(vec![
                 "DOLNOŚLĄSKIE",
                 "ŚLĄSKIE",
@@ -256,7 +259,7 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea | AlertSource::Pge | AlertSource::Stoen => {
             if is_pl { "awaria prądu" } else { "power outage" }
         }
-        AlertSource::MpwikWroclaw | AlertSource::Wmk | AlertSource::Aquanet => {
+        AlertSource::MpwikWroclaw | AlertSource::Wmk | AlertSource::Aquanet | AlertSource::KatowickieWodociagi => {
             if is_pl { "awaria wody" } else { "water outage" }
         }
         AlertSource::Fortum | AlertSource::TauronHeat => {
@@ -337,6 +340,7 @@ impl std::fmt::Display for AlertSource {
             AlertSource::Wmk => "wmk",
             AlertSource::TauronHeat => "tauron_heat",
             AlertSource::Aquanet => "aquanet",
+            AlertSource::KatowickieWodociagi => "katowickie_wodociagi",
         };
         write!(f, "{}", s)
     }

@@ -156,7 +156,7 @@ class TriWidgetProvider : BaseWidgetProvider() {
                                     .sum()
                         }
                         val w = async {
-                            val waterSources = listOf("mpwik_wroclaw", "wmk", "aquanet")
+                            val waterSources = listOf("mpwik_wroclaw", "wmk", "aquanet", "katowickie_wodociagi")
                             waterSources
                                     .map { source ->
                                         async {
@@ -282,7 +282,7 @@ class TriWidgetProvider : BaseWidgetProvider() {
         val heatEnabled =
                 allEnabledByDefault || listOf("fortum", "tauron_heat").any { it in enabledSources }
         val waterEnabled =
-                allEnabledByDefault || listOf("mpwik_wroclaw", "wmk", "aquanet").any { it in enabledSources }
+                allEnabledByDefault || listOf("mpwik_wroclaw", "wmk", "aquanet", "katowickie_wodociagi").any { it in enabledSources }
 
         // Theme
         applyTriTheme(context, views, theme, dark, powerEnabled, heatEnabled, waterEnabled)
