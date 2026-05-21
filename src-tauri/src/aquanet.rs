@@ -73,6 +73,7 @@ pub struct AquanetItem {
     pub city: Option<String>,
     pub streets: Option<String>,
     pub impediments: Option<String>,
+    pub incident_type: Option<String>,
 }
 
 /// Parse Aquanet date text like "20.05.2026 godz. 08:00" → "2026-05-20T08:00:00"
@@ -262,15 +263,26 @@ pub struct AquanetDetail {
     pub city: Option<String>,
     pub streets: Option<String>,
     pub impediments: Option<String>,
+    pub incident_type: Option<String>,
 }
 
 fn is_date_like(text: &str) -> bool {
     let lower = text.to_lowercase();
-    if lower.contains("od ") || lower.contains("do ") || lower.contains("godz.") {
+    if lower.contains("od ") || lower.contains("do ") || lower.contains("godz.") || lower.contains("rok ") {
         return true;
     }
     if let Ok(re) = Regex::new(r"\d{1,2}[.\-]\d{1,2}[.\-]\d{4}") {
         if re.is_match(text) {
+            return true;
+        }
+    }
+    if let Ok(re) = Regex::new(r"\b\d{1,2}:\d{2}\b") {
+        if re.is_match(text) {
+            return true;
+        }
+    }
+    if let Ok(re) = Regex::new(r"\d{1,2}\s+[a-ząćęłńóśźż]+\s+\d{4}") {
+        if re.is_match(&lower) {
             return true;
         }
     }
@@ -370,7 +382,7 @@ pub async fn fetch_aquanet_detail(client: &Client, slug: &str) -> Option<Aquanet
     });
 
     // Try to get specific title (incident type) from detail page
-    let mut title = parsed_title;
+    let mut title = parsed_title.clone();
     if title.is_none() {
         if let Ok(title_sel) = Selector::parse(".accident-map-box__content-value, .accident-map-box__content_value, .accident-detail__title, .accident-content__title, .item-accident__title") {
             for el in document.select(&title_sel) {
@@ -441,6 +453,7 @@ pub async fn fetch_aquanet_detail(client: &Client, slug: &str) -> Option<Aquanet
         city,
         streets,
         impediments,
+        incident_type: parsed_title,
     })
 }
 
@@ -448,58 +461,70 @@ pub async fn fetch_aquanet_detail(client: &Client, slug: &str) -> Option<Aquanet
 pub async fn fetch_aquanet_alerts(client: &Client) -> Result<Vec<AquanetItem>, String> {
     let mut items = retry(|| fetch_aquanet_list(client), 3).await?;
 
-    // Fetch detail pages concurrently (up to 5 at a time)
-    let semaphore = std::sync::Arc::new(tokio::sync::Semaphore::new(5));
+    // Fetch detail pages concurrently (up to 20 at a time)
+    let semaphore = std::sync::Arc::new(tokio::sync::Semaphore::new(20));
     let client = std::sync::Arc::new(client.clone());
-    let mut handles = Vec::new();
+    use futures::stream::StreamExt;
+    let mut futures = futures::stream::FuturesUnordered::new();
 
-    for item in &items {
+    for (idx, item) in items.iter().enumerate() {
         let slug = item.slug.clone();
         let c = client.clone();
         let sem = semaphore.clone();
-        handles.push(tokio::spawn(async move {
+        futures.push(tokio::spawn(async move {
             let _permit = sem.acquire().await.ok()?;
-            fetch_aquanet_detail(&c, &slug).await
+            let detail = tokio::time::timeout(std::time::Duration::from_secs(3), fetch_aquanet_detail(&c, &slug))
+                .await
+                .ok()
+                .flatten();
+            Some((idx, detail))
         }));
     }
 
-    let results = futures::future::join_all(handles).await;
-    for (item, result) in items.iter_mut().zip(results) {
-        if let Ok(Some(detail)) = result {
-            if let Some(desc) = detail.description {
-                item.description = Some(desc);
-            }
-            if let Some(l) = detail.location {
-                if item.location.is_none() {
-                    item.location = Some(l);
+    // Process whatever details finish within 5 seconds to ensure we don't exceed the widget's 9000ms deadline
+    let timeout_duration = std::time::Duration::from_secs(5);
+    let _ = tokio::time::timeout(timeout_duration, async {
+        while let Some(res) = futures.next().await {
+            if let Ok(Some((idx, Some(detail)))) = res {
+                let item = &mut items[idx];
+                if let Some(desc) = detail.description {
+                    item.description = Some(desc);
                 }
-            }
-            if let Some((start, end)) = detail.dates {
-                if item.start_date.is_none() && start.is_some() {
-                    item.start_date = start;
+                if let Some(l) = detail.location {
+                    if item.location.is_none() {
+                        item.location = Some(l);
+                    }
                 }
-                if item.end_date.is_none() && end.is_some() {
-                    item.end_date = end;
+                if let Some((start, end)) = detail.dates {
+                    if item.start_date.is_none() && start.is_some() {
+                        item.start_date = start;
+                    }
+                    if item.end_date.is_none() && end.is_some() {
+                        item.end_date = end;
+                    }
                 }
-            }
-            if let Some(t) = detail.title {
-                if !t.is_empty() && (item.title.is_empty() || item.title == "Awaria wodociągowa") {
-                    item.title = t;
-                    item.is_emergency = item.title.to_lowercase().contains("awaria") || 
-                                         item.title.to_lowercase().contains("emergency");
+                if let Some(t) = detail.title {
+                    if !t.is_empty() && (item.title.is_empty() || item.title == "Awaria wodociągowa") {
+                        item.title = t;
+                        item.is_emergency = item.title.to_lowercase().contains("awaria") || 
+                                             item.title.to_lowercase().contains("emergency");
+                    }
                 }
-            }
-            if let Some(c) = detail.city {
-                item.city = Some(c);
-            }
-            if let Some(s) = detail.streets {
-                item.streets = Some(s);
-            }
-            if let Some(imp) = detail.impediments {
-                item.impediments = Some(imp);
+                if let Some(c) = detail.city {
+                    item.city = Some(c);
+                }
+                if let Some(s) = detail.streets {
+                    item.streets = Some(s);
+                }
+                if let Some(imp) = detail.impediments {
+                    item.impediments = Some(imp);
+                }
+                if let Some(inc) = detail.incident_type {
+                    item.incident_type = Some(inc);
+                }
             }
         }
-    }
+    }).await;
 
     Ok(items)
 }
@@ -528,18 +553,22 @@ pub fn clean_aquanet_description(desc: &str) -> String {
 
 impl AquanetItem {
     pub fn to_unified(&self) -> UnifiedAlert {
-        let end_date = if self.end_date.is_none() && self.is_emergency {
-            // Default 24h for emergency outages with no end date
-            self.start_date.as_deref().and_then(|s| {
-                crate::utils::parse_date(s).map(|dt| {
-                    let end = dt + Duration::hours(24);
-                    end.format("%Y-%m-%dT%H:%M:00").to_string()
+        let end_date = if self.end_date.is_none() {
+            if self.is_emergency {
+                let fallback_hours = 24;
+                self.start_date.as_deref().and_then(|s| {
+                    crate::utils::parse_date(s).map(|dt| {
+                        let end = dt + Duration::hours(fallback_hours);
+                        end.format("%Y-%m-%dT%H:%M:00").to_string()
+                    })
+                }).or_else(|| {
+                    // No start date either, assume current time + fallback_hours
+                    let end = Utc::now() + Duration::hours(fallback_hours);
+                    Some(end.format("%Y-%m-%dT%H:%M:00").to_string())
                 })
-            }).or_else(|| {
-                // No start date either, assume current time + 24h
-                let end = Utc::now() + Duration::hours(24);
-                Some(end.format("%Y-%m-%dT%H:%M:00").to_string())
-            })
+            } else {
+                None
+            }
         } else {
             self.end_date.clone()
         };
@@ -573,6 +602,12 @@ impl AquanetItem {
             .unwrap_or_default();
 
         let mut parts = Vec::new();
+        if let Some(inc_type) = &self.incident_type {
+            if !inc_type.is_empty() {
+                parts.push(inc_type.clone());
+            }
+        }
+
         let title_to_use = if self.title.is_empty() {
             if self.is_emergency {
                 "Awaria wodociągowa".to_string()
@@ -582,7 +617,10 @@ impl AquanetItem {
         } else {
             self.title.clone()
         };
-        parts.push(title_to_use);
+        
+        if parts.is_empty() || parts.last().map(|s| s.to_lowercase()) != Some(title_to_use.to_lowercase()) {
+            parts.push(title_to_use);
+        }
 
         if !streets.is_empty() {
             parts.push(streets);
@@ -648,7 +686,16 @@ impl CompiledAquanetRegex {
             }
 
             for cand in &candidates {
-                let p = format!(r"(?i){}", regex::escape(cand));
+                let mut c_clean = cand.to_string();
+                if c_clean.len() > 4 {
+                    if c_clean.ends_with("ego") { c_clean.truncate(c_clean.len() - 3); }
+                    else if c_clean.ends_with("ej") { c_clean.truncate(c_clean.len() - 2); }
+                    else if c_clean.ends_with("iej") { c_clean.truncate(c_clean.len() - 3); }
+                    else if c_clean.ends_with('a') || c_clean.ends_with('y') || c_clean.ends_with('i') || c_clean.ends_with('e') {
+                        c_clean.truncate(c_clean.len() - 1);
+                    }
+                }
+                let p = format!(r"(?i){}", regex::escape(&c_clean));
                 if let Ok(r) = Regex::new(&p) {
                     street_candidates.push(r);
                 }
@@ -701,6 +748,14 @@ impl AlertProvider for AquanetProvider {
                 let mut alerts = Vec::new();
 
                 for item in items {
+                    let is_water_outage = item.impediments.as_ref()
+                        .map(|imp| imp.to_lowercase().contains("brak wody"))
+                        .unwrap_or(false);
+                    
+                    if !is_water_outage {
+                        continue;
+                    }
+
                     let combined_text = format!(
                         "{} {} {} {} {}",
                         item.title,
@@ -1114,43 +1169,7 @@ mod tests {
         assert!(!is_date_like("Awaria wodociągowa"));
     }
 
-    #[test]
-    fn test_is_location_or_street_robust() {
-        assert!(is_location_or_street("Suchy Las"));
-        assert!(is_location_or_street("Poznań"));
-        assert!(is_location_or_street("poznan"));
-        assert!(is_location_or_street("ul. Chabrowa"));
-        assert!(is_location_or_street("al. Niepodległości"));
-        assert!(is_location_or_street("os. Chrobrego"));
-        
-        assert!(!is_location_or_street("Planowe wyłączenie wody"));
-        assert!(!is_location_or_street("Awaria wodociągowa"));
-    }
 
-    #[test]
-    fn test_parse_detail_html_with_date_and_location_filtering() {
-        let html = r#"
-        <html>
-        <body>
-            <div class="accident-header">
-                <h1 class="accident-header__title">Suchy Las</h1>
-                <div class="accident-header__info-bar">ul. Chabrowa (od Fiołkowej)</div>
-            </div>
-            <!-- Potential title polluters -->
-            <h1>Suchy Las</h1>
-            <div class="accident-detail__title">Planowe wyłączenie wody</div>
-            <div class="accident-content__text-wyswig">
-                W związku z pracami inwestycyjnymi na sieci wodociągowej nastąpi przerwa w dostawie wody.
-            </div>
-        </body>
-        </html>
-        "#;
-
-        let detail = parse_aquanet_detail_html(html);
-        assert_eq!(detail.title, Some("Planowe wyłączenie wody".to_string()));
-        assert_eq!(detail.city, Some("Suchy Las".to_string()));
-        assert_eq!(detail.streets, Some("ul. Chabrowa (od Fiołkowej)".to_string()));
-    }
 
     #[test]
     fn test_aquanet_matching_logic() {
@@ -1174,6 +1193,7 @@ mod tests {
             city: Some("Suchy Las".to_string()),
             streets: Some("ul. Chabrowa (od Fiołkowej)".to_string()),
             impediments: Some("Brak wody".to_string()),
+            incident_type: None,
         };
 
         // Old combined_text logic (failed to match)

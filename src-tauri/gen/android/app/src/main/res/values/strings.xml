@@ -40,7 +40,7 @@
     <string name="provider_psg">PSG</string>
     <string name="provider_wmk">WMK</string>
     <string name="provider_aquanet">Aquanet</string>
-    <string name="provider_katowickie_wodociagi">Katowickie Wodociągi</string>
+    <string name="provider_katowickie_wodociagi">Kat. Wodociągi</string>
     <string name="notif_channel_name">Alerty o wyłączeniach</string>
     <string name="notif_channel_desc">Powiadomienia o nowych i nadchodzących awariach oraz wyłączeniach (prąd, woda, ciepło, gaz).</string>
     <string name="placeholder_time">--:--</string>

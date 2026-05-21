@@ -10,6 +10,7 @@ pub const WODOCIAGI_KATOWICE_URL: &str = "https://wodociagi.katowice.pl/rss_woda
 pub struct WodociagiKatowiceItem {
     pub title: String,
     pub description: String,
+    pub raw_description: String,
 }
 
 pub async fn fetch_rss(client: &Client) -> Result<Vec<WodociagiKatowiceItem>, String> {
@@ -35,12 +36,14 @@ pub async fn fetch_rss(client: &Client) -> Result<Vec<WodociagiKatowiceItem>, St
     for cap in item_re.captures_iter(&text) {
         let block = &cap[1];
         let title = title_re.captures(block).map_or(String::new(), |c| c[1].trim().to_string());
-        let description = desc_re.captures(block).map_or(String::new(), |c| c[1].trim().to_string());
+        let raw_description = desc_re.captures(block).map_or(String::new(), |c| c[1].trim().to_string());
+        let description = String::from("Miejscowość: Katowice");
 
         if !title.is_empty() {
             items.push(WodociagiKatowiceItem {
                 title,
                 description,
+                raw_description,
             });
         }
     }
@@ -142,6 +145,7 @@ impl AlertProvider for KatowickieWodociagiProvider {
                     .collect();
 
                 let mut alerts = Vec::new();
+                let termin_re = Regex::new(r"Termin:\s*(\d{4}-\d{2}-\d{2})").unwrap();
 
                 for item in items {
                     let combined_text = format!("{} {}", item.title, item.description);
@@ -154,12 +158,12 @@ impl AlertProvider for KatowickieWodociagiProvider {
                         }
                     }
 
-                    // Try parsing the date from description: "Termin: 2026-05-20"
-                    let start_date = if let Some(caps) = Regex::new(r"Termin:\s*(\d{4}-\d{2}-\d{2})").unwrap().captures(&item.description) {
+                    // Try parsing the date from raw_description: "Termin: 2026-05-20"
+                    let start_date = if let Some(caps) = termin_re.captures(&item.raw_description) {
                         Some(format!("{}T00:00:00", &caps[1]))
                     } else {
-                        // Fallback to current time + 1 hour if emergency
-                        Some(Utc::now().format("%Y-%m-%dT%H:%M:00").to_string())
+                        // Fallback to today at midnight if date is unknown
+                        Some(Utc::now().format("%Y-%m-%dT00:00:00").to_string())
                     };
 
                     let end_date = start_date.as_ref().and_then(|s| {
@@ -180,10 +184,13 @@ impl AlertProvider for KatowickieWodociagiProvider {
                         hash: None,
                     };
 
+                    log::debug!("Alert: {:?}", alert);
+
                     if let Some(idx) = local_match_idx {
                         alert.address_index = Some(idx);
                         alert.is_local = Some(true);
                     }
+
                     alerts.push(alert);
                 }
 
