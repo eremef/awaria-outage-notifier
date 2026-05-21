@@ -132,6 +132,8 @@ pub fn parse_aquanet_list_html(html: &str) -> Result<Vec<AquanetItem>, String> {
 
     let mut items = Vec::new();
 
+    let slug_re = Regex::new(r"/awaria/([^/]+)").unwrap();
+
     // Try to find cards; if no cards, fall back to scanning all /awaria/ links
     if let Some(card_selector) = &card_sel {
         for card in document.select(card_selector) {
@@ -145,8 +147,7 @@ pub fn parse_aquanet_list_html(html: &str) -> Result<Vec<AquanetItem>, String> {
                     if let Some(href) = a.value().attr("href") {
                         if href.contains("/awaria/") {
                             // Extract slug from /awaria/{slug}/
-                            let re = Regex::new(r"/awaria/([^/]+)").unwrap();
-                            if let Some(caps) = re.captures(href) {
+                            if let Some(caps) = slug_re.captures(href) {
                                 slug = caps.get(1).unwrap().as_str().to_string();
                             }
                             break;
@@ -417,14 +418,14 @@ pub async fn fetch_aquanet_detail(client: &Client, slug: &str) -> Option<Aquanet
     // Extract impediments from .accident-content__row--impediments or general .accident-content__row containing "Utrudnienia"
     let imp_sel = Selector::parse(".accident-content__row--impediments, .accident-content__row").ok();
     let impediments = imp_sel.and_then(|sel| {
-        document.select(&sel).filter(|el| {
+        document.select(&sel).find(|el| {
             let class_attr = el.value().attr("class").unwrap_or("");
             if class_attr.contains("accident-content__row--impediments") {
                 return true;
             }
             let text = el.text().collect::<Vec<_>>().join(" ").to_lowercase();
             text.contains("utrudnienia")
-        }).next().map(|el| {
+        }).map(|el| {
             el.text().collect::<Vec<_>>().join(" ")
                 .split_whitespace()
                 .collect::<Vec<_>>()
