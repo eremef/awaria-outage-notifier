@@ -71,6 +71,22 @@
         </receiver>
 
         <receiver
+            android:name=".MpwikWarszawaWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_mpwik_warszawa">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_MPWIK_WARSZAWA" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_mpwik_warszawa_info" />
+        </receiver>
+
+        <receiver
             android:name=".FortumWidgetProvider"
             android:exported="true"
             android:label="@string/widget_label_fortum">
@@ -228,6 +244,38 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_katowickiewodociagi_info" />
+        </receiver>
+
+         <receiver
+            android:name=".VeoliaWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_veolia">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_VEOLIA" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_veolia_info" />
+        </receiver>
+
+        <receiver
+            android:name=".VeoliaPoznanWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_veolia_poznan">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_VEOLIA_POZNAN" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_veolia_poznan_info" />
         </receiver>
 
         <receiver

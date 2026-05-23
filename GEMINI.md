@@ -28,8 +28,16 @@
 
 ## User Rules
 
-- When you bump version, update it in `src-tauri/Cargo.toml`, `src-tauri/Cargo.lock`, `package.json` using semver versioning, even when git tag is in other format, like 1.0.0b
-- when bumping `src-tauri/tauri.conf.json` use only X.X.X format, without any additional suffixes
+- when adding provider color/accent, adjust it for the themes colors to make it easily readable.
+
+## Outage card layout
+
+Use this layout when implementing the new provider. I used placeholders for the readability.
+
+{utility_icon} {provider_name}
+{start_date} - {end_date}
+Miejscowość: {address_city}
+{incident_type} - {description_with_streets_etc}
 
 ## Project Learnings
 
@@ -66,6 +74,11 @@
 - **Internal File Sharing**: To share files from the app's internal storage (e.g., `settings.json`), `res/xml/file_paths.xml` MUST include `<files-path name="..." path="." />`.
 - **Share Intent**: When starting a Share Intent from `ApplicationContext`, `Intent.FLAG_ACTIVITY_NEW_TASK` is required for the chooser activity.
 - **Plugin Bug (tauri-plugin-share v2.0.5)**: Rust wrapper uses snake_case (`share_file`) while Kotlin registers camelCase (`shareFile`), causing "No command found" errors. Use direct JNI or manual command invocation as a workaround.
+
+### Reqwest RequestBuilder & Query Parameter Type Inference
+
+- **RequestBuilder query compilation issues**: In some environments, using `.query(&[("a", "b")])` on a `reqwest::RequestBuilder` with custom feature-restricted configurations can fail to compile due to missing standard query methods or cause type-inference errors on `.send().await` or `.map_err()`.
+- **Solution**: To bypass reqwest RequestBuilder version/feature constraints, construct URLs manually using `format!` and the `urlencoding::encode` crate, e.g. `format!("https://host/api?a={}", urlencoding::encode(b))`. This is 100% robust, highly readable, and compiles flawlessly.
 
 ## Common Development Workflows
 

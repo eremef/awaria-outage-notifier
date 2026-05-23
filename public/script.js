@@ -91,10 +91,13 @@ if (typeof document !== 'undefined') {
         { id: 'psg', label: 'PSG', category: 'gas', defaultNotify: true, i18nLabel: 'source_psg_name', i18nShort: 'source_psg_short' },
         { id: 'fortum', label: 'Fortum', category: 'heating', defaultNotify: true, i18nLabel: 'source_fortum_name', i18nShort: 'source_fortum_short' },
         { id: 'mpwik_wroclaw', label: 'MPWiK', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_wroclaw_name', i18nShort: 'source_mpwik_wroclaw_short' },
+        { id: 'mpwik_warszawa', label: 'MPWiK Warszawa', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_warszawa_name', i18nShort: 'source_mpwik_warszawa_short' },
         { id: 'wmk', label: 'WMK', category: 'water', defaultNotify: true, i18nLabel: 'source_wmk_name', i18nShort: 'source_wmk_short' },
         { id: 'aquanet', label: 'Aquanet', category: 'water', defaultNotify: true, i18nLabel: 'source_aquanet_name', i18nShort: 'source_aquanet_short' },
         { id: 'katowickie_wodociagi', label: 'Katowickie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_katowickie_wodociagi_name', i18nShort: 'source_katowickie_wodociagi_short' },
         { id: 'tauron_heat', label: 'Tauron Ciepło', category: 'heating', defaultNotify: true, i18nLabel: 'source_tauron_heat_name', i18nShort: 'source_tauron_heat_short' },
+        { id: 'veolia_warszawa', label: 'Veolia Warszawa', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_name', i18nShort: 'source_veolia_short' },
+        { id: 'veolia_poznan', label: 'Veolia Poznań', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_poznan_name', i18nShort: 'source_veolia_poznan_short' },
     ];
 
     function renderSourcesUI() {
@@ -758,7 +761,7 @@ if (typeof document !== 'undefined') {
                 <input type="checkbox" ${addr.isActive !== false ? 'checked' : ''} onchange="toggleAddressActive(${idx})" title="${addr.isActive === false ? (typeof t !== 'undefined' ? t('lbl_address_disabled') : 'Disabled') : (typeof t !== 'undefined' ? t('lbl_address_active') : 'Active')}">
             </div>
             <div class="address-info">
-                <div class="address-name">${addr.name || (typeof t !== 'undefined' ? t('address_name') + ' ' + (idx + 1) : 'Address ' + (idx + 1))}</div>
+                <div class="address-name">${addr.name || (typeof t !== 'undefined' ? t('default_address_name') + ' ' + (idx + 1) : 'Address ' + (idx + 1))}</div>
                 <div class="address-detail">${addr.streetName} ${addr.houseNo}, ${addr.cityName}</div>
             </div>
             <div class="address-actions">
@@ -1099,10 +1102,18 @@ if (typeof document !== 'undefined') {
                 }
                 applyTheme(settings.theme || 'system');
 
-                // If enabledSources is present, we respect it as is. 
-                // The fallback below handles the case where it's entirely missing.
-
-                const sources = settings.enabledSources || [];
+                // If enabledSources is present, auto-add any new providers with defaultNotify: true
+                // that were added after the user last saved settings (migration for existing users).
+                let sources = settings.enabledSources || [];
+                if (sources.length > 0) {
+                    const newDefaults = SOURCES.filter(s => s.defaultNotify && !sources.includes(s.id)).map(s => s.id);
+                    if (newDefaults.length > 0) {
+                        sources = [...sources, ...newDefaults];
+                        settings.enabledSources = sources;
+                        // Persist the migration silently
+                        try { await window.__TAURI__.core.invoke('save_settings', { settings }); } catch (_) { }
+                    }
+                }
                 SOURCES.forEach(s => {
                     const cb = document.getElementById(`source-${s.id}-check`);
                     if (cb) cb.checked = sources.includes(s.id);
@@ -1194,7 +1205,9 @@ if (typeof document !== 'undefined') {
     }
 
     async function saveNewAddress() {
-        const name = document.getElementById('address-name-input').value.trim() || 'Address ' + ((currentSettings?.addresses?.length || 0) + 1);
+        const idx = (currentSettings?.addresses?.length || 0) + 1;
+        const defaultName = (typeof t !== 'undefined' ? t('default_address_name') : 'Address') + ' ' + idx;
+        const name = document.getElementById('address-name-input').value.trim() || defaultName;
         const streetName = document.getElementById('street-input').value.trim();
         const houseNo = document.getElementById('house-input').value.trim() || '1';
         const status = document.getElementById('settings-status');
@@ -1456,7 +1469,7 @@ if (typeof document !== 'undefined') {
         if (!addr || addr.isActive === false) return false;
 
         // Sources that provide addressIndex and isLocal from backend
-        if (['tauron', 'energa', 'enea', 'pge', 'stoen', 'fortum', 'mpwik_wroclaw', 'wmk', 'psg', 'aquanet', 'katowickie_wodociagi'].includes(alert.source)) {
+        if (['tauron', 'energa', 'enea', 'pge', 'stoen', 'fortum', 'mpwik_wroclaw', 'mpwik_warszawa', 'wmk', 'psg', 'aquanet', 'katowickie_wodociagi', 'veolia', 'veolia_poznan'].includes(alert.source)) {
             if (alert.isLocal === true && (alert.addressIndex === addrIdx || alert.addressIndex === -1)) {
                 return true;
             }
@@ -1515,7 +1528,7 @@ if (typeof document !== 'undefined') {
 
     function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         const now = new Date();
-        const enabledSources = (settings && settings.enabledSources) ? settings.enabledSources : ['tauron', 'mpwik_wroclaw', 'wmk', 'fortum', 'energa', 'enea', 'pge', 'stoen', 'psg', 'aquanet', 'katowickie_wodociagi'];
+        const enabledSources = (settings && settings.enabledSources) ? settings.enabledSources : ['tauron', 'mpwik_wroclaw', 'mpwik_warszawa', 'wmk', 'fortum', 'energa', 'enea', 'pge', 'stoen', 'psg', 'aquanet', 'katowickie_wodociagi', 'veolia', 'veolia_poznan'];
         const activeAlerts = alerts.filter(item => {
             if (!enabledSources.includes(item.source)) return false;
             if (!item.endDate) return true;
@@ -1664,9 +1677,9 @@ if (typeof document !== 'undefined') {
                         if (isWroclaw(addr)) otherLists[item.source].push(item);
                     } else if (item.source === 'wmk') {
                         if (isKrakow(addr)) otherLists[item.source].push(item);
-                    } else if (item.source === 'aquanet') {
+                    } else if (item.source === 'aquanet' || item.source === 'veolia_poznan') {
                         if (isPoznan(addr)) otherLists[item.source].push(item);
-                    } else if (item.source === 'stoen') {
+                    } else if (item.source === 'stoen' || item.source === 'veolia' || item.source === 'mpwik_warszawa') {
                         if (isWarszawa(addr)) otherLists[item.source].push(item);
                     } else {
                         const itemAddr = (item.addressIndex !== undefined && item.addressIndex !== null) ? addresses[item.addressIndex] : null;
@@ -1684,9 +1697,9 @@ if (typeof document !== 'undefined') {
                         if (hasAnyWroclaw) otherLists[item.source].push(item);
                     } else if (item.source === 'wmk') {
                         if (hasAnyKrakow) otherLists[item.source].push(item);
-                    } else if (item.source === 'aquanet') {
+                    } else if (item.source === 'aquanet' || item.source === 'veolia_poznan') {
                         if (hasAnyPoznan) otherLists[item.source].push(item);
-                    } else if (item.source === 'stoen') {
+                    } else if (item.source === 'stoen' || item.source === 'veolia' || item.source === 'mpwik_warszawa') {
                         if (hasAnyWarszawa) otherLists[item.source].push(item);
                     } else {
                         otherLists[item.source].push(item);

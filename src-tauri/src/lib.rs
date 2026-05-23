@@ -4,6 +4,7 @@ mod enea;
 mod energa;
 mod fortum;
 mod mpwik;
+mod mpwik_warsaw;
 mod pge;
 mod network_state;
 mod state_db;
@@ -16,6 +17,8 @@ mod psg;
 mod wmk;
 mod tauron_heat;
 mod katowickie_wodociagi;
+mod veolia_warszawa;
+mod veolia_poznan;
 
 use crate::network_state::NetworkState;
 use api_logic::{
@@ -496,6 +499,7 @@ fn get_providers() -> Vec<Box<dyn AlertProvider>> {
     vec![
         Box::new(tauron::TauronProvider),
         Box::new(mpwik::MpwikProvider),
+        Box::new(mpwik_warsaw::MpwikWarszawaProvider),
         Box::new(fortum::FortumProvider),
         Box::new(energa::EnergaProvider),
         Box::new(enea::EneaProvider),
@@ -506,6 +510,8 @@ fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(tauron_heat::TauronHeatProvider),
         Box::new(aquanet::AquanetProvider),
         Box::new(katowickie_wodociagi::KatowickieWodociagiProvider),
+        Box::new(veolia_warszawa::VeoliaWarszawaProvider),
+        Box::new(veolia_poznan::VeoliaPoznanProvider),
     ]
 }
 

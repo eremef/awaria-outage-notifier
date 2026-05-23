@@ -21,8 +21,11 @@
     <color name="brand_pge">#1E3A8A</color>
     <color name="brand_fortum">#00A859</color>
     <color name="brand_mpwik">#0077D9</color>
+    <color name="brand_mpwik_warszawa">#3A5BC2</color>
     <color name="brand_wmk">#01618F</color>
     <color name="brand_psg">#38BDF8</color>
     <color name="brand_aquanet">#0077D9</color>
     <color name="brand_katowickiewodociagi">#0089C8</color>
+    <color name="brand_veolia">#FF0000</color>
+    <color name="brand_veolia_poznan">#E53935</color>
 </resources>

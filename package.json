@@ -20,7 +20,8 @@
     "load:teryt": "node scripts/load-teryt.mjs",
     "mempalace:mine": "mempalace mine .",
     "mempalace:sync": "mempalace sync --apply --wing awaria",
-    "kill:em:all": "taskkill /f /im cargo.exe & taskkill /f /im rustc.exe & taskkill /f /im rust-analyzer.exe"
+    "kill:em:all": "taskkill /f /im cargo.exe & taskkill /f /im rustc.exe & taskkill /f /im rust-analyzer.exe",
+    "build:install": "npx tauri android build --target aarch64 --apk && adb install D:/eremef/Documents/AI/antigravity/awaria/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.11.1",

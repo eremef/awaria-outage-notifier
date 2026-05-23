@@ -1,0 +1,11 @@
+package xyz.eremef.awaria
+
+import android.content.Context
+
+class MpwikWarszawaWidgetProvider : BaseWidgetProvider() {
+    override val refreshAction: String = "xyz.eremef.awaria.ACTION_REFRESH_MPWIK_WARSZAWA"
+    override val primaryColorRes: Int = R.color.brand_mpwik_warszawa
+    override val iconResId: Int = R.drawable.ic_water
+    override val labelKey: String = "outages"
+    override val sourceKey: String = "mpwik_warszawa"
+}

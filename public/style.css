@@ -54,6 +54,9 @@
     --wmk-color: #01618F;
     --aquanet-color: #00A3D7;
     --katowickie_wodociagi-color: #0089C8;
+    --mpwik_warszawa-color: #3A5BC2;
+    --veolia-color: #FF0000;
+    --veolia_poznan-color: var(--veolia-color);
     --nav-bg: rgba(248, 250, 252, 0.85);
 }
 
@@ -92,6 +95,8 @@
     --wmk-color: #38bdf8;
     --aquanet-color: #4DA6FF;
     --katowickie_wodociagi-color: #0089C8;
+    --mpwik_warszawa-color: #5c6bc0;
+    --veolia-color: #ff5555;
     --nav-bg: rgba(15, 23, 42, 0.85);
 }
 
@@ -125,6 +130,8 @@
     --wmk-color: #0284c7;
     --aquanet-color: #0284c7;
     --katowickie_wodociagi-color: #0089C8;
+    --mpwik_warszawa-color: #1d4ed8;
+    --veolia-color: #be123c;
     --nav-bg: rgba(240, 253, 244, 0.85);
 }
 
@@ -159,6 +166,8 @@
     --wmk-color: #38bdf8;
     --aquanet-color: #38bdf8;
     --katowickie_wodociagi-color: #0089C8;
+    --mpwik_warszawa-color: #3b82f6;
+    --veolia-color: #fb7185;
     --nav-bg: rgba(8, 51, 68, 0.85);
 }
 
@@ -192,6 +201,8 @@
     --wmk-color: #81a1c1;
     --aquanet-color: #81a1c1;
     --katowickie_wodociagi-color: #0089C8;
+    --mpwik_warszawa-color: #5e81ac;
+    --veolia-color: #bf616a;
     --nav-bg: rgba(46, 52, 64, 0.85);
 }
 
@@ -225,6 +236,8 @@
     --wmk-color: #8be9fd;
     --aquanet-color: #8be9fd;
     --katowickie_wodociagi-color: #0089C8;
+    --mpwik_warszawa-color: #6272a4;
+    --veolia-color: #ff5555;
 }
 
 [data-theme="sepia"] {
@@ -257,6 +270,8 @@
     --wmk-color: #3d5a80;
     --aquanet-color: #3d5a80;
     --katowickie_wodociagi-color: #0089C8;
+    --mpwik_warszawa-color: #2a4d69;
+    --veolia-color: #9b2226;
 }
 
 [data-theme="latte"] {
@@ -289,6 +304,8 @@
     --wmk-color: #2a6f97;
     --aquanet-color: #2a6f97;
     --katowickie_wodociagi-color: #0089C8;
+    --mpwik_warszawa-color: #2a6f97;
+    --veolia-color: #c1121f;
 }
 
 [data-theme="monochrome-light"] {
@@ -323,6 +340,8 @@
     --wmk-color: #525252;
     --aquanet-color: #525252;
     --katowickie_wodociagi-color: #525252;
+    --mpwik_warszawa-color: #525252;
+    --veolia-color: #525252;
 }
 
 [data-theme="monochrome-dark"] {
@@ -357,6 +376,8 @@
     --wmk-color: #a3a3a3;
     --aquanet-color: #a3a3a3;
     --katowickie_wodociagi-color: #a3a3a3;
+    --mpwik_warszawa-color: #a3a3a3;
+    --veolia-color: #a3a3a3;
 }
 
 * {
@@ -969,6 +990,7 @@ h1 {
 .card.source-wmk {
     border-top: 4px solid var(--wmk-color);
 }
+
 .card.source-aquanet {
     border-top: 4px solid var(--aquanet-color);
 }
@@ -977,11 +999,23 @@ h1 {
     border-top: 4px solid var(--katowickie_wodociagi-color);
 }
 
+.card.source-mpwik_warszawa {
+    border-top: 4px solid var(--mpwik_warszawa-color);
+}
+
 .card.source-tauron_heat {
     border-top: 4px solid var(--tauron_heat-color);
 }
 
-.card:not(.source-tauron):not(.source-mpwik_wroclaw):not(.source-fortum):not(.source-energa):not(.source-enea):not(.source-pge):not(.source-stoen):not(.source-psg):not(.source-wmk):not(.source-tauron_heat):not(.source-aquanet):not(.source-katowickie_wodociagi) {
+.card.source-veolia_warszawa {
+    border-top: 4px solid var(--veolia-color);
+}
+
+.card.source-veolia_poznan {
+    border-top: 4px solid var(--veolia_poznan-color);
+}
+
+.card:not(.source-tauron):not(.source-mpwik_wroclaw):not(.source-fortum):not(.source-energa):not(.source-enea):not(.source-pge):not(.source-stoen):not(.source-psg):not(.source-wmk):not(.source-tauron_heat):not(.source-aquanet):not(.source-katowickie_wodociagi):not(.source-mpwik_warszawa):not(.source-veolia):not(.source-veolia_poznan) {
     border-top: 4px solid #7c7c7c;
 }
 
@@ -995,6 +1029,10 @@ h1 {
 
 .card.source-mpwik_wroclaw .outage-type {
     color: var(--mpwik_wroclaw-color);
+}
+
+.card.source-mpwik_warszawa .outage-type {
+    color: var(--mpwik_warszawa-color);
 }
 
 .card.source-energa .outage-type {
@@ -1020,12 +1058,21 @@ h1 {
 .card.source-wmk .outage-type {
     color: var(--wmk-color);
 }
+
 .card.source-aquanet .outage-type {
     color: var(--aquanet-color);
 }
 
 .card.source-katowickie_wodociagi .outage-type {
     color: var(--katowickie_wodociagi-color);
+}
+
+.card.source-veolia_warszawa .outage-type {
+    color: var(--veolia-color);
+}
+
+.card.source-veolia_poznan .outage-type {
+    color: var(--veolia_poznan-color);
 }
 
 .outage-time {
@@ -1131,6 +1178,10 @@ h1 {
     color: var(--mpwik_wroclaw-color);
 }
 
+.collapsible.source-mpwik_warszawa .section-label.other {
+    color: var(--mpwik_warszawa-color);
+}
+
 .collapsible.source-fortum .section-label.other {
     color: var(--fortum-color);
 }
@@ -1169,6 +1220,14 @@ h1 {
 
 .collapsible.source-tauron_heat .section-label.other {
     color: var(--tauron_heat-color);
+}
+
+.collapsible.source-veolia_warszawa .section-label.other {
+    color: var(--veolia-color);
+}
+
+.collapsible.source-veolia_poznan .section-label.other {
+    color: var(--veolia_poznan-color);
 }
 
 .other-divider {

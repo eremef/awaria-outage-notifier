@@ -139,7 +139,7 @@ class AllWidgetProvider : BaseWidgetProvider() {
                                     .sum()
                         }
                         val h = async {
-                            val heatSources = listOf("fortum", "tauron_heat")
+                            val heatSources = listOf("fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan")
                             heatSources
                                     .map { source ->
                                         async {
@@ -164,7 +164,7 @@ class AllWidgetProvider : BaseWidgetProvider() {
                                     .sum()
                         }
                         val w = async {
-                            val waterSources = listOf("mpwik_wroclaw", "wmk", "aquanet", "katowickie_wodociagi")
+                            val waterSources = listOf("mpwik_wroclaw", "mpwik_warszawa", "wmk", "aquanet", "katowickie_wodociagi")
                             waterSources
                                     .map { source ->
                                         async {
@@ -303,9 +303,9 @@ class AllWidgetProvider : BaseWidgetProvider() {
                             it in enabledSources
                         }
         val heatEnabled =
-                allEnabledByDefault || listOf("fortum", "tauron_heat").any { it in enabledSources }
+                allEnabledByDefault || listOf("fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan").any { it in enabledSources }
         val waterEnabled =
-                allEnabledByDefault || listOf("mpwik_wroclaw", "wmk", "aquanet", "katowickie_wodociagi").any { it in enabledSources }
+                allEnabledByDefault || listOf("mpwik_wroclaw", "mpwik_warszawa", "wmk", "aquanet", "katowickie_wodociagi").any { it in enabledSources }
         val gasEnabled = allEnabledByDefault || listOf("psg").any { it in enabledSources }
 
         // Theme
