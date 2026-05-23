@@ -407,7 +407,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         val sourceEnabled = settingsList?.firstOrNull()?.sourceEnabled ?: true
 
         val activeSettings = settingsList?.filter { it.isActive } ?: emptyList()
-        var count = "?"
+        var count;
         var statusMessage: String? = null
 
         if (!sourceEnabled) {

@@ -83,7 +83,6 @@ class TriWidgetProvider : BaseWidgetProvider() {
                     primaryAddress
                 }
 
-        val language = allSettings?.firstOrNull()?.language ?: "system"
         val theme = allSettings?.firstOrNull()?.theme ?: "system"
         val dark = isDarkMode(context, theme)
 
@@ -205,7 +204,6 @@ class TriWidgetProvider : BaseWidgetProvider() {
                 } else {
                     SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
                 }
-        val prefsAddressId = getStoredAddressId(context, appWidgetId)
         val addressName =
                 if (selectedAddress != null) {
                     if (selectedAddress.name.isNotEmpty()) selectedAddress.name
