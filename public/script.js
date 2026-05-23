@@ -1104,16 +1104,7 @@ if (typeof document !== 'undefined') {
 
                 // If enabledSources is present, auto-add any new providers with defaultNotify: true
                 // that were added after the user last saved settings (migration for existing users).
-                let sources = settings.enabledSources || [];
-                if (sources.length > 0) {
-                    const newDefaults = SOURCES.filter(s => s.defaultNotify && !sources.includes(s.id)).map(s => s.id);
-                    if (newDefaults.length > 0) {
-                        sources = [...sources, ...newDefaults];
-                        settings.enabledSources = sources;
-                        // Persist the migration silently
-                        try { await window.__TAURI__.core.invoke('save_settings', { settings }); } catch (_) { }
-                    }
-                }
+                const sources = settings.enabledSources || [];
                 SOURCES.forEach(s => {
                     const cb = document.getElementById(`source-${s.id}-check`);
                     if (cb) cb.checked = sources.includes(s.id);

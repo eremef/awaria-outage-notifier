@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">awaria</string>
-    <string name="main_activity_title">awaria</string>
+    <string name="app_name">Awaria</string>
+    <string name="main_activity_title">Awaria</string>
     <string name="config_select_address">Select address for widget</string>
     <string name="config_primary_address">Follow primary address</string>
     <string name="config_confirm">Confirm</string>
