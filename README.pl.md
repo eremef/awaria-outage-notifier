@@ -25,9 +25,17 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
 - **🌡️ Ciepło**
   - **Fortum**: Planowane i bieżące wyłączenia ogrzewania oraz ciepłej wody.
   - **Tauron Ciepło**: Przerwy w dostawie ciepła (Południowa Polska).
+  - **Veolia Warszawa**: Przerwy w dostawie ciepła w Warszawie.
+  - **Veolia Poznań**: Przerwy w dostawie ciepła w Poznaniu.
+  - **Veolia Łódź**: Przerwy w dostawie ciepła w Łodzi.
 - **💧 Woda**
   - **MPWiK Wrocław**: Awarie wodociągowe i prace konserwacyjne we Wrocławiu.
+  - **MPWiK Warszawa**: Awarie i naprawy wodociągowe w Warszawie.
   - **WMK**: Awarie i konserwacje wodociągowe w Krakowie.
+  - **Aquanet**: Awarie i konserwacje wodociągowe w Poznaniu i okolicach.
+  - **Katowickie Wodociągi**: Awarie i konserwacje wodociągowe w Katowicach.
+  - **ZWiK Łódź**: Awarie i konserwacje wodociągowe w Łodzi.
+  - **PWiK Kalisz**: Awarie i konserwacje wodociągowe w Kaliszu.
 
 ## Aplikacja Android
 
@@ -40,11 +48,15 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
 - **Logika Multi-Source**: Agreguje alerty od różnych dostawców mediów (prąd, woda itp.).
 - **Wybór Źródeł**: Możliwość dostosowania rodzajów awarii widocznych w ustawieniach.
 - **Wsparcie dla wielu adresów**: Monitoruj do 20 różnych lokalizacji jednocześnie.
-- **Inteligentne Dopasowanie Adresu**: Wyróżnia alerty dotyczące konkretnego adresu (lub adresów). **Uwaga**: Obecnie dopasowanie odbywa się na poziomie miasta i ulicy; filtrowanie według konkretnego numeru domu nie jest jeszcze zaimplementowane.
+- **Inteligentne Dopasowanie Adresu**: Wyróżnia alerty dotyczące konkretnego adresu (lub adresów) przy użyciu oficjalnej **bazy TERYT**, co zapewnia precyzyjne wyszukiwanie ulic i miast.
 - **Powiadomienia Push w Czasie Rzeczywistym**: Otrzymuj natychmiastowe alerty na komputerze lub urządzeniu mobilnym, gdy wykryta zostanie nowa awaria dla Twojej lokalizacji.
 - **Monitorowanie w Tle**: Automatyczne sprawdzanie aktualizacji w tle (interwał 30 minut na desktopie).
 - **Inteligentna Pre-filtracja**: Optymalizuje użycie sieci poprzez odpytywanie tylko tych dostawców, którzy obsługują Twoje województwa.
 - **Zrównoleglona Logika**: Nowoczesny backend pobierający dane od wszystkich dostawców jednocześnie z inteligentnym systemem ponawiania prób.
+- **Przenośność Ustawień**: Łatwy **Eksport i Import** ustawień (adresów i włączonych źródeł), co pozwala na szybką migrację między urządzeniami lub kopię zapasową.
+- **Optymalizacje Android**:
+  - **Zarządzanie Baterią**: Wbudowane wsparcie dla prośby o wyłączenie optymalizacji baterii, co gwarantuje niezawodne sprawdzanie alertów i powiadomienia w tle.
+  - **Natywne Widżety**: Szybki dostęp do liczby alertów bezpośrednio z ekranu głównego.
 - **Design Premium**:
   - **Nowoczesny Interfejs**: System Indigo - przyjazny UI z żywymi wskaźnikami źródeł.
   - **Zwijane Kategorie**: Uporządkowany widok "Twoja Lokalizacja" oraz "Pozostałe Awarie".

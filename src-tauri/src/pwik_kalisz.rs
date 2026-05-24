@@ -107,8 +107,7 @@ fn parse_article_html(url: &str, html: &str) -> Result<PwikKaliszArticle, String
         }
     }
     
-    full_text = full_text.replace('\r', " ")
-        .replace('\n', " ")
+    full_text = full_text.replace(['\r', '\n'], " ")
         .split_whitespace()
         .collect::<Vec<_>>()
         .join(" ")
