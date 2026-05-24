@@ -21,16 +21,17 @@
         android:src="@drawable/ic_electricity" />
 
     <TextView
-        android:id="@+id/widget_source"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:breakStrategy="simple"
-        android:hyphenationFrequency="none"
-        android:text="@string/label_provider"
-        android:textColor="@color/widget_text_label"
-        android:textSize="9sp"
-        android:textStyle="bold" />
+      android:id="@+id/widget_source"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="center"
+      android:breakStrategy="simple"
+      android:hyphenationFrequency="none"
+      android:text="@string/label_provider"
+      android:textAlignment="center"
+      android:textColor="@color/widget_text_label"
+      android:textSize="9sp"
+      android:textStyle="bold" />
   </LinearLayout>
 
   <FrameLayout

@@ -8,17 +8,18 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <TextView
-        android:id="@+id/widget_source"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:breakStrategy="simple"
-        android:hyphenationFrequency="none"
-        android:text="@string/label_provider"
-        android:textColor="@color/widget_text_updated"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="4dp" />
+  <TextView
+    android:id="@+id/widget_source"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="4dp"
+    android:breakStrategy="simple"
+    android:hyphenationFrequency="none"
+    android:text="@string/label_provider"
+    android:textAlignment="center"
+    android:textColor="@color/widget_text_updated"
+    android:textSize="18sp"
+    android:textStyle="bold" />
 
     <ImageView
         android:id="@+id/widget_icon"

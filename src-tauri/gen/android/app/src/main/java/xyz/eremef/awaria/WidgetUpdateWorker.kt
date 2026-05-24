@@ -161,6 +161,31 @@ class WidgetUpdateWorker(
             veoliaPoznanProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        // Update Veolia Lodz widgets
+        val veoliaLodzName = ComponentName(context, VeoliaLodzWidgetProvider::class.java)
+        val veoliaLodzIds = appWidgetManager.getAppWidgetIds(veoliaLodzName)
+        val veoliaLodzProvider = VeoliaLodzWidgetProvider()
+        for (id in veoliaLodzIds) {
+            veoliaLodzProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update ZWIK Lodz widgets
+        val zwikLodzName = ComponentName(context, ZwikLodzWidgetProvider::class.java)
+        val zwikLodzIds = appWidgetManager.getAppWidgetIds(zwikLodzName)
+        val zwikLodzProvider = ZwikLodzWidgetProvider()
+        for (id in zwikLodzIds) {
+            zwikLodzProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update PWiK Kalisz widgets
+        val pwikKaliszName = ComponentName(context, PwikKaliszWidgetProvider::class.java)
+        val pwikKaliszIds = appWidgetManager.getAppWidgetIds(pwikKaliszName)
+        val pwikKaliszProvider = PwikKaliszWidgetProvider()
+        for (id in pwikKaliszIds) {
+            pwikKaliszProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+
         return androidx.work.ListenableWorker.Result.success()
     }
 }

@@ -28,4 +28,7 @@
     <color name="brand_katowickiewodociagi">#0089C8</color>
     <color name="brand_veolia">#FF0000</color>
     <color name="brand_veolia_poznan">#E53935</color>
+    <color name="brand_veolia_lodz">#FF0000</color>
+    <color name="brand_zwik_lodz">#009FE3</color>
+    <color name="brand_pwik_kalisz">#06A4DF</color>
 </resources>

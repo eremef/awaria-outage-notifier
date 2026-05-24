@@ -19,6 +19,9 @@ mod tauron_heat;
 mod katowickie_wodociagi;
 mod veolia_warszawa;
 mod veolia_poznan;
+pub mod veolia_lodz;
+pub mod zwik_lodz;
+pub mod pwik_kalisz;
 
 use crate::network_state::NetworkState;
 use api_logic::{
@@ -58,6 +61,8 @@ const MAX_CONCURRENT_REQUESTS: usize = 5;
 static ANDROID_CONTEXT: Mutex<Option<std::sync::Arc<Global<JObject<'static>>>>> = Mutex::new(None);
 #[cfg(target_os = "android")]
 static PSG_FETCHER_CLASS: Mutex<Option<std::sync::Arc<Global<JClass<'static>>>>> = Mutex::new(None);
+#[cfg(target_os = "android")]
+static PWIK_KALISZ_FETCHER_CLASS: Mutex<Option<std::sync::Arc<Global<JClass<'static>>>>> = Mutex::new(None);
 #[cfg(target_os = "android")]
 static WIDGET_UTILS_CLASS: Mutex<Option<std::sync::Arc<Global<JClass<'static>>>>> = Mutex::new(None);
 #[cfg(target_os = "android")]
@@ -512,6 +517,9 @@ fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(katowickie_wodociagi::KatowickieWodociagiProvider),
         Box::new(veolia_warszawa::VeoliaWarszawaProvider),
         Box::new(veolia_poznan::VeoliaPoznanProvider),
+        Box::new(veolia_lodz::VeoliaLodzProvider),
+        Box::new(zwik_lodz::ZwikLodzProvider),
+        Box::new(pwik_kalisz::PwikKaliszProvider),
     ]
 }
 
@@ -877,6 +885,21 @@ fn ensure_verifier_initialized(env: &mut Env, context: &JObject) {
         }
         Err(e) => {
             log::error!("Failed to find PsgWebViewFetcher class: {:?}", e);
+        }
+    }
+
+    log::info!("Caching PwikKaliszFetcher class...");
+    match env.find_class(jni::jni_str!("xyz/eremef/awaria/PwikKaliszFetcher")) {
+        Ok(cls) => {
+            if let Ok(cls_ref) = env.new_global_ref(cls) {
+                if let Ok(mut g) = PWIK_KALISZ_FETCHER_CLASS.lock() {
+                    *g = Some(std::sync::Arc::new(cls_ref));
+                    log::info!("PwikKaliszFetcher class cached successfully.");
+                }
+            }
+        }
+        Err(e) => {
+            log::error!("Failed to find PwikKaliszFetcher class: {:?}", e);
         }
     }
 
@@ -1247,6 +1270,50 @@ pub async fn get_psg_html_android() -> Result<String, String> {
             Ok(html) => {
                 if html.is_empty() {
                     Err("Native PSG fetch returned null".to_string())
+                } else {
+                    Ok(html)
+                }
+            },
+            Err(e) => Err(e.to_string())
+        }
+    }).await.map_err(|e: tokio::task::JoinError| e.to_string())?
+}
+
+/// Fetches a URL on Android using Kotlin's HttpURLConnection (Android BoringSSL/Conscrypt TLS),
+/// bypassing rustls for sites with incompatible TLS configurations (e.g. wodociagi-kalisz.pl).
+#[cfg(target_os = "android")]
+pub async fn fetch_url_via_android(url: &str) -> Result<String, String> {
+    let class_ref = PWIK_KALISZ_FETCHER_CLASS.lock()
+        .map_err(|_| "PwikKaliszFetcher lock poisoned".to_string())?
+        .clone()
+        .ok_or("PwikKaliszFetcher class not cached")?;
+
+    let url_owned = url.to_string();
+    #[allow(deprecated)]
+    tokio::task::spawn_blocking(move || -> Result<String, String> {
+        let vm_guard = JAVA_VM.lock().unwrap();
+        let vm = vm_guard.as_ref().unwrap();
+        let res: Result<String, jni::errors::Error> = vm.attach_current_thread(|env| {
+            let jurl = env.new_string(&url_owned)?;
+            let result = env.call_static_method(
+                &*class_ref,
+                jni::jni_str!("fetchUrl"),
+                jni::jni_sig!("(Ljava/lang/String;)Ljava/lang/String;"),
+                &[jni::objects::JValue::Object(&jurl)]
+            )?;
+            let html_obj = result.l()?;
+            if html_obj.is_null() {
+                return Ok(String::new());
+            }
+            let html_jstr = unsafe { jni::objects::JString::from_raw(env, html_obj.as_raw() as jstring) };
+            #[allow(deprecated)]
+            let html: String = env.get_string(&html_jstr).map(|s| s.into()).unwrap_or_default();
+            Ok(html)
+        });
+        match res {
+            Ok(html) => {
+                if html.is_empty() {
+                    Err("PwikKaliszFetcher.fetchUrl returned null".to_string())
                 } else {
                     Ok(html)
                 }

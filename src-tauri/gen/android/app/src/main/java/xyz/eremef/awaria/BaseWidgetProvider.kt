@@ -360,6 +360,9 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             "katowickie_wodociagi" -> context.getString(R.string.provider_katowickie_wodociagi)
             "veolia_warszawa" -> context.getString(R.string.provider_veolia_warszawa)
             "veolia_poznan" -> context.getString(R.string.provider_veolia_poznan)
+            "veolia_lodz" -> context.getString(R.string.provider_veolia_lodz)
+            "zwik_lodz" -> context.getString(R.string.provider_zwik_lodz)
+            "pwik_kalisz" -> context.getString(R.string.provider_pwik_kalisz)
             else ->
                     key.replaceFirstChar {
                         if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()

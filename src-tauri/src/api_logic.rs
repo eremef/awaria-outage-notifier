@@ -33,6 +33,12 @@ pub enum AlertSource {
     VeoliaWarszawa,
     #[serde(rename = "veolia_poznan")]
     VeoliaPoznan,
+    #[serde(rename = "veolia_lodz")]
+    VeoliaLodz,
+    #[serde(rename = "zwik_lodz")]
+    ZwikLodz,
+    #[serde(rename = "pwik_kalisz")]
+    PwikKalisz,
 }
 
 impl AlertSource {
@@ -79,6 +85,9 @@ impl AlertSource {
             AlertSource::KatowickieWodociagi => Some(vec!["ŚLĄSKIE"]),
             AlertSource::VeoliaWarszawa => Some(vec!["MAZOWIECKIE"]),
             AlertSource::VeoliaPoznan => Some(vec!["WIELKOPOLSKIE"]),
+            AlertSource::VeoliaLodz => Some(vec!["ŁÓDZKIE"]),
+            AlertSource::ZwikLodz => Some(vec!["ŁÓDZKIE"]),
+            AlertSource::PwikKalisz => Some(vec!["WIELKOPOLSKIE"]),
             AlertSource::Fortum => Some(vec![
                 "DOLNOŚLĄSKIE",
                 "ŚLĄSKIE",
@@ -279,10 +288,10 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea | AlertSource::Pge | AlertSource::Stoen => {
             if is_pl { "awaria prądu" } else { "power outage" }
         }
-        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::Aquanet | AlertSource::KatowickieWodociagi => {
+        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::PwikKalisz => {
             if is_pl { "awaria wody" } else { "water outage" }
         }
-        AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan => {
+        AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz => {
             if is_pl { "awaria ogrzewania" } else { "heat outage" }
         }
         AlertSource::Psg => {
@@ -364,6 +373,9 @@ impl std::fmt::Display for AlertSource {
             AlertSource::KatowickieWodociagi => "katowickie_wodociagi",
             AlertSource::VeoliaWarszawa => "veolia_warszawa",
             AlertSource::VeoliaPoznan => "veolia_poznan",
+            AlertSource::VeoliaLodz => "veolia_lodz",
+            AlertSource::ZwikLodz => "zwik_lodz",
+            AlertSource::PwikKalisz => "pwik_kalisz",
         };
         write!(f, "{}", s)
     }
@@ -439,7 +451,15 @@ pub fn is_krakow(addr: &AddressEntry) -> bool {
     name.starts_with("kraków") || name.starts_with("krakow") || addr.city_id == Some(950463)
 }
 
+pub fn is_lodz(addr: &AddressEntry) -> bool {
+    let name = addr.city_name.trim().to_lowercase();
+    name.starts_with("łódź") || name.starts_with("lodz") || addr.city_id == Some(958153)
+}
 
+pub fn is_kalisz(addr: &AddressEntry) -> bool {
+    let name = addr.city_name.trim().to_lowercase();
+    name.starts_with("kalisz") || addr.city_id == Some(936579)
+}
 
 // ── Address & Settings ────────────────────────────────────
 
