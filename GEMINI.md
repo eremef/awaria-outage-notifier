@@ -29,6 +29,7 @@
 ## User Rules
 
 - when adding provider color/accent, adjust it for the themes colors to make it easily readable.
+- use `cargo clippy` instead of `cargo check`
 
 ## Outage card layout
 

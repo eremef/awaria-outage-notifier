@@ -55,14 +55,14 @@ pub struct PwikKaliszArticle {
     pub description: String,
 }
 
-pub async fn fetch_html(url: &str, client: &Client) -> Result<String, String> {
+pub async fn fetch_html(url: &str, _client: &Client) -> Result<String, String> {
     #[cfg(target_os = "android")]
     {
         crate::fetch_url_via_android(url).await
     }
     #[cfg(not(target_os = "android"))]
     {
-        let res = client.get(url)
+        let res = _client.get(url)
             .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
             .send()
             .await

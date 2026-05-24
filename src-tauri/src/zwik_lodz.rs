@@ -117,74 +117,70 @@ impl AlertProvider for ZwikLodzProvider {
                             current_section = 1;
                         } else if text_lower.contains("planowanych pracach") {
                             current_section = 2;
-                        } else if !text_lower.is_empty() && text_lower != " " && !text_lower.contains("&nbsp;") && text_lower != " " {
-                            if parse_zwik_date(&text).is_none() {
-                                current_section = 0;
-                            }
+                        } else if !text_lower.is_empty() && text_lower != " " && !text_lower.contains("&nbsp;") && text_lower != " " && parse_zwik_date(&text).is_none() {
+                            current_section = 0;
                         }
-                    } else if tag_name == "ul" || tag_name == "ol" {
-                        if current_section == 1 || current_section == 2 {
-                            for li in element.select(&li_selector) {
-                                let li_text = li.text().collect::<Vec<_>>().join(" ").trim().to_string();
-                                let li_text = li_text.replace("&nbsp;", " ").replace('\u{a0}', " ");
-                                if li_text.to_lowercase().contains("bez wyłączeń") || li_text.is_empty() {
+                    } else if (tag_name == "ul" || tag_name == "ol") && (current_section == 1 || current_section == 2) {
+                        for li in element.select(&li_selector) {
+                            let li_text = li.text().collect::<Vec<_>>().join(" ").trim().to_string();
+                            let li_text = li_text.replace("&nbsp;", " ").replace('\u{a0}', " ");
+                            if li_text.to_lowercase().contains("bez wyłączeń") || li_text.is_empty() {
+                                continue;
+                            }
+                                
+                            let incident_type = if current_section == 1 { "Awaria" } else { "Prace planowane" };
+                            let message = format!("{} - {}", incident_type, li_text);
+                                
+                            let mut alert = UnifiedAlert {
+                                source: AlertSource::ZwikLodz,
+                                startDate: start_date.map(|d| d.format("%Y-%m-%dT%H:%M:%S").to_string()),
+                                endDate: start_date.map(|d| (d + Duration::hours(24)).format("%Y-%m-%dT%H:%M:%S").to_string()),
+                                message: Some(message),
+                                description: Some("Miejscowość: Łódź".to_string()),
+                                address_index: None,
+                                is_local: Some(false),
+                                hash: None,
+                            };
+
+                            let combined_text = format!("Łódź {}", li_text).to_lowercase();
+                                
+                            for (idx, a) in settings.addresses.iter().enumerate() {
+                                if !a.is_active || !crate::api_logic::is_lodz(a) {
                                     continue;
                                 }
-                                
-                                let incident_type = if current_section == 1 { "Awaria" } else { "Prace planowane" };
-                                let message = format!("{} - {}", incident_type, li_text);
-                                
-                                let mut alert = UnifiedAlert {
-                                    source: AlertSource::ZwikLodz,
-                                    startDate: start_date.map(|d| d.format("%Y-%m-%dT%H:%M:%S").to_string()),
-                                    endDate: start_date.map(|d| (d + Duration::hours(24)).format("%Y-%m-%dT%H:%M:%S").to_string()),
-                                    message: Some(message),
-                                    description: Some(format!("Miejscowość: Łódź")),
-                                    address_index: None,
-                                    is_local: Some(false),
-                                    hash: None,
-                                };
-
-                                let combined_text = format!("Łódź {}", li_text).to_lowercase();
-                                
-                                for (idx, a) in settings.addresses.iter().enumerate() {
-                                    if !a.is_active || !crate::api_logic::is_lodz(a) {
-                                        continue;
+                                let mut is_match = false;
+                                if !a.street_name_1.is_empty() {
+                                    let s1 = a.street_name_1.to_lowercase();
+                                    if combined_text.contains(&s1) {
+                                        is_match = true;
                                     }
-                                    let mut is_match = false;
-                                    if !a.street_name_1.is_empty() {
-                                        let s1 = a.street_name_1.to_lowercase();
-                                        if combined_text.contains(&s1) {
-                                            is_match = true;
-                                        }
+                                }
+                                if !a.street_name_2.as_deref().unwrap_or("").is_empty() {
+                                    let s2 = a.street_name_2.as_ref().unwrap().to_lowercase();
+                                    if combined_text.contains(&s2) {
+                                        is_match = true;
                                     }
-                                    if !a.street_name_2.as_deref().unwrap_or("").is_empty() {
-                                        let s2 = a.street_name_2.as_ref().unwrap().to_lowercase();
-                                        if combined_text.contains(&s2) {
-                                            is_match = true;
-                                        }
-                                    }
+                                }
                                     
-                                    if is_match {
-                                        alert.is_local = Some(true);
-                                        alert.address_index = Some(idx);
-                                        break;
-                                    }
+                                if is_match {
+                                    alert.is_local = Some(true);
+                                    alert.address_index = Some(idx);
+                                    break;
                                 }
-
-                                // Create a unique hash
-                                let mut hasher = DefaultHasher::new();
-                                alert.source.hash(&mut hasher);
-                                if let Some(msg) = &alert.message {
-                                    msg.hash(&mut hasher);
-                                }
-                                if let Some(start) = &alert.startDate {
-                                    start.hash(&mut hasher);
-                                }
-                                alert.hash = Some(format!("{:x}", hasher.finish()));
-
-                                alerts.push(alert);
                             }
+
+                            // Create a unique hash
+                            let mut hasher = DefaultHasher::new();
+                            alert.source.hash(&mut hasher);
+                            if let Some(msg) = &alert.message {
+                                msg.hash(&mut hasher);
+                            }
+                            if let Some(start) = &alert.startDate {
+                                start.hash(&mut hasher);
+                            }
+                            alert.hash = Some(format!("{:x}", hasher.finish()));
+
+                            alerts.push(alert);
                         }
                     }
                 }

@@ -52,8 +52,7 @@ pub fn parse_veolia_lodz_date(s: &str) -> Option<String> {
 pub fn extract_text_from_html(html: &str) -> String {
     let document = Html::parse_document(html);
     document.root_element().text().collect::<Vec<_>>().join(" ")
-        .replace('\r', " ")
-        .replace('\n', " ")
+        .replace(['\r', '\n'], " ")
         .split_whitespace()
         .collect::<Vec<_>>()
         .join(" ")
