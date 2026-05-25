@@ -185,6 +185,14 @@ class WidgetUpdateWorker(
             pwikKaliszProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        // Update PWiK Częstochowa widgets
+        val pwikCzestochowaName = ComponentName(context, PwikCzestochowaWidgetProvider::class.java)
+        val pwikCzestochowaIds = appWidgetManager.getAppWidgetIds(pwikCzestochowaName)
+        val pwikCzestochowaProvider = PwikCzestochowaWidgetProvider()
+        for (id in pwikCzestochowaIds) {
+            pwikCzestochowaProvider.updateWidget(context, appWidgetManager, id)
+        }
+
 
         return androidx.work.ListenableWorker.Result.success()
     }

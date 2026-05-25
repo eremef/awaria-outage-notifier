@@ -327,6 +327,22 @@
         </receiver>
 
         <receiver
+            android:name=".PwikCzestochowaWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_pwik_czestochowa">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_PWIK_CZESTOCHOWA" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_pwik_czestochowa_info" />
+        </receiver>
+
+        <receiver
             android:name=".AllWidgetProvider"
             android:exported="true"
             android:label="@string/widget_label_all">

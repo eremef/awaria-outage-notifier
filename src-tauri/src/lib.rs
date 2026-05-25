@@ -22,6 +22,7 @@ mod veolia_poznan;
 pub mod veolia_lodz;
 pub mod zwik_lodz;
 pub mod pwik_kalisz;
+pub mod pwik_czestochowa;
 
 use crate::network_state::NetworkState;
 use api_logic::{
@@ -520,6 +521,7 @@ fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(veolia_lodz::VeoliaLodzProvider),
         Box::new(zwik_lodz::ZwikLodzProvider),
         Box::new(pwik_kalisz::PwikKaliszProvider),
+        Box::new(pwik_czestochowa::PwikCzestochowaProvider),
     ]
 }
 
