@@ -28,6 +28,7 @@
 
 ## User Rules
 
+- **Manual Commits Only**: Never stage, commit, or push git changes automatically. Always wait for the user's explicit request (e.g., via the `/commit` workflow).
 - when adding provider color/accent, adjust it for the themes colors to make it easily readable.
 - use `cargo clippy` instead of `cargo check`
 

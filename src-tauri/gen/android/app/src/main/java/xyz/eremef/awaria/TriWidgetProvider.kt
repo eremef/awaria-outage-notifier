@@ -86,6 +86,9 @@ class TriWidgetProvider : BaseWidgetProvider() {
         val theme = allSettings?.firstOrNull()?.theme ?: "system"
         val dark = isDarkMode(context, theme)
 
+        val enabledSources = getEnabledSources(fullJson)
+        val allEnabledByDefault = fullJson?.has("enabledSources") == false
+
         var powerCount = "–"
         var heatCount = "–"
         var waterCount = "–"
@@ -106,6 +109,7 @@ class TriWidgetProvider : BaseWidgetProvider() {
                                 WidgetUtils.serializeSettingsForRust(settingsList, fullJson)
                         val p = async {
                             val sources = listOf("tauron", "stoen", "energa", "enea", "pge")
+                                    .filter { allEnabledByDefault || it in enabledSources }
                             sources
                                     .map { source ->
                                         async {
@@ -131,6 +135,7 @@ class TriWidgetProvider : BaseWidgetProvider() {
                         }
                         val h = async {
                             val heatSources = listOf("fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz")
+                                    .filter { allEnabledByDefault || it in enabledSources }
                             heatSources
                                     .map { source ->
                                         async {
@@ -156,6 +161,7 @@ class TriWidgetProvider : BaseWidgetProvider() {
                         }
                         val w = async {
                             val waterSources = listOf("mpwik_wroclaw", "mpwik_warszawa", "wmk", "aquanet", "katowickie_wodociagi", "zwik_lodz", "pwik_kalisz", "pwik_czestochowa", "wodociagi_plockie")
+                                    .filter { allEnabledByDefault || it in enabledSources }
                             waterSources
                                     .map { source ->
                                         async {
@@ -269,8 +275,7 @@ class TriWidgetProvider : BaseWidgetProvider() {
         views.setTextViewText(R.id.label_water, getTranslation(context, "water"))
 
         // Check enabled utilities
-        val enabledSources = getEnabledSources(fullJson)
-        val allEnabledByDefault = fullJson?.has("enabledSources") == false
+
 
         val powerEnabled =
                 allEnabledByDefault ||
