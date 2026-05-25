@@ -6,6 +6,25 @@ use chrono::{Datelike, Local, NaiveDate, NaiveDateTime, NaiveTime, Duration};
 use scraper::{Html, Selector};
 use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
+use regex::Regex;
+
+fn parse_zwik_li_date(li_text: &str) -> (Option<NaiveDateTime>, Option<NaiveDateTime>) {
+    let re = Regex::new(r"w dniu (\d{1,2})\.(\d{1,2})\.?(?:(20\d{2})r?\.?)?.*?g(?:odz)?\.\s*(\d{1,2})(?::(\d{2}))?-(\d{1,2})(?::(\d{2}))?").unwrap();
+    if let Some(caps) = re.captures(li_text) {
+        if let (Ok(d), Ok(m), Ok(h_start), Ok(h_end)) = (caps[1].parse::<u32>(), caps[2].parse::<u32>(), caps[4].parse::<u32>(), caps[6].parse::<u32>()) {
+            let year = caps.get(3).map_or(Local::now().year(), |m| m.as_str().parse::<i32>().unwrap_or(Local::now().year()));
+            let m_start = caps.get(5).map_or(0, |m| m.as_str().parse::<u32>().unwrap_or(0));
+            let m_end = caps.get(7).map_or(0, |m| m.as_str().parse::<u32>().unwrap_or(0));
+
+            if let Some(date) = NaiveDate::from_ymd_opt(year, m, d) {
+                if let (Some(t_start), Some(t_end)) = (NaiveTime::from_hms_opt(h_start, m_start, 0), NaiveTime::from_hms_opt(h_end, m_end, 0)) {
+                    return (Some(NaiveDateTime::new(date, t_start)), Some(NaiveDateTime::new(date, t_end)));
+                }
+            }
+        }
+    }
+    (None, None)
+}
 
 fn parse_zwik_date(date_str: &str) -> Option<NaiveDateTime> {
     let cleaned = date_str.to_lowercase()
@@ -103,7 +122,7 @@ impl AlertProvider for ZwikLodzProvider {
 
                 for element in document.select(&selector) {
                     let tag_name = element.value().name();
-                    let text = element.text().collect::<Vec<_>>().join(" ").trim().to_string();
+                    let text = element.text().collect::<Vec<_>>().concat().trim().to_string();
                     
                     if tag_name == "p" || tag_name.starts_with("h") {
                         let text_lower = text.to_lowercase();
@@ -122,7 +141,7 @@ impl AlertProvider for ZwikLodzProvider {
                         }
                     } else if (tag_name == "ul" || tag_name == "ol") && (current_section == 1 || current_section == 2) {
                         for li in element.select(&li_selector) {
-                            let li_text = li.text().collect::<Vec<_>>().join(" ").trim().to_string();
+                            let li_text = li.text().collect::<Vec<_>>().concat().trim().to_string();
                             let li_text = li_text.replace("&nbsp;", " ").replace('\u{a0}', " ");
                             if li_text.to_lowercase().contains("bez wyłączeń") || li_text.to_lowercase().contains("bez awarii") || li_text.is_empty() {
                                 continue;
@@ -130,11 +149,17 @@ impl AlertProvider for ZwikLodzProvider {
                                 
                             let incident_type = if current_section == 1 { "Awaria" } else { "Prace planowane" };
                             let message = format!("{} - {}", incident_type, li_text);
+                            
+                            let (mut li_start, mut li_end) = parse_zwik_li_date(&li_text);
+                            if li_start.is_none() {
+                                li_start = start_date;
+                                li_end = start_date.map(|d| d + Duration::hours(24));
+                            }
                                 
                             let mut alert = UnifiedAlert {
                                 source: AlertSource::ZwikLodz,
-                                startDate: start_date.map(|d| d.format("%Y-%m-%dT%H:%M:%S").to_string()),
-                                endDate: start_date.map(|d| (d + Duration::hours(24)).format("%Y-%m-%dT%H:%M:%S").to_string()),
+                                startDate: li_start.map(|d| d.format("%Y-%m-%dT%H:%M:%S").to_string()),
+                                endDate: li_end.map(|d| d.format("%Y-%m-%dT%H:%M:%S").to_string()),
                                 message: Some(message),
                                 description: Some("Miejscowość: Łódź".to_string()),
                                 address_index: None,
@@ -150,13 +175,19 @@ impl AlertProvider for ZwikLodzProvider {
                                 }
                                 let mut is_match = false;
                                 if !a.street_name_1.is_empty() {
-                                    let s1 = a.street_name_1.to_lowercase();
+                                    let s1 = a.street_name_1.to_lowercase()
+                                        .replace("ul. ", "")
+                                        .replace("al. ", "")
+                                        .replace("pl. ", "");
                                     if combined_text.contains(&s1) {
                                         is_match = true;
                                     }
                                 }
                                 if !a.street_name_2.as_deref().unwrap_or("").is_empty() {
-                                    let s2 = a.street_name_2.as_ref().unwrap().to_lowercase();
+                                    let s2 = a.street_name_2.as_ref().unwrap().to_lowercase()
+                                        .replace("ul. ", "")
+                                        .replace("al. ", "")
+                                        .replace("pl. ", "");
                                     if combined_text.contains(&s2) {
                                         is_match = true;
                                     }
@@ -204,6 +235,21 @@ mod tests {
     fn test_parse_zwik_date() {
         assert!(parse_zwik_date("24 maja g. 9.00").is_some());
         assert!(parse_zwik_date("24 05 9.00").is_some());
+        
+        let (start, end) = parse_zwik_li_date("Milionowa /wyłącz. od Przędzalnianej do pos. Milionowa 25/27 /- w dniu 26.05. g. 8-13 wyłączenie wody");
+        assert!(start.is_some());
+        assert_eq!(start.unwrap().format("%m-%d %H:%M").to_string(), "05-26 08:00");
+        assert_eq!(end.unwrap().format("%m-%d %H:%M").to_string(), "05-26 13:00");
+
+        let (start, end) = parse_zwik_li_date("w dniu 26.05.2026 r. g. 8-13");
+        assert!(start.is_some());
+        assert_eq!(start.unwrap().format("%Y-%m-%d %H:%M").to_string(), "2026-05-26 08:00");
+        assert_eq!(end.unwrap().format("%Y-%m-%d %H:%M").to_string(), "2026-05-26 13:00");
+
+        let (start, end) = parse_zwik_li_date("w dniu 26.05. g. 08:30-13:45");
+        assert!(start.is_some());
+        assert_eq!(start.unwrap().format("%m-%d %H:%M").to_string(), "05-26 08:30");
+        assert_eq!(end.unwrap().format("%m-%d %H:%M").to_string(), "05-26 13:45");
     }
 
     #[tokio::test]
@@ -252,7 +298,7 @@ mod tests {
 
         for element in document.select(&selector) {
             let tag_name = element.value().name();
-            let text = element.text().collect::<Vec<_>>().join(" ").trim().to_string();
+            let text = element.text().collect::<Vec<_>>().concat().trim().to_string();
             
             if tag_name == "p" || tag_name.starts_with("h") {
                 let text_lower = text.to_lowercase();
@@ -274,7 +320,7 @@ mod tests {
             } else if tag_name == "ul" || tag_name == "ol" {
                 if current_section == 1 || current_section == 2 {
                     for li in element.select(&li_selector) {
-                        let li_text = li.text().collect::<Vec<_>>().join(" ").trim().to_string();
+                        let li_text = li.text().collect::<Vec<_>>().concat().trim().to_string();
                         let li_text = li_text.replace("&nbsp;", " ").replace('\u{a0}', " ");
                         if li_text.to_lowercase().contains("bez wyłączeń") || li_text.to_lowercase().contains("bez awarii") || li_text.is_empty() {
                             continue;
@@ -344,16 +390,13 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_zwik_lodz_parsing_logic_no_outages() {
+    async fn test_zwik_lodz_parsing_logic_broken_html() {
+        use crate::api_logic::{AddressEntry, Settings};
         let html = r#"
             <p class="topic_new" style="text-align: center;"><strong>24 maja g. 9.00</strong></p>
-            <p class="topic_new" style="text-align: left;"><span style="text-decoration: underline;"><strong>Informacje o awariach wodociągowych i kanalizacyjnych oraz ograniczeniach w dostawie wody:</strong></span></p>
+            <p><em><strong><span style="text-decoration: underline;">Informacj</span></strong></em><strong><span style="text-decoration: underline;">e o planowa</span></strong><em><strong><span style="text-decoration: underline;">nych pracach na sieci wodociągowej:</span></strong></em></p>
             <ul>
-                <li>bez awarii</li>
-            </ul>
-            <p class="topic_new" style="text-align: left;"><span style="text-decoration: underline;"><strong>Informacje o planowanych pracach na sieci wodociągowej:</strong></span></p>
-            <ul>
-                <li>bez wyłączeń</li>
+                <li>Milionowa /wyłącz. od Przędzalnianej do pos. Milionowa 25/27 /- w dniu 26.05. g. 8-13 wyłączenie wody.</li>
             </ul>
         "#;
 
@@ -361,15 +404,38 @@ mod tests {
         let selector = Selector::parse("p, h1, h2, h3, h4, h5, h6, ul, ol").unwrap();
         let li_selector = Selector::parse("li").unwrap();
         
+        let mut start_date: Option<NaiveDateTime> = None;
         let mut current_section = 0; // 0=None, 1=Awarie, 2=Planowane
+
         let mut alerts = Vec::new();
+
+        let mut settings = Settings::default();
+        settings.addresses.push(AddressEntry {
+            name: "Dom".to_string(),
+            city_name: "Łódź".to_string(),
+            voivodeship: "ŁÓDZKIE".to_string(),
+            district: String::new(),
+            commune: String::new(),
+            street_name: "Milionowa".to_string(),
+            street_name_1: "Milionowa".to_string(),
+            street_name_2: None,
+            house_no: "25".to_string(),
+            city_id: Some(958128),
+            street_id: None,
+            is_active: true,
+        });
 
         for element in document.select(&selector) {
             let tag_name = element.value().name();
-            let text = element.text().collect::<Vec<_>>().join(" ").trim().to_string();
+            let text = element.text().collect::<Vec<_>>().concat().trim().to_string();
             
             if tag_name == "p" || tag_name.starts_with("h") {
                 let text_lower = text.to_lowercase();
+                if start_date.is_none() {
+                    if let Some(dt) = parse_zwik_date(&text) {
+                        start_date = Some(dt);
+                    }
+                }
                 
                 if text_lower.contains("informacje o awariach") || text_lower.contains("awariach wodociągowych") {
                     current_section = 1;
@@ -383,18 +449,60 @@ mod tests {
             } else if tag_name == "ul" || tag_name == "ol" {
                 if current_section == 1 || current_section == 2 {
                     for li in element.select(&li_selector) {
-                        let li_text = li.text().collect::<Vec<_>>().join(" ").trim().to_string();
+                        let li_text = li.text().collect::<Vec<_>>().concat().trim().to_string();
                         let li_text = li_text.replace("&nbsp;", " ").replace('\u{a0}', " ");
                         if li_text.to_lowercase().contains("bez wyłączeń") || li_text.to_lowercase().contains("bez awarii") || li_text.is_empty() {
                             continue;
                         }
                         
-                        alerts.push(li_text);
+                        let incident_type = if current_section == 1 { "Awaria" } else { "Prace planowane" };
+                        let message = format!("{} - {}", incident_type, li_text);
+                        
+                        let (mut li_start, mut li_end) = parse_zwik_li_date(&li_text);
+                        if li_start.is_none() {
+                            li_start = start_date;
+                            li_end = start_date.map(|d| d + Duration::hours(24));
+                        }
+
+                        let mut alert = UnifiedAlert {
+                            source: AlertSource::ZwikLodz,
+                            startDate: li_start.map(|d| d.format("%Y-%m-%dT%H:%M:%S").to_string()),
+                            endDate: li_end.map(|d| d.format("%Y-%m-%dT%H:%M:%S").to_string()),
+                            message: Some(message),
+                            description: Some(format!("Miejscowość: Łódź")),
+                            address_index: None,
+                            is_local: Some(false),
+                            hash: None,
+                        };
+
+                        let combined_text = format!("Łódź {}", li_text).to_lowercase();
+                        
+                        for (idx, a) in settings.addresses.iter().enumerate() {
+                            if !a.is_active || !crate::api_logic::is_lodz(a) {
+                                continue;
+                            }
+                            let mut is_match = false;
+                            if !a.street_name_1.is_empty() {
+                                let s1 = a.street_name_1.to_lowercase();
+                                if combined_text.contains(&s1) {
+                                    is_match = true;
+                                }
+                            }
+                            
+                            if is_match {
+                                alert.is_local = Some(true);
+                                alert.address_index = Some(idx);
+                                break;
+                            }
+                        }
+
+                        alerts.push(alert);
                     }
                 }
             }
         }
 
-        assert_eq!(alerts.len(), 0);
+        assert_eq!(alerts.len(), 1, "Should have parsed one alert despite broken HTML header text");
     }
 }
+
