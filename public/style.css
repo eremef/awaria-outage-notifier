@@ -1219,7 +1219,29 @@ h1 {
     text-align: center;
     display: flex;
     justify-content: center;
+    align-items: center;
     margin: 0.5rem 0 1rem;
+    position: relative;
+}
+
+.collapse-local-btn {
+    position: absolute;
+    right: 0;
+    background: transparent;
+    border: none;
+    color: var(--secondary-text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4rem;
+    border-radius: 8px;
+    transition: all 0.1s ease;
+}
+
+.collapse-local-btn:hover {
+    color: var(--primary-text);
+    background: var(--label-border);
 }
 
 .section-your-location span {
@@ -1353,6 +1375,8 @@ h1 {
     text-align: center;
     display: flex;
     justify-content: center;
+    align-items: center;
+    position: relative;
     margin: 1rem 0 1rem;
 }
 
@@ -1430,7 +1454,7 @@ h1 {
 
 .collapsible .toggle-icon {
     font-size: 0.8rem;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
     display: inline-block;
 }
 
@@ -1442,7 +1466,7 @@ h1 {
     max-height: 5000px;
     /* Large enough */
     overflow: hidden;
-    transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+    transition: max-height 0.1s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.1s ease;
 }
 
 .collapsible.collapsed .collapsible-content {

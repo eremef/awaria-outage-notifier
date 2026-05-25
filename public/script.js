@@ -1801,14 +1801,23 @@ if (typeof document !== 'undefined') {
         if (hasLocalAlerts) {
             const totalLocal = Object.values(localLists).reduce((sum, l) => sum + l.length, 0);
             const lblYourLoc = typeof t !== 'undefined' ? t('lbl_your_location') : 'Your location';
-            html += `<div class="section-your-location"><span>${escapeHtml(lblYourLoc)} (${totalLocal})</span></div>`;
+            const titleCollapse = typeof t !== 'undefined' ? t('btn_collapse_expand_all') : 'Collapse/Expand All';
+            html += `
+            <div class="section-your-location">
+                <span>${escapeHtml(lblYourLoc)} (${totalLocal})</span>
+                <button class="collapse-local-btn" onclick="toggleLocalCollapse(this)" title="${escapeHtml(titleCollapse)}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="18 15 12 9 6 15"></polyline>
+                    </svg>
+                </button>
+            </div>`;
 
             SOURCES.forEach(s => {
                 const list = localLists[s.id];
                 if (list && list.length > 0) {
                     const lblSection = (typeof t !== 'undefined' ? t(`lbl_section_${s.id}`) : null) || `${s.category} (${s.label})`;
                     html += `
-                    <div class="collapsible source-${s.id}">
+                    <div class="collapsible local-alert-group source-${s.id}">
                         <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
                             <span>${escapeHtml(lblSection)} (${list.length})</span>
                             <span class="toggle-icon">▼</span>
@@ -1836,14 +1845,23 @@ if (typeof document !== 'undefined') {
             setTimeout(() => {
                 let otherHtml = '';
                 const lblDivider = typeof t !== 'undefined' ? t('lbl_other_alerts_divider') : 'Other alerts';
-                otherHtml += `<div class="other-divider"><span>${escapeHtml(lblDivider)}</span></div>`;
+                const titleCollapse = typeof t !== 'undefined' ? t('btn_collapse_expand_all') : 'Collapse/Expand All';
+                otherHtml += `
+                <div class="other-divider">
+                    <span>${escapeHtml(lblDivider)}</span>
+                    <button class="collapse-local-btn" onclick="toggleOtherCollapse(this)" title="${escapeHtml(titleCollapse)}">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                </div>`;
 
                 SOURCES.forEach(s => {
                     const list = otherLists[s.id];
                     if (list && list.length > 0) {
                         const lblSection = (typeof t !== 'undefined' ? t(`lbl_section_${s.id}`) : null) || `${s.category} (${s.label})`;
                         otherHtml += `
-                        <div class="collapsible source-${s.id} collapsed">
+                        <div class="collapsible other-alert-group source-${s.id} collapsed">
                             <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
                                 <span>${escapeHtml(lblSection)} (${list.length})</span>
                                 <span class="toggle-icon">▼</span>
@@ -1859,6 +1877,38 @@ if (typeof document !== 'undefined') {
             }, 0);
         }
     }
+
+    window.toggleOtherCollapse = function(btn) {
+        const groups = document.querySelectorAll('.other-alert-group');
+        if (!groups.length) return;
+
+        const anyExpanded = Array.from(groups).some(g => !g.classList.contains('collapsed'));
+        const svg = btn.querySelector('polyline');
+        
+        if (anyExpanded) {
+            groups.forEach(g => g.classList.add('collapsed'));
+            if(svg) svg.setAttribute('points', '6 9 12 15 18 9');
+        } else {
+            groups.forEach(g => g.classList.remove('collapsed'));
+            if(svg) svg.setAttribute('points', '18 15 12 9 6 15');
+        }
+    };
+
+    window.toggleLocalCollapse = function(btn) {
+        const groups = document.querySelectorAll('.local-alert-group');
+        if (!groups.length) return;
+
+        const anyExpanded = Array.from(groups).some(g => !g.classList.contains('collapsed'));
+        const svg = btn.querySelector('polyline');
+        
+        if (anyExpanded) {
+            groups.forEach(g => g.classList.add('collapsed'));
+            if(svg) svg.setAttribute('points', '6 9 12 15 18 9');
+        } else {
+            groups.forEach(g => g.classList.remove('collapsed'));
+            if(svg) svg.setAttribute('points', '18 15 12 9 6 15');
+        }
+    };
 
     function renderCards(alerts, sourceId) {
         let sourceLabel = sourceLabelCache[sourceId];
