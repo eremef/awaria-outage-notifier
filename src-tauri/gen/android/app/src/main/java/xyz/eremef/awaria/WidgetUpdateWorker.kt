@@ -185,6 +185,14 @@ class WidgetUpdateWorker(
             pwikKaliszProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        // Update Wodociągi Płockie widgets
+        val wodociagiPlockieName = ComponentName(context, WodociagiPlockieWidgetProvider::class.java)
+        val wodociagiPlockieIds = appWidgetManager.getAppWidgetIds(wodociagiPlockieName)
+        val wodociagiPlockieProvider = WodociagiPlockieWidgetProvider()
+        for (id in wodociagiPlockieIds) {
+            wodociagiPlockieProvider.updateWidget(context, appWidgetManager, id)
+        }
+
         // Update PWiK Częstochowa widgets
         val pwikCzestochowaName = ComponentName(context, PwikCzestochowaWidgetProvider::class.java)
         val pwikCzestochowaIds = appWidgetManager.getAppWidgetIds(pwikCzestochowaName)

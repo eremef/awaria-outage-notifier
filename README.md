@@ -35,6 +35,8 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **Katowickie Wodociągi**: Water maintenance and failures in Katowice.
   - **ZWiK Łódź**: Water maintenance and failures in Łódź.
   - **PWiK Kalisz**: Water maintenance and failures in Kalisz.
+  - **PWiK Częstochowa**: Water maintenance and failures in Częstochowa.
+  - **Wodociągi Płockie**: Water maintenance and failures in Płock.
 
 ## Android app
 

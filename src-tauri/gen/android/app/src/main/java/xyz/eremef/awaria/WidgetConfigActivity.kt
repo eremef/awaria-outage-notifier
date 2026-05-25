@@ -146,6 +146,7 @@ class WidgetConfigActivity : ComponentActivity() {
             className.contains("VeoliaLodzWidgetProvider") -> VeoliaLodzWidgetProvider()
             className.contains("ZwikLodzWidgetProvider") -> ZwikLodzWidgetProvider()
             className.contains("PwikKaliszWidgetProvider") -> PwikKaliszWidgetProvider()
+            className.contains("WodociagiPlockieWidgetProvider") -> WodociagiPlockieWidgetProvider()
             else -> TriWidgetProvider()
         }
     }

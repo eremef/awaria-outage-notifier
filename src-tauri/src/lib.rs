@@ -21,6 +21,7 @@ mod veolia_warszawa;
 mod veolia_poznan;
 pub mod veolia_lodz;
 pub mod zwik_lodz;
+pub mod wodociagi_plockie;
 pub mod pwik_kalisz;
 pub mod pwik_czestochowa;
 
@@ -520,6 +521,7 @@ fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(veolia_poznan::VeoliaPoznanProvider),
         Box::new(veolia_lodz::VeoliaLodzProvider),
         Box::new(zwik_lodz::ZwikLodzProvider),
+        Box::new(wodociagi_plockie::WodociagiPlockieProvider),
         Box::new(pwik_kalisz::PwikKaliszProvider),
         Box::new(pwik_czestochowa::PwikCzestochowaProvider),
     ]

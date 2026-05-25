@@ -100,6 +100,7 @@ if (typeof document !== 'undefined') {
         { id: 'veolia_poznan', label: 'Veolia Poznań', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_poznan_name', i18nShort: 'source_veolia_poznan_short' },
         { id: 'veolia_lodz', label: 'Veolia Łódź', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_lodz_name', i18nShort: 'source_veolia_lodz_short' },
         { id: 'zwik_lodz', label: 'ZWIK Łódź', category: 'water', defaultNotify: true, i18nLabel: 'source_zwik_lodz_name', i18nShort: 'source_zwik_lodz_short' },
+        { id: 'wodociagi_plockie', label: 'Wodociągi Płockie', category: 'water', defaultNotify: true, i18nLabel: 'source_wodociagi_plockie_name', i18nShort: 'source_wodociagi_plockie_short' },
         { id: 'pwik_kalisz', label: 'PWiK Kalisz', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_kalisz_name', i18nShort: 'source_pwik_kalisz_short' },
         { id: 'pwik_czestochowa', label: 'PWiK Częstochowa', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_czestochowa_name', i18nShort: 'source_pwik_czestochowa_short' },
     ];
@@ -1524,6 +1525,7 @@ if (typeof document !== 'undefined') {
     function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         const now = new Date();
         const enabledSources = (settings && settings.enabledSources) ? settings.enabledSources : SOURCES.map(s => s.id);
+
         const activeAlerts = alerts.filter(item => {
             if (!enabledSources.includes(item.source)) return false;
             if (!item.endDate) return true;
@@ -1646,11 +1648,17 @@ if (typeof document !== 'undefined') {
             ];
             return poznanCommunes.some(c => city.startsWith(c) || commune.startsWith(c));
         };
-        const isLodz = (addr) => {
-            if (!addr) return false;
-            const city = (addr.cityName || '').trim().toLowerCase();
-            return city.startsWith('łódź') || city.startsWith('lodz') || addr.cityId === 958153;
-        };
+        function isLodz(addr) {
+            if (!addr || !addr.cityName) return false;
+            let name = addr.cityName.trim().toLowerCase();
+            return name.startsWith('łódź') || name.startsWith('lodz') || addr.cityId === 958153;
+        }
+
+        function isPlock(addr) {
+            if (!addr || !addr.cityName) return false;
+            let name = addr.cityName.trim().toLowerCase();
+            return name.startsWith('płock') || name.startsWith('plock') || addr.cityId === 969400; // I'll just check startsWith
+        }
         const isKalisz = (addr) => {
             if (!addr) return false;
             const city = (addr.cityName || '').trim().toLowerCase();
@@ -1674,6 +1682,7 @@ if (typeof document !== 'undefined') {
         const hasAnyLodz = addresses.some(isLodz);
         const hasAnyKalisz = addresses.some(isKalisz);
         const hasAnyCzestochowa = addresses.some(isCzestochowa);
+        const hasAnyPlock = addresses.some(isPlock);
 
         const localLists = {};
         const otherLists = {};
@@ -1699,6 +1708,8 @@ if (typeof document !== 'undefined') {
                         if (isPoznan(addr)) otherLists[item.source].push(item);
                     } else if (item.source === 'veolia_lodz' || item.source === 'zwik_lodz') {
                         if (isLodz(addr)) otherLists[item.source].push(item);
+                    } else if (item.source === 'wodociagi_plockie') {
+                        if (isPlock(addr)) otherLists[item.source].push(item);
                     } else if (item.source === 'pwik_kalisz') {
                         if (isKalisz(addr)) otherLists[item.source].push(item);
                     } else if (item.source === 'pwik_czestochowa') {
@@ -1725,6 +1736,8 @@ if (typeof document !== 'undefined') {
                         if (hasAnyPoznan) otherLists[item.source].push(item);
                     } else if (item.source === 'veolia_lodz' || item.source === 'zwik_lodz') {
                         if (hasAnyLodz) otherLists[item.source].push(item);
+                    } else if (item.source === 'wodociagi_plockie') {
+                        if (hasAnyPlock) otherLists[item.source].push(item);
                     } else if (item.source === 'pwik_kalisz') {
                         if (hasAnyKalisz) otherLists[item.source].push(item);
                     } else if (item.source === 'pwik_czestochowa') {

@@ -36,6 +36,8 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
   - **Katowickie Wodociągi**: Awarie i konserwacje wodociągowe w Katowicach.
   - **ZWiK Łódź**: Awarie i konserwacje wodociągowe w Łodzi.
   - **PWiK Kalisz**: Awarie i konserwacje wodociągowe w Kaliszu.
+  - **PWiK Częstochowa**: Awarie i konserwacje wodociągowe w Częstochowie.
+  - **Wodociągi Płockie**: Awarie i konserwacje wodociągowe w Płocku.
 
 ## Aplikacja Android
 

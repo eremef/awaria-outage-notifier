@@ -37,6 +37,8 @@ pub enum AlertSource {
     VeoliaLodz,
     #[serde(rename = "zwik_lodz")]
     ZwikLodz,
+    #[serde(rename = "wodociagi_plockie")]
+    WodociagiPlockie,
     #[serde(rename = "pwik_kalisz")]
     PwikKalisz,
     #[serde(rename = "pwik_czestochowa")]
@@ -89,6 +91,7 @@ impl AlertSource {
             AlertSource::VeoliaPoznan => Some(vec!["WIELKOPOLSKIE"]),
             AlertSource::VeoliaLodz => Some(vec!["ŁÓDZKIE"]),
             AlertSource::ZwikLodz => Some(vec!["ŁÓDZKIE"]),
+            AlertSource::WodociagiPlockie => Some(vec!["MAZOWIECKIE"]),
             AlertSource::PwikKalisz => Some(vec!["WIELKOPOLSKIE"]),
             AlertSource::PwikCzestochowa => Some(vec!["ŚLĄSKIE"]),
             AlertSource::Fortum => Some(vec![
@@ -291,7 +294,7 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea | AlertSource::Pge | AlertSource::Stoen => {
             if is_pl { "awaria prądu" } else { "power outage" }
         }
-        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa => {
+        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::WodociagiPlockie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa => {
             if is_pl { "awaria wody" } else { "water outage" }
         }
         AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz => {
@@ -378,6 +381,7 @@ impl std::fmt::Display for AlertSource {
             AlertSource::VeoliaPoznan => "veolia_poznan",
             AlertSource::VeoliaLodz => "veolia_lodz",
             AlertSource::ZwikLodz => "zwik_lodz",
+            AlertSource::WodociagiPlockie => "wodociagi_plockie",
             AlertSource::PwikKalisz => "pwik_kalisz",
             AlertSource::PwikCzestochowa => "pwik_czestochowa",
         };
