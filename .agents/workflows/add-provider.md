@@ -34,7 +34,7 @@ Once the data source is identified, create an `implementation_plan.md` artifact.
 2. **Frontend (`public/`)**:
    - `public/script.js`: Add the provider to the `SOURCES` array (name, category, id, i18n keys) and update `renderAlerts` / filtering logic to handle the new city.
    - `public/i18n.js`: Add translation strings for the provider name and abbreviations.
-   - `public/style.css` (or `index.css`): Add CSS variables for the provider's brand color (ensure it is readable in light/dark themes).
+   - `public/style.css` (or `index.css`): Add CSS variables for the provider's brand color to **all themes** defined in the file (e.g., `:root`, `[data-theme="dark"]`, `emerald`, `ocean`, `nord`, `dracula`, `sepia`, `latte`), ensuring it is readable and maintains good contrast against each theme's background color.
    - Use the standard outage card layout:
      `{utility_icon} {provider_name}`
      `{start_date} - {end_date}`

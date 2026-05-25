@@ -101,6 +101,7 @@ if (typeof document !== 'undefined') {
         { id: 'veolia_lodz', label: 'Veolia Łódź', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_lodz_name', i18nShort: 'source_veolia_lodz_short' },
         { id: 'zwik_lodz', label: 'ZWIK Łódź', category: 'water', defaultNotify: true, i18nLabel: 'source_zwik_lodz_name', i18nShort: 'source_zwik_lodz_short' },
         { id: 'pwik_kalisz', label: 'PWiK Kalisz', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_kalisz_name', i18nShort: 'source_pwik_kalisz_short' },
+        { id: 'pwik_czestochowa', label: 'PWiK Częstochowa', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_czestochowa_name', i18nShort: 'source_pwik_czestochowa_short' },
     ];
 
     function renderSourcesUI() {
@@ -1463,7 +1464,7 @@ if (typeof document !== 'undefined') {
         if (!addr || addr.isActive === false) return false;
 
         // Sources that provide addressIndex and isLocal from backend
-        if (['tauron', 'energa', 'enea', 'pge', 'stoen', 'fortum', 'mpwik_wroclaw', 'mpwik_warszawa', 'wmk', 'psg', 'aquanet', 'katowickie_wodociagi', 'veolia', 'veolia_poznan', 'veolia_lodz', 'zwik_lodz', 'pwik_kalisz'].includes(alert.source)) {
+        if (['tauron', 'energa', 'enea', 'pge', 'stoen', 'fortum', 'mpwik_wroclaw', 'mpwik_warszawa', 'wmk', 'psg', 'aquanet', 'katowickie_wodociagi', 'veolia', 'veolia_poznan', 'veolia_lodz', 'zwik_lodz', 'pwik_kalisz', 'pwik_czestochowa'].includes(alert.source)) {
             if (alert.isLocal === true && (alert.addressIndex === addrIdx || alert.addressIndex === -1)) {
                 return true;
             }
@@ -1522,7 +1523,7 @@ if (typeof document !== 'undefined') {
 
     function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         const now = new Date();
-        const enabledSources = (settings && settings.enabledSources) ? settings.enabledSources : ['tauron', 'mpwik_wroclaw', 'mpwik_warszawa', 'wmk', 'fortum', 'energa', 'enea', 'pge', 'stoen', 'psg', 'aquanet', 'katowickie_wodociagi', 'veolia', 'veolia_poznan', 'veolia_lodz', 'zwik_lodz', 'pwik_kalisz'];
+        const enabledSources = (settings && settings.enabledSources) ? settings.enabledSources : ['tauron', 'mpwik_wroclaw', 'mpwik_warszawa', 'wmk', 'fortum', 'energa', 'enea', 'pge', 'stoen', 'psg', 'aquanet', 'katowickie_wodociagi', 'veolia', 'veolia_poznan', 'veolia_lodz', 'zwik_lodz', 'pwik_kalisz', 'pwik_czestochowa'];
         const activeAlerts = alerts.filter(item => {
             if (!enabledSources.includes(item.source)) return false;
             if (!item.endDate) return true;
@@ -1655,6 +1656,16 @@ if (typeof document !== 'undefined') {
             const city = (addr.cityName || '').trim().toLowerCase();
             return city.startsWith('kalisz') || addr.cityId === 936579;
         };
+        const isCzestochowa = (addr) => {
+            if (!addr) return false;
+            const city = (addr.cityName || '').trim().toLowerCase();
+            const czestochowaCommunes = [
+                'częstochowa', 'czestochowa', 'blachownia', 'kłobuck', 'klobuck',
+                'konopiska', 'miedźno', 'miedzno', 'mykanów', 'mykanow', 'olsztyn',
+                'poczesna', 'rędziny', 'redziny'
+            ];
+            return czestochowaCommunes.some(c => city.startsWith(c));
+        };
 
         const hasAnyWarszawa = addresses.some(isWarszawa);
         const hasAnyWroclaw = addresses.some(isWroclaw);
@@ -1662,6 +1673,7 @@ if (typeof document !== 'undefined') {
         const hasAnyPoznan = addresses.some(isPoznan);
         const hasAnyLodz = addresses.some(isLodz);
         const hasAnyKalisz = addresses.some(isKalisz);
+        const hasAnyCzestochowa = addresses.some(isCzestochowa);
 
         const localLists = {};
         const otherLists = {};
@@ -1689,6 +1701,8 @@ if (typeof document !== 'undefined') {
                         if (isLodz(addr)) otherLists[item.source].push(item);
                     } else if (item.source === 'pwik_kalisz') {
                         if (isKalisz(addr)) otherLists[item.source].push(item);
+                    } else if (item.source === 'pwik_czestochowa') {
+                        if (isCzestochowa(addr)) otherLists[item.source].push(item);
                     } else if (item.source === 'stoen' || item.source === 'veolia' || item.source === 'mpwik_warszawa') {
                         if (isWarszawa(addr)) otherLists[item.source].push(item);
                     } else {
@@ -1713,6 +1727,8 @@ if (typeof document !== 'undefined') {
                         if (hasAnyLodz) otherLists[item.source].push(item);
                     } else if (item.source === 'pwik_kalisz') {
                         if (hasAnyKalisz) otherLists[item.source].push(item);
+                    } else if (item.source === 'pwik_czestochowa') {
+                        if (hasAnyCzestochowa) otherLists[item.source].push(item);
                     } else if (item.source === 'stoen' || item.source === 'veolia' || item.source === 'mpwik_warszawa') {
                         if (hasAnyWarszawa) otherLists[item.source].push(item);
                     } else {

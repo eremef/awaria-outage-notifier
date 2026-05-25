@@ -124,7 +124,7 @@ impl AlertProvider for ZwikLodzProvider {
                         for li in element.select(&li_selector) {
                             let li_text = li.text().collect::<Vec<_>>().join(" ").trim().to_string();
                             let li_text = li_text.replace("&nbsp;", " ").replace('\u{a0}', " ");
-                            if li_text.to_lowercase().contains("bez wyłączeń") || li_text.is_empty() {
+                            if li_text.to_lowercase().contains("bez wyłączeń") || li_text.to_lowercase().contains("bez awarii") || li_text.is_empty() {
                                 continue;
                             }
                                 
@@ -276,7 +276,7 @@ mod tests {
                     for li in element.select(&li_selector) {
                         let li_text = li.text().collect::<Vec<_>>().join(" ").trim().to_string();
                         let li_text = li_text.replace("&nbsp;", " ").replace('\u{a0}', " ");
-                        if li_text.to_lowercase().contains("bez wyłączeń") || li_text.is_empty() {
+                        if li_text.to_lowercase().contains("bez wyłączeń") || li_text.to_lowercase().contains("bez awarii") || li_text.is_empty() {
                             continue;
                         }
                         
@@ -341,5 +341,60 @@ mod tests {
         let alert = &alerts[0];
         assert_eq!(alert.message.as_deref().unwrap(), "Awaria - Wilcza 11 - awaria przyłącza, dowóz wody cysterną. Naprawa w dniu dzisiejszym.");
         assert_eq!(alert.is_local, Some(true));
+    }
+
+    #[tokio::test]
+    async fn test_zwik_lodz_parsing_logic_no_outages() {
+        let html = r#"
+            <p class="topic_new" style="text-align: center;"><strong>24 maja g. 9.00</strong></p>
+            <p class="topic_new" style="text-align: left;"><span style="text-decoration: underline;"><strong>Informacje o awariach wodociągowych i kanalizacyjnych oraz ograniczeniach w dostawie wody:</strong></span></p>
+            <ul>
+                <li>bez awarii</li>
+            </ul>
+            <p class="topic_new" style="text-align: left;"><span style="text-decoration: underline;"><strong>Informacje o planowanych pracach na sieci wodociągowej:</strong></span></p>
+            <ul>
+                <li>bez wyłączeń</li>
+            </ul>
+        "#;
+
+        let document = Html::parse_document(&html);
+        let selector = Selector::parse("p, h1, h2, h3, h4, h5, h6, ul, ol").unwrap();
+        let li_selector = Selector::parse("li").unwrap();
+        
+        let mut current_section = 0; // 0=None, 1=Awarie, 2=Planowane
+        let mut alerts = Vec::new();
+
+        for element in document.select(&selector) {
+            let tag_name = element.value().name();
+            let text = element.text().collect::<Vec<_>>().join(" ").trim().to_string();
+            
+            if tag_name == "p" || tag_name.starts_with("h") {
+                let text_lower = text.to_lowercase();
+                
+                if text_lower.contains("informacje o awariach") || text_lower.contains("awariach wodociągowych") {
+                    current_section = 1;
+                } else if text_lower.contains("planowanych pracach") {
+                    current_section = 2;
+                } else if !text_lower.is_empty() && text_lower != " " && !text_lower.contains("&nbsp;") && text_lower != " " {
+                    if parse_zwik_date(&text).is_none() {
+                        current_section = 0;
+                    }
+                }
+            } else if tag_name == "ul" || tag_name == "ol" {
+                if current_section == 1 || current_section == 2 {
+                    for li in element.select(&li_selector) {
+                        let li_text = li.text().collect::<Vec<_>>().join(" ").trim().to_string();
+                        let li_text = li_text.replace("&nbsp;", " ").replace('\u{a0}', " ");
+                        if li_text.to_lowercase().contains("bez wyłączeń") || li_text.to_lowercase().contains("bez awarii") || li_text.is_empty() {
+                            continue;
+                        }
+                        
+                        alerts.push(li_text);
+                    }
+                }
+            }
+        }
+
+        assert_eq!(alerts.len(), 0);
     }
 }
