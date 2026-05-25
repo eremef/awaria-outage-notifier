@@ -1464,7 +1464,7 @@ if (typeof document !== 'undefined') {
         if (!addr || addr.isActive === false) return false;
 
         // Sources that provide addressIndex and isLocal from backend
-        if (['tauron', 'energa', 'enea', 'pge', 'stoen', 'fortum', 'mpwik_wroclaw', 'mpwik_warszawa', 'wmk', 'psg', 'aquanet', 'katowickie_wodociagi', 'veolia', 'veolia_poznan', 'veolia_lodz', 'zwik_lodz', 'pwik_kalisz', 'pwik_czestochowa'].includes(alert.source)) {
+        if (SOURCES.map(s => s.id).includes(alert.source)) {
             if (alert.isLocal === true && (alert.addressIndex === addrIdx || alert.addressIndex === -1)) {
                 return true;
             }
@@ -1523,7 +1523,7 @@ if (typeof document !== 'undefined') {
 
     function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         const now = new Date();
-        const enabledSources = (settings && settings.enabledSources) ? settings.enabledSources : ['tauron', 'mpwik_wroclaw', 'mpwik_warszawa', 'wmk', 'fortum', 'energa', 'enea', 'pge', 'stoen', 'psg', 'aquanet', 'katowickie_wodociagi', 'veolia', 'veolia_poznan', 'veolia_lodz', 'zwik_lodz', 'pwik_kalisz', 'pwik_czestochowa'];
+        const enabledSources = (settings && settings.enabledSources) ? settings.enabledSources : SOURCES.map(s => s.id);
         const activeAlerts = alerts.filter(item => {
             if (!enabledSources.includes(item.source)) return false;
             if (!item.endDate) return true;

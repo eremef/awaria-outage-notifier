@@ -33,9 +33,7 @@ Once the data source is identified, create an `implementation_plan.md` artifact.
 
 2. **Frontend (`public/`)**:
    - `public/script.js`: 
-     - Add the provider to the `SOURCES` array (name, category, id, i18n keys).
-     - **CRITICAL**: Add the provider to the explicit backend matching array inside the `matchesAddress()` function (e.g., `['tauron', ..., 'new_provider'].includes(alert.source)`). If omitted, the frontend will ignore the backend's `is_local` flag and fall back to strict exact string matching, causing false negatives.
-     - Add the provider to the default `enabledSources` array initialization inside `renderAlerts()`.
+     - Add the provider to the `SOURCES` array (name, category, id, i18n keys). *(Note: The explicit backend matching array `matchesAddress()` and `enabledSources` in `renderAlerts()` are dynamically populated from `SOURCES`, so adding it to `SOURCES` covers these automatically!)*
      - Create the necessary city-specific helpers (e.g., `isCzestochowa(addr)` and `const hasAnyCzestochowa = addresses.some(isCzestochowa)`) and update the `otherLists` conditional blocks inside `renderAlerts()` to properly group outages for locations outside the user's primary addresses.
    - `public/i18n.js`: Add translation strings for the provider name and abbreviations.
    - `public/style.css` (or `index.css`): 
