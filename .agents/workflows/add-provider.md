@@ -32,9 +32,19 @@ Once the data source is identified, create an `implementation_plan.md` artifact.
    - Create the new fetcher module (e.g., `new_provider.rs`) conforming to `AlertProvider`. Ensure the scraping logic correctly populates `item.city` and `item.streets` so the local regex matcher works (setting `is_local = Some(true)`).
 
 2. **Frontend (`public/`)**:
-   - `public/script.js`: Add the provider to the `SOURCES` array (name, category, id, i18n keys) and update `renderAlerts` / filtering logic to handle the new city.
+   - `public/script.js`: 
+     - Add the provider to the `SOURCES` array (name, category, id, i18n keys).
+     - **CRITICAL**: Add the provider to the explicit backend matching array inside the `matchesAddress()` function (e.g., `['tauron', ..., 'new_provider'].includes(alert.source)`). If omitted, the frontend will ignore the backend's `is_local` flag and fall back to strict exact string matching, causing false negatives.
+     - Add the provider to the default `enabledSources` array initialization inside `renderAlerts()`.
+     - Create the necessary city-specific helpers (e.g., `isCzestochowa(addr)` and `const hasAnyCzestochowa = addresses.some(isCzestochowa)`) and update the `otherLists` conditional blocks inside `renderAlerts()` to properly group outages for locations outside the user's primary addresses.
    - `public/i18n.js`: Add translation strings for the provider name and abbreviations.
-   - `public/style.css` (or `index.css`): Add CSS variables for the provider's brand color to **all themes** defined in the file (e.g., `:root`, `[data-theme="dark"]`, `emerald`, `ocean`, `nord`, `dracula`, `sepia`, `latte`), ensuring it is readable and maintains good contrast against each theme's background color.
+   - `public/style.css` (or `index.css`): 
+     - Add CSS variables for the provider's brand color to **all themes** defined in the file (e.g., `:root`, `[data-theme="dark"]`, `emerald`, `ocean`, `nord`, `dracula`, `sepia`, `latte`), ensuring it is readable and maintains good contrast against each theme's background color.
+     - **Crucial Component Rules:** Remember to add specific class rules for the provider's card so the brand color actually applies to the UI elements:
+       1. `.card.source-[new_provider] .outage-type { color: var(--[new_provider]-color); }`
+       2. `.card.source-[new_provider] { border-top: 4px solid var(--[new_provider]-color); }`
+       3. Also append `:not(.source-[new_provider])` to the default fallback border selector (`.card:not(...):not(.source-[new_provider]) { border-top: 4px solid #7c7c7c; }`).
+       4. `.collapsible.source-[new_provider] .section-label.other { color: var(--[new_provider]-color); }` (for the Settings UI).
    - Use the standard outage card layout:
      `{utility_icon} {provider_name}`
      `{start_date} - {end_date}`
