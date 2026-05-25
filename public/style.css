@@ -698,7 +698,7 @@ h1 {
        Col 1: Indent spacer
        Col 2: Main content (Source name)
        Col 3: Notify controls (locked to 230px, wide enough for Polish text) */
-    grid-template-columns: 160px 1fr;
+    grid-template-columns: 175px 1fr;
     align-items: center;
     gap: 10px;
     box-sizing: border-box;
