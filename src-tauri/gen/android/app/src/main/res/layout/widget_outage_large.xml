@@ -8,15 +8,18 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <TextView
-        android:id="@+id/widget_source"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/label_provider"
-        android:textColor="@color/widget_text_updated"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="4dp" />
+  <TextView
+    android:id="@+id/widget_source"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="4dp"
+    android:breakStrategy="simple"
+    android:hyphenationFrequency="none"
+    android:text="@string/label_provider"
+    android:textAlignment="center"
+    android:textColor="@color/widget_text_updated"
+    android:textSize="18sp"
+    android:textStyle="bold" />
 
     <ImageView
         android:id="@+id/widget_icon"
@@ -26,6 +29,11 @@
         android:src="@drawable/ic_electricity"
         android:contentDescription="@string/icon_description" />
 
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+  
     <TextView
         android:id="@+id/widget_count"
         android:layout_width="wrap_content"
@@ -34,6 +42,7 @@
         android:textColor="@color/widget_text_primary"
         android:textSize="48sp"
         android:textStyle="bold" />
+  
 
     <TextView
         android:id="@+id/widget_label"
@@ -43,11 +52,16 @@
         android:textColor="@color/widget_text_label"
         android:textSize="20sp" />
 
+    <Space
+      android:layout_width="match_parent"
+      android:layout_height="0dp"
+      android:layout_weight="1" />
+  
     <TextView
         android:id="@+id/widget_updated"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text=""
+        android:text="@string/date"
         android:textColor="@color/widget_text_updated"
         android:textSize="16sp" />
 

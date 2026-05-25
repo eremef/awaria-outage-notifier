@@ -15,6 +15,8 @@ pub enum AlertSource {
     Tauron,
     #[serde(rename = "mpwik_wroclaw")]
     MpwikWroclaw,
+    #[serde(rename = "mpwik_warszawa")]
+    MpwikWarszawa,
     Fortum,
     Energa,
     Enea,
@@ -24,6 +26,23 @@ pub enum AlertSource {
     Wmk,
     #[serde(rename = "tauron_heat")]
     TauronHeat,
+    Aquanet,
+    #[serde(rename = "katowickie_wodociagi")]
+    KatowickieWodociagi,
+    #[serde(rename = "veolia_warszawa")]
+    VeoliaWarszawa,
+    #[serde(rename = "veolia_poznan")]
+    VeoliaPoznan,
+    #[serde(rename = "veolia_lodz")]
+    VeoliaLodz,
+    #[serde(rename = "zwik_lodz")]
+    ZwikLodz,
+    #[serde(rename = "wodociagi_plockie")]
+    WodociagiPlockie,
+    #[serde(rename = "pwik_kalisz")]
+    PwikKalisz,
+    #[serde(rename = "pwik_czestochowa")]
+    PwikCzestochowa,
 }
 
 impl AlertSource {
@@ -64,7 +83,17 @@ impl AlertSource {
             ]),
             AlertSource::Stoen => Some(vec!["MAZOWIECKIE"]),
             AlertSource::MpwikWroclaw => Some(vec!["DOLNOŚLĄSKIE"]),
+            AlertSource::MpwikWarszawa => Some(vec!["MAZOWIECKIE"]),
             AlertSource::Wmk => Some(vec!["MAŁOPOLSKIE"]),
+            AlertSource::Aquanet => Some(vec!["WIELKOPOLSKIE"]),
+            AlertSource::KatowickieWodociagi => Some(vec!["ŚLĄSKIE"]),
+            AlertSource::VeoliaWarszawa => Some(vec!["MAZOWIECKIE"]),
+            AlertSource::VeoliaPoznan => Some(vec!["WIELKOPOLSKIE"]),
+            AlertSource::VeoliaLodz => Some(vec!["ŁÓDZKIE"]),
+            AlertSource::ZwikLodz => Some(vec!["ŁÓDZKIE"]),
+            AlertSource::WodociagiPlockie => Some(vec!["MAZOWIECKIE"]),
+            AlertSource::PwikKalisz => Some(vec!["WIELKOPOLSKIE"]),
+            AlertSource::PwikCzestochowa => Some(vec!["ŚLĄSKIE"]),
             AlertSource::Fortum => Some(vec![
                 "DOLNOŚLĄSKIE",
                 "ŚLĄSKIE",
@@ -182,6 +211,17 @@ impl<'a> MonitorEngine<'a> {
                 continue;
             }
 
+            // Skip alerts that have already expired — this prevents historical outages from
+            // triggering notifications when a provider is newly enabled.
+            if let Some(end_str) = &alert.endDate {
+                if let Some(end_dt) = crate::utils::parse_date(end_str) {
+                    if end_dt < chrono::Utc::now() {
+                        log::debug!("Alert {} skipped: already expired (end={})", hash, end_str);
+                        continue;
+                    }
+                }
+            }
+
             let notified_enabled = self.settings.notification_preferences.get(&source_key).copied().unwrap_or(false);
 
             if notified_enabled {
@@ -254,10 +294,10 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea | AlertSource::Pge | AlertSource::Stoen => {
             if is_pl { "awaria prądu" } else { "power outage" }
         }
-        AlertSource::MpwikWroclaw | AlertSource::Wmk => {
+        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::WodociagiPlockie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa => {
             if is_pl { "awaria wody" } else { "water outage" }
         }
-        AlertSource::Fortum | AlertSource::TauronHeat => {
+        AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz => {
             if is_pl { "awaria ogrzewania" } else { "heat outage" }
         }
         AlertSource::Psg => {
@@ -326,6 +366,7 @@ impl std::fmt::Display for AlertSource {
         let s = match self {
             AlertSource::Tauron => "tauron",
             AlertSource::MpwikWroclaw => "mpwik_wroclaw",
+            AlertSource::MpwikWarszawa => "mpwik_warszawa",
             AlertSource::Fortum => "fortum",
             AlertSource::Energa => "energa",
             AlertSource::Enea => "enea",
@@ -334,6 +375,15 @@ impl std::fmt::Display for AlertSource {
             AlertSource::Psg => "psg",
             AlertSource::Wmk => "wmk",
             AlertSource::TauronHeat => "tauron_heat",
+            AlertSource::Aquanet => "aquanet",
+            AlertSource::KatowickieWodociagi => "katowickie_wodociagi",
+            AlertSource::VeoliaWarszawa => "veolia_warszawa",
+            AlertSource::VeoliaPoznan => "veolia_poznan",
+            AlertSource::VeoliaLodz => "veolia_lodz",
+            AlertSource::ZwikLodz => "zwik_lodz",
+            AlertSource::WodociagiPlockie => "wodociagi_plockie",
+            AlertSource::PwikKalisz => "pwik_kalisz",
+            AlertSource::PwikCzestochowa => "pwik_czestochowa",
         };
         write!(f, "{}", s)
     }
@@ -409,7 +459,15 @@ pub fn is_krakow(addr: &AddressEntry) -> bool {
     name.starts_with("kraków") || name.starts_with("krakow") || addr.city_id == Some(950463)
 }
 
+pub fn is_lodz(addr: &AddressEntry) -> bool {
+    let name = addr.city_name.trim().to_lowercase();
+    name.starts_with("łódź") || name.starts_with("lodz") || addr.city_id == Some(958153)
+}
 
+pub fn is_kalisz(addr: &AddressEntry) -> bool {
+    let name = addr.city_name.trim().to_lowercase();
+    name.starts_with("kalisz") || addr.city_id == Some(936579)
+}
 
 // ── Address & Settings ────────────────────────────────────
 
@@ -857,5 +915,37 @@ mod tests {
         // If address is inactive, it shouldn't count
         settings.addresses[1].is_active = false;
         assert!(!is_provider_applicable(AlertSource::Stoen, &settings));
+    }
+
+    #[test]
+    fn test_monitor_engine_skip_expired() {
+        let mock_db = MockDatabaseInterface::new();
+        let mock_notifier = MockNotificationProvider::new();
+
+        let settings = Settings {
+            notification_preferences: [("tauron".to_string(), true)].into(),
+            enabled_sources: Some(vec!["tauron".to_string()]),
+            ..Default::default()
+        };
+
+        // Outage that ended 1 hour ago
+        let past_end = (chrono::Utc::now() - chrono::Duration::hours(1))
+            .format("%Y-%m-%dT%H:%M:%S")
+            .to_string();
+
+        let alerts = vec![
+            UnifiedAlert {
+                source: AlertSource::Tauron,
+                endDate: Some(past_end),
+                message: Some("Stara awaria".to_string()),
+                is_local: Some(true),
+                ..Default::default()
+            }
+        ];
+
+        // is_alert_seen and show_notification should NEVER be called for an expired alert
+        // (mockall panics if unexpected calls are made — no .expect() calls needed)
+        let engine = MonitorEngine::new(&mock_db, &mock_notifier, &settings);
+        engine.process_alerts(alerts);
     }
 }

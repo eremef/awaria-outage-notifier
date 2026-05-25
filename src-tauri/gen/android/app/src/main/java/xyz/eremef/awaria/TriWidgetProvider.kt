@@ -83,7 +83,6 @@ class TriWidgetProvider : BaseWidgetProvider() {
                     primaryAddress
                 }
 
-        val language = allSettings?.firstOrNull()?.language ?: "system"
         val theme = allSettings?.firstOrNull()?.theme ?: "system"
         val dark = isDarkMode(context, theme)
 
@@ -131,7 +130,7 @@ class TriWidgetProvider : BaseWidgetProvider() {
                                     .sum()
                         }
                         val h = async {
-                            val heatSources = listOf("fortum", "tauron_heat")
+                            val heatSources = listOf("fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz")
                             heatSources
                                     .map { source ->
                                         async {
@@ -156,7 +155,7 @@ class TriWidgetProvider : BaseWidgetProvider() {
                                     .sum()
                         }
                         val w = async {
-                            val waterSources = listOf("mpwik_wroclaw", "wmk")
+                            val waterSources = listOf("mpwik_wroclaw", "mpwik_warszawa", "wmk", "aquanet", "katowickie_wodociagi", "zwik_lodz", "pwik_kalisz", "pwik_czestochowa")
                             waterSources
                                     .map { source ->
                                         async {
@@ -205,7 +204,6 @@ class TriWidgetProvider : BaseWidgetProvider() {
                 } else {
                     SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
                 }
-        val prefsAddressId = getStoredAddressId(context, appWidgetId)
         val addressName =
                 if (selectedAddress != null) {
                     if (selectedAddress.name.isNotEmpty()) selectedAddress.name
@@ -280,9 +278,9 @@ class TriWidgetProvider : BaseWidgetProvider() {
                             it in enabledSources
                         }
         val heatEnabled =
-                allEnabledByDefault || listOf("fortum", "tauron_heat").any { it in enabledSources }
+                allEnabledByDefault || listOf("fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz").any { it in enabledSources }
         val waterEnabled =
-                allEnabledByDefault || listOf("mpwik_wroclaw", "wmk").any { it in enabledSources }
+                allEnabledByDefault || listOf("mpwik_wroclaw", "mpwik_warszawa", "wmk", "aquanet", "katowickie_wodociagi", "zwik_lodz", "pwik_kalisz", "pwik_czestochowa").any { it in enabledSources }
 
         // Theme
         applyTriTheme(context, views, theme, dark, powerEnabled, heatEnabled, waterEnabled)

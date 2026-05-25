@@ -39,6 +39,14 @@ class WidgetUpdateWorker(
             mpwikProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        // Update MPWiK Warszawa widgets
+        val mpwikWarszawaName = ComponentName(context, MpwikWarszawaWidgetProvider::class.java)
+        val mpwikWarszawaIds = appWidgetManager.getAppWidgetIds(mpwikWarszawaName)
+        val mpwikWarszawaProvider = MpwikWarszawaWidgetProvider()
+        for (id in mpwikWarszawaIds) {
+            mpwikWarszawaProvider.updateWidget(context, appWidgetManager, id)
+        }
+
         // Update Energa widgets
         val energaName = ComponentName(context, EnergaWidgetProvider::class.java)
         val energaIds = appWidgetManager.getAppWidgetIds(energaName)
@@ -120,6 +128,79 @@ class WidgetUpdateWorker(
         for (id in wmkIds) {
             wmkProvider.updateWidget(context, appWidgetManager, id)
         }
+
+        // Update Aquanet widgets
+        val aquanetName = ComponentName(context, AquanetWidgetProvider::class.java)
+        val aquanetIds = appWidgetManager.getAppWidgetIds(aquanetName)
+        val aquanetProvider = AquanetWidgetProvider()
+        for (id in aquanetIds) {
+            aquanetProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update Katowickie Wodociagi widgets
+        val katowickieWodociagiName = ComponentName(context, KatowickieWodociagiWidgetProvider::class.java)
+        val katowickieWodociagiIds = appWidgetManager.getAppWidgetIds(katowickieWodociagiName)
+        val katowickieWodociagiProvider = KatowickieWodociagiWidgetProvider()
+        for (id in katowickieWodociagiIds) {
+            katowickieWodociagiProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update Veolia widgets
+        val veoliaName = ComponentName(context, VeoliaWidgetProvider::class.java)
+        val veoliaIds = appWidgetManager.getAppWidgetIds(veoliaName)
+        val veoliaProvider = VeoliaWidgetProvider()
+        for (id in veoliaIds) {
+            veoliaProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update Veolia Poznan widgets
+        val veoliaPoznanName = ComponentName(context, VeoliaPoznanWidgetProvider::class.java)
+        val veoliaPoznanIds = appWidgetManager.getAppWidgetIds(veoliaPoznanName)
+        val veoliaPoznanProvider = VeoliaPoznanWidgetProvider()
+        for (id in veoliaPoznanIds) {
+            veoliaPoznanProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update Veolia Lodz widgets
+        val veoliaLodzName = ComponentName(context, VeoliaLodzWidgetProvider::class.java)
+        val veoliaLodzIds = appWidgetManager.getAppWidgetIds(veoliaLodzName)
+        val veoliaLodzProvider = VeoliaLodzWidgetProvider()
+        for (id in veoliaLodzIds) {
+            veoliaLodzProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update ZWIK Lodz widgets
+        val zwikLodzName = ComponentName(context, ZwikLodzWidgetProvider::class.java)
+        val zwikLodzIds = appWidgetManager.getAppWidgetIds(zwikLodzName)
+        val zwikLodzProvider = ZwikLodzWidgetProvider()
+        for (id in zwikLodzIds) {
+            zwikLodzProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update PWiK Kalisz widgets
+        val pwikKaliszName = ComponentName(context, PwikKaliszWidgetProvider::class.java)
+        val pwikKaliszIds = appWidgetManager.getAppWidgetIds(pwikKaliszName)
+        val pwikKaliszProvider = PwikKaliszWidgetProvider()
+        for (id in pwikKaliszIds) {
+            pwikKaliszProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update Wodociągi Płockie widgets
+        val wodociagiPlockieName = ComponentName(context, WodociagiPlockieWidgetProvider::class.java)
+        val wodociagiPlockieIds = appWidgetManager.getAppWidgetIds(wodociagiPlockieName)
+        val wodociagiPlockieProvider = WodociagiPlockieWidgetProvider()
+        for (id in wodociagiPlockieIds) {
+            wodociagiPlockieProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update PWiK Częstochowa widgets
+        val pwikCzestochowaName = ComponentName(context, PwikCzestochowaWidgetProvider::class.java)
+        val pwikCzestochowaIds = appWidgetManager.getAppWidgetIds(pwikCzestochowaName)
+        val pwikCzestochowaProvider = PwikCzestochowaWidgetProvider()
+        for (id in pwikCzestochowaIds) {
+            pwikCzestochowaProvider.updateWidget(context, appWidgetManager, id)
+        }
+
 
         return androidx.work.ListenableWorker.Result.success()
     }

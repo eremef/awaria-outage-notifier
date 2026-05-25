@@ -28,8 +28,17 @@
 
 ## User Rules
 
-- When you bump version, update it in `src-tauri/Cargo.toml`, `src-tauri/Cargo.lock`, `package.json` using semver versioning, even when git tag is in other format, like 1.0.0b
-- when bumping `src-tauri/tauri.conf.json` use only X.X.X format, without any additional suffixes
+- when adding provider color/accent, adjust it for the themes colors to make it easily readable.
+- use `cargo clippy` instead of `cargo check`
+
+## Outage card layout
+
+Use this layout when implementing the new provider. I used placeholders for the readability.
+
+{utility_icon} {provider_name}
+{start_date} - {end_date}
+Miejscowość: {address_city}
+{incident_type} - {description_with_streets_etc}
 
 ## Project Learnings
 
@@ -51,6 +60,10 @@
 - **Notification Formatting**: Excessive whitespace in notifications (especially PSG) is caused by raw HTML remnants and newlines. Use `split_whitespace().collect::<Vec<_>>().join(" ")` in Rust or `replace(Regex("\\s+"), " ")` in Kotlin to normalize strings.
 - **Date Parsing**: Polish providers often use dots (`.`) and "godz." prefixes. `utils.rs::parse_date` should be extended to handle these by cleaning the string (dots to hyphens, remove "godz.") before parsing with `NaiveDateTime`.
 
+### Aquanet Matching & Local Outage Verification
+
+- **Street & City Fields Inclusion**: In `aquanet::fetch`, matching of addresses relies on a compiled regex (generated from the user's `streetName1` / `streetName2` and matched against a `combined_text` string). Initially, this `combined_text` was constructed using only `item.title`, `item.location`, and `item.description`. However, `Aquanet` detail scraping populates `item.city` and `item.streets` separately. Because these fields were missing from `combined_text`, the regex matching failed, resulting in `is_local` being incorrectly set to `Some(false)`. This caused Android widgets (which only count `is_local == Some(true)` outages) to report 0 outages. Fixing this requires including `item.city` and `item.streets` in `combined_text`.
+
 ### Browser Automation & Scraping
 
 - **Dynamic Dropdowns**: For sites with autocomplete (like Tauron), `type_text` must be followed by an explicit click on the suggested item `uid`.
@@ -62,6 +75,11 @@
 - **Internal File Sharing**: To share files from the app's internal storage (e.g., `settings.json`), `res/xml/file_paths.xml` MUST include `<files-path name="..." path="." />`.
 - **Share Intent**: When starting a Share Intent from `ApplicationContext`, `Intent.FLAG_ACTIVITY_NEW_TASK` is required for the chooser activity.
 - **Plugin Bug (tauri-plugin-share v2.0.5)**: Rust wrapper uses snake_case (`share_file`) while Kotlin registers camelCase (`shareFile`), causing "No command found" errors. Use direct JNI or manual command invocation as a workaround.
+
+### Reqwest RequestBuilder & Query Parameter Type Inference
+
+- **RequestBuilder query compilation issues**: In some environments, using `.query(&[("a", "b")])` on a `reqwest::RequestBuilder` with custom feature-restricted configurations can fail to compile due to missing standard query methods or cause type-inference errors on `.send().await` or `.map_err()`.
+- **Solution**: To bypass reqwest RequestBuilder version/feature constraints, construct URLs manually using `format!` and the `urlencoding::encode` crate, e.g. `format!("https://host/api?a={}", urlencoding::encode(b))`. This is 100% robust, highly readable, and compiles flawlessly.
 
 ## Common Development Workflows
 

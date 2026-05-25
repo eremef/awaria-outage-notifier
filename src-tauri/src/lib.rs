@@ -1,8 +1,10 @@
 mod api_logic;
+mod aquanet;
 mod enea;
 mod energa;
 mod fortum;
 mod mpwik;
+mod mpwik_warsaw;
 mod pge;
 mod network_state;
 mod state_db;
@@ -14,6 +16,14 @@ mod cache;
 mod psg;
 mod wmk;
 mod tauron_heat;
+mod katowickie_wodociagi;
+mod veolia_warszawa;
+mod veolia_poznan;
+pub mod veolia_lodz;
+pub mod zwik_lodz;
+pub mod wodociagi_plockie;
+pub mod pwik_kalisz;
+pub mod pwik_czestochowa;
 
 use crate::network_state::NetworkState;
 use api_logic::{
@@ -53,6 +63,8 @@ const MAX_CONCURRENT_REQUESTS: usize = 5;
 static ANDROID_CONTEXT: Mutex<Option<std::sync::Arc<Global<JObject<'static>>>>> = Mutex::new(None);
 #[cfg(target_os = "android")]
 static PSG_FETCHER_CLASS: Mutex<Option<std::sync::Arc<Global<JClass<'static>>>>> = Mutex::new(None);
+#[cfg(target_os = "android")]
+static PWIK_KALISZ_FETCHER_CLASS: Mutex<Option<std::sync::Arc<Global<JClass<'static>>>>> = Mutex::new(None);
 #[cfg(target_os = "android")]
 static WIDGET_UTILS_CLASS: Mutex<Option<std::sync::Arc<Global<JClass<'static>>>>> = Mutex::new(None);
 #[cfg(target_os = "android")]
@@ -377,7 +389,7 @@ async fn export_settings(app: AppHandle) -> Result<String, String> {
             std::fs::copy(&settings_path, &dest_path).map_err(|e| e.to_string())?;
             return Ok(format!("Saved to {:?}", dest_path));
         }
-        return Err("cancel".to_string());
+        Err("cancel".to_string())
     }
 }
 
@@ -494,6 +506,7 @@ fn get_providers() -> Vec<Box<dyn AlertProvider>> {
     vec![
         Box::new(tauron::TauronProvider),
         Box::new(mpwik::MpwikProvider),
+        Box::new(mpwik_warsaw::MpwikWarszawaProvider),
         Box::new(fortum::FortumProvider),
         Box::new(energa::EnergaProvider),
         Box::new(enea::EneaProvider),
@@ -502,6 +515,15 @@ fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(psg::PsgProvider),
         Box::new(wmk::WmkProvider),
         Box::new(tauron_heat::TauronHeatProvider),
+        Box::new(aquanet::AquanetProvider),
+        Box::new(katowickie_wodociagi::KatowickieWodociagiProvider),
+        Box::new(veolia_warszawa::VeoliaWarszawaProvider),
+        Box::new(veolia_poznan::VeoliaPoznanProvider),
+        Box::new(veolia_lodz::VeoliaLodzProvider),
+        Box::new(zwik_lodz::ZwikLodzProvider),
+        Box::new(wodociagi_plockie::WodociagiPlockieProvider),
+        Box::new(pwik_kalisz::PwikKaliszProvider),
+        Box::new(pwik_czestochowa::PwikCzestochowaProvider),
     ]
 }
 
@@ -870,6 +892,21 @@ fn ensure_verifier_initialized(env: &mut Env, context: &JObject) {
         }
     }
 
+    log::info!("Caching PwikKaliszFetcher class...");
+    match env.find_class(jni::jni_str!("xyz/eremef/awaria/PwikKaliszFetcher")) {
+        Ok(cls) => {
+            if let Ok(cls_ref) = env.new_global_ref(cls) {
+                if let Ok(mut g) = PWIK_KALISZ_FETCHER_CLASS.lock() {
+                    *g = Some(std::sync::Arc::new(cls_ref));
+                    log::info!("PwikKaliszFetcher class cached successfully.");
+                }
+            }
+        }
+        Err(e) => {
+            log::error!("Failed to find PwikKaliszFetcher class: {:?}", e);
+        }
+    }
+
     log::info!("Caching WidgetUtils class...");
     match env.find_class(jni::jni_str!("xyz/eremef/awaria/WidgetUtils")) {
         Ok(cls) => {
@@ -936,7 +973,9 @@ pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchCountFromRust(
 
             match provider {
                 Some(p) => {
+                    log::info!("Provider: {}", p.source());
                     if !api_logic::is_provider_applicable(p.source(), &settings) {
+                        log::info!("is_provider_applicable: provider not applicable for this region");
                         return 0;
                     }
                     let (mut alerts, _) = p.fetch(&client, &client_http1, &settings, None).await;
@@ -944,12 +983,14 @@ pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchCountFromRust(
                     alerts.retain(|alert| {
                         if let Some(end_str) = &alert.endDate {
                             if let Some(end_dt) = utils::parse_date(end_str) {
+                                log::debug!("end_dt: {}, now: {}", end_dt, now);
                                 return end_dt >= now;
                             }
                         }
                         true
                     });
                     let grouped = api_logic::deduplicate_alerts(alerts);
+                    log::info!("Alerts count after filtering (is_local): {}", grouped.iter().filter(|a| a.is_local == Some(true)).count());
                     grouped.iter().filter(|a| a.is_local == Some(true)).count() as jint
                 }
                 None => -1
@@ -1233,6 +1274,50 @@ pub async fn get_psg_html_android() -> Result<String, String> {
             Ok(html) => {
                 if html.is_empty() {
                     Err("Native PSG fetch returned null".to_string())
+                } else {
+                    Ok(html)
+                }
+            },
+            Err(e) => Err(e.to_string())
+        }
+    }).await.map_err(|e: tokio::task::JoinError| e.to_string())?
+}
+
+/// Fetches a URL on Android using Kotlin's HttpURLConnection (Android BoringSSL/Conscrypt TLS),
+/// bypassing rustls for sites with incompatible TLS configurations (e.g. wodociagi-kalisz.pl).
+#[cfg(target_os = "android")]
+pub async fn fetch_url_via_android(url: &str) -> Result<String, String> {
+    let class_ref = PWIK_KALISZ_FETCHER_CLASS.lock()
+        .map_err(|_| "PwikKaliszFetcher lock poisoned".to_string())?
+        .clone()
+        .ok_or("PwikKaliszFetcher class not cached")?;
+
+    let url_owned = url.to_string();
+    #[allow(deprecated)]
+    tokio::task::spawn_blocking(move || -> Result<String, String> {
+        let vm_guard = JAVA_VM.lock().unwrap();
+        let vm = vm_guard.as_ref().unwrap();
+        let res: Result<String, jni::errors::Error> = vm.attach_current_thread(|env| {
+            let jurl = env.new_string(&url_owned)?;
+            let result = env.call_static_method(
+                &*class_ref,
+                jni::jni_str!("fetchUrl"),
+                jni::jni_sig!("(Ljava/lang/String;)Ljava/lang/String;"),
+                &[jni::objects::JValue::Object(&jurl)]
+            )?;
+            let html_obj = result.l()?;
+            if html_obj.is_null() {
+                return Ok(String::new());
+            }
+            let html_jstr = unsafe { jni::objects::JString::from_raw(env, html_obj.as_raw() as jstring) };
+            #[allow(deprecated)]
+            let html: String = env.get_string(&html_jstr).map(|s| s.into()).unwrap_or_default();
+            Ok(html)
+        });
+        match res {
+            Ok(html) => {
+                if html.is_empty() {
+                    Err("PwikKaliszFetcher.fetchUrl returned null".to_string())
                 } else {
                     Ok(html)
                 }

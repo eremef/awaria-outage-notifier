@@ -26,4 +26,7 @@ target_check*/
 # MemPalace per-project files (issue #185)
 mempalace.yaml
 entities.json
-src-tauri/target_clippy/.rustc_info.json
+src-tauri/target_clippy/
+.antigravitycli/
+src-tauri/target_android/
+target_android/

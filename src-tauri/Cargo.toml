@@ -1,13 +1,13 @@
 [package]
-name = "app"
-version = "1.0.51"
+name = "Awaria"
+version = "1.0.52-alpha.6"
 description = "Awaria"
 authors = ["eremef.xyz"]
 license = ""
 repository = "https://github.com/eremef/awaria-outage-notifier"
 edition = "2021"
 rust-version = "1.77.2"
-default-run = "app"
+default-run = "Awaria"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -46,6 +46,10 @@ scraper = "0.26.0"
 android_logger = "0.15"
 urlencoding = "2.1.3"
 
+[target.'cfg(not(target_os = "android"))'.dependencies]
+# native-tls (SChannel on Windows, SecureTransport on macOS) for desktop-only providers
+# that have TLS cert chains incompatible with rustls (e.g. wodociagi-kalisz.pl)
+reqwest = { version = "0.13", default-features = false, features = ["native-tls"] }
 
 [dev-dependencies]
 mockito = "1.5.0"

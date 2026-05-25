@@ -153,6 +153,10 @@ pub fn matches_address(outage: &StoenOutage, address: &AddressEntry) -> bool {
                 .replace("os. ", "")
                 .trim()
                 .to_string();
+
+            if street_norm.is_empty() {
+                continue;
+            }
             
             if street_norm.contains(&street_query) || street_query.contains(&street_norm) {
                 return true;

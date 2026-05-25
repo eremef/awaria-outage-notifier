@@ -91,8 +91,18 @@ if (typeof document !== 'undefined') {
         { id: 'psg', label: 'PSG', category: 'gas', defaultNotify: true, i18nLabel: 'source_psg_name', i18nShort: 'source_psg_short' },
         { id: 'fortum', label: 'Fortum', category: 'heating', defaultNotify: true, i18nLabel: 'source_fortum_name', i18nShort: 'source_fortum_short' },
         { id: 'mpwik_wroclaw', label: 'MPWiK', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_wroclaw_name', i18nShort: 'source_mpwik_wroclaw_short' },
+        { id: 'mpwik_warszawa', label: 'MPWiK Warszawa', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_warszawa_name', i18nShort: 'source_mpwik_warszawa_short' },
         { id: 'wmk', label: 'WMK', category: 'water', defaultNotify: true, i18nLabel: 'source_wmk_name', i18nShort: 'source_wmk_short' },
+        { id: 'aquanet', label: 'Aquanet', category: 'water', defaultNotify: true, i18nLabel: 'source_aquanet_name', i18nShort: 'source_aquanet_short' },
+        { id: 'katowickie_wodociagi', label: 'Katowickie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_katowickie_wodociagi_name', i18nShort: 'source_katowickie_wodociagi_short' },
         { id: 'tauron_heat', label: 'Tauron Ciepło', category: 'heating', defaultNotify: true, i18nLabel: 'source_tauron_heat_name', i18nShort: 'source_tauron_heat_short' },
+        { id: 'veolia_warszawa', label: 'Veolia Warszawa', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_warszawa_name', i18nShort: 'source_veolia_warszawa_short' },
+        { id: 'veolia_poznan', label: 'Veolia Poznań', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_poznan_name', i18nShort: 'source_veolia_poznan_short' },
+        { id: 'veolia_lodz', label: 'Veolia Łódź', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_lodz_name', i18nShort: 'source_veolia_lodz_short' },
+        { id: 'zwik_lodz', label: 'ZWIK Łódź', category: 'water', defaultNotify: true, i18nLabel: 'source_zwik_lodz_name', i18nShort: 'source_zwik_lodz_short' },
+        { id: 'wodociagi_plockie', label: 'Wodociągi Płockie', category: 'water', defaultNotify: true, i18nLabel: 'source_wodociagi_plockie_name', i18nShort: 'source_wodociagi_plockie_short' },
+        { id: 'pwik_kalisz', label: 'PWiK Kalisz', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_kalisz_name', i18nShort: 'source_pwik_kalisz_short' },
+        { id: 'pwik_czestochowa', label: 'PWiK Częstochowa', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_czestochowa_name', i18nShort: 'source_pwik_czestochowa_short' },
     ];
 
     function renderSourcesUI() {
@@ -756,7 +766,7 @@ if (typeof document !== 'undefined') {
                 <input type="checkbox" ${addr.isActive !== false ? 'checked' : ''} onchange="toggleAddressActive(${idx})" title="${addr.isActive === false ? (typeof t !== 'undefined' ? t('lbl_address_disabled') : 'Disabled') : (typeof t !== 'undefined' ? t('lbl_address_active') : 'Active')}">
             </div>
             <div class="address-info">
-                <div class="address-name">${addr.name || (typeof t !== 'undefined' ? t('address_name') + ' ' + (idx + 1) : 'Address ' + (idx + 1))}</div>
+                <div class="address-name">${addr.name || (typeof t !== 'undefined' ? t('default_address_name') + ' ' + (idx + 1) : 'Address ' + (idx + 1))}</div>
                 <div class="address-detail">${addr.streetName} ${addr.houseNo}, ${addr.cityName}</div>
             </div>
             <div class="address-actions">
@@ -1097,9 +1107,8 @@ if (typeof document !== 'undefined') {
                 }
                 applyTheme(settings.theme || 'system');
 
-                // If enabledSources is present, we respect it as is. 
-                // The fallback below handles the case where it's entirely missing.
-
+                // If enabledSources is present, auto-add any new providers with defaultNotify: true
+                // that were added after the user last saved settings (migration for existing users).
                 const sources = settings.enabledSources || [];
                 SOURCES.forEach(s => {
                     const cb = document.getElementById(`source-${s.id}-check`);
@@ -1192,7 +1201,9 @@ if (typeof document !== 'undefined') {
     }
 
     async function saveNewAddress() {
-        const name = document.getElementById('address-name-input').value.trim() || 'Address ' + ((currentSettings?.addresses?.length || 0) + 1);
+        const idx = (currentSettings?.addresses?.length || 0) + 1;
+        const defaultName = (typeof t !== 'undefined' ? t('default_address_name') : 'Address') + ' ' + idx;
+        const name = document.getElementById('address-name-input').value.trim() || defaultName;
         const streetName = document.getElementById('street-input').value.trim();
         const houseNo = document.getElementById('house-input').value.trim() || '1';
         const status = document.getElementById('settings-status');
@@ -1454,7 +1465,7 @@ if (typeof document !== 'undefined') {
         if (!addr || addr.isActive === false) return false;
 
         // Sources that provide addressIndex and isLocal from backend
-        if (['tauron', 'energa', 'enea', 'pge', 'stoen', 'fortum', 'mpwik_wroclaw', 'wmk', 'psg'].includes(alert.source)) {
+        if (SOURCES.map(s => s.id).includes(alert.source)) {
             if (alert.isLocal === true && (alert.addressIndex === addrIdx || alert.addressIndex === -1)) {
                 return true;
             }
@@ -1513,7 +1524,8 @@ if (typeof document !== 'undefined') {
 
     function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         const now = new Date();
-        const enabledSources = (settings && settings.enabledSources) ? settings.enabledSources : ['tauron', 'mpwik_wroclaw', 'wmk', 'fortum', 'energa', 'enea', 'pge', 'stoen', 'psg'];
+        const enabledSources = (settings && settings.enabledSources) ? settings.enabledSources : SOURCES.map(s => s.id);
+
         const activeAlerts = alerts.filter(item => {
             if (!enabledSources.includes(item.source)) return false;
             if (!item.endDate) return true;
@@ -1624,10 +1636,53 @@ if (typeof document !== 'undefined') {
             const city = (addr.cityName || '').trim().toLowerCase();
             return city.startsWith('kraków') || city.startsWith('krakow') || addr.cityId === 950463;
         };
+        const isPoznan = (addr) => {
+            if (!addr) return false;
+            const city = (addr.cityName || '').trim().toLowerCase();
+            const commune = (addr.commune || '').trim().toLowerCase();
+            const poznanCommunes = [
+                'poznań', 'poznan', 'czerwonak', 'dopiewo', 'kleszczewo', 'komorniki',
+                'kórnik', 'kornik', 'luboń', 'lubon', 'mosina', 'murowana goślina',
+                'murowana goslina', 'puszczykowo', 'rokietnica', 'suchy las', 'swarzędz',
+                'swarzedz', 'tarnowo podgórne', 'tarnowo podgorne', 'brodnica'
+            ];
+            return poznanCommunes.some(c => city.startsWith(c) || commune.startsWith(c));
+        };
+        function isLodz(addr) {
+            if (!addr || !addr.cityName) return false;
+            let name = addr.cityName.trim().toLowerCase();
+            return name.startsWith('łódź') || name.startsWith('lodz') || addr.cityId === 958153;
+        }
+
+        function isPlock(addr) {
+            if (!addr || !addr.cityName) return false;
+            let name = addr.cityName.trim().toLowerCase();
+            return name.startsWith('płock') || name.startsWith('plock') || addr.cityId === 969400; // I'll just check startsWith
+        }
+        const isKalisz = (addr) => {
+            if (!addr) return false;
+            const city = (addr.cityName || '').trim().toLowerCase();
+            return city.startsWith('kalisz') || addr.cityId === 936579;
+        };
+        const isCzestochowa = (addr) => {
+            if (!addr) return false;
+            const city = (addr.cityName || '').trim().toLowerCase();
+            const czestochowaCommunes = [
+                'częstochowa', 'czestochowa', 'blachownia', 'kłobuck', 'klobuck',
+                'konopiska', 'miedźno', 'miedzno', 'mykanów', 'mykanow', 'olsztyn',
+                'poczesna', 'rędziny', 'redziny'
+            ];
+            return czestochowaCommunes.some(c => city.startsWith(c));
+        };
 
         const hasAnyWarszawa = addresses.some(isWarszawa);
         const hasAnyWroclaw = addresses.some(isWroclaw);
         const hasAnyKrakow = addresses.some(isKrakow);
+        const hasAnyPoznan = addresses.some(isPoznan);
+        const hasAnyLodz = addresses.some(isLodz);
+        const hasAnyKalisz = addresses.some(isKalisz);
+        const hasAnyCzestochowa = addresses.some(isCzestochowa);
+        const hasAnyPlock = addresses.some(isPlock);
 
         const localLists = {};
         const otherLists = {};
@@ -1649,7 +1704,17 @@ if (typeof document !== 'undefined') {
                         if (isWroclaw(addr)) otherLists[item.source].push(item);
                     } else if (item.source === 'wmk') {
                         if (isKrakow(addr)) otherLists[item.source].push(item);
-                    } else if (item.source === 'stoen') {
+                    } else if (item.source === 'aquanet' || item.source === 'veolia_poznan') {
+                        if (isPoznan(addr)) otherLists[item.source].push(item);
+                    } else if (item.source === 'veolia_lodz' || item.source === 'zwik_lodz') {
+                        if (isLodz(addr)) otherLists[item.source].push(item);
+                    } else if (item.source === 'wodociagi_plockie') {
+                        if (isPlock(addr)) otherLists[item.source].push(item);
+                    } else if (item.source === 'pwik_kalisz') {
+                        if (isKalisz(addr)) otherLists[item.source].push(item);
+                    } else if (item.source === 'pwik_czestochowa') {
+                        if (isCzestochowa(addr)) otherLists[item.source].push(item);
+                    } else if (item.source === 'stoen' || item.source === 'veolia' || item.source === 'mpwik_warszawa') {
                         if (isWarszawa(addr)) otherLists[item.source].push(item);
                     } else {
                         const itemAddr = (item.addressIndex !== undefined && item.addressIndex !== null) ? addresses[item.addressIndex] : null;
@@ -1667,7 +1732,17 @@ if (typeof document !== 'undefined') {
                         if (hasAnyWroclaw) otherLists[item.source].push(item);
                     } else if (item.source === 'wmk') {
                         if (hasAnyKrakow) otherLists[item.source].push(item);
-                    } else if (item.source === 'stoen') {
+                    } else if (item.source === 'aquanet' || item.source === 'veolia_poznan') {
+                        if (hasAnyPoznan) otherLists[item.source].push(item);
+                    } else if (item.source === 'veolia_lodz' || item.source === 'zwik_lodz') {
+                        if (hasAnyLodz) otherLists[item.source].push(item);
+                    } else if (item.source === 'wodociagi_plockie') {
+                        if (hasAnyPlock) otherLists[item.source].push(item);
+                    } else if (item.source === 'pwik_kalisz') {
+                        if (hasAnyKalisz) otherLists[item.source].push(item);
+                    } else if (item.source === 'pwik_czestochowa') {
+                        if (hasAnyCzestochowa) otherLists[item.source].push(item);
+                    } else if (item.source === 'stoen' || item.source === 'veolia' || item.source === 'mpwik_warszawa') {
                         if (hasAnyWarszawa) otherLists[item.source].push(item);
                     } else {
                         otherLists[item.source].push(item);

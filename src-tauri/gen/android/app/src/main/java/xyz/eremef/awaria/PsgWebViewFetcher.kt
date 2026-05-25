@@ -241,6 +241,7 @@ object PsgWebViewFetcher {
                                      if (!startTimeStr) {
                                          startTimeStr = Date.now().toString();
                                          sessionStorage.setItem('psg_startTime', startTimeStr);
+                                         sessionStorage.setItem('psg_lastActionTime', startTimeStr);
                                      }
                                      let startTime = parseInt(startTimeStr);
 
@@ -321,22 +322,22 @@ object PsgWebViewFetcher {
                                          return (activeHtml || '') + "\n<hr>\n" + (plannedHtml || '');
                                      }
 
-                                     if (!activeCaptured && !isActiveChecked) {
-                                         if (checkbox0) {
+                                     if (!activeCaptured) {
+                                         if (!isActiveChecked && checkbox0) {
                                              sessionStorage.setItem('psg_lastActionTime', now.toString());
                                              checkbox0.click();
                                              checkbox0.dispatchEvent(new Event('change', { bubbles: true }));
-                                             return 'waiting';
                                          }
+                                         return 'waiting';
                                      }
 
-                                     if (!plannedCaptured && !isPlannedChecked) {
-                                         if (checkbox1) {
+                                     if (!plannedCaptured) {
+                                         if (!isPlannedChecked && checkbox1) {
                                              sessionStorage.setItem('psg_lastActionTime', now.toString());
                                              checkbox1.click();
                                              checkbox1.dispatchEvent(new Event('change', { bubbles: true }));
-                                             return 'waiting';
                                          }
+                                         return 'waiting';
                                      }
 
                                      if (now - startTime > 45000) {

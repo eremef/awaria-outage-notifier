@@ -138,6 +138,7 @@
     "stoen",
     "fortum",
     "mpwik_wroclaw",
+    "mpwik_warszawa",
     "wmk",
     "tauron_heat"
   ],
@@ -152,7 +153,8 @@
     "psg": true,
     "tauron_heat": true,
     "tauron": true,
-    "mpwik_wroclaw": true
+    "mpwik_wroclaw": true,
+    "mpwik_warszawa": true
   },
   "upcomingNotificationEnabled": true,
   "upcomingNotificationHours": 2,

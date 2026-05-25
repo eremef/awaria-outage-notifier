@@ -1,0 +1,34 @@
+{
+  "name": "Awaria Tauri Dev Container",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "features": {
+    // Install Node.js v24 (matches CI settings)
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "24"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "tamasfe.even-better-toml",
+        "tauri-apps.tauri-vscode",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "editorconfig.editorconfig"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "rust-analyzer.cargo.targetDir": true,
+        "editor.formatOnSave": true
+      }
+    }
+  },
+  // Forward the Tauri dev server port
+  "forwardPorts": [1430],
+  // Script to run after the container has been built and instantiated
+  "postCreateCommand": "npm ci && cargo check --manifest-path src-tauri/Cargo.toml",
+  "remoteUser": "vscode"
+}

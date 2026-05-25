@@ -1,6 +1,6 @@
 {
-  "name": "Awaria",
-  "version": "1.0.51",
+  "name": "awaria",
+  "version": "1.0.52-alpha.6",
   "description": "Outage notifier — Tauri desktop & Android app",
   "scripts": {
     "tauri": "tauri",
@@ -8,7 +8,6 @@
     "dev": "tauri dev",
     "android:build": "tauri android build",
     "android:dev": "tauri android dev",
-    "version:bump": "node scripts/bump-version.mjs",
     "ios:build": "tauri ios build",
     "ios:init": "tauri ios init --ci",
     "test": "npm run test:frontend && npm run test:backend && npm run test:android",
@@ -21,16 +20,18 @@
     "load:teryt": "node scripts/load-teryt.mjs",
     "mempalace:mine": "mempalace mine .",
     "mempalace:sync": "mempalace sync --apply --wing awaria",
-    "kill:em:all": "taskkill /f /im cargo.exe & taskkill /f /im rustc.exe & taskkill /f /im rust-analyzer.exe"
+    "kill:em:all": "taskkill /f /im cargo.exe & taskkill /f /im rustc.exe & taskkill /f /im rust-analyzer.exe",
+    "build:install": "npx tauri android build --target aarch64 --apk && adb install D:/eremef/Documents/AI/antigravity/awaria/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.10.1",
+    "@tauri-apps/cli": "^2.11.1",
     "@vitest/coverage-v8": "^4.0.18",
     "better-sqlite3": "^11.9.1",
     "jsdom": "^28.0.0",
     "vitest": "^4.0.18"
   },
   "dependencies": {
-    "@tauri-apps/plugin-opener": "^2.5.3"
+    "@tauri-apps/plugin-opener": "^2.5.4",
+    "cross-env": "^7.0.3"
   }
 }

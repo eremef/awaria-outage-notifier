@@ -163,6 +163,7 @@ async fn try_direct_fetch_both(app: &AppHandle) -> Result<String, String> {
                 if (!startTimeStr) {
                     startTimeStr = Date.now().toString();
                     sessionStorage.setItem('psg_startTime', startTimeStr);
+                    sessionStorage.setItem('psg_lastActionTime', startTimeStr);
                 }
                 let startTime = parseInt(startTimeStr);
 
@@ -266,24 +267,25 @@ async fn try_direct_fetch_both(app: &AppHandle) -> Result<String, String> {
                         return true;
                     }
 
-                    if (!activeCaptured && !isActiveChecked) {
-                        if (checkbox0) {
+                    if (!activeCaptured) {
+                        if (!isActiveChecked && checkbox0) {
                             console.log('PSG-FETCH: Switching to Active...');
                             sessionStorage.setItem('psg_lastActionTime', now.toString());
                             checkbox0.click();
                             checkbox0.dispatchEvent(new Event('change', { bubbles: true }));
-                            return false;
                         }
+                        // Always return to let the active view load before attempting to switch to planned
+                        return false;
                     }
 
-                    if (!plannedCaptured && !isPlannedChecked) {
-                        if (checkbox1) {
+                    if (!plannedCaptured) {
+                        if (!isPlannedChecked && checkbox1) {
                             console.log('PSG-FETCH: Switching to Planned...');
                             sessionStorage.setItem('psg_lastActionTime', now.toString());
                             checkbox1.click();
                             checkbox1.dispatchEvent(new Event('change', { bubbles: true }));
-                            return false;
                         }
+                        return false;
                     }
 
                     if (now - startTime > 45000) {
@@ -462,10 +464,9 @@ fn get_core_street_name(street: &str) -> String {
         if normalized_word.is_empty() {
             continue;
         }
-        let is_roman = match normalized_word.as_str() {
-            "i" | "ii" | "iii" | "iv" | "v" | "vi" | "vii" | "viii" | "ix" | "x" => true,
-            _ => false,
-        };
+        let is_roman = matches!(normalized_word.as_str(),
+            "i" | "ii" | "iii" | "iv" | "v" | "vi" | "vii" | "viii" | "ix" | "x"
+        );
         let is_numeric = normalized_word.chars().all(|c| c.is_numeric());
         if !is_roman && !is_numeric && normalized_word.len() >= 3 {
             return normalized_word;

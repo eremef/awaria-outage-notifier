@@ -136,7 +136,17 @@ class WidgetConfigActivity : ComponentActivity() {
             className.contains("StoenWidgetProvider") -> StoenWidgetProvider()
             className.contains("FortumWidgetProvider") -> FortumWidgetProvider()
             className.contains("MpwikWidgetProvider") -> MpwikWidgetProvider()
+            className.contains("MpwikWarszawaWidgetProvider") -> MpwikWarszawaWidgetProvider()
             className.contains("PsgWidgetProvider") -> PsgWidgetProvider()
+            className.contains("WmkWidgetProvider") -> WmkWidgetProvider()
+            className.contains("AquanetWidgetProvider") -> AquanetWidgetProvider()
+            className.contains("KatowickieWodociagiWidgetProvider") -> KatowickieWodociagiWidgetProvider()
+            className.contains("VeoliaWidgetProvider") -> VeoliaWidgetProvider()
+            className.contains("VeoliaPoznanWidgetProvider") -> VeoliaPoznanWidgetProvider()
+            className.contains("VeoliaLodzWidgetProvider") -> VeoliaLodzWidgetProvider()
+            className.contains("ZwikLodzWidgetProvider") -> ZwikLodzWidgetProvider()
+            className.contains("PwikKaliszWidgetProvider") -> PwikKaliszWidgetProvider()
+            className.contains("WodociagiPlockieWidgetProvider") -> WodociagiPlockieWidgetProvider()
             else -> TriWidgetProvider()
         }
     }

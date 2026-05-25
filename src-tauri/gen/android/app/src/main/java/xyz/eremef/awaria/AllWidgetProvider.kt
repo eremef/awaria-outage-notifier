@@ -139,7 +139,7 @@ class AllWidgetProvider : BaseWidgetProvider() {
                                     .sum()
                         }
                         val h = async {
-                            val heatSources = listOf("fortum", "tauron_heat")
+                            val heatSources = listOf("fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz")
                             heatSources
                                     .map { source ->
                                         async {
@@ -164,9 +164,9 @@ class AllWidgetProvider : BaseWidgetProvider() {
                                     .sum()
                         }
                         val w = async {
-                            val waterSources = listOf("mpwik_wroclaw", "wmk")
+                            val waterSources = listOf("mpwik_wroclaw", "mpwik_warszawa", "wmk", "aquanet", "katowickie_wodociagi", "zwik_lodz", "pwik_kalisz", "pwik_czestochowa")
                             waterSources
-                                    .map { source ->
+                                .map { source ->
                                         async {
                                             try {
                                                 ProviderCache.getOrFetch(source, hash) {
@@ -303,9 +303,9 @@ class AllWidgetProvider : BaseWidgetProvider() {
                             it in enabledSources
                         }
         val heatEnabled =
-                allEnabledByDefault || listOf("fortum", "tauron_heat").any { it in enabledSources }
+                allEnabledByDefault || listOf("fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz").any { it in enabledSources }
         val waterEnabled =
-                allEnabledByDefault || listOf("mpwik_wroclaw", "wmk").any { it in enabledSources }
+                allEnabledByDefault || listOf("mpwik_wroclaw", "mpwik_warszawa", "wmk", "aquanet", "katowickie_wodociagi", "zwik_lodz", "pwik_kalisz", "pwik_czestochowa").any { it in enabledSources }
         val gasEnabled = allEnabledByDefault || listOf("psg").any { it in enabledSources }
 
         // Theme
