@@ -1526,13 +1526,41 @@ if (typeof document !== 'undefined') {
         el.textContent = text;
     }
 
+    const getPolishStreetStem = (street) => {
+        if (!street) return '';
+        const clean = street.trim();
+        const len = clean.length;
+        if (len <= 3) return clean;
+
+        if (clean.toLowerCase().endsWith('ego') && len > 3) {
+            return clean.slice(0, -3);
+        }
+        if ((clean.toLowerCase().endsWith('ej') || clean.toLowerCase().endsWith('ych') || clean.toLowerCase().endsWith('ich')) && len > 2) {
+            return clean.slice(0, -2);
+        }
+
+        const last = clean.toLowerCase().slice(-1);
+        if (['a', 'y', 'i', 'e', 'ą', 'ę'].includes(last)) {
+            return clean.slice(0, -1);
+        }
+
+        return clean;
+    };
+
     function filterAlerts(alerts, streetName) {
         if (!alerts || !streetName) return [];
 
         const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const wordMatch = (text, word) => {
             const regex = new RegExp(`(^|[^\\p{L}])${escapeRegExp(word)}([^\\p{L}]|$)`, 'iu');
-            return regex.test(text);
+            if (regex.test(text)) return true;
+
+            const stem = getPolishStreetStem(word);
+            if (stem && stem !== word && stem.length >= 3) {
+                const stemRegex = new RegExp(`(^|[^\\p{L}])${escapeRegExp(stem)}[\\p{L}]{0,3}([^\\p{L}]|$)`, 'iu');
+                if (stemRegex.test(text)) return true;
+            }
+            return false;
         };
 
         const normalize = (name) => name.replace(/^(ul\.|al\.|pl\.|os\.|rondo)\s*/i, '').trim();
@@ -1610,7 +1638,14 @@ if (typeof document !== 'undefined') {
         }
         const wordMatch = (word) => {
             const regex = new RegExp(`(^|[^\\p{L}])${escapeRegExp(word)}([^\\p{L}]|$)`, 'iu');
-            return regex.test(message);
+            if (regex.test(message)) return true;
+
+            const stem = getPolishStreetStem(word);
+            if (stem && stem !== word && stem.length >= 3) {
+                const stemRegex = new RegExp(`(^|[^\\p{L}])${escapeRegExp(stem)}[\\p{L}]{0,3}([^\\p{L}]|$)`, 'iu');
+                if (stemRegex.test(message)) return true;
+            }
+            return false;
         };
 
         // Priority: compound name first (if nazwa_2 exists)

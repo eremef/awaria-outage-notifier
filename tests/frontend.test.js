@@ -92,6 +92,16 @@ describe('Frontend Logic', () => {
             const alert = { message: 'ul. Legnicka 1', source: 'mpwik_wroclaw' };
             expect(matchesStreetName(alert, mockAddr)).toBe(false);
         });
+
+        it('matches Polish street declensions (e.g. Jędrowizna / Jędrowizny)', () => {
+            const addr1 = { cityName: 'Łódź', streetName1: 'Jędrowizna', streetName2: 'ul.' };
+            const alert1 = { message: 'Jędrowizny 26 - wyłączenie wodociągu', source: 'mpwik_wroclaw' };
+            expect(matchesStreetName(alert1, addr1)).toBe(true);
+
+            const addr2 = { cityName: 'Łódź', streetName1: 'Milionowa', streetName2: 'ul.' };
+            const alert2 = { message: 'Milionowa (Przędzalniana - do pos. 25/27) - wyłączenie', source: 'mpwik_wroclaw' };
+            expect(matchesStreetName(alert2, addr2)).toBe(true);
+        });
     });
 
     describe('filterAlerts (unified)', () => {
@@ -135,12 +145,8 @@ describe('Frontend Logic', () => {
         });
 
         it('matches only whole words or word boundaries', () => {
-            // "Pawła" should match "Pawła" but "Świdnicka" should not match "Świdnicki" if using word boundaries.
-            // Wait, the current implementation uses property \p{L}.
-            const customAlerts = [{ message: 'Prace na ul. Świdnickiej' }];
+            const customAlerts = [{ message: 'Prace na ul. Świdnickaextra' }];
             const filtered = filterAlerts(customAlerts, 'Świdnicka');
-            // Based on the regex in script.js: (^|[^\p{L}])Świdnicka([^\p{L}]|$)
-            // It will NOT match "Świdnickiej" because "j" is a letter (\p{L}).
             expect(filtered).toHaveLength(0);
         });
     });

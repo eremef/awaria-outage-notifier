@@ -67,6 +67,46 @@ fn parse_zwik_date(date_str: &str) -> Option<NaiveDateTime> {
     None
 }
 
+fn check_street(street: &str, combined_text: &str) -> bool {
+    if street.is_empty() { return false; }
+    let s_lower = street.to_lowercase()
+        .replace("ul. ", "")
+        .replace("ul.", "")
+        .replace("al. ", "")
+        .replace("al.", "")
+        .replace("pl. ", "")
+        .replace("pl.", "")
+        .replace("\"", "");
+    
+    let words: Vec<&str> = s_lower.split_whitespace().collect();
+    let significant_words: Vec<&str> = words.into_iter()
+        .filter(|w| w.chars().count() >= 3 && !w.chars().all(|c| c.is_numeric()))
+        .collect();
+
+    if significant_words.is_empty() {
+        return combined_text.contains(&s_lower);
+    }
+
+    for w in significant_words {
+        let chars: Vec<char> = w.chars().collect();
+        let len = chars.len();
+        let mut stem = w.to_string();
+
+        if w.ends_with("ego") && len > 3 {
+            stem = chars[..len - 3].iter().collect();
+        } else if (w.ends_with("ej") || w.ends_with("ych") || w.ends_with("ich")) && len > 2 {
+            stem = chars[..len - 2].iter().collect();
+        } else if (w.ends_with("a") || w.ends_with("y") || w.ends_with("i") || w.ends_with("e") || w.ends_with("ą") || w.ends_with("ę")) && len > 3 {
+            stem = chars[..len - 1].iter().collect();
+        }
+
+        if !combined_text.contains(&stem) {
+            return false;
+        }
+    }
+    true
+}
+
 pub struct ZwikLodzProvider;
 
 #[async_trait]
@@ -170,25 +210,15 @@ impl AlertProvider for ZwikLodzProvider {
                             let combined_text = format!("Łódź {}", li_text).to_lowercase();
                                 
                             for (idx, a) in settings.addresses.iter().enumerate() {
+                                let mut is_match = false;
                                 if !a.is_active || !crate::api_logic::is_lodz(a) {
                                     continue;
                                 }
-                                let mut is_match = false;
-                                if !a.street_name_1.is_empty() {
-                                    let s1 = a.street_name_1.to_lowercase()
-                                        .replace("ul. ", "")
-                                        .replace("al. ", "")
-                                        .replace("pl. ", "");
-                                    if combined_text.contains(&s1) {
-                                        is_match = true;
-                                    }
+                                if check_street(&a.street_name_1, &combined_text) {
+                                    is_match = true;
                                 }
-                                if !a.street_name_2.as_deref().unwrap_or("").is_empty() {
-                                    let s2 = a.street_name_2.as_ref().unwrap().to_lowercase()
-                                        .replace("ul. ", "")
-                                        .replace("al. ", "")
-                                        .replace("pl. ", "");
-                                    if combined_text.contains(&s2) {
+                                if let Some(s2) = &a.street_name_2 {
+                                    if check_street(s2, &combined_text) {
                                         is_match = true;
                                     }
                                 }
@@ -343,19 +373,15 @@ mod tests {
                         let combined_text = format!("Łódź {}", li_text).to_lowercase();
                         
                         for (idx, a) in settings.addresses.iter().enumerate() {
+                            let mut is_match = false;
                             if !a.is_active || !crate::api_logic::is_lodz(a) {
                                 continue;
                             }
-                            let mut is_match = false;
-                            if !a.street_name_1.is_empty() {
-                                let s1 = a.street_name_1.to_lowercase();
-                                if combined_text.contains(&s1) {
-                                    is_match = true;
-                                }
+                            if check_street(&a.street_name_1, &combined_text) {
+                                is_match = true;
                             }
-                            if !a.street_name_2.as_deref().unwrap_or("").is_empty() {
-                                let s2 = a.street_name_2.as_ref().unwrap().to_lowercase();
-                                if combined_text.contains(&s2) {
+                            if let Some(s2) = &a.street_name_2 {
+                                if check_street(s2, &combined_text) {
                                     is_match = true;
                                 }
                             }
@@ -478,15 +504,12 @@ mod tests {
                         let combined_text = format!("Łódź {}", li_text).to_lowercase();
                         
                         for (idx, a) in settings.addresses.iter().enumerate() {
+                            let mut is_match = false;
                             if !a.is_active || !crate::api_logic::is_lodz(a) {
                                 continue;
                             }
-                            let mut is_match = false;
-                            if !a.street_name_1.is_empty() {
-                                let s1 = a.street_name_1.to_lowercase();
-                                if combined_text.contains(&s1) {
-                                    is_match = true;
-                                }
+                            if check_street(&a.street_name_1, &combined_text) {
+                                is_match = true;
                             }
                             
                             if is_match {
@@ -503,6 +526,16 @@ mod tests {
         }
 
         assert_eq!(alerts.len(), 1, "Should have parsed one alert despite broken HTML header text");
+    }
+
+    #[test]
+    fn test_check_street_declensions() {
+        let text1 = "jędrowizny 26 - 26.02. g. 8-10 wyłączenie wodociągu.";
+        assert!(check_street("ul. Jędrowizna", text1));
+        assert!(check_street("Jędrowizna", text1));
+        
+        let text2 = "milionowa (przędzalniana - do pos. 25/27) - 26.02. g. 8-13 wyłączenie wodociągu.";
+        assert!(check_street("Milionowa", text2));
     }
 }
 
