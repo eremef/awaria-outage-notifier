@@ -10,6 +10,7 @@ pub struct TerytCity {
     pub commune: String,
     pub city: String,
     pub city_id: u64,
+    pub locality_type: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -67,7 +68,7 @@ pub fn lookup_cities(app: &AppHandle, city_name: &str) -> Result<Vec<TerytCity>,
 }
 
 fn _lookup_cities(conn: &Connection, city_name: &str) -> Result<Vec<TerytCity>, String> {
-    let sql = "SELECT voivodeship.nazwa, district.nazwa, commune.nazwa, city.nazwa, city.sym \
+    let sql = "SELECT voivodeship.nazwa, district.nazwa, commune.nazwa, city.nazwa, city.sym, rm.nazwa \
                FROM simc city \
                LEFT JOIN terc voivodeship ON city.woj = voivodeship.woj \
                    AND voivodeship.pow IS NULL AND voivodeship.gmi IS NULL \
@@ -76,10 +77,11 @@ fn _lookup_cities(conn: &Connection, city_name: &str) -> Result<Vec<TerytCity>, 
                LEFT JOIN terc commune ON city.woj = commune.woj \
                    AND city.pow = commune.pow AND city.gmi = commune.gmi \
                    AND city.rodz_gmi = commune.rodz \
+               LEFT JOIN rodz_miej rm ON city.rm = rm.rm \
                WHERE city.sym = city.sympod \
                    AND city.nazwa like ?1 COLLATE NOCASE \
                ORDER BY city.nazwa, voivodeship.nazwa, district.nazwa, commune.nazwa \
-               LIMIT 20";
+               LIMIT 100";
 
     let mut stmt = conn
         .prepare(sql)
@@ -93,6 +95,7 @@ fn _lookup_cities(conn: &Connection, city_name: &str) -> Result<Vec<TerytCity>, 
                 commune: row.get::<_, Option<String>>(2)?.unwrap_or_default(),
                 city: row.get(3)?,
                 city_id: row.get::<_, i64>(4)? as u64,
+                locality_type: row.get::<_, Option<String>>(5)?.unwrap_or_default(),
             })
         })
         .map_err(|e| format!("City query failed: {}", e))?;
@@ -186,15 +189,18 @@ mod tests {
         // Setup minimal TERYT schema
         conn.execute_batch("
             CREATE TABLE terc (woj TEXT, pow TEXT, gmi TEXT, rodz TEXT, nazwa TEXT);
-            CREATE TABLE simc (woj TEXT, pow TEXT, gmi TEXT, rodz_gmi TEXT, nazwa TEXT, sym INTEGER, sympod INTEGER);
+            CREATE TABLE rodz_miej (rm INTEGER NOT NULL, nazwa TEXT NOT NULL);
+            CREATE TABLE simc (woj TEXT, pow TEXT, gmi TEXT, rodz_gmi TEXT, rm INTEGER, nazwa TEXT, sym INTEGER, sympod INTEGER);
             CREATE TABLE ulic (sym INTEGER, sym_ul INTEGER, cecha TEXT, nazwa_1 TEXT, nazwa_2 TEXT);
 
             -- Insert Voivodeship
             INSERT INTO terc VALUES ('02', NULL, NULL, NULL, 'DOLNOŚLĄSKIE');
             -- Insert District
             INSERT INTO terc VALUES ('02', '64', NULL, NULL, 'Wrocław');
+            -- Insert Locality Type
+            INSERT INTO rodz_miej VALUES (96, 'miasto');
             -- Insert City
-            INSERT INTO simc VALUES ('02', '64', '01', '1', 'Wrocław', 969400, 969400);
+            INSERT INTO simc VALUES ('02', '64', '01', '1', 96, 'Wrocław', 969400, 969400);
             -- Insert Street
             INSERT INTO ulic VALUES (969400, 13900, 'ul.', 'Kuźnicza', NULL);
         ").unwrap();

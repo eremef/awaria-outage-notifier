@@ -1653,7 +1653,7 @@ h1 {
 }
 
 .suggestion-item {
-    padding: 0.6rem 0.75rem;
+    padding: 0.20rem 0.25rem;
     cursor: pointer;
     border-bottom: 1px solid var(--message-border);
     transition: background 0.15s;
@@ -2145,3 +2145,88 @@ input[type="checkbox"]:checked+.notify-bell-icon {
     border: 2px solid var(--primary-color) !important;
     z-index: 10;
 }
+
+/* ── Collapsible Utility Groups ────────────────── */
+.settings-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.75rem;
+    margin-bottom: 0.5rem;
+    padding: 0.4rem 0.5rem;
+    background: var(--message-border);
+    border-radius: 8px;
+    border: 1px solid var(--input-border);
+}
+
+.settings-group-header-clickable {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    flex-grow: 1;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.settings-group-header-clickable .settings-group-label {
+    margin-bottom: 0;
+    font-size: 0.8rem;
+    font-weight: 750;
+}
+
+.group-collapse-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: var(--secondary-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: transform 0.2s ease, color 0.2s;
+}
+
+.group-collapse-btn:hover {
+    color: var(--primary-color);
+    background-color: var(--input-border);
+}
+
+.chevron-icon {
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: rotate(-90deg); /* Collapsed (pointing right/left) */
+    display: block;
+}
+
+.settings-field-group.expanded .chevron-icon {
+    transform: rotate(0deg); /* Expanded (pointing down) */
+}
+
+.settings-group-sources {
+    display: none;
+    padding-top: 0.4rem;
+    padding-bottom: 0.2rem;
+    transition: all 0.3s ease;
+}
+
+.settings-field-group.expanded .settings-group-sources {
+    display: block;
+}
+
+.master-checkbox-container {
+    display: flex;
+    align-items: center;
+    padding-right: 0.25rem;
+}
+
+.master-checkbox-container input[type="checkbox"] {
+    width: 1.25rem;
+    height: 1.25rem;
+    cursor: pointer;
+    accent-color: var(--checkbox-accent, var(--primary-color));
+}
+
+.master-checkbox-container input[type="checkbox"]:indeterminate {
+    accent-color: var(--checkbox-accent, var(--primary-color));
+}

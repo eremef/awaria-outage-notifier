@@ -111,9 +111,8 @@ impl AlertProvider for PwikCzestochowaProvider {
                             let combined_text_for_city = format!("{} {}", title, content).to_lowercase();
                             let mut city = "Częstochowa".to_string(); // default
                             
-                            // Gminy obsługiwane przez PWiK Częstochowa z ich rdzeniami dla dopasowania w tekście
+                            // Gminy i miejscowości obsługiwane przez PWiK Częstochowa z ich rdzeniami dla dopasowania w tekście
                             let municipalities = [
-                                ("Częstochowa", "częstochow"),
                                 ("Blachownia", "blachowni"),
                                 ("Kłobuck", "kłobuc"),
                                 ("Konopiska", "konopisk"),
@@ -121,13 +120,31 @@ impl AlertProvider for PwikCzestochowaProvider {
                                 ("Mykanów", "mykan"),
                                 ("Olsztyn", "olsztyn"),
                                 ("Poczesna", "poczesn"),
-                                ("Rędziny", "rędzin")
+                                ("Rędziny", "rędzin"),
+                                ("Łobodno", "łobodn"),
+                                ("Kamyk", "kamyk"),
+                                ("Mstów", "mstow"),
+                                ("Nowa Wieś", "nowa wieś"),
+                                ("Nowa Wieś", "nowej wsi")
                             ];
                             
+                            // 1. Try to match from the predefined list
                             for (m_name, stem) in municipalities {
                                 if combined_text_for_city.contains(stem) {
                                     city = m_name.to_string();
                                     break;
+                                }
+                            }
+                            
+                            // 2. Try to extract from common phrases like "miejscowości Łobodno" or "mieszkańców Łobodno"
+                            if city == "Częstochowa" {
+                                let re = Regex::new(r"(?:w miejscowości|miejscowości|dla mieszkańców)\s+([A-ZŁŚĆŻŹ][a-ząćęłńóśźż]+(?:-[A-ZŁŚĆŻŹ][a-ząćęłńóśźż]+)?)").unwrap();
+                                if let Some(caps) = re.captures(&content) {
+                                    let extracted = caps.get(1).unwrap().as_str().to_string();
+                                    // Make sure we don't accidentally match "Częstochowa" or street names
+                                    if !extracted.to_lowercase().starts_with("ul") && extracted != "Częstochowie" {
+                                        city = extracted;
+                                    }
                                 }
                             }
 
@@ -310,7 +327,6 @@ mod tests {
                     let mut city = "Częstochowa".to_string(); // default
                     
                     let municipalities = [
-                        ("Częstochowa", "częstochow"),
                         ("Blachownia", "blachowni"),
                         ("Kłobuck", "kłobuc"),
                         ("Konopiska", "konopisk"),

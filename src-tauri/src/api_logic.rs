@@ -292,22 +292,22 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
     
     let label = match alert.source {
         AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea | AlertSource::Pge | AlertSource::Stoen => {
-            if is_pl { "awaria prądu" } else { "power outage" }
+            if is_pl { "wyłączenie prądu" } else { "power outage" }
         }
         AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::WodociagiPlockie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa => {
-            if is_pl { "awaria wody" } else { "water outage" }
+            if is_pl { "wyłączenie wody" } else { "water outage" }
         }
         AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz => {
-            if is_pl { "awaria ogrzewania" } else { "heat outage" }
+            if is_pl { "wyłączenie ogrzewania" } else { "heat outage" }
         }
         AlertSource::Psg => {
-            if is_pl { "awaria gazu" } else { "gas outage" }
+            if is_pl { "wyłączenie gazu" } else { "gas outage" }
         }
     };
     
     let prefix = if is_upcoming {
-        if is_pl { "Nadchodząca" } else { "Upcoming" }
-    } else if is_pl { "Nowa" } else { "New" };
+        if is_pl { "Nadchodzące" } else { "Upcoming" }
+    } else if is_pl { "Nowe" } else { "New" };
     
     let title = format!("{} {}", prefix, label);
     

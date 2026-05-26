@@ -69,27 +69,27 @@ describe('Frontend Logic', () => {
         };
 
         it('matches straight forward street name', () => {
-            const alert = { message: 'Awaria na ul. Henryka Probusa 12' };
+            const alert = { message: 'Awaria na ul. Henryka Probusa 12', source: 'mpwik_wroclaw' };
             expect(matchesStreetName(alert, mockAddr)).toBe(true);
         });
 
         it('matches without prefix', () => {
-            const alert = { message: 'Henryka Probusa 5' };
+            const alert = { message: 'Henryka Probusa 5', source: 'mpwik_wroclaw' };
             expect(matchesStreetName(alert, mockAddr)).toBe(true);
         });
 
         it('matches short name (last part)', () => {
-            const alert = { message: 'ul. Probusa 1' };
+            const alert = { message: 'ul. Probusa 1', source: 'mpwik_wroclaw' };
             expect(matchesStreetName(alert, mockAddr)).toBe(true);
         });
 
         it('matches abbreviated prefix', () => {
-             const alert = { message: 'al. Henryka Probusa' };
+             const alert = { message: 'al. Henryka Probusa', source: 'mpwik_wroclaw' };
              expect(matchesStreetName(alert, mockAddr)).toBe(true);
         });
 
         it('does not match wrong street', () => {
-            const alert = { message: 'ul. Legnicka 1' };
+            const alert = { message: 'ul. Legnicka 1', source: 'mpwik_wroclaw' };
             expect(matchesStreetName(alert, mockAddr)).toBe(false);
         });
     });
@@ -280,7 +280,7 @@ describe('Frontend Logic', () => {
         });
 
         it('falls back to street name matching for other sources', () => {
-            const alert = { source: 'unknown', message: 'Utrudnienia na Probusa' };
+            const alert = { source: 'unknown', message: 'Utrudnienia na Probusa Wrocław' };
             expect(matchesAddress(alert, addresses, 0)).toBe(true);
         });
 

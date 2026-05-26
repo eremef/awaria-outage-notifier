@@ -116,30 +116,110 @@ if (typeof document !== 'undefined') {
             gas: { label: 'Gas', i18n: 'source_gas' }
         };
 
+        const chevronSvg = `<svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+
         let html = '';
         for (const [catId, catInfo] of Object.entries(categories)) {
             const catSources = SOURCES.filter(s => s.category === catId);
             if (catSources.length === 0) continue;
 
             html += `
-            <div class="settings-field-group">
-                <div class="settings-group-label" data-i18n="${catInfo.i18n}">${catInfo.label}</div>
-                ${catSources.map(s => `
-                    <div class="settings-field-row indent">
-                        <div class="source-group checkbox-pair">
-                            <input type="checkbox" id="source-${s.id}-check">
-                            <label for="source-${s.id}-check" ${s.i18nLabel ? `data-i18n="${s.i18nLabel}"` : ''}>${s.label}</label>
-                        </div>
-                        <div class="notify-group checkbox-pair mini">
-                            <input type="checkbox" id="notify-${s.id}-check">
-                            <svg class="notify-bell-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
-                        </div>
+            <div class="settings-field-group" id="group-${catId}">
+                <div class="settings-group-header">
+                    <div class="settings-group-header-clickable">
+                        <button class="group-collapse-btn" aria-label="Toggle group collapse">
+                            ${chevronSvg}
+                        </button>
+                        <div class="settings-group-label" data-i18n="${catInfo.i18n}">${catInfo.label}</div>
                     </div>
-                `).join('')}
+                    <div class="master-checkbox-container">
+                        <input type="checkbox" id="category-${catId}-check" title="Toggle all under ${catInfo.label}">
+                    </div>
+                </div>
+                <div class="settings-group-sources">
+                    <div class="settings-field-row header indent">
+                        <div class="source-group header-label" data-i18n="source_name">Source</div>
+                        <div class="notify-group header-label" data-i18n="notify">Notify</div>
+                    </div>
+                    ${catSources.map(s => `
+                        <div class="settings-field-row indent">
+                            <div class="source-group checkbox-pair">
+                                <input type="checkbox" id="source-${s.id}-check">
+                                <label for="source-${s.id}-check" ${s.i18nLabel ? `data-i18n="${s.i18nLabel}"` : ''}>${s.label}</label>
+                            </div>
+                            <div class="notify-group checkbox-pair mini">
+                                <input type="checkbox" id="notify-${s.id}-check">
+                                <svg class="notify-bell-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
             </div>
         `;
         }
         container.innerHTML = html;
+
+        setupCategoryHeaderClickListeners();
+        setupCategoryMasterCheckboxListeners();
+    }
+
+    function setupCategoryHeaderClickListeners() {
+        const headers = document.querySelectorAll('.settings-group-header-clickable');
+        headers.forEach(header => {
+            header.addEventListener('click', () => {
+                const group = header.closest('.settings-field-group');
+                if (group) {
+                    group.classList.toggle('expanded');
+                }
+            });
+        });
+    }
+
+    function setupCategoryMasterCheckboxListeners() {
+        const categories = ['power', 'heating', 'water', 'gas'];
+        categories.forEach(catId => {
+            const master = document.getElementById(`category-${catId}-check`);
+            if (!master) return;
+
+            master.addEventListener('click', () => {
+                const checked = master.checked;
+                const catSources = SOURCES.filter(s => s.category === catId);
+                
+                master.indeterminate = false;
+
+                catSources.forEach(s => {
+                    const cb = document.getElementById(`source-${s.id}-check`);
+                    if (cb && cb.checked !== checked) {
+                        cb.checked = checked;
+                        cb.dispatchEvent(new Event('change'));
+                    }
+                });
+            });
+        });
+    }
+
+    function updateCategoryMasterCheck(catId) {
+        const catSources = SOURCES.filter(s => s.category === catId);
+        const children = catSources.map(s => document.getElementById(`source-${s.id}-check`)).filter(Boolean);
+        const master = document.getElementById(`category-${catId}-check`);
+        if (!master || children.length === 0) return;
+
+        const checkedCount = children.filter(c => c.checked).length;
+        if (checkedCount === children.length) {
+            master.checked = true;
+            master.indeterminate = false;
+        } else if (checkedCount === 0) {
+            master.checked = false;
+            master.indeterminate = false;
+        } else {
+            master.checked = false;
+            master.indeterminate = true;
+        }
+    }
+
+    function updateAllCategoryMasterCheckboxes() {
+        const categories = ['power', 'heating', 'water', 'gas'];
+        categories.forEach(updateCategoryMasterCheck);
     }
 
     let editingAddressIndex = null;
@@ -607,6 +687,7 @@ if (typeof document !== 'undefined') {
                     currentSettings.enabledSources = enabledSources;
                     updateNotifyStatus(sourceId, notifyId);
                     updateUpcomingStatus();
+                    updateCategoryMasterCheck(s.category);
                     await autoSaveSettings();
                     if (sourceCheckbox.checked) {
                         fetchOutages(s.id);
@@ -913,7 +994,7 @@ if (typeof document !== 'undefined') {
             data-district="${escapeHtml(c.district)}"
             data-commune="${escapeHtml(c.commune)}">
             <div class="suggestion-name">${escapeHtml(c.city)}</div>
-            <div class="suggestion-detail">${escapeHtml(c.voivodeship)} / ${escapeHtml(c.district)} / ${escapeHtml(c.commune)}</div>
+            <div class="suggestion-detail">${escapeHtml(c.voivodeship)} / ${escapeHtml(c.district)} / ${escapeHtml(c.commune)} / ${c.locality_type ? ` ${escapeHtml(c.locality_type)}` : ''}</div>
         </div>
     `).join('');
 
@@ -1127,6 +1208,10 @@ if (typeof document !== 'undefined') {
                     const notifyId = `notify-${s.id}-check`;
                     updateNotifyStatus(sourceId, notifyId);
                 });
+
+                if (typeof updateAllCategoryMasterCheckboxes === 'function') {
+                    updateAllCategoryMasterCheckboxes();
+                }
 
                 if (document.getElementById('upcoming-notify-check')) {
                     document.getElementById('upcoming-notify-check').checked = !!settings.upcomingNotificationEnabled;
@@ -1486,6 +1571,28 @@ if (typeof document !== 'undefined') {
         const cityName = addr.cityName || '';
 
         const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        // Prevent cross-city street matches for multi-city providers
+        if (cityName) {
+            const singleCityProviders = ['mpwik_wroclaw', 'mpwik_warszawa', 'stoen', 'wmk', 'zwik_lodz', 'wodociagi_plockie', 'katowickie_wodociagi', 'pwik_kalisz'];
+            if (!singleCityProviders.includes(alert.source)) {
+                const desc = alert.description || '';
+                const msg = alert.message || '';
+
+                const normalizeStr = (s) => s.toLowerCase()
+                    .replace(/ą/g, 'a').replace(/ć/g, 'c').replace(/ę/g, 'e')
+                    .replace(/ł/g, 'l').replace(/ń/g, 'n').replace(/ó/g, 'o')
+                    .replace(/ś/g, 's').replace(/ź/g, 'z').replace(/ż/g, 'z');
+
+                const combined = normalizeStr(msg + ' ' + desc);
+                const cityNorm = normalizeStr(cityName);
+                const cityBase = cityNorm.length > 3 ? cityNorm.substring(0, cityNorm.length - 1) : cityNorm;
+
+                if (!combined.includes(cityBase)) {
+                    return false;
+                }
+            }
+        }
 
         // Check if the message indicates a locality-wide outage
         // Patterns like "m. Kraków", "cała miejscowość Kraków", "całe miasto Kraków"
@@ -1878,35 +1985,35 @@ if (typeof document !== 'undefined') {
         }
     }
 
-    window.toggleOtherCollapse = function(btn) {
+    window.toggleOtherCollapse = function (btn) {
         const groups = document.querySelectorAll('.other-alert-group');
         if (!groups.length) return;
 
         const anyExpanded = Array.from(groups).some(g => !g.classList.contains('collapsed'));
         const svg = btn.querySelector('polyline');
-        
+
         if (anyExpanded) {
             groups.forEach(g => g.classList.add('collapsed'));
-            if(svg) svg.setAttribute('points', '6 9 12 15 18 9');
+            if (svg) svg.setAttribute('points', '6 9 12 15 18 9');
         } else {
             groups.forEach(g => g.classList.remove('collapsed'));
-            if(svg) svg.setAttribute('points', '18 15 12 9 6 15');
+            if (svg) svg.setAttribute('points', '18 15 12 9 6 15');
         }
     };
 
-    window.toggleLocalCollapse = function(btn) {
+    window.toggleLocalCollapse = function (btn) {
         const groups = document.querySelectorAll('.local-alert-group');
         if (!groups.length) return;
 
         const anyExpanded = Array.from(groups).some(g => !g.classList.contains('collapsed'));
         const svg = btn.querySelector('polyline');
-        
+
         if (anyExpanded) {
             groups.forEach(g => g.classList.add('collapsed'));
-            if(svg) svg.setAttribute('points', '6 9 12 15 18 9');
+            if (svg) svg.setAttribute('points', '6 9 12 15 18 9');
         } else {
             groups.forEach(g => g.classList.remove('collapsed'));
-            if(svg) svg.setAttribute('points', '18 15 12 9 6 15');
+            if (svg) svg.setAttribute('points', '18 15 12 9 6 15');
         }
     };
 
