@@ -588,7 +588,7 @@ pub fn parse_psg_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAle
                         startDate: Some(start_date.clone()),
                         endDate: Some(end_date.clone()),
                         message: Some(final_message.clone()),
-                        description: Some(format!("Miejscowość: {}", city)),
+                        location: Some(format!("Miejscowość: {}", city)),
                         address_index: Some(idx),
                         is_local: Some(true),
                         hash: None,

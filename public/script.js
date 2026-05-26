@@ -184,7 +184,7 @@ if (typeof document !== 'undefined') {
             master.addEventListener('click', () => {
                 const checked = master.checked;
                 const catSources = SOURCES.filter(s => s.category === catId);
-                
+
                 master.indeterminate = false;
 
                 catSources.forEach(s => {
@@ -1604,7 +1604,7 @@ if (typeof document !== 'undefined') {
         if (cityName) {
             const singleCityProviders = ['mpwik_wroclaw', 'mpwik_warszawa', 'stoen', 'wmk', 'zwik_lodz', 'wodociagi_plockie', 'katowickie_wodociagi', 'pwik_kalisz'];
             if (!singleCityProviders.includes(alert.source)) {
-                const desc = alert.description || '';
+                const location = alert.location || '';
                 const msg = alert.message || '';
 
                 const normalizeStr = (s) => s.toLowerCase()
@@ -1612,7 +1612,7 @@ if (typeof document !== 'undefined') {
                     .replace(/ł/g, 'l').replace(/ń/g, 'n').replace(/ó/g, 'o')
                     .replace(/ś/g, 's').replace(/ź/g, 'z').replace(/ż/g, 'z');
 
-                const combined = normalizeStr(msg + ' ' + desc);
+                const combined = normalizeStr(msg + ' ' + location);
                 const cityNorm = normalizeStr(cityName);
                 const cityBase = cityNorm.length > 3 ? cityNorm.substring(0, cityNorm.length - 1) : cityNorm;
 
@@ -1949,7 +1949,7 @@ if (typeof document !== 'undefined') {
                 <span>${escapeHtml(lblYourLoc)} (${totalLocal})</span>
                 <button class="collapse-local-btn" onclick="toggleLocalCollapse(this)" title="${escapeHtml(titleCollapse)}">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="18 15 12 9 6 15"></polyline>
+                        <polyline points="6 9 12 15 18 9"></polyline>
                     </svg>
                 </button>
             </div>`;
@@ -1959,7 +1959,7 @@ if (typeof document !== 'undefined') {
                 if (list && list.length > 0) {
                     const lblSection = (typeof t !== 'undefined' ? t(`lbl_section_${s.id}`) : null) || `${s.category} (${s.label})`;
                     html += `
-                    <div class="collapsible local-alert-group source-${s.id}">
+                    <div class="collapsible local-alert-group source-${s.id} collapsed">
                         <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
                             <span>${escapeHtml(lblSection)} (${list.length})</span>
                             <span class="toggle-icon">▼</span>
@@ -2073,7 +2073,7 @@ if (typeof document !== 'undefined') {
             <div class="outage-time">
                 ${formatDate(item.startDate)} – ${formatDate(item.endDate)}
             </div>
-            ${item.description ? `<div class="outage-reason">${escapeHtml(item.description)}</div>` : ''}
+            ${item.location ? `<div class="outage-location">${escapeHtml(item.location)}</div>` : ''}
             ${item.message ? `<div class="outage-message">${escapeHtml(item.message)}</div>` : ''}
         </div>
     `).join('');

@@ -129,7 +129,7 @@ pub struct UnifiedAlert {
     pub startDate: Option<String>,
     pub endDate: Option<String>,
     pub message: Option<String>,
-    pub description: Option<String>,
+    pub location: Option<String>,
     #[serde(default, rename = "addressIndex")]
     pub address_index: Option<usize>,
     #[serde(default, rename = "isLocal")]
@@ -172,8 +172,8 @@ pub fn deduplicate_alerts(alerts: Vec<UnifiedAlert>) -> Vec<UnifiedAlert> {
                 if alert.message.is_some() {
                     existing.message = alert.message.clone();
                 }
-                if alert.description.is_some() {
-                    existing.description = alert.description.clone();
+                if alert.location.is_some() {
+                    existing.location = alert.location.clone();
                 }
             }
         } else {
@@ -631,7 +631,7 @@ mod tests {
             startDate: Some("2024-01-01 10:00".to_string()),
             endDate: None,
             message: Some("Brak prądu".to_string()),
-            description: None,
+            location: None,
             address_index: None,
             is_local: None,
             hash: None,
@@ -642,7 +642,7 @@ mod tests {
             startDate: Some("2024-01-01 10:00".to_string()),
             endDate: Some("2024-01-01 14:00".to_string()),
             message: Some("Brak prądu".to_string()),
-            description: Some("Different desc".to_string()),
+            location: Some("Different desc".to_string()),
             address_index: Some(1),
             is_local: Some(true),
             hash: None,
@@ -672,7 +672,7 @@ mod tests {
                 startDate: Some("2024-05-20 12:00".to_string()),
                 endDate: None,
                 message: None,
-                description: None,
+                location: None,
                 address_index: None,
                 is_local: None,
                 hash: None,
@@ -682,7 +682,7 @@ mod tests {
                 startDate: Some("2024-05-20 10:00".to_string()),
                 endDate: None,
                 message: None,
-                description: None,
+                location: None,
                 address_index: None,
                 is_local: None,
                 hash: None,
@@ -692,7 +692,7 @@ mod tests {
                 startDate: None,
                 endDate: None,
                 message: None,
-                description: None,
+                location: None,
                 address_index: None,
                 is_local: None,
                 hash: None,

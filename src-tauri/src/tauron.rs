@@ -58,7 +58,7 @@ impl OutageItem {
             startDate: self.StartDate.clone(),
             endDate: self.EndDate.clone(),
             message: self.Message.clone(),
-            description: self.Description.clone(),
+            location: self.Description.clone(),
             address_index: None,
             is_local: None,
             hash: None,
@@ -415,7 +415,7 @@ impl AlertProvider for TauronProvider {
                                 let mut alert = item.to_unified();
                                 alert.address_index = Some(idx);
                                 let city_prefix = format!("Miejscowość: {}", addr.city_name);
-                                alert.description = Some(match alert.description {
+                                alert.location = Some(match alert.location {
                                     Some(d) if !d.is_empty() => format!("{}. {}", city_prefix, d),
                                     _ => city_prefix,
                                 });
@@ -470,7 +470,7 @@ mod tests {
         let unified = item.to_unified();
         assert_eq!(unified.source, AlertSource::Tauron);
         assert_eq!(unified.message, Some("Test power outage".to_string()));
-        assert_eq!(unified.description, Some("Testing".to_string()));
+        assert_eq!(unified.location, Some("Testing".to_string()));
     }
 
     #[test]

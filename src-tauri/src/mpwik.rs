@@ -97,7 +97,7 @@ impl MpwikFailureItem {
             startDate: self.date_start.as_deref().and_then(parse_mpwik_date),
             endDate: self.date_end.as_deref().and_then(parse_mpwik_date),
             message: self.content.clone(),
-            description: None,
+            location: None,
             address_index: None,
             is_local: None,
             hash: None,
@@ -171,7 +171,7 @@ impl AlertProvider for MpwikProvider {
                     }
 
                     let mut alert = item.to_unified();
-                    alert.description = Some("Miejscowość: Wrocław".to_string());
+                    alert.location = Some("Miejscowość: Wrocław".to_string());
                     if let Some(idx) = local_match_idx {
                         alert.address_index = Some(idx);
                         alert.is_local = Some(true);

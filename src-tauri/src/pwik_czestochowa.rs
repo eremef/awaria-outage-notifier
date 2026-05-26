@@ -87,6 +87,7 @@ impl AlertProvider for PwikCzestochowaProvider {
                 let middle_selector = Selector::parse("div.middle").unwrap();
                 let h3_selector = Selector::parse("h3").unwrap();
                 let p_selector = Selector::parse("div.content_text p").unwrap();
+                let city_extraction_re = Regex::new(r"(?:w miejscowości|miejscowości|dla mieszkańców)\s+([A-ZŁŚĆŻŹ][a-ząćęłńóśźż]+(?:-[A-ZŁŚĆŻŹ][a-ząćęłńóśźż]+)?)").unwrap();
 
                 for middle_element in document.select(&middle_selector) {
                     if let Some(h3_element) = middle_element.select(&h3_selector).next() {
@@ -138,8 +139,7 @@ impl AlertProvider for PwikCzestochowaProvider {
                             
                             // 2. Try to extract from common phrases like "miejscowości Łobodno" or "mieszkańców Łobodno"
                             if city == "Częstochowa" {
-                                let re = Regex::new(r"(?:w miejscowości|miejscowości|dla mieszkańców)\s+([A-ZŁŚĆŻŹ][a-ząćęłńóśźż]+(?:-[A-ZŁŚĆŻŹ][a-ząćęłńóśźż]+)?)").unwrap();
-                                if let Some(caps) = re.captures(&content) {
+                                if let Some(caps) = city_extraction_re.captures(&content) {
                                     let extracted = caps.get(1).unwrap().as_str().to_string();
                                     // Make sure we don't accidentally match "Częstochowa" or street names
                                     if !extracted.to_lowercase().starts_with("ul") && extracted != "Częstochowie" {
@@ -157,7 +157,7 @@ impl AlertProvider for PwikCzestochowaProvider {
                                 startDate: start_dt.map(|d| d.format("%Y-%m-%dT%H:%M:%S").to_string()),
                                 endDate: end_dt.map(|d| d.format("%Y-%m-%dT%H:%M:%S").to_string()),
                                 message: Some(message),
-                                description: Some(format!("Miejscowość: {}", city)),
+                                location: Some(format!("Miejscowość: {}", city)),
                                 address_index: None,
                                 is_local: Some(false),
                                 hash: None,
@@ -353,7 +353,7 @@ mod tests {
                         startDate: start_dt.map(|d| d.format("%Y-%m-%dT%H:%M:%S").to_string()),
                         endDate: end_dt.map(|d| d.format("%Y-%m-%dT%H:%M:%S").to_string()),
                         message: Some(message),
-                        description: Some(format!("Miejscowość: {}", city)),
+                        location: Some(format!("Miejscowość: {}", city)),
                         address_index: None,
                         is_local: Some(false),
                         hash: None,
@@ -426,11 +426,11 @@ mod tests {
         assert_eq!(alerts.len(), 2);
         let alert1 = &alerts[0];
         assert_eq!(alert1.is_local, Some(false));
-        assert_eq!(alert1.description.as_deref().unwrap(), "Miejscowość: Mykanów");
+        assert_eq!(alert1.location.as_deref().unwrap(), "Miejscowość: Mykanów");
         
         let alert2 = &alerts[1];
         assert_eq!(alert2.is_local, Some(true));
-        assert_eq!(alert2.description.as_deref().unwrap(), "Miejscowość: Częstochowa");
+        assert_eq!(alert2.location.as_deref().unwrap(), "Miejscowość: Częstochowa");
         assert!(alert2.message.as_ref().unwrap().starts_with("Prace planowane"));
     }
 }

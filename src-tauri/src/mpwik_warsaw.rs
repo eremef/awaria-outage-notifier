@@ -168,7 +168,7 @@ impl MpwikWarszawaItem {
             startDate: self.start_date.clone(),
             endDate: self.end_date.clone(),
             message: Some(message),
-            description: Some(format!("Miejscowość: Warszawa (Dzielnica: {})", self.district)),
+            location: Some(format!("Miejscowość: Warszawa (Dzielnica: {})", self.district)),
             address_index: None,
             is_local: None,
             hash: None,
@@ -306,7 +306,7 @@ mod tests {
             Some("Planowe wyłączenie wody - ul. Zawrat - posesje: Zawrat 18, Zawrat 22".to_string())
         );
         assert_eq!(
-            unified.description,
+            unified.location,
             Some("Miejscowość: Warszawa (Dzielnica: MOKOTÓW)".to_string())
         );
     }

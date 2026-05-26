@@ -143,7 +143,7 @@ impl EneaItem {
             startDate: start_date,
             endDate: end_date,
             message: self.description.clone(),
-            description: None,
+            location: None,
             address_index: None,
             is_local: None,
             hash: None,
@@ -321,7 +321,7 @@ impl AlertProvider for EneaProvider {
                             let mut alert = item.to_unified();
                             alert.address_index = Some(idx);
                             alert.is_local = Some(true);
-                            alert.description = Some(format!("Miejscowość: {}", city_name));
+                            alert.location = Some(format!("Miejscowość: {}", city_name));
                             alert
                         })
                         .collect();

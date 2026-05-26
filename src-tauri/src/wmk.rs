@@ -211,7 +211,7 @@ impl AlertProvider for WmkProvider {
                         startDate: start_dt,
                         endDate: end_dt,
                         message: Some(format!("{} - {}", item.title, item.place.replace("&nbsp;", " "))),
-                        description: Some(item.desc.replace("&nbsp;", " ")),
+                        location: Some(item.desc.replace("&nbsp;", " ")),
                         address_index: None,
                         is_local: None,
                         hash: None,

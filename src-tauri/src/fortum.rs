@@ -59,7 +59,7 @@ impl FortumPoint {
             startDate: self.start_date.clone(),
             endDate: self.end_date.clone(),
             message: self.message.clone(),
-            description: None,
+            location: None,
             address_index: None,
             is_local: None,
             hash: None,
@@ -191,7 +191,7 @@ impl AlertProvider for FortumProvider {
                                         alert.address_index = Some(*idx);
                                         alert.is_local = Some(true);
                                         let city_prefix = format!("Miejscowość: {}", addr.city_name);
-                                        alert.description = Some(match alert.description {
+                                        alert.location = Some(match alert.location {
                                             Some(d) if !d.is_empty() => format!("{}. {}", city_prefix, d),
                                             _ => city_prefix,
                                         });
@@ -205,7 +205,7 @@ impl AlertProvider for FortumProvider {
                                         alert.address_index = Some(*idx);
                                         alert.is_local = Some(false);
                                         let city_prefix = format!("Miejscowość: {}", addr.city_name);
-                                        alert.description = Some(match alert.description {
+                                        alert.location = Some(match alert.location {
                                             Some(d) if !d.is_empty() => format!("{}. {}", city_prefix, d),
                                             _ => city_prefix,
                                         });

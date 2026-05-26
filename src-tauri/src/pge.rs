@@ -106,7 +106,7 @@ impl AlertProvider for PgeProvider {
                             let mut alert = po.to_unified();
                             alert.address_index = Some(idx);
                             alert.is_local = Some(true);
-                            alert.description = Some(format!("Miejscowość: {}", addr.city_name));
+                            alert.location = Some(format!("Miejscowość: {}", addr.city_name));
                             alert
                         })
                         .collect();
@@ -202,7 +202,7 @@ impl PgeOutage {
             String::new()
         };
 
-        let description = if !address_summary.is_empty() {
+        let location = if !address_summary.is_empty() {
             if let Some(region) = &self.regionName {
                 format!("{} ({})", address_summary, region)
             } else {
@@ -216,8 +216,8 @@ impl PgeOutage {
             source: AlertSource::Pge,
             startDate: Some(self.startAt.clone()),
             endDate: Some(self.stopAt.clone()),
-            message: Some(description),
-            description: self.description.clone().or_else(|| self.regionName.clone()),
+            message: Some(location),
+            location: self.description.clone().or_else(|| self.regionName.clone()),
             address_index: None,
             is_local: None,
             hash: None,
@@ -267,7 +267,7 @@ mod tests {
             unified.message,
             Some("ul. Wiejska 1, 2, 3; ul. Polna 10-20 (Rejon Gliwice)".to_string())
         );
-        assert_eq!(unified.description, Some("Planned maintenance".to_string()));
+        assert_eq!(unified.location, Some("Planned maintenance".to_string()));
     }
 
     #[test]

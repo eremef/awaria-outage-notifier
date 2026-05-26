@@ -74,7 +74,7 @@ impl VeoliaPoznanItem {
             startDate: start_date,
             endDate: end_date,
             message: Some(message),
-            description: Some("Miejscowość: Poznań".to_string()),
+            location: Some("Miejscowość: Poznań".to_string()),
             address_index: None,
             is_local: None,
             hash: None,

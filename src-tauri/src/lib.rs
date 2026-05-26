@@ -654,19 +654,19 @@ async fn fetch_all_alerts_internal(
             
             // For general city alerts
             if alert.is_local == Some(false) {
-                if let Some(desc) = &alert.description {
-                    if desc.contains("Wrocław") {
+                if let Some(loc) = &alert.location {
+                    if loc.contains("Wrocław") {
                         return s.addresses.iter().any(|a| a.is_active && is_wroclaw(a));
                     }
-                    if desc.contains("Warszawa") {
+                    if loc.contains("Warszawa") {
                         return s.addresses.iter().any(|a| a.is_active && is_warszawa(a));
                     }
-                    if desc.contains("Kraków") {
+                    if loc.contains("Kraków") {
                         return s.addresses.iter().any(|a| a.is_active && is_krakow(a));
                     }
                     // For other cities (dynamic check based on active addresses)
                     for addr in s.addresses.iter().filter(|a| a.is_active) {
-                        if desc.contains(&addr.city_name) {
+                        if loc.contains(&addr.city_name) {
                             return true;
                         }
                     }

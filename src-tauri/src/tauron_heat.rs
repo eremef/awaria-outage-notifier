@@ -258,7 +258,7 @@ impl AlertProvider for TauronHeatProvider {
                                         startDate: None,
                                         endDate: None,
                                         message: Some(item.reply),
-                                        description: item.details,
+                                        location: item.details,
                                         address_index: Some(idx),
                                         is_local: Some(true), // Since we queried by street GAID
                                         hash: None,

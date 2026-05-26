@@ -106,7 +106,7 @@ impl VeoliaLodzItem {
             startDate: start_date,
             endDate: end_date,
             message: Some(message),
-            description: Some("Miejscowość: Łódź".to_string()),
+            location: Some("Miejscowość: Łódź".to_string()),
             address_index: None,
             is_local: None,
             hash: None,

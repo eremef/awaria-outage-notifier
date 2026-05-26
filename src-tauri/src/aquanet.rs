@@ -643,14 +643,14 @@ impl AquanetItem {
         }
 
         let message = base_message;
-        let description = Some(format!("Miejscowość: {}", city));
+        let location = Some(format!("Miejscowość: {}", city));
 
         UnifiedAlert {
             source: AlertSource::Aquanet,
             startDate: self.start_date.clone(),
             endDate: end_date,
             message: Some(message),
-            description,
+            location,
             address_index: None,
             is_local: None,
             hash: None,
@@ -1014,7 +1014,7 @@ mod tests {
         };
         let alert1 = item1.to_unified();
         assert_eq!(alert1.message, Some("Awaria wodociągowa - ul. Bratumiły - Suchy Las, Chabrowa (od Fiołkowej)".to_string()));
-        assert_eq!(alert1.description, Some("Miejscowość: Poznań".to_string()));
+        assert_eq!(alert1.location, Some("Miejscowość: Poznań".to_string()));
 
         // Case 2: Location with commune only, no street, no description
         let item2 = AquanetItem {
@@ -1029,7 +1029,7 @@ mod tests {
         };
         let alert2 = item2.to_unified();
         assert_eq!(alert2.message, Some("Planowane wyłączenie".to_string()));
-        assert_eq!(alert2.description, Some("Miejscowość: Swarzędz".to_string()));
+        assert_eq!(alert2.location, Some("Miejscowość: Swarzędz".to_string()));
 
         // Case 3: Location with street only, fallback to Poznań, no description
         let item3 = AquanetItem {
@@ -1044,7 +1044,7 @@ mod tests {
         };
         let alert3 = item3.to_unified();
         assert_eq!(alert3.message, Some("Awaria wodociągowa - ul. Testowa 10".to_string()));
-        assert_eq!(alert3.description, Some("Miejscowość: Poznań".to_string()));
+        assert_eq!(alert3.location, Some("Miejscowość: Poznań".to_string()));
     }
 
     #[test]
@@ -1125,7 +1125,7 @@ mod tests {
         };
 
         let alert = item.to_unified();
-        assert_eq!(alert.description, Some("Miejscowość: Suchy Las".to_string()));
+        assert_eq!(alert.location, Some("Miejscowość: Suchy Las".to_string()));
         assert_eq!(
             alert.message,
             Some("Planowe wyłączenie wody - ul. Chabrowa (od Fiołkowej) - W związku z pracami inwestycyjnymi na sieci wodociągowej nastąpi przerwa w dostawie wody. Informujemy, że godzina włączenia wody jest szacunkowa i może ulec zmianie. Jeśli jest to niezbędne prosimy o przygotowanie zapasów wody. Utrudnienia: Brak wody".to_string())
@@ -1148,7 +1148,7 @@ mod tests {
         };
 
         let alert = item.to_unified();
-        assert_eq!(alert.description, Some("Miejscowość: Suchy Las".to_string()));
+        assert_eq!(alert.location, Some("Miejscowość: Suchy Las".to_string()));
         assert_eq!(
             alert.message,
             Some("Planowe wyłączenie wody - ul. Chabrowa (od Fiołkowej) - W związku z pracami inwestycyjnymi na sieci wodociągowej nastąpi przerwa w dostawie wody. Utrudnienia: Brak wody".to_string())

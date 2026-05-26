@@ -117,12 +117,12 @@ impl AlertProvider for StoenProvider {
                         let mut alert = outage.to_unified();
                         alert.address_index = Some(idx);
                         alert.is_local = Some(true);
-                        alert.description = Some(format!("Miejscowość: {}", addr.city_name));
+                        alert.location = Some(format!("Miejscowość: {}", addr.city_name));
                         alerts.push(alert);
                     } else {
                         let mut alert = outage.to_unified();
                         alert.is_local = Some(false);
-                        alert.description = Some("Miejscowość: Warszawa".to_string());
+                        alert.location = Some("Miejscowość: Warszawa".to_string());
                         alerts.push(alert);
                     }
                 }
@@ -194,7 +194,7 @@ impl StoenOutage {
             startDate: Some(self.outageStart.clone()),
             endDate: Some(self.outageEnd.clone()),
             message: Some(full_msg),
-            description: None,
+            location: None,
             address_index: None,
             is_local: None,
             hash: None,

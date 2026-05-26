@@ -63,7 +63,7 @@ impl EnergaShutdown {
             startDate: self.start_date.clone(),
             endDate: self.end_date.clone(),
             message: self.message.clone(),
-            description: None,
+            location: None,
             address_index: None,
             is_local: None,
             hash: None,
@@ -227,7 +227,7 @@ impl AlertProvider for EnergaProvider {
                                 let mut alert = sd.to_unified();
                                 alert.address_index = Some(idx);
                                 alert.is_local = Some(true);
-                                alert.description = Some(format!("Miejscowość: {}", city_name));
+                                alert.location = Some(format!("Miejscowość: {}", city_name));
                                 alert
                             })
                             .collect();

@@ -178,7 +178,7 @@ impl AlertProvider for KatowickieWodociagiProvider {
                         startDate: start_date,
                         endDate: end_date,
                         message: Some(item.title.clone()),
-                        description: Some(item.description.clone()),
+                        location: Some(item.description.clone()),
                         address_index: None,
                         is_local: Some(false),
                         hash: None,

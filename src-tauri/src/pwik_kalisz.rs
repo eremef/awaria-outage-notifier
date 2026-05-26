@@ -170,7 +170,7 @@ impl PwikKaliszArticle {
             startDate: start_date,
             endDate: end_date,
             message: Some(message),
-            description: Some("Miejscowość: Kalisz".to_string()),
+            location: Some("Miejscowość: Kalisz".to_string()),
             address_index: None,
             is_local: None,
             hash,

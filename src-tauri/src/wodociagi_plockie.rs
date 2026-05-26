@@ -154,7 +154,7 @@ impl AlertProvider for WodociagiPlockieProvider {
                                 startDate: start_dt.map(|d| d.format("%Y-%m-%dT%H:%M:%S").to_string()),
                                 endDate: end_dt.map(|d| d.format("%Y-%m-%dT%H:%M:%S").to_string()),
                                 message: Some(message),
-                                description: Some(format!("Miejscowość: {}", city)),
+                                location: Some(format!("Miejscowość: {}", city)),
                                 address_index: None,
                                 is_local: Some(false),
                                 hash: None,

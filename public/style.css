@@ -1181,7 +1181,7 @@ h1 {
     color: var(--text-color);
 }
 
-.outage-reason {
+.outage-location {
     color: var(--secondary-text);
     font-size: 0.9rem;
     line-height: 1.5;
