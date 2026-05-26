@@ -3,7 +3,7 @@
 # Application for Warning and Alerting of Repairs and Infrastructure Accidents
 
 <p align="center">
-   <img height="600" alt="image" src="https://github.com/user-attachments/assets/108932b2-0fe0-4a19-8769-61d4962835ac" />
+  <img height="600" alt="image" src="https://github.com/user-attachments/assets/2901b970-f0ff-45f8-93d3-e00ad6564289" />
 </p>
 
 A modern desktop (Tauri) and Android application providing real-time alerts for planned and emergency outages. **AWARIA** aggregates data from multiple utility providers into a centralized interface.
@@ -39,10 +39,6 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **Wodociągi Płockie**: Water maintenance and failures in Płock.
 
 ## Android app
-
-<p align="center">
-  <img height="600" alt="image" src="https://github.com/user-attachments/assets/2760977f-67a5-465d-9e59-0629b0b958b5" />
-</p>
 
 ## Features
 
