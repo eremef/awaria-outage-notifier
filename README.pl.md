@@ -3,7 +3,7 @@
 # Aplikacja Wygodnego Alarmowania o Remontach i Infrastrukturalnych Awariach
 
 <p align="center">
-  <img height="600" alt="image" src="https://github.com/user-attachments/assets/5c13103e-8c9d-4067-b994-55e32fb21de2" />
+  <img height="600" alt="image" src="https://github.com/user-attachments/assets/3360cbd0-2de3-416f-8262-286ec796e182" />
 </p>
 
 Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiadomienia w czasie rzeczywistym o planowanych i awaryjnych przerwach w dostawie mediów. **AWARIA** agreguje dane od wielu dostawców w jeden przejrzysty interfejs.
@@ -40,10 +40,6 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
   - **Wodociągi Płockie**: Awarie i konserwacje wodociągowe w Płocku.
 
 ## Aplikacja Android
-
-<p align="center">
-  <img height="600" alt="image" src="https://github.com/user-attachments/assets/f60a0982-aefc-440e-9caa-f1c0b8fbb584" />
-</p>
 
 ## Funkcje
 
