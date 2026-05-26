@@ -1939,14 +1939,15 @@ if (typeof document !== 'undefined') {
 
     function formatDate(dateString) {
         if (!dateString) return '';
-        if (dateCache[dateString]) return dateCache[dateString];
+        const localeStr = typeof getLocaleString !== 'undefined' ? getLocaleString() : 'pl-PL';
+        const cacheKey = `${dateString}_${localeStr}`;
+        if (dateCache[cacheKey]) return dateCache[cacheKey];
 
         const date = new Date(dateString);
         if (isNaN(date.getTime())) {
             return dateString;
         }
 
-        const localeStr = typeof getLocaleString !== 'undefined' ? getLocaleString() : 'pl-PL';
         const formatted = date.toLocaleString(localeStr, {
             weekday: 'short',
             day: 'numeric',
@@ -1954,7 +1955,7 @@ if (typeof document !== 'undefined') {
             hour: '2-digit',
             minute: '2-digit'
         });
-        dateCache[dateString] = formatted;
+        dateCache[cacheKey] = formatted;
         return formatted;
     }
 
