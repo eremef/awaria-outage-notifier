@@ -13,6 +13,7 @@ Follow these steps systematically:
 - Determine the provider's website.
 - Prioritize finding direct APIs. Use the `chrome-devtools-mcp` tools (e.g., `list_network_requests`, `navigate_page`) to monitor network traffic while interacting with the provider's outage map or list.
 - Look for REST APIs, GraphQL endpoints, JSON files, or RSS feeds. Avoid complex HTML scraping if an API exists.
+- If the webpage is static/not dynamically generated and there are no APIs, RSS, or JSON feeds, eventually use `web.archive.org` to investigate previous outages on historic links (to help build the parser).
 - Data requirements to locate:
   - **Address**: cities, streets, house numbers where the outage happens.
   - **Time**: start date, end date (if provided). *Note: Watch out for Polish date formats (e.g., dots or "godz." prefixes), as they require custom parsing in Rust.*
@@ -32,11 +33,11 @@ Once the data source is identified, create an `implementation_plan.md` artifact.
    - Create the new fetcher module (e.g., `new_provider.rs`) conforming to `AlertProvider`. Ensure the scraping logic correctly populates `item.city` and `item.streets` so the local regex matcher works (setting `is_local = Some(true)`).
 
 2. **Frontend (`public/`)**:
-   - `public/script.js`: 
+   - `public/script.js`:
      - Add the provider to the `SOURCES` array (name, category, id, i18n keys). *(Note: The explicit backend matching array `matchesAddress()` and `enabledSources` in `renderAlerts()` are dynamically populated from `SOURCES`, so adding it to `SOURCES` covers these automatically!)*
      - Create the necessary city-specific helpers (e.g., `isCzestochowa(addr)` and `const hasAnyCzestochowa = addresses.some(isCzestochowa)`) and update the `otherLists` conditional blocks inside `renderAlerts()` to properly group outages for locations outside the user's primary addresses.
    - `public/i18n.js`: Add translation strings for the provider name and abbreviations.
-   - `public/style.css` (or `index.css`): 
+   - `public/style.css` (or `index.css`):
      - Add CSS variables for the provider's brand color to **all themes** defined in the file (e.g., `:root`, `[data-theme="dark"]`, `emerald`, `ocean`, `nord`, `dracula`, `sepia`, `latte`), ensuring it is readable and maintains good contrast against each theme's background color.
      - **Crucial Component Rules:** Remember to add specific class rules for the provider's card so the brand color actually applies to the UI elements:
        1. `.card.source-[new_provider] .outage-type { color: var(--[new_provider]-color); }`
