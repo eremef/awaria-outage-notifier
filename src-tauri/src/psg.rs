@@ -7,6 +7,22 @@ use tauri::{AppHandle, Manager};
 use tauri::{WebviewWindowBuilder, WebviewUrl, Event, Listener};
 use crate::state_db;
 use std::time::{SystemTime, UNIX_EPOCH};
+#[cfg(not(target_os = "android"))]
+use std::sync::{Mutex, OnceLock};
+#[cfg(not(target_os = "android"))]
+use tokio::sync::broadcast;
+#[cfg(not(target_os = "android"))]
+type InflightSender = Mutex<Option<broadcast::Sender<Result<String, String>>>>;
+
+/// Singleflight guard: concurrent calls share one WebView fetch instead of
+/// each spawning their own browser window.
+#[cfg(not(target_os = "android"))]
+static PSG_INFLIGHT: OnceLock<InflightSender> = OnceLock::new();
+
+#[cfg(not(target_os = "android"))]
+fn psg_inflight() -> &'static InflightSender {
+    PSG_INFLIGHT.get_or_init(|| Mutex::new(None))
+}
 
 pub const PSG_URL: &str = "https://www.psgaz.pl/przerwy-w-dostawie-gazu";
 const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
@@ -141,9 +157,49 @@ async fn try_direct_fetch_both(app: &AppHandle) -> Result<String, String> {
         crate::get_psg_html_android().await
     }
 
+    // Singleflight: on desktop, at most one WebView fetch runs at a time.
+    // Additional concurrent callers subscribe to the in-flight broadcast and
+    // receive the result the moment the first caller finishes.
     #[cfg(not(target_os = "android"))]
+    singleflight_webview_fetch(app).await
+}
+
+#[cfg(not(target_os = "android"))]
+async fn singleflight_webview_fetch(app: &AppHandle) -> Result<String, String> {
+    let mut rx: Option<broadcast::Receiver<Result<String, String>>> = {
+        let mut guard = psg_inflight().lock().unwrap();
+        if let Some(tx) = guard.as_ref() {
+            log::info!("PSG: Another WebView fetch is already in-flight; joining it.");
+            Some(tx.subscribe())
+        } else {
+            let (tx, _) = broadcast::channel(1);
+            *guard = Some(tx);
+            None
+        }
+    };
+
+    if let Some(ref mut subscriber) = rx {
+        return subscriber
+            .recv()
+            .await
+            .unwrap_or_else(|_| Err("PSG in-flight fetch failed or was dropped".to_string()));
+    }
+
+    let result = do_webview_fetch(app).await;
+
     {
-        log::info!("Starting PSG WebView fetch (timeout 90s)...");
+        let mut guard = psg_inflight().lock().unwrap();
+        if let Some(tx) = guard.take() {
+            let _ = tx.send(result.clone());
+        }
+    }
+
+    result
+}
+
+#[cfg(not(target_os = "android"))]
+async fn do_webview_fetch(app: &AppHandle) -> Result<String, String> {
+    log::info!("Starting PSG WebView fetch (timeout 90s)...");
         
         if let Some(_existing) = app.get_webview_window("psg_fetcher") {
             let _ = _existing.close();
@@ -311,7 +367,7 @@ async fn try_direct_fetch_both(app: &AppHandle) -> Result<String, String> {
             .user_agent(USER_AGENT)
             .initialization_script(script);
 
-        #[cfg(desktop)]
+        #[cfg(not(target_os = "android"))]
         {
             #[cfg(debug_assertions)]
             let visible = true;
@@ -368,12 +424,12 @@ async fn try_direct_fetch_both(app: &AppHandle) -> Result<String, String> {
             },
         };
         
-        #[cfg(desktop)]
+        #[cfg(not(target_os = "android"))]
         let _ = window.close();
         
         result
-    }
 }
+
 
 #[cfg(not(target_os = "android"))]
 fn save_cookies(app: &AppHandle, cookies: &str) -> Result<(), String> {

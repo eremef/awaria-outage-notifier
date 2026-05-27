@@ -183,7 +183,7 @@ impl AlertProvider for ZwikLodzProvider {
                         for li in element.select(&li_selector) {
                             let li_text = li.text().collect::<Vec<_>>().concat().trim().to_string();
                             let li_text = li_text.replace("&nbsp;", " ").replace('\u{a0}', " ");
-                            if li_text.to_lowercase().contains("bez wyłączeń") || li_text.to_lowercase().contains("bez awarii") || li_text.is_empty() {
+                            if li_text.to_lowercase().contains("bez wyłączeń") || li_text.to_lowercase().contains("brak") || li_text.to_lowercase().contains("bez awarii") || li_text.is_empty() {
                                 continue;
                             }
                                 

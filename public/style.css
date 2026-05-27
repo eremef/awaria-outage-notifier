@@ -62,6 +62,8 @@
     --wodociagi_plockie-color: #83CBD3;
     --pwik_kalisz-color: #06a4df;
     --pwik_czestochowa-color: #005EC2;
+    --gdanskie_wodociagi-color: #0375AE;
+    --gpec-color: #DB002D;
     --nav-bg: rgba(248, 250, 252, 0.85);
 }
 
@@ -108,6 +110,8 @@
     --wodociagi_plockie-color: #83CBD3;
     --pwik_kalisz-color: #33b8ea;
     --pwik_czestochowa-color: #3b82f6;
+    --gdanskie_wodociagi-color: #1493D7;
+    --gpec-color: #ff335f;
     --nav-bg: rgba(15, 23, 42, 0.85);
 }
 
@@ -149,6 +153,7 @@
     --wodociagi_plockie-color: #83CBD3;
     --pwik_kalisz-color: #0284c7;
     --pwik_czestochowa-color: #1d4ed8;
+    --gdanskie_wodociagi-color: #0284c7;
     --nav-bg: rgba(240, 253, 244, 0.85);
 }
 
@@ -191,6 +196,7 @@
     --wodociagi_plockie-color: #83CBD3;
     --pwik_kalisz-color: #38bdf8;
     --pwik_czestochowa-color: #38bdf8;
+    --gdanskie_wodociagi-color: #38bdf8;
     --nav-bg: rgba(8, 51, 68, 0.85);
 }
 
@@ -232,6 +238,7 @@
     --wodociagi_plockie-color: #83CBD3;
     --pwik_kalisz-color: #81a1c1;
     --pwik_czestochowa-color: #81a1c1;
+    --gdanskie_wodociagi-color: #81a1c1;
     --nav-bg: rgba(46, 52, 64, 0.85);
 }
 
@@ -273,6 +280,7 @@
     --wodociagi_plockie-color: #83CBD3;
     --pwik_kalisz-color: #8be9fd;
     --pwik_czestochowa-color: #8be9fd;
+    --gdanskie_wodociagi-color: #8be9fd;
 }
 
 [data-theme="sepia"] {
@@ -313,6 +321,7 @@
     --wodociagi_plockie-color: #83CBD3;
     --pwik_kalisz-color: #3d5a80;
     --pwik_czestochowa-color: #3d5a80;
+    --gdanskie_wodociagi-color: #3d5a80;
 }
 
 [data-theme="latte"] {
@@ -353,6 +362,7 @@
     --wodociagi_plockie-color: #83CBD3;
     --pwik_kalisz-color: #2a6f97;
     --pwik_czestochowa-color: #2a6f97;
+    --gdanskie_wodociagi-color: #2a6f97;
 }
 
 [data-theme="monochrome-light"] {
@@ -395,6 +405,7 @@
     --wodociagi_plockie-color: #525252;
     --pwik_kalisz-color: #525252;
     --pwik_czestochowa-color: #525252;
+    --gdanskie_wodociagi-color: #525252;
 }
 
 [data-theme="monochrome-dark"] {
@@ -437,6 +448,7 @@
     --wodociagi_plockie-color: #a3a3a3;
     --pwik_kalisz-color: #a3a3a3;
     --pwik_czestochowa-color: #a3a3a3;
+    --gdanskie_wodociagi-color: #a3a3a3;
 }
 
 * {
@@ -1094,7 +1106,15 @@ h1 {
     border-top: 4px solid var(--pwik_czestochowa-color);
 }
 
-.card:not(.source-tauron):not(.source-mpwik_wroclaw):not(.source-fortum):not(.source-energa):not(.source-enea):not(.source-pge):not(.source-stoen):not(.source-psg):not(.source-wmk):not(.source-tauron_heat):not(.source-aquanet):not(.source-katowickie_wodociagi):not(.source-mpwik_warszawa):not(.source-veolia_warszawa):not(.source-veolia_poznan):not(.source-veolia_lodz):not(.source-zwik_lodz):not(.source-wodociagi_plockie):not(.source-pwik_kalisz):not(.source-pwik_czestochowa) {
+.card.source-gdanskie_wodociagi {
+    border-top: 4px solid var(--gdanskie_wodociagi-color);
+}
+
+.card.source-gpec {
+    border-top: 4px solid var(--gpec-color);
+}
+
+.card:not(.source-tauron):not(.source-mpwik_wroclaw):not(.source-fortum):not(.source-energa):not(.source-enea):not(.source-pge):not(.source-stoen):not(.source-psg):not(.source-wmk):not(.source-tauron_heat):not(.source-aquanet):not(.source-katowickie_wodociagi):not(.source-mpwik_warszawa):not(.source-veolia_warszawa):not(.source-veolia_poznan):not(.source-veolia_lodz):not(.source-zwik_lodz):not(.source-wodociagi_plockie):not(.source-pwik_kalisz):not(.source-pwik_czestochowa):not(.source-gdanskie_wodociagi):not(.source-gpec) {
     border-top: 4px solid #7c7c7c;
 }
 
@@ -1172,6 +1192,14 @@ h1 {
 
 .card.source-pwik_czestochowa .outage-type {
     color: var(--pwik_czestochowa-color);
+}
+
+.card.source-gdanskie_wodociagi .outage-type {
+    color: var(--gdanskie_wodociagi-color);
+}
+
+.card.source-gpec .outage-type {
+    color: var(--gpec-color);
 }
 
 .outage-time {
@@ -1369,6 +1397,14 @@ h1 {
 
 .collapsible.source-pwik_czestochowa .section-label.other {
     color: var(--pwik_czestochowa-color);
+}
+
+.collapsible.source-gdanskie_wodociagi .section-label.other {
+    color: var(--gdanskie_wodociagi-color);
+}
+
+.collapsible.source-gpec .section-label.other {
+    color: var(--gpec-color);
 }
 
 .other-divider {

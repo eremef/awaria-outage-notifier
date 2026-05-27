@@ -103,6 +103,8 @@ if (typeof document !== 'undefined') {
         { id: 'wodociagi_plockie', label: 'Wodociągi Płockie', category: 'water', defaultNotify: true, i18nLabel: 'source_wodociagi_plockie_name', i18nShort: 'source_wodociagi_plockie_short' },
         { id: 'pwik_kalisz', label: 'PWiK Kalisz', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_kalisz_name', i18nShort: 'source_pwik_kalisz_short' },
         { id: 'pwik_czestochowa', label: 'PWiK Częstochowa', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_czestochowa_name', i18nShort: 'source_pwik_czestochowa_short' },
+        { id: 'gdanskie_wodociagi', label: 'Gdańskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_gdanskie_wodociagi_name', i18nShort: 'source_gdanskie_wodociagi_short' },
+        { id: 'gpec', label: 'GPEC Gdańsk', category: 'heating', defaultNotify: true, i18nLabel: 'source_gpec_name', i18nShort: 'source_gpec_short' },
     ];
 
     function renderSourcesUI() {
@@ -1602,7 +1604,7 @@ if (typeof document !== 'undefined') {
 
         // Prevent cross-city street matches for multi-city providers
         if (cityName) {
-            const singleCityProviders = ['mpwik_wroclaw', 'mpwik_warszawa', 'stoen', 'wmk', 'zwik_lodz', 'wodociagi_plockie', 'katowickie_wodociagi', 'pwik_kalisz'];
+            const singleCityProviders = ['mpwik_wroclaw', 'mpwik_warszawa', 'stoen', 'wmk', 'zwik_lodz', 'wodociagi_plockie', 'katowickie_wodociagi', 'pwik_kalisz', 'gdanskie_wodociagi'];
             if (!singleCityProviders.includes(alert.source)) {
                 const location = alert.location || '';
                 const msg = alert.message || '';
@@ -1816,6 +1818,11 @@ if (typeof document !== 'undefined') {
             ];
             return czestochowaCommunes.some(c => city.startsWith(c));
         };
+        const isGdansk = (addr) => {
+            if (!addr) return false;
+            const city = (addr.cityName || '').trim().toLowerCase();
+            return city.startsWith('gdańsk') || city.startsWith('gdansk') || addr.cityId === 908123;
+        };
 
         const hasAnyWarszawa = addresses.some(isWarszawa);
         const hasAnyWroclaw = addresses.some(isWroclaw);
@@ -1825,6 +1832,7 @@ if (typeof document !== 'undefined') {
         const hasAnyKalisz = addresses.some(isKalisz);
         const hasAnyCzestochowa = addresses.some(isCzestochowa);
         const hasAnyPlock = addresses.some(isPlock);
+        const hasAnyGdansk = addresses.some(isGdansk);
 
         const localLists = {};
         const otherLists = {};
@@ -1856,6 +1864,8 @@ if (typeof document !== 'undefined') {
                         if (isKalisz(addr)) otherLists[item.source].push(item);
                     } else if (item.source === 'pwik_czestochowa') {
                         if (isCzestochowa(addr)) otherLists[item.source].push(item);
+                    } else if (item.source === 'gdanskie_wodociagi') {
+                        if (isGdansk(addr)) otherLists[item.source].push(item);
                     } else if (item.source === 'stoen' || item.source === 'veolia' || item.source === 'mpwik_warszawa') {
                         if (isWarszawa(addr)) otherLists[item.source].push(item);
                     } else {
@@ -1884,6 +1894,8 @@ if (typeof document !== 'undefined') {
                         if (hasAnyKalisz) otherLists[item.source].push(item);
                     } else if (item.source === 'pwik_czestochowa') {
                         if (hasAnyCzestochowa) otherLists[item.source].push(item);
+                    } else if (item.source === 'gdanskie_wodociagi') {
+                        if (hasAnyGdansk) otherLists[item.source].push(item);
                     } else if (item.source === 'stoen' || item.source === 'veolia' || item.source === 'mpwik_warszawa') {
                         if (hasAnyWarszawa) otherLists[item.source].push(item);
                     } else {

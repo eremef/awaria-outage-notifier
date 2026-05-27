@@ -43,6 +43,10 @@ pub enum AlertSource {
     PwikKalisz,
     #[serde(rename = "pwik_czestochowa")]
     PwikCzestochowa,
+    #[serde(rename = "gdanskie_wodociagi")]
+    GdanskieWodociagi,
+    #[serde(rename = "gpec")]
+    Gpec,
 }
 
 impl AlertSource {
@@ -94,6 +98,8 @@ impl AlertSource {
             AlertSource::WodociagiPlockie => Some(vec!["MAZOWIECKIE"]),
             AlertSource::PwikKalisz => Some(vec!["WIELKOPOLSKIE"]),
             AlertSource::PwikCzestochowa => Some(vec!["ŚLĄSKIE"]),
+            AlertSource::GdanskieWodociagi => Some(vec!["POMORSKIE"]),
+            AlertSource::Gpec => Some(vec!["POMORSKIE"]),
             AlertSource::Fortum => Some(vec![
                 "DOLNOŚLĄSKIE",
                 "ŚLĄSKIE",
@@ -294,10 +300,10 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea | AlertSource::Pge | AlertSource::Stoen => {
             if is_pl { "wyłączenie prądu" } else { "power outage" }
         }
-        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::WodociagiPlockie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa => {
+        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::WodociagiPlockie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa | AlertSource::GdanskieWodociagi => {
             if is_pl { "wyłączenie wody" } else { "water outage" }
         }
-        AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz => {
+        AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz | AlertSource::Gpec => {
             if is_pl { "wyłączenie ogrzewania" } else { "heat outage" }
         }
         AlertSource::Psg => {
@@ -384,6 +390,8 @@ impl std::fmt::Display for AlertSource {
             AlertSource::WodociagiPlockie => "wodociagi_plockie",
             AlertSource::PwikKalisz => "pwik_kalisz",
             AlertSource::PwikCzestochowa => "pwik_czestochowa",
+            AlertSource::GdanskieWodociagi => "gdanskie_wodociagi",
+            AlertSource::Gpec => "gpec",
         };
         write!(f, "{}", s)
     }
@@ -467,6 +475,12 @@ pub fn is_lodz(addr: &AddressEntry) -> bool {
 pub fn is_kalisz(addr: &AddressEntry) -> bool {
     let name = addr.city_name.trim().to_lowercase();
     name.starts_with("kalisz") || addr.city_id == Some(936579)
+}
+
+#[allow(dead_code)]
+pub fn is_gdansk(addr: &AddressEntry) -> bool {
+    let name = addr.city_name.trim().to_lowercase();
+    name.starts_with("gdańsk") || name.starts_with("gdansk") || addr.city_id == Some(908123)
 }
 
 // ── Address & Settings ────────────────────────────────────

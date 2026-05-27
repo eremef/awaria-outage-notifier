@@ -30,6 +30,8 @@
     <string name="widget_label_pwik_kalisz">PWiK Kalisz</string>
     <string name="widget_label_wodociagi_plockie">Wodociągi Płockie</string>
     <string name="widget_label_pwik_czestochowa">PWiK Częstochowa</string>
+    <string name="widget_label_gdanskie_wodociagi">Gdańskie Wodociągi</string>
+    <string name="widget_label_gpec">GPEC Gdańsk</string>
     <string name="widget_label_tri">Adres: prąd, ciepło, woda</string>
     <string name="widget_label_all">Adres: wszystkie media</string>
     <string name="msg_setup_needed">Skonfiguruj</string>
@@ -57,6 +59,8 @@
     <string name="provider_pwik_kalisz">PWiK Kalisz</string>
     <string name="provider_wodociagi_plockie">WP Płock</string>
     <string name="provider_pwik_czestochowa">PWiK CZW</string>
+    <string name="provider_gdanskie_wodociagi">GW GDA</string>
+    <string name="provider_gpec">GPEC GDA</string>
     <string name="notif_channel_name">Alerty o wyłączeniach</string>
     <string name="notif_channel_desc">Powiadomienia o nowych i nadchodzących awariach oraz wyłączeniach (prąd, woda, ciepło, gaz).</string>
     <string name="placeholder_time">--:--</string>

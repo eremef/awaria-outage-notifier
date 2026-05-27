@@ -201,6 +201,23 @@ class WidgetUpdateWorker(
             pwikCzestochowaProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        // Update Gdańskie Wodociągi widgets
+        val gdanskieWodociagiName = ComponentName(context, GdanskieWodociagiWidgetProvider::class.java)
+        val gdanskieWodociagiIds = appWidgetManager.getAppWidgetIds(gdanskieWodociagiName)
+        val gdanskieWodociagiProvider = GdanskieWodociagiWidgetProvider()
+        for (id in gdanskieWodociagiIds) {
+            gdanskieWodociagiProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update GPEC widgets
+        val gpecName = ComponentName(context, GpecWidgetProvider::class.java)
+        val gpecIds = appWidgetManager.getAppWidgetIds(gpecName)
+        val gpecProvider = GpecWidgetProvider()
+        for (id in gpecIds) {
+            gpecProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+
 
         return androidx.work.ListenableWorker.Result.success()
     }

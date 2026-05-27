@@ -24,6 +24,9 @@ pub mod zwik_lodz;
 pub mod wodociagi_plockie;
 pub mod pwik_kalisz;
 pub mod pwik_czestochowa;
+pub mod gdanskie_wodociagi;
+pub mod gpec;
+
 
 use crate::network_state::NetworkState;
 use api_logic::{
@@ -65,6 +68,8 @@ static ANDROID_CONTEXT: Mutex<Option<std::sync::Arc<Global<JObject<'static>>>>> 
 static PSG_FETCHER_CLASS: Mutex<Option<std::sync::Arc<Global<JClass<'static>>>>> = Mutex::new(None);
 #[cfg(target_os = "android")]
 static PWIK_KALISZ_FETCHER_CLASS: Mutex<Option<std::sync::Arc<Global<JClass<'static>>>>> = Mutex::new(None);
+#[cfg(target_os = "android")]
+static GPEC_FETCHER_CLASS: Mutex<Option<std::sync::Arc<Global<JClass<'static>>>>> = Mutex::new(None);
 #[cfg(target_os = "android")]
 static WIDGET_UTILS_CLASS: Mutex<Option<std::sync::Arc<Global<JClass<'static>>>>> = Mutex::new(None);
 #[cfg(target_os = "android")]
@@ -524,6 +529,8 @@ fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(wodociagi_plockie::WodociagiPlockieProvider),
         Box::new(pwik_kalisz::PwikKaliszProvider),
         Box::new(pwik_czestochowa::PwikCzestochowaProvider),
+        Box::new(gdanskie_wodociagi::GdanskieWodociagiProvider),
+        Box::new(gpec::GpecProvider),
     ]
 }
 
@@ -547,6 +554,8 @@ async fn fetch_all_alerts_internal(
 
     let mut all_alerts: Vec<UnifiedAlert> = Vec::new();
     let mut errors: Vec<String> = Vec::new();
+    let mut attempted_providers = 0;
+    let mut failed_providers = 0;
 
     let mut enabled_sources = settings
         .as_ref()
@@ -595,18 +604,25 @@ async fn fetch_all_alerts_internal(
             }));
         }
 
+        attempted_providers = tasks.len();
         let results = join_all(tasks).await;
 
         for res in results {
             match res {
                 Ok((mut alerts, errs)) => {
+                    if !errs.is_empty() && alerts.is_empty() {
+                        failed_providers += 1;
+                    }
                     for alert in &mut alerts {
                         alert.hash = Some(alert.to_hash());
                     }
                     all_alerts.extend(alerts);
                     errors.extend(errs);
                 }
-                Err(e) => errors.push(format!("Task execution error: {}", e)),
+                Err(e) => {
+                    failed_providers += 1;
+                    errors.push(format!("Task execution error: {}", e));
+                }
             }
         }
 
@@ -635,9 +651,9 @@ async fn fetch_all_alerts_internal(
         engine.process_alerts(all_alerts.clone());
     }
 
-    if all_alerts.is_empty() && !errors.is_empty() {
+    if failed_providers == attempted_providers && attempted_providers > 0 {
         if let Some(cached) = cache_state.get_stale() {
-            log::warn!("Fetch failed ({} errors), falling back to stale cache ({} items)", errors.len(), cached.len());
+            log::warn!("Fetch failed for all {} providers ({} errors), falling back to stale cache ({} items)", attempted_providers, errors.len(), cached.len());
             return Ok(api_logic::AlertsResponse { alerts: cached, is_stale: true });
         }
         return Err("ERR_NO_INTERNET".to_string());
@@ -889,6 +905,22 @@ fn ensure_verifier_initialized(env: &mut Env, context: &JObject) {
         }
         Err(e) => {
             log::error!("Failed to find PsgWebViewFetcher class: {:?}", e);
+        }
+    }
+
+    // Also find and cache our GpecWebViewFetcher class
+    log::info!("Caching GpecWebViewFetcher class...");
+    match env.find_class(jni::jni_str!("xyz/eremef/awaria/GpecWebViewFetcher")) {
+        Ok(cls) => {
+            if let Ok(cls_ref) = env.new_global_ref(cls) {
+                if let Ok(mut g_gpec) = GPEC_FETCHER_CLASS.lock() {
+                    *g_gpec = Some(std::sync::Arc::new(cls_ref));
+                    log::info!("GpecWebViewFetcher class cached successfully.");
+                }
+            }
+        }
+        Err(e) => {
+            log::error!("Failed to find GpecWebViewFetcher class: {:?}", e);
         }
     }
 
@@ -1274,6 +1306,50 @@ pub async fn get_psg_html_android() -> Result<String, String> {
             Ok(html) => {
                 if html.is_empty() {
                     Err("Native PSG fetch returned null".to_string())
+                } else {
+                    Ok(html)
+                }
+            },
+            Err(e) => Err(e.to_string())
+        }
+    }).await.map_err(|e: tokio::task::JoinError| e.to_string())?
+}
+
+#[cfg(target_os = "android")]
+pub async fn get_gpec_html_android() -> Result<String, String> {
+    let context_ref = ANDROID_CONTEXT.lock().map_err(|_| "Android Context lock poisoned".to_string())?.clone().ok_or("Android Context not initialized")?;
+    let class_ref = GPEC_FETCHER_CLASS.lock().map_err(|_| "GpecWebViewFetcher lock poisoned".to_string())?.clone().ok_or("GpecWebViewFetcher class not cached")?;
+    
+    #[allow(deprecated)]
+    tokio::task::spawn_blocking(move || -> Result<String, String> {
+        let vm_guard = JAVA_VM.lock().unwrap();
+        let vm = vm_guard.as_ref().unwrap();
+        let res: Result<String, jni::errors::Error> = vm.attach_current_thread(|env| {
+            let context = context_ref.as_obj();
+            
+            let result = env.call_static_method(
+                &*class_ref,
+                jni::jni_str!("fetchHtmlNative"),
+                jni::jni_sig!("(Landroid/content/Context;)Ljava/lang/String;"),
+                &[jni::objects::JValue::Object(context)]
+            )?;
+            
+            let html_obj = result.l()?;
+            if html_obj.is_null() {
+                return Ok(String::new());
+            }
+            
+            let html_jstr = unsafe { jni::objects::JString::from_raw(env, html_obj.as_raw() as jstring) };
+            #[allow(deprecated)]
+            let html: String = env.get_string(&html_jstr).map(|s| s.into()).unwrap_or_default();
+            
+            Ok(html)
+        });
+        
+        match res {
+            Ok(html) => {
+                if html.is_empty() {
+                    Err("Native GPEC fetch returned null".to_string())
                 } else {
                     Ok(html)
                 }
