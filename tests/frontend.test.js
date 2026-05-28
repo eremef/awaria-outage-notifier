@@ -95,11 +95,11 @@ describe('Frontend Logic', () => {
 
         it('matches Polish street declensions (e.g. Jędrowizna / Jędrowizny)', () => {
             const addr1 = { cityName: 'Łódź', streetName1: 'Jędrowizna', streetName2: 'ul.' };
-            const alert1 = { message: 'Jędrowizny 26 - wyłączenie wodociągu', source: 'mpwik_wroclaw' };
+            const alert1 = { message: 'Jędrowizny 26 - wyłączenie wodociągu', source: 'zwik_lodz' };
             expect(matchesStreetName(alert1, addr1)).toBe(true);
 
             const addr2 = { cityName: 'Łódź', streetName1: 'Milionowa', streetName2: 'ul.' };
-            const alert2 = { message: 'Milionowa (Przędzalniana - do pos. 25/27) - wyłączenie', source: 'mpwik_wroclaw' };
+            const alert2 = { message: 'Milionowa (Przędzalniana - do pos. 25/27) - wyłączenie', source: 'zwik_lodz' };
             expect(matchesStreetName(alert2, addr2)).toBe(true);
         });
     });

@@ -1,0 +1,35 @@
+<pl-PL>
+Co nowego w tej wersji:
+• Dodano nowych dostawców: Gdańskie Wodociągi oraz GPEC Gdańsk.
+• Usprawniono niezawodność pobierania danych z PSG.
+• Pogrupowano dostawców w ustawieniach według typu.
+• Uporządkowano widok ustawień (domyślne zwijanie długich list).
+</pl-PL>
+<en-GB>
+What's new in this version:
+• Added new providers: Gdańskie Wodociągi and GPEC Gdańsk.
+• Improved reliability of fetching data from PSG.
+• Grouped utility providers in settings by media type.
+• Optimized the settings view by collapsing long lists by default.
+</en-GB>
+<en-US>
+What's new in this version:
+• Added new providers: Gdańskie Wodociągi and GPEC Gdańsk.
+• Improved reliability of fetching data from PSG.
+• Grouped utility providers in settings by media type.
+• Optimized the settings view by collapsing long lists by default.
+</en-US>
+<en-CA>
+What's new in this version:
+• Added new providers: Gdańskie Wodociągi and GPEC Gdańsk.
+• Improved reliability of fetching data from PSG.
+• Grouped utility providers in settings by media type.
+• Optimized the settings view by collapsing long lists by default.
+</en-CA>
+<en-AU>
+What's new in this version:
+• Added new providers: Gdańskie Wodociągi and GPEC Gdańsk.
+• Improved reliability of fetching data from PSG.
+• Grouped utility providers in settings by media type.
+• Optimized the settings view by collapsing long lists by default.
+</en-AU>

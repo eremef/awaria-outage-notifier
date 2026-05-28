@@ -22,23 +22,63 @@ val keystoreProperties = Properties().apply {
 }
 
 fun findRustlsPlatformVerifierAndroidMavenRepo(): String {
+    // 1. Try running cargo metadata with various cargo command paths
+    val cargoPaths = listOf(
+        "cargo",
+        File(System.getProperty("user.home"), ".cargo/bin/cargo").absolutePath,
+        File(System.getProperty("user.home"), ".cargo/bin/cargo.exe").absolutePath
+    )
+    for (cargo in cargoPaths) {
+        try {
+            val process = ProcessBuilder(cargo, "metadata", "--format-version", "1")
+                .directory(projectDir.parentFile.parentFile.parentFile)
+                .start()
+            val output = process.inputStream.bufferedReader().readText()
+            val exitCode = process.waitFor()
+            if (exitCode == 0) {
+                val json = JsonSlurper().parseText(output) as Map<String, Any>
+                val packages = json["packages"] as List<Map<String, Any>>
+                val pkg = packages.find { it["name"] == "rustls-platform-verifier-android" }
+                if (pkg != null) {
+                    val manifestPath = pkg["manifest_path"] as String
+                    val mavenPath = File(File(manifestPath).parentFile, "maven").absolutePath
+                    if (File(mavenPath).exists()) {
+                        return mavenPath
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            // Try next cargo path
+        }
+    }
+
+    // 2. Direct File System Fallback: scan ~/.cargo/registry/src/ for the cached crate
     try {
-        val process = ProcessBuilder("cargo", "metadata", "--format-version", "1")
-            .directory(projectDir.parentFile.parentFile.parentFile)
-            .start()
-        val output = process.inputStream.bufferedReader().readText()
-        process.waitFor()
-        
-        val json = JsonSlurper().parseText(output) as Map<String, Any>
-        val packages = json["packages"] as List<Map<String, Any>>
-        val pkg = packages.find { it["name"] == "rustls-platform-verifier-android" }
-        if (pkg != null) {
-            val manifestPath = pkg["manifest_path"] as String
-            return File(File(manifestPath).parentFile, "maven").absolutePath
+        val cargoRegistrySrc = File(System.getProperty("user.home"), ".cargo/registry/src")
+        if (cargoRegistrySrc.exists()) {
+            val registryDirs = cargoRegistrySrc.listFiles()
+            if (registryDirs != null) {
+                for (registryDir in registryDirs) {
+                    if (registryDir.isDirectory) {
+                        val pkgDirs = registryDir.listFiles { f -> 
+                            f.isDirectory && f.name.startsWith("rustls-platform-verifier-android-") 
+                        }
+                        if (pkgDirs != null && pkgDirs.isNotEmpty()) {
+                            // Pick the first match or sort if needed
+                            val mavenPath = File(pkgDirs[0], "maven").absolutePath
+                            if (File(mavenPath).exists()) {
+                                return mavenPath
+                            }
+                        }
+                    }
+                }
+            }
         }
     } catch (e: Exception) {
-        println("Warning: Could not find rustls-platform-verifier-android via cargo metadata: ${e.message}")
+        println("Warning: File system fallback for cargo registry failed: ${e.message}")
     }
+
+    println("Warning: Could not find rustls-platform-verifier-android Maven repo")
     return ""
 }
 

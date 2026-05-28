@@ -1605,7 +1605,25 @@ if (typeof document !== 'undefined') {
         // Prevent cross-city street matches for multi-city providers
         if (cityName) {
             const singleCityProviders = ['mpwik_wroclaw', 'mpwik_warszawa', 'stoen', 'wmk', 'zwik_lodz', 'wodociagi_plockie', 'katowickie_wodociagi', 'pwik_kalisz', 'gdanskie_wodociagi'];
-            if (!singleCityProviders.includes(alert.source)) {
+            if (singleCityProviders.includes(alert.source)) {
+                // For single-city providers, reject matching if the saved address is in a completely different city
+                const cityLower = cityName.toLowerCase();
+                if (alert.source === 'mpwik_wroclaw' && !cityLower.startsWith('wroc')) return false;
+                if (alert.source === 'mpwik_warszawa' && !cityLower.startsWith('warsz')) return false;
+                if (alert.source === 'wmk' && !cityLower.startsWith('krak')) return false;
+                if (alert.source === 'zwik_lodz' && !cityLower.startsWith('łódź') && !cityLower.startsWith('lodz')) return false;
+                if (alert.source === 'wodociagi_plockie' && !cityLower.startsWith('pło') && !cityLower.startsWith('plo')) return false;
+                if (alert.source === 'pwik_kalisz' && !cityLower.startsWith('kalisz')) return false;
+                if (alert.source === 'gdanskie_wodociagi' &&
+                    !cityLower.startsWith('gdań') &&
+                    !cityLower.startsWith('gdan') &&
+                    !cityLower.startsWith('pruszcz') &&
+                    !cityLower.startsWith('kolbudy') &&
+                    !cityLower.startsWith('kowale')
+                ) {
+                    return false;
+                }
+            } else {
                 const location = alert.location || '';
                 const msg = alert.message || '';
 
@@ -1659,8 +1677,6 @@ if (typeof document !== 'undefined') {
         // Secondary: match main streetName1 as a whole word
         // (e.g. "Kościuszki" if address is "Tadeusza Kościuszki")
         if (wordMatch(streetName1)) return true;
-
-        return false;
 
         return false;
     }

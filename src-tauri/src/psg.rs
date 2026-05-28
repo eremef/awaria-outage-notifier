@@ -479,7 +479,6 @@ async fn save_cached_html(app: &AppHandle, html: &str) -> Result<(), String> {
 fn normalize(s: &str) -> String {
     s.to_lowercase()
         .chars()
-        .filter(|c| c.is_alphanumeric())
         .map(|c| match c {
             'ą' => 'a',
             'ć' => 'c',
@@ -491,6 +490,7 @@ fn normalize(s: &str) -> String {
             'ź' | 'ż' => 'z',
             _ => c,
         })
+        .filter(|c| c.is_alphanumeric())
         .collect()
 }
 
@@ -592,11 +592,13 @@ pub fn parse_psg_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAle
             let norm_area = normalize(&area);
 
             for (idx, addr) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
-                let addr_city = normalize(&addr.city_name);
                 let addr_street = normalize(&addr.street_name_1);
 
-                // City match: exact or contains
-                let city_match = norm_city == addr_city || norm_city.contains(&addr_city) || addr_city.contains(&norm_city);
+                // For direct matching, check if the normalized scraped city matches the user's city
+                let addr_city = normalize(&addr.city_name);
+                let city_match = norm_city == addr_city 
+                    || norm_city.contains(&addr_city) 
+                    || addr_city.contains(&norm_city);
                 
                 // If city didn't match directly, check if the city name is mentioned in the AREA field
                 let city_in_area = !city_match && (norm_area.contains(&addr_city) || addr_city.contains(&norm_area));
@@ -631,18 +633,26 @@ pub fn parse_psg_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAle
             }
 
             if !matched_indices.is_empty() {
+                let is_awaria = outage_type.to_lowercase().contains("awaria");
+                
                 let reason_trimmed = reason.trim();
                 let final_message = if reason_trimmed.is_empty() || reason_trimmed == "Info Button Text" || reason_trimmed == "Info" {
                     outage_type.clone() + " - " + &area.clone()
                 } else {
-                    format!("{}: {}", reason_trimmed, outage_type + " - " + &area)
+                    format!("{}: {}", reason_trimmed, outage_type.clone() + " - " + &area)
+                };
+
+                let final_message = if is_awaria && !end_date.trim().is_empty() {
+                    format!("{} (Przewidywany czas usunięcia: {})", final_message, end_date)
+                } else {
+                    final_message
                 };
 
                 for &idx in &matched_indices {
                     alerts.push(UnifiedAlert {
                         source: AlertSource::Psg,
                         startDate: Some(start_date.clone()),
-                        endDate: Some(end_date.clone()),
+                        endDate: if is_awaria { None } else { Some(end_date.clone()) },
                         message: Some(final_message.clone()),
                         location: Some(format!("Miejscowość: {}", city)),
                         address_index: Some(idx),
@@ -835,5 +845,37 @@ mod tests {
         
         let alerts = parse_psg_html(html, &settings);
         assert_eq!(alerts.len(), 1, "Locality-wide outage should match specific street");
+    }
+
+    #[test]
+    fn test_psg_wschowa() {
+        let html = r#"
+            <table>
+                <tr>
+                    <td>LUBUSKIE</td>
+                    <td>Wschowa</td>
+                    <td>ul. Wolsztyńska</td>
+                    <td>2024-05-20</td>
+                    <td>termin zostanie podany wkrótce</td>
+                    <td>Awaria gazociągu</td>
+                    <td>awaria</td>
+                </tr>
+            </table>
+        "#;
+        
+        let settings = Settings {
+            addresses: vec![
+                AddressEntry {
+                    city_name: "Wschowa".to_string(),
+                    street_name_1: "ul. Wolsztyńska".to_string(), // Specific street
+                    is_active: true,
+                    ..Default::default()
+                }
+            ],
+            ..Default::default()
+        };
+        
+        let alerts = parse_psg_html(html, &settings);
+        assert_eq!(alerts.len(), 1, "awaria in Wschowa should match");
     }
 }

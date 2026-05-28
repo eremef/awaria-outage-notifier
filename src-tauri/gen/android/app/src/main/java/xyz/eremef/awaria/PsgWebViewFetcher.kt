@@ -459,13 +459,17 @@ object PsgWebViewFetcher {
             // Relaxed check: at least 7 columns (Status might be missing or optional in some views)
             if (cells.size >= 7) {
                 val status = if (cells.size >= 8) cells[7].lowercase() else ""
+                val type = cells[6].lowercase()
+                
                 // Skip completed outages
                 if (status.contains("zakończona") || status.contains("zakonczona")) {
                     continue
                 }
+                
+                val isAwaria = type.contains("awaria")
 
-                // Skip expired outages
-                if (isExpired(cells[4])) {
+                // Skip expired outages (unless it's an active failure without a clear end date)
+                if (!isAwaria && isExpired(cells[4])) {
                     continue
                 }
 
@@ -587,7 +591,8 @@ object PsgWebViewFetcher {
             val formats = listOf(
                 SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()),
                 SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()),
-                SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+                SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()),
+                SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
             )
             for (fmt in formats) {
                 try {

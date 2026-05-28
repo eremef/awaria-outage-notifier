@@ -54,3 +54,15 @@ reqwest = { version = "0.13", default-features = false, features = ["native-tls"
 [dev-dependencies]
 mockito = "1.5.0"
 mockall = "0.13.1"
+
+[profile.dev]
+opt-level = 0
+debug = 1            # 1 = line tables only (saves debug size & link time), 0 = no debug info
+split-debuginfo = "unpacked" # Avoid package-overhead on linking (macOS/Windows/Linux-friendly)
+
+[profile.release]
+opt-level = "s"      # Optimize for size (often compiles faster and is perfect for mobile)
+lto = "thin"         # Faster linking than true LTO
+codegen-units = 16   # Compile different crates in parallel
+panic = "abort"      # Disables stack unwinding, reducing binary size and compile time
+strip = true         # Automatically strips symbols/debuginfo from the final binary
