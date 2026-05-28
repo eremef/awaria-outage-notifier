@@ -148,6 +148,8 @@ pub struct UnifiedAlert {
 pub struct AlertsResponse {
     pub alerts: Vec<UnifiedAlert>,
     pub is_stale: bool,
+    #[serde(default)]
+    pub is_offline: bool,
 }
 
 impl UnifiedAlert {

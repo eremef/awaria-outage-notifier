@@ -548,18 +548,17 @@ async fn fetch_all_alerts_internal(
         if let Ok(Some(json_str)) = state_db::get_kv(&conn, "alerts_cache") {
             if let Ok(cached_alerts) = serde_json::from_str::<Vec<UnifiedAlert>>(&json_str) {
                 log::info!("Serving fetch_all_alerts: persistent SQLite cache hits ({} items)", cached_alerts.len());
-                return Ok(api_logic::AlertsResponse { alerts: cached_alerts, is_stale: true });
+                return Ok(api_logic::AlertsResponse { alerts: cached_alerts, is_stale: true, is_offline: false });
             }
         }
-        // Fallback to empty alerts if cache is empty
-        return Ok(api_logic::AlertsResponse { alerts: Vec::new(), is_stale: true });
+        return Ok(api_logic::AlertsResponse { alerts: Vec::new(), is_stale: true, is_offline: false });
     }
 
     // 2. Check Memory Cache (only on full refresh)
     if sources.is_none() {
         if let Some(cached) = cache_state.get() {
             log::info!("Serving fetch_all_alerts from cache ({} items)", cached.len());
-            return Ok(api_logic::AlertsResponse { alerts: cached, is_stale: false });
+            return Ok(api_logic::AlertsResponse { alerts: cached, is_stale: false, is_offline: false });
         }
     }
     let path = settings_path(app)?;
@@ -594,6 +593,27 @@ async fn fetch_all_alerts_internal(
         let providers = get_providers();
         let net_state = app.state::<NetworkState>();
         let client = net_state.get_client().await?;
+        
+        // --- INTERNET CONNECTIVITY CHECK ---
+        if !NetworkState::check_internet_connection(&client).await {
+            log::warn!("Active internet check failed. Device appears to be offline.");
+            let mut recovered_alerts = Vec::new();
+            let conn = db_state.conn.lock().unwrap();
+            if let Ok(Some(json_str)) = state_db::get_kv(&conn, "alerts_cache") {
+                if let Ok(cached_alerts) = serde_json::from_str::<Vec<UnifiedAlert>>(&json_str) {
+                    recovered_alerts = cached_alerts;
+                }
+            }
+            
+            if !recovered_alerts.is_empty() {
+                return Ok(api_logic::AlertsResponse { alerts: recovered_alerts, is_stale: true, is_offline: true });
+            }
+            if let Some(cached) = cache_state.get_stale() {
+                return Ok(api_logic::AlertsResponse { alerts: cached, is_stale: true, is_offline: true });
+            }
+            return Err("ERR_NO_INTERNET".to_string());
+        }
+
         let client_http1 = net_state.get_client_http1().await?;
 
         for provider in providers {
@@ -614,18 +634,23 @@ async fn fetch_all_alerts_internal(
             let app_h = app.clone();
             tasks.push(tauri::async_runtime::spawn(async move {
                 let _permit = sem.acquire().await.ok();
-                provider.fetch(&c, &c_h1, &s_p, Some(&app_h)).await
+                let source = provider.source();
+                let fetch_result = provider.fetch(&c, &c_h1, &s_p, Some(&app_h)).await;
+                (source, fetch_result)
             }));
         }
 
         attempted_providers = tasks.len();
         let results = join_all(tasks).await;
 
+        let mut failed_sources = Vec::new();
+
         for res in results {
             match res {
-                Ok((mut alerts, errs)) => {
+                Ok((source, (mut alerts, errs))) => {
                     if !errs.is_empty() && alerts.is_empty() {
                         failed_providers += 1;
+                        failed_sources.push(source);
                     }
                     for alert in &mut alerts {
                         alert.hash = Some(alert.to_hash());
@@ -636,6 +661,24 @@ async fn fetch_all_alerts_internal(
                 Err(e) => {
                     failed_providers += 1;
                     errors.push(format!("Task execution error: {}", e));
+                }
+            }
+        }
+
+        // --- RECOVER FAILED PROVIDERS FROM CACHE ---
+        if !failed_sources.is_empty() {
+            log::info!("Attempting to recover alerts for {} failed providers from persistent cache", failed_sources.len());
+            let conn = db_state.conn.lock().unwrap();
+            if let Ok(Some(json_str)) = state_db::get_kv(&conn, "alerts_cache") {
+                if let Ok(cached_alerts) = serde_json::from_str::<Vec<UnifiedAlert>>(&json_str) {
+                    let mut recovered = 0;
+                    for old_alert in cached_alerts {
+                        if failed_sources.contains(&old_alert.source) {
+                            all_alerts.push(old_alert);
+                            recovered += 1;
+                        }
+                    }
+                    log::info!("Recovered {} alerts from persistent cache", recovered);
                 }
             }
         }
@@ -666,9 +709,13 @@ async fn fetch_all_alerts_internal(
     }
 
     if failed_providers == attempted_providers && attempted_providers > 0 {
+        if !all_alerts.is_empty() {
+            log::warn!("Fetch failed for all providers, but recovered {} items from persistent cache", all_alerts.len());
+            return Ok(api_logic::AlertsResponse { alerts: all_alerts, is_stale: true, is_offline: true });
+        }
         if let Some(cached) = cache_state.get_stale() {
             log::warn!("Fetch failed for all {} providers ({} errors), falling back to stale cache ({} items)", attempted_providers, errors.len(), cached.len());
-            return Ok(api_logic::AlertsResponse { alerts: cached, is_stale: true });
+            return Ok(api_logic::AlertsResponse { alerts: cached, is_stale: true, is_offline: true });
         }
         return Err("ERR_NO_INTERNET".to_string());
     }
@@ -718,7 +765,7 @@ async fn fetch_all_alerts_internal(
         }
     }
 
-    Ok(api_logic::AlertsResponse { alerts: all_alerts, is_stale: false })
+    Ok(api_logic::AlertsResponse { alerts: all_alerts, is_stale: false, is_offline: false })
 }
 
 #[tauri::command]

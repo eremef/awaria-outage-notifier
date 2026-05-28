@@ -171,7 +171,8 @@ const translations = {
         "settings_close": "Close settings",
         "settings_show_other_outages": "Show other outages list for other locations",
         "err_no_internet": "No internet connection. Please check your network.",
-        "msg_using_cache": "Showing cached data. New data will be downloaded in background.",
+        "msg_offline": "No internet - showing cached data:",
+        "msg_using_cache": "Data refresh in progress - showing cached data:",
         "btn_collapse_expand_all": "Collapse/Expand All"
     },
     pl: {
@@ -343,7 +344,8 @@ const translations = {
         "settings_close": "Zamknij ustawienia",
         "settings_show_other_outages": "Pokaż listę pozostałych wyłączeń dla innych lokalizacji",
         "err_no_internet": "Brak połączenia z internetem. Sprawdź swoje połączenie sieciowe.",
-        "msg_using_cache": "Pokazywanie zapamiętanych danych. Nowe dane zostaną pobrane wkrótce.",
+        "msg_offline": "Brak internetu - wyświetlam informacje z:",
+        "msg_using_cache": "Aktualizacja danych w tle - wyświetlam informacje z:",
         "btn_collapse_expand_all": "Zwiń/Rozwiń wszystko"
     }
 };

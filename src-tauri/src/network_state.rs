@@ -83,4 +83,21 @@ impl NetworkState {
             Self::build_client_http1()
         }
     }
+
+    pub async fn check_internet_connection(client: &Client) -> bool {
+        let urls = [
+            "http://clients3.google.com/generate_204",
+            "http://captive.apple.com/hotspot-detect.html",
+            "http://1.1.1.1",
+        ];
+
+        for url in urls {
+            if let Ok(res) = client.get(url).timeout(std::time::Duration::from_secs(2)).send().await {
+                if res.status().is_success() || res.status().as_u16() == 204 {
+                    return true;
+                }
+            }
+        }
+        false
+    }
 }

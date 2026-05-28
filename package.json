@@ -21,7 +21,8 @@
     "mempalace:mine": "mempalace mine .",
     "mempalace:sync": "mempalace sync --apply --wing awaria",
     "kill:em:all": "taskkill /f /im cargo.exe & taskkill /f /im rustc.exe & taskkill /f /im rust-analyzer.exe",
-    "build:install": "npx tauri android build --target aarch64 --apk && adb install D:/eremef/Documents/AI/antigravity/awaria/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk"
+    "build:install": "npx tauri android build --target aarch64 --apk && adb install D:/eremef/Documents/AI/antigravity/awaria/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk",
+    "logcat": "powershell -Command \"$AppPid = adb shell pidof -s xyz.eremef.awaria; if ($AppPid) { adb logcat --pid=$AppPid } else { Write-Host 'App is not running!' -ForegroundColor Red }\""
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.11.1",

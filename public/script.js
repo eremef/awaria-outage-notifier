@@ -83,28 +83,32 @@ if (typeof document !== 'undefined') {
     let streetDebounceTimer = null;
     let cityHasNoStreets = false;
     const SOURCES = [
+        // Power
         { id: 'tauron', label: 'Tauron', category: 'power', defaultNotify: true, i18nLabel: 'source_tauron_name', i18nShort: 'source_tauron_short' },
         { id: 'energa', label: 'Energa', category: 'power', defaultNotify: true, i18nLabel: 'source_energa_name', i18nShort: 'source_energa_short' },
         { id: 'enea', label: 'Enea', category: 'power', defaultNotify: true, i18nLabel: 'source_enea_name', i18nShort: 'source_enea_short' },
         { id: 'pge', label: 'PGE', category: 'power', defaultNotify: true, i18nLabel: 'source_pge_name', i18nShort: 'source_pge_short' },
         { id: 'stoen', label: 'Stoen', category: 'power', defaultNotify: true, i18nLabel: 'source_stoen_name', i18nShort: 'source_stoen_short' },
+        // Gas
         { id: 'psg', label: 'PSG', category: 'gas', defaultNotify: true, i18nLabel: 'source_psg_name', i18nShort: 'source_psg_short' },
+        // Heating
         { id: 'fortum', label: 'Fortum', category: 'heating', defaultNotify: true, i18nLabel: 'source_fortum_name', i18nShort: 'source_fortum_short' },
+        { id: 'tauron_heat', label: 'Tauron Ciepło', category: 'heating', defaultNotify: true, i18nLabel: 'source_tauron_heat_name', i18nShort: 'source_tauron_heat_short' },
+        { id: 'veolia_warszawa', label: 'Veolia Warszawa', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_warszawa_name', i18nShort: 'source_veolia_warszawa_short' },
+        { id: 'veolia_poznan', label: 'Veolia Poznań', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_poznan_name', i18nShort: 'source_veolia_poznan_short' },
+        { id: 'veolia_lodz', label: 'Veolia Łódź', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_lodz_name', i18nShort: 'source_veolia_lodz_short' },
+        { id: 'gpec', label: 'GPEC Gdańsk', category: 'heating', defaultNotify: true, i18nLabel: 'source_gpec_name', i18nShort: 'source_gpec_short' },
+        // Water
         { id: 'mpwik_wroclaw', label: 'MPWiK', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_wroclaw_name', i18nShort: 'source_mpwik_wroclaw_short' },
         { id: 'mpwik_warszawa', label: 'MPWiK Warszawa', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_warszawa_name', i18nShort: 'source_mpwik_warszawa_short' },
         { id: 'wmk', label: 'WMK', category: 'water', defaultNotify: true, i18nLabel: 'source_wmk_name', i18nShort: 'source_wmk_short' },
         { id: 'aquanet', label: 'Aquanet', category: 'water', defaultNotify: true, i18nLabel: 'source_aquanet_name', i18nShort: 'source_aquanet_short' },
         { id: 'katowickie_wodociagi', label: 'Katowickie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_katowickie_wodociagi_name', i18nShort: 'source_katowickie_wodociagi_short' },
-        { id: 'tauron_heat', label: 'Tauron Ciepło', category: 'heating', defaultNotify: true, i18nLabel: 'source_tauron_heat_name', i18nShort: 'source_tauron_heat_short' },
-        { id: 'veolia_warszawa', label: 'Veolia Warszawa', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_warszawa_name', i18nShort: 'source_veolia_warszawa_short' },
-        { id: 'veolia_poznan', label: 'Veolia Poznań', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_poznan_name', i18nShort: 'source_veolia_poznan_short' },
-        { id: 'veolia_lodz', label: 'Veolia Łódź', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_lodz_name', i18nShort: 'source_veolia_lodz_short' },
         { id: 'zwik_lodz', label: 'ZWIK Łódź', category: 'water', defaultNotify: true, i18nLabel: 'source_zwik_lodz_name', i18nShort: 'source_zwik_lodz_short' },
         { id: 'wodociagi_plockie', label: 'Wodociągi Płockie', category: 'water', defaultNotify: true, i18nLabel: 'source_wodociagi_plockie_name', i18nShort: 'source_wodociagi_plockie_short' },
         { id: 'pwik_kalisz', label: 'PWiK Kalisz', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_kalisz_name', i18nShort: 'source_pwik_kalisz_short' },
         { id: 'pwik_czestochowa', label: 'PWiK Częstochowa', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_czestochowa_name', i18nShort: 'source_pwik_czestochowa_short' },
         { id: 'gdanskie_wodociagi', label: 'Gdańskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_gdanskie_wodociagi_name', i18nShort: 'source_gdanskie_wodociagi_short' },
-        { id: 'gpec', label: 'GPEC Gdańsk', category: 'heating', defaultNotify: true, i18nLabel: 'source_gpec_name', i18nShort: 'source_gpec_short' },
     ];
 
     function renderSourcesUI() {
@@ -1461,13 +1465,14 @@ if (typeof document !== 'undefined') {
 
         const container = document.getElementById('outages-container');
         try {
-            const invokeArgs = { 
+            const invokeArgs = {
                 sources: specificSource ? [specificSource] : null,
-                cachedOnly: cachedOnly 
+                cachedOnly: cachedOnly
             };
             const response = await window.__TAURI__.core.invoke('fetch_all_alerts', invokeArgs);
             let newAlerts = response.alerts;
             const isStale = response.is_stale;
+            const isOffline = response.is_offline;
 
             if (Array.isArray(newAlerts)) {
                 const seen = new Set();
@@ -1486,7 +1491,7 @@ if (typeof document !== 'undefined') {
                 lastAlerts = newAlerts;
             }
 
-            updateLastUpdated(new Date(), isStale);
+            updateLastUpdated(new Date(), isStale, isOffline);
             renderAlerts(lastAlerts || [], container, currentSettings, selectedAddressIndex);
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -1506,7 +1511,7 @@ if (typeof document !== 'undefined') {
         }
     }
 
-    function updateLastUpdated(date, isStale = false) {
+    function updateLastUpdated(date, isStale = false, isOffline = false) {
         if (date) lastFetchDate = date;
         const el = document.getElementById('last-updated');
         if (!el) return;
@@ -1523,9 +1528,14 @@ if (typeof document !== 'undefined') {
         const label = typeof t !== 'undefined' ? t('last_updated') : 'Last updated';
         let text = `${label}: ${lastFetchDate.toLocaleTimeString(localeStr)}`;
 
-        if (isStale) {
+        if (isOffline) {
+            const offlineLabel = typeof t !== 'undefined' ? t('msg_offline') : 'Offline mode';
+            text = `${offlineLabel} ${lastFetchDate.toLocaleTimeString(localeStr)}`;
+            el.style.color = 'var(--text-secondary)';
+            el.style.fontStyle = 'italic';
+        } else if (isStale) {
             const staleLabel = typeof t !== 'undefined' ? t('msg_using_cache') : 'Offline mode';
-            text = `${staleLabel} (${lastFetchDate.toLocaleTimeString(localeStr)})`;
+            text = `${staleLabel} ${lastFetchDate.toLocaleTimeString(localeStr)}`;
             el.style.color = 'var(--text-secondary)';
             el.style.fontStyle = 'italic';
         } else {
