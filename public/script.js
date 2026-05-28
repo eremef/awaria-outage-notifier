@@ -1241,7 +1241,10 @@ if (typeof document !== 'undefined') {
                 document.getElementById('address-form').classList.add('hidden');
 
                 if (settings.addresses && settings.addresses.length > 0) {
-                    fetchOutages();
+                    // Fast load from SQLite persistent cache first, then fetch fresh in background
+                    fetchOutages(null, true).then(() => {
+                        fetchOutages(null, false);
+                    });
                 } else {
                     renderAlerts([], container, currentSettings, selectedAddressIndex);
                     document.getElementById('last-updated').textContent = typeof t !== 'undefined' ? t('not_configured') : 'Not configured';
@@ -1447,18 +1450,21 @@ if (typeof document !== 'undefined') {
 
     // ── Alerts ─────────────────────────────────────────────────
 
-    async function fetchOutages(specificSource = null) {
+    async function fetchOutages(specificSource = null, cachedOnly = false) {
         if (specificSource) {
             if (fetchingSources.has(specificSource)) return;
             fetchingSources.add(specificSource);
         } else {
-            if (isFetching) return;
-            isFetching = true;
+            if (isFetching && !cachedOnly) return;
+            if (!cachedOnly) isFetching = true;
         }
 
         const container = document.getElementById('outages-container');
         try {
-            const invokeArgs = specificSource ? { sources: [specificSource] } : { sources: null };
+            const invokeArgs = { 
+                sources: specificSource ? [specificSource] : null,
+                cachedOnly: cachedOnly 
+            };
             const response = await window.__TAURI__.core.invoke('fetch_all_alerts', invokeArgs);
             let newAlerts = response.alerts;
             const isStale = response.is_stale;
@@ -1485,7 +1491,7 @@ if (typeof document !== 'undefined') {
         } catch (error) {
             console.error('Error fetching data:', error);
             // Only show full error message on full fetch
-            if (!specificSource) {
+            if (!specificSource && !cachedOnly) {
                 const errorMsg = error === 'ERR_NO_INTERNET' ? (typeof t !== 'undefined' ? t('err_no_internet') : 'No internet connection.') : `${typeof t !== 'undefined' ? t('err_load_failed') : 'Failed to load alert data. Error: '}${error}`;
                 container.innerHTML = `<div class="error">${errorMsg}</div>`;
             }
@@ -1493,7 +1499,9 @@ if (typeof document !== 'undefined') {
             if (specificSource) {
                 fetchingSources.delete(specificSource);
             } else {
-                isFetching = false;
+                if (!cachedOnly) {
+                    isFetching = false;
+                }
             }
         }
     }

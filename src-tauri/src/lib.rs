@@ -537,11 +537,25 @@ fn get_providers() -> Vec<Box<dyn AlertProvider>> {
 async fn fetch_all_alerts_internal(
     app: &AppHandle,
     sources: Option<Vec<String>>,
+    cached_only: Option<bool>,
 ) -> Result<api_logic::AlertsResponse, String> {
     let db_state = app.state::<DbState>();
     let cache_state = app.state::<cache::CacheState>();
 
-    // 1. Check Cache (only on full refresh)
+    // 1. If cached_only is true, load instantly from the persistent database cache
+    if cached_only.unwrap_or(false) {
+        let conn = db_state.conn.lock().unwrap();
+        if let Ok(Some(json_str)) = state_db::get_kv(&conn, "alerts_cache") {
+            if let Ok(cached_alerts) = serde_json::from_str::<Vec<UnifiedAlert>>(&json_str) {
+                log::info!("Serving fetch_all_alerts: persistent SQLite cache hits ({} items)", cached_alerts.len());
+                return Ok(api_logic::AlertsResponse { alerts: cached_alerts, is_stale: true });
+            }
+        }
+        // Fallback to empty alerts if cache is empty
+        return Ok(api_logic::AlertsResponse { alerts: Vec::new(), is_stale: true });
+    }
+
+    // 2. Check Memory Cache (only on full refresh)
     if sources.is_none() {
         if let Some(cached) = cache_state.get() {
             log::info!("Serving fetch_all_alerts from cache ({} items)", cached.len());
@@ -696,6 +710,12 @@ async fn fetch_all_alerts_internal(
 
     if sources.is_none() {
         cache_state.set(all_alerts.clone());
+        
+        // Save to persistent database cache
+        if let Ok(json_str) = serde_json::to_string(&all_alerts) {
+            let conn = db_state.conn.lock().unwrap();
+            let _ = state_db::set_kv(&conn, "alerts_cache", &json_str);
+        }
     }
 
     Ok(api_logic::AlertsResponse { alerts: all_alerts, is_stale: false })
@@ -705,8 +725,9 @@ async fn fetch_all_alerts_internal(
 async fn fetch_all_alerts(
     app: AppHandle,
     sources: Option<Vec<String>>,
+    cached_only: Option<bool>,
 ) -> Result<api_logic::AlertsResponse, String> {
-    fetch_all_alerts_internal(&app, sources).await
+    fetch_all_alerts_internal(&app, sources, cached_only).await
 }
 
 #[cfg(not(mobile))]
@@ -720,7 +741,7 @@ fn start_background_monitoring(app: AppHandle) {
         loop {
             interval.tick().await;
             log::info!("Background monitoring: starting fetch cycle...");
-            match fetch_all_alerts_internal(&app, None).await {
+            match fetch_all_alerts_internal(&app, None, None).await {
                 Ok(response) => log::info!("Background monitoring: cycle completed successfully ({} alerts found).", response.alerts.len()),
                 Err(e) => log::error!("Background monitoring: cycle failed: {}", e),
             }
