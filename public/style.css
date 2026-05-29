@@ -154,6 +154,7 @@
     --pwik_kalisz-color: #0284c7;
     --pwik_czestochowa-color: #1d4ed8;
     --gdanskie_wodociagi-color: #0284c7;
+    --gpec-color: #be123c;
     --nav-bg: rgba(240, 253, 244, 0.85);
 }
 
@@ -176,8 +177,8 @@
     --success-border: #065f46;
     --message-border: #164e63;
     --label-border: #164e63;
-    --tauron-color: #e3067e;
-    --tauron_heat-color: #e3067e;
+    --tauron-color: #f9a8d4;
+    --tauron_heat-color: #f9a8d4;
     --mpwik_wroclaw-color: #38bdf8;
     --fortum-color: #4ade80;
     --energa-color: #fb7185;
@@ -187,7 +188,7 @@
     --psg-color: #38bdf8;
     --wmk-color: #38bdf8;
     --aquanet-color: #38bdf8;
-    --katowickie_wodociagi-color: #0089C8;
+    --katowickie_wodociagi-color: #22d3ee;
     --mpwik_warszawa-color: #3b82f6;
     --veolia-color: #fb7185;
     --veolia_poznan-color: var(--veolia-color);
@@ -197,6 +198,7 @@
     --pwik_kalisz-color: #38bdf8;
     --pwik_czestochowa-color: #38bdf8;
     --gdanskie_wodociagi-color: #38bdf8;
+    --gpec-color: #fca5a5;
     --nav-bg: rgba(8, 51, 68, 0.85);
 }
 
@@ -239,6 +241,7 @@
     --pwik_kalisz-color: #81a1c1;
     --pwik_czestochowa-color: #81a1c1;
     --gdanskie_wodociagi-color: #81a1c1;
+    --gpec-color: #bf616a;
     --nav-bg: rgba(46, 52, 64, 0.85);
 }
 
@@ -271,7 +274,7 @@
     --psg-color: #8be9fd;
     --wmk-color: #8be9fd;
     --aquanet-color: #8be9fd;
-    --katowickie_wodociagi-color: #0089C8;
+    --katowickie_wodociagi-color: #8be9fd;
     --mpwik_warszawa-color: #6272a4;
     --veolia-color: #ff5555;
     --veolia_poznan-color: var(--veolia-color);
@@ -281,6 +284,7 @@
     --pwik_kalisz-color: #8be9fd;
     --pwik_czestochowa-color: #8be9fd;
     --gdanskie_wodociagi-color: #8be9fd;
+    --gpec-color: #ff5555;
 }
 
 [data-theme="sepia"] {
@@ -322,6 +326,7 @@
     --pwik_kalisz-color: #3d5a80;
     --pwik_czestochowa-color: #3d5a80;
     --gdanskie_wodociagi-color: #3d5a80;
+    --gpec-color: #9b2226;
 }
 
 [data-theme="latte"] {
@@ -363,6 +368,7 @@
     --pwik_kalisz-color: #2a6f97;
     --pwik_czestochowa-color: #2a6f97;
     --gdanskie_wodociagi-color: #2a6f97;
+    --gpec-color: #c1121f;
 }
 
 [data-theme="monochrome-light"] {
@@ -406,6 +412,7 @@
     --pwik_kalisz-color: #525252;
     --pwik_czestochowa-color: #525252;
     --gdanskie_wodociagi-color: #525252;
+    --gpec-color: #525252;
 }
 
 [data-theme="monochrome-dark"] {
@@ -449,6 +456,7 @@
     --pwik_kalisz-color: #a3a3a3;
     --pwik_czestochowa-color: #a3a3a3;
     --gdanskie_wodociagi-color: #a3a3a3;
+    --gpec-color: #a3a3a3;
 }
 
 * {
@@ -1262,7 +1270,7 @@ h1 {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.4rem;
+    padding: 0.4rem 1rem;
     border-radius: 8px;
     transition: all 0.1s ease;
 }
@@ -1486,12 +1494,15 @@ h1 {
     cursor: pointer;
     margin-top: 0.3rem;
     user-select: none;
+    padding-right: 8px;
 }
 
 .collapsible .toggle-icon {
-    font-size: 0.8rem;
-    transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     display: inline-block;
+    color: var(--secondary-text);
+    margin-right: 8px;
+    transform: rotate(0deg);
 }
 
 .collapsible.collapsed .toggle-icon {
@@ -1511,15 +1522,60 @@ h1 {
 }
 
 .address-filter {
+    display: block;
     width: 100%;
     max-width: 600px;
-    padding: 0.5rem;
-    margin: 0.5rem 0;
+    padding: 0.6rem 2.5rem 0.6rem 1rem;
+    margin: 0.5rem auto;
     border: 1px solid var(--input-border);
     border-radius: 0.5rem;
     background: var(--card-background);
     color: var(--text-color);
     font-size: 0.9rem;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1.25rem;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+[data-theme="dark"] .address-filter {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f9' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+}
+
+[data-theme="ocean"] .address-filter {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a5f3fc' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+}
+
+[data-theme="emerald"] .address-filter {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23166534' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+}
+
+[data-theme="nord"] .address-filter {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d8dee9' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+}
+
+[data-theme="dracula"] .address-filter {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236272a4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+}
+
+[data-theme="sepia"] .address-filter {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2370665b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+}
+
+[data-theme="latte"] .address-filter {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23705d56' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+}
+
+.address-filter:focus {
+    outline: none;
+    border-color: var(--input-focus);
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.15);
 }
 
 .addresses-list {
@@ -2231,12 +2287,14 @@ input[type="checkbox"]:checked+.notify-bell-icon {
 
 .chevron-icon {
     transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    transform: rotate(-90deg); /* Collapsed (pointing right/left) */
+    transform: rotate(-90deg);
+    /* Collapsed (pointing right/left) */
     display: block;
 }
 
 .settings-field-group.expanded .chevron-icon {
-    transform: rotate(0deg); /* Expanded (pointing down) */
+    transform: rotate(0deg);
+    /* Expanded (pointing down) */
 }
 
 .settings-group-sources {
@@ -2265,4 +2323,215 @@ input[type="checkbox"]:checked+.notify-bell-icon {
 
 .master-checkbox-container input[type="checkbox"]:indeterminate {
     accent-color: var(--checkbox-accent, var(--primary-color));
-}
+}
+
+/* ── Premium Toast Notification ───────────────────────── */
+.app-toast {
+    position: fixed;
+    bottom: calc(24px + var(--safe-area-inset-bottom));
+    left: 50%;
+    transform: translate(-50%, 100px);
+    z-index: 2000;
+    max-width: 90%;
+    width: 420px;
+    background: var(--card-background);
+    border: 1px solid var(--input-border);
+    border-radius: 16px;
+    box-shadow: var(--shadow), 0 10px 30px rgba(0, 0, 0, 0.08);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+        opacity 0.3s ease;
+}
+
+[data-theme="dark"] .app-toast {
+    box-shadow: var(--shadow), 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.app-toast.show {
+    transform: translate(-50%, 0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.app-toast.hide {
+    transform: translate(-50%, 100px);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.app-toast-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+}
+
+.app-toast-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--primary-color);
+}
+
+.app-toast-icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.app-toast-text {
+    flex-grow: 1;
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--text-color);
+}
+
+.app-toast-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: var(--secondary-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    opacity: 0.7;
+    transition: opacity 0.2s, background-color 0.2s;
+}
+
+.app-toast-close:hover {
+    opacity: 1;
+    background-color: rgba(128, 128, 128, 0.15);
+}
+
+.app-toast-close svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* ── Premium Accordion Progress Console ──────────────── */
+.refresh-progress-console {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    margin: 0.6rem auto;
+    background: var(--card-background);
+    border: 1px solid var(--message-border);
+    border-radius: 12px;
+    box-sizing: border-box;
+    overflow: hidden;
+    padding: 0.6rem 1.2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="dark"] .refresh-progress-console {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.progress-console-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    outline: none;
+}
+
+.progress-console-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.progress-console-chevron {
+    color: var(--secondary-text);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progress-console-chevron.expanded {
+    transform: rotate(180deg);
+}
+
+/* Detailed Provider Grid Panel */
+.progress-console-details {
+    margin-top: 0.35rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid var(--message-border);
+    /* max-height: 120px; */
+    overflow-y: auto;
+    transition: opacity 0.2s ease;
+}
+
+.progress-providers-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding-bottom: 0.25rem;
+}
+
+/* Provider Status Capsule Tags */
+.provider-status-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    background: var(--background-color);
+    border: 1px solid var(--message-border);
+    color: var(--secondary-text);
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.provider-status-badge.fetching {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    animation: badgePulse 1.5s infinite ease-in-out;
+}
+
+.provider-status-badge.success {
+    background: var(--success-bg);
+    border-color: var(--success-border);
+    color: var(--success-text);
+}
+
+.provider-status-badge.error {
+    background: var(--error-bg);
+    border-color: var(--error-border);
+    color: var(--error-text);
+}
+
+@keyframes badgePulse {
+
+    0%,
+    100% {
+        opacity: 0.7;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+/* Subtle Boundary Progress Bar */
+.progress-console-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: rgba(128, 128, 128, 0.1);
+}
+
+.progress-console-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--primary-color);
+    transition: width 0.3s cubic-bezier(0.1, 0.8, 0.2, 1);
+}

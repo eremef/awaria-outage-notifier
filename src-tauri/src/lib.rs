@@ -60,7 +60,8 @@ use futures::future::join_all;
 use teryt::{TerytCity, TerytStreet};
 
 
-const MAX_CONCURRENT_REQUESTS: usize = 5;
+const MAX_CONCURRENT_API_REQUESTS: usize = 15;
+const MAX_CONCURRENT_WEBVIEW_REQUESTS: usize = 3;
 
 #[cfg(target_os = "android")]
 static ANDROID_CONTEXT: Mutex<Option<std::sync::Arc<Global<JObject<'static>>>>> = Mutex::new(None);
@@ -554,11 +555,24 @@ async fn fetch_all_alerts_internal(
         return Ok(api_logic::AlertsResponse { alerts: Vec::new(), is_stale: true, is_offline: false });
     }
 
-    // 2. Check Memory Cache (only on full refresh)
+    // 2. Check Memory Cache (full refresh) or per-source cache (single-provider refresh)
     if sources.is_none() {
         if let Some(cached) = cache_state.get() {
             log::info!("Serving fetch_all_alerts from cache ({} items)", cached.len());
             return Ok(api_logic::AlertsResponse { alerts: cached, is_stale: false, is_offline: false });
+        }
+    } else if let Some(ref requested_sources) = sources {
+        let mut cached_results = Vec::new();
+        let mut all_hit = true;
+        for src_id in requested_sources {
+            match cache_state.get_source(src_id) {
+                Some(cached) => cached_results.extend(cached),
+                None => { all_hit = false; break; }
+            }
+        }
+        if all_hit {
+            log::info!("Serving fetch_all_alerts for {:?} from per-source cache ({} items)", requested_sources, cached_results.len());
+            return Ok(api_logic::AlertsResponse { alerts: cached_results, is_stale: false, is_offline: false });
         }
     }
     let path = settings_path(app)?;
@@ -585,7 +599,8 @@ async fn fetch_all_alerts_internal(
         settings.as_ref().map(|s| s.addresses.len()).unwrap_or(0)
     );
 
-    let semaphore = Arc::new(Semaphore::new(MAX_CONCURRENT_REQUESTS));
+    let api_semaphore = Arc::new(Semaphore::new(MAX_CONCURRENT_API_REQUESTS));
+    let webview_semaphore = Arc::new(Semaphore::new(MAX_CONCURRENT_WEBVIEW_REQUESTS));
     let mut tasks = Vec::new();
 
     if let Some(s) = settings {
@@ -628,7 +643,12 @@ async fn fetch_all_alerts_internal(
             }
 
             let s_p = Arc::clone(&s_arc);
-            let sem = semaphore.clone();
+            let is_webview = provider.id() == "psg" || provider.id() == "gpec" || provider.id() == "pwik_kalisz";
+            let sem = if is_webview {
+                webview_semaphore.clone()
+            } else {
+                api_semaphore.clone()
+            };
             let c = client.clone();
             let c_h1 = client_http1.clone();
             let app_h = app.clone();
@@ -757,11 +777,20 @@ async fn fetch_all_alerts_internal(
 
     if sources.is_none() {
         cache_state.set(all_alerts.clone());
-        
+
         // Save to persistent database cache
         if let Ok(json_str) = serde_json::to_string(&all_alerts) {
             let conn = db_state.conn.lock().unwrap();
             let _ = state_db::set_kv(&conn, "alerts_cache", &json_str);
+        }
+    } else if let Some(ref requested_sources) = sources {
+        // Save per-source cache for each fetched source
+        for src_id in requested_sources {
+            let src_alerts: Vec<_> = all_alerts.iter()
+                .filter(|a| a.source.to_string() == *src_id)
+                .cloned()
+                .collect();
+            cache_state.set_source(src_id, src_alerts);
         }
     }
 

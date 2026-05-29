@@ -1,40 +1,56 @@
 pub fn parse_date(date_str: &str) -> Option<chrono::DateTime<chrono::Utc>> {
     use chrono::{DateTime, TimeZone, Utc, NaiveDateTime};
+    use chrono_tz::Europe::Warsaw;
     
+    let parse_local = |nd: NaiveDateTime| {
+        Warsaw.from_local_datetime(&nd)
+            .latest() // Use latest in case of ambiguous times (DST fallback)
+            .or_else(|| Warsaw.from_local_datetime(&nd).earliest()) // or earliest for DST gaps
+            .map(|dt| dt.with_timezone(&Utc))
+            .unwrap_or_else(|| Utc.from_utc_datetime(&nd))
+    };
+
     DateTime::parse_from_rfc3339(date_str)
         .map(|dt| dt.with_timezone(&Utc))
         .ok()
         .or_else(|| {
             NaiveDateTime::parse_from_str(date_str, "%Y-%m-%dT%H:%M:%S%.f")
                 .ok()
-                .map(|nd| Utc.from_utc_datetime(&nd))
+                .map(parse_local)
         })
         .or_else(|| {
             NaiveDateTime::parse_from_str(date_str, "%Y-%m-%dT%H:%M:%S")
                 .ok()
-                .map(|nd| Utc.from_utc_datetime(&nd))
+                .map(parse_local)
         })
         .or_else(|| {
             NaiveDateTime::parse_from_str(date_str, "%Y-%m-%d %H:%M:%S")
                 .ok()
-                .map(|nd| Utc.from_utc_datetime(&nd))
+                .map(parse_local)
         })
         .or_else(|| {
             NaiveDateTime::parse_from_str(date_str, "%Y-%m-%d %H:%M")
                 .ok()
-                .map(|nd| Utc.from_utc_datetime(&nd))
+                .map(parse_local)
         })
         .or_else(|| {
             NaiveDateTime::parse_from_str(date_str, "%d-%m-%Y %H:%M")
                 .ok()
-                .map(|nd| Utc.from_utc_datetime(&nd))
+                .map(parse_local)
         })
         .or_else(|| {
             // Handle "14.05.2026 godz. 08:00" or "14.05.2026 08:00"
             let cleaned = date_str.replace("godz.", "").replace(".", "-").trim().to_string();
             NaiveDateTime::parse_from_str(&cleaned, "%d-%m-%Y %H:%M")
                 .ok()
-                .map(|nd| Utc.from_utc_datetime(&nd))
+                .map(parse_local)
+        })
+        .or_else(|| {
+            // Handle just "14.05.2026"
+            let cleaned = date_str.replace(".", "-").trim().to_string();
+            chrono::NaiveDate::parse_from_str(&cleaned, "%d-%m-%Y")
+                .ok()
+                .map(|nd| parse_local(nd.and_hms_opt(23, 59, 59).unwrap()))
         })
 }
 

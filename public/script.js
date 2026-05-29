@@ -14,6 +14,7 @@ if (typeof document !== 'undefined') {
         initPullToRefresh();
         initRefreshButton();
         initAddressFilter();
+        initProgressConsole();
         loadSettingsAndFetch();
         debugSafeAreas();
         fetchAppVersion();
@@ -65,6 +66,12 @@ if (typeof document !== 'undefined') {
     let selectedAddressIndex = -1; // -1 means "all addresses"
     let isFetching = false;
     let fetchingSources = new Set();
+    let consoleRefreshState = {
+        isExpanded: false,
+        total: 0,
+        completed: 0,
+        providers: {}
+    };
     let isSearchingCities = false;
     let isSearchingStreets = false;
     let dateCache = {};
@@ -697,6 +704,9 @@ if (typeof document !== 'undefined') {
                     await autoSaveSettings();
                     if (sourceCheckbox.checked) {
                         fetchOutages(s.id);
+                        if (s.id === 'enea' || s.id === 'psg') {
+                            showToast(typeof t !== 'undefined' ? t('toast_slow_fetching_warning') : 'Fetching outages from Enea and PSG may take longer than other providers.');
+                        }
                     } else {
                         const container = document.getElementById('outages-container');
                         renderAlerts(lastAlerts || [], container, currentSettings, selectedAddressIndex);
@@ -1458,9 +1468,77 @@ if (typeof document !== 'undefined') {
         if (specificSource) {
             if (fetchingSources.has(specificSource)) return;
             fetchingSources.add(specificSource);
+            updateRefreshProgressUI();
         } else {
             if (isFetching && !cachedOnly) return;
-            if (!cachedOnly) isFetching = true;
+            if (!cachedOnly) {
+                isFetching = true;
+
+                // If it is a full fresh fetch, trigger progressive loading for all enabled sources
+                const enabled = currentSettings && Array.isArray(currentSettings.enabledSources)
+                    ? currentSettings.enabledSources
+                    : [];
+
+                if (enabled.length > 0) {
+                    const progressEl = document.getElementById('refresh-progress');
+                    if (progressEl) {
+                        progressEl.classList.remove('hidden');
+                    }
+
+                    // Reset progressive console states
+                    consoleRefreshState.completed = 0;
+                    consoleRefreshState.total = enabled.length;
+                    consoleRefreshState.providers = {};
+                    enabled.forEach(sourceId => {
+                        consoleRefreshState.providers[sourceId] = 'pending';
+                    });
+
+                    let completedCount = 0;
+                    const totalCount = enabled.length;
+
+                    updateRefreshProgressUI(completedCount, totalCount);
+
+                    // Trigger all fetches in parallel
+                    const fetchPromises = enabled.map(async (sourceId) => {
+                        consoleRefreshState.providers[sourceId] = 'fetching';
+                        updateRefreshProgressUI();
+
+                        let success = false;
+                        try {
+                            await fetchOutages(sourceId, false);
+                            success = true;
+                        } catch (err) {
+                            console.error(`Error in progressive fetch for ${sourceId}:`, err);
+                        } finally {
+                            completedCount++;
+                            consoleRefreshState.providers[sourceId] = success ? 'success' : 'error';
+                            updateRefreshProgressUI(completedCount, totalCount);
+                        }
+                    });
+
+                    try {
+                        await Promise.all(fetchPromises);
+                    } catch (e) {
+                        console.error('Error during progressive fetching:', e);
+                    } finally {
+                        isFetching = false;
+                        setTimeout(() => {
+                            if (progressEl) {
+                                progressEl.classList.add('hidden');
+                                // Reset title and progress bar
+                                const titleEl = document.getElementById('progress-console-title');
+                                if (titleEl) {
+                                    titleEl.textContent = typeof t !== 'undefined' ? t('refreshing_providers') : 'Refreshing providers';
+                                }
+                                const barFillEl = document.getElementById('progress-console-bar-fill');
+                                if (barFillEl) barFillEl.style.width = '0%';
+                            }
+                        }, 800); // 800ms success delay
+                        updateLastUpdated(new Date(), false, false);
+                    }
+                    return;
+                }
+            }
         }
 
         const container = document.getElementById('outages-container');
@@ -1503,12 +1581,155 @@ if (typeof document !== 'undefined') {
         } finally {
             if (specificSource) {
                 fetchingSources.delete(specificSource);
+                updateRefreshProgressUI();
             } else {
                 if (!cachedOnly) {
                     isFetching = false;
                 }
             }
         }
+    }
+
+    function updateRefreshProgressUI(completed = null, total = null) {
+        const progressEl = document.getElementById('refresh-progress');
+        if (!progressEl) return;
+
+        // If completed counts are passed, track them
+        if (completed !== null) consoleRefreshState.completed = completed;
+        if (total !== null) consoleRefreshState.total = total;
+
+        const currentCompleted = consoleRefreshState.completed;
+        const currentTotal = consoleRefreshState.total;
+
+        if (fetchingSources.size === 0 && completed === null && currentCompleted === currentTotal) {
+            // Let the setTimeout in fetchOutages handle the fade-out; don't hide immediately
+            return;
+        }
+
+        // Update the header text
+        const titleEl = document.getElementById('progress-console-title');
+        const prefix = typeof t !== 'undefined' ? t('refreshing_providers') : 'Refreshing providers';
+
+        // Update the progress bar fill
+        const barFillEl = document.getElementById('progress-console-bar-fill');
+
+        if (currentTotal === 0) {
+            // Single source fetch fallback
+            const activeNames = Array.from(fetchingSources).map(id => {
+                const src = SOURCES.find(s => s.id === id);
+                return src ? (t(src.i18nShort) || src.label) : id;
+            }).join(', ');
+
+            if (titleEl) {
+                const singlePrefix = typeof t !== 'undefined' ? t('refresh_progress_prefix') : 'Refreshing';
+                titleEl.textContent = activeNames ? `${singlePrefix} (${activeNames})...` : `${singlePrefix}...`;
+            }
+
+            if (barFillEl) barFillEl.style.width = '100%';
+
+            // Hide details/chevron since it's a single source
+            const toggleEl = document.getElementById('progress-console-toggle');
+            if (toggleEl) toggleEl.style.pointerEvents = 'none';
+            const chevronEl = document.getElementById('progress-chevron-icon');
+            if (chevronEl) chevronEl.classList.add('hidden');
+            const detailsEl = document.getElementById('progress-console-details');
+            if (detailsEl) detailsEl.classList.add('hidden');
+        } else {
+            // Full progressive refresh
+            const toggleEl = document.getElementById('progress-console-toggle');
+            if (toggleEl) toggleEl.style.pointerEvents = 'auto';
+            const chevronEl = document.getElementById('progress-chevron-icon');
+            if (chevronEl) {
+                chevronEl.classList.remove('hidden');
+                if (consoleRefreshState.isExpanded) {
+                    chevronEl.classList.add('expanded');
+                } else {
+                    chevronEl.classList.remove('expanded');
+                }
+            }
+
+            if (titleEl) {
+                titleEl.textContent = `${prefix} (${currentCompleted}/${currentTotal})...`;
+            }
+
+            if (barFillEl) {
+                const percent = currentTotal > 0 ? (currentCompleted / currentTotal) * 100 : 0;
+                barFillEl.style.width = `${percent}%`;
+            }
+
+            // Toggle expansion state in DOM
+            const detailsEl = document.getElementById('progress-console-details');
+            if (detailsEl) {
+                if (consoleRefreshState.isExpanded) {
+                    detailsEl.classList.remove('hidden');
+                } else {
+                    detailsEl.classList.add('hidden');
+                }
+            }
+        }
+
+        // Render the detailed wall of statuses inside grid
+        renderProgressConsoleDetails();
+    }
+
+    function initProgressConsole() {
+        const toggleEl = document.getElementById('progress-console-toggle');
+        if (!toggleEl) return;
+
+        toggleEl.addEventListener('click', () => {
+            const detailsEl = document.getElementById('progress-console-details');
+            const chevronEl = document.getElementById('progress-chevron-icon');
+            if (!detailsEl || !chevronEl) return;
+
+            consoleRefreshState.isExpanded = !consoleRefreshState.isExpanded;
+            toggleEl.setAttribute('aria-expanded', consoleRefreshState.isExpanded);
+
+            if (consoleRefreshState.isExpanded) {
+                detailsEl.classList.remove('hidden');
+                chevronEl.classList.add('expanded');
+                renderProgressConsoleDetails();
+            } else {
+                detailsEl.classList.add('hidden');
+                chevronEl.classList.remove('expanded');
+            }
+        });
+    }
+
+    function renderProgressConsoleDetails() {
+        const listEl = document.getElementById('progress-providers-list');
+        if (!listEl) return;
+
+        // Clear existing list
+        listEl.innerHTML = '';
+
+        // Render each enabled provider status card
+        const enabled = currentSettings && Array.isArray(currentSettings.enabledSources)
+            ? currentSettings.enabledSources
+            : [];
+
+        enabled.forEach(sourceId => {
+            const src = SOURCES.find(s => s.id === sourceId);
+            const label = src ? (t(src.i18nShort) || src.label) : sourceId;
+            const status = consoleRefreshState.providers[sourceId] || 'pending';
+
+            const badge = document.createElement('div');
+            badge.className = `provider-status-badge ${status}`;
+
+            // Create indicator icon based on state
+            let iconHtml = '';
+            if (status === 'fetching') {
+                iconHtml = '<span class="status-pulse-dot" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;"></span>';
+            } else if (status === 'success') {
+                iconHtml = '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+            } else if (status === 'error') {
+                iconHtml = '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>';
+            } else {
+                iconHtml = '<span class="status-idle-dot" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--secondary-text);opacity:0.3;"></span>';
+            }
+
+            badge.innerHTML = `${iconHtml}<span>${label}</span>`;
+            listEl.appendChild(badge);
+        });
     }
 
     function updateLastUpdated(date, isStale = false, isOffline = false) {
@@ -1701,11 +1922,27 @@ if (typeof document !== 'undefined') {
 
 
     function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
+        const expandedGroups = new Set();
+        if (container) {
+            container.querySelectorAll('.collapsible:not(.collapsed)').forEach(el => {
+                const match = el.className.match(/(source-[a-zA-Z0-9_]+)/);
+                if (match) {
+                    const isOther = el.classList.contains('other-alert-group');
+                    expandedGroups.add((isOther ? 'other-' : 'local-') + match[1]);
+                }
+            });
+        }
+
         const now = new Date();
         const enabledSources = (settings && settings.enabledSources) ? settings.enabledSources : SOURCES.map(s => s.id);
 
+        const seen = new Set();
         const activeAlerts = alerts.filter(item => {
             if (!enabledSources.includes(item.source)) return false;
+            if (item.hash) {
+                if (seen.has(item.hash)) return false;
+                seen.add(item.hash);
+            }
             if (!item.endDate) return true;
             const end = new Date(item.endDate);
             return isNaN(end.getTime()) || end > now;
@@ -2004,8 +2241,11 @@ if (typeof document !== 'undefined') {
                 const list = localLists[s.id];
                 if (list && list.length > 0) {
                     const lblSection = (typeof t !== 'undefined' ? t(`lbl_section_${s.id}`) : null) || `${s.category} (${s.label})`;
+                    const groupId = `local-source-${s.id}`;
+                    const isExpanded = expandedGroups.has(groupId);
+                    const collapsedClass = isExpanded ? '' : ' collapsed';
                     html += `
-                    <div class="collapsible local-alert-group source-${s.id} collapsed">
+                    <div class="collapsible local-alert-group source-${s.id}${collapsedClass}">
                         <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
                             <span>${escapeHtml(lblSection)} (${list.length})</span>
                             <span class="toggle-icon">▼</span>
@@ -2030,7 +2270,10 @@ if (typeof document !== 'undefined') {
 
         // Step 2: Defer "Other Alerts" to keep UI interactive
         if (hasOtherAlerts && showOther) {
-            setTimeout(() => {
+            if (window.renderTimeoutId) {
+                clearTimeout(window.renderTimeoutId);
+            }
+            window.renderTimeoutId = setTimeout(() => {
                 let otherHtml = '';
                 const lblDivider = typeof t !== 'undefined' ? t('lbl_other_alerts_divider') : 'Other alerts';
                 const titleCollapse = typeof t !== 'undefined' ? t('btn_collapse_expand_all') : 'Collapse/Expand All';
@@ -2048,8 +2291,11 @@ if (typeof document !== 'undefined') {
                     const list = otherLists[s.id];
                     if (list && list.length > 0) {
                         const lblSection = (typeof t !== 'undefined' ? t(`lbl_section_${s.id}`) : null) || `${s.category} (${s.label})`;
+                        const groupId = `other-source-${s.id}`;
+                        const isExpanded = expandedGroups.has(groupId);
+                        const collapsedClass = isExpanded ? '' : ' collapsed';
                         otherHtml += `
-                        <div class="collapsible other-alert-group source-${s.id} collapsed">
+                        <div class="collapsible other-alert-group source-${s.id}${collapsedClass}">
                             <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
                                 <span>${escapeHtml(lblSection)} (${list.length})</span>
                                 <span class="toggle-icon">▼</span>
@@ -2175,6 +2421,62 @@ if (typeof document !== 'undefined') {
                 highlightAlert(hash);
             }
         });
+    }
+
+    function showToast(message) {
+        // Remove existing toast if any
+        const existing = document.getElementById('app-toast');
+        if (existing) {
+            existing.remove();
+        }
+
+        const toast = document.createElement('div');
+        toast.id = 'app-toast';
+        toast.className = 'app-toast';
+
+        const toastContent = document.createElement('div');
+        toastContent.className = 'app-toast-content';
+
+        // Add icon
+        const iconSpan = document.createElement('span');
+        iconSpan.className = 'app-toast-icon';
+        iconSpan.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></svg>';
+        toastContent.appendChild(iconSpan);
+
+        // Add text
+        const textSpan = document.createElement('span');
+        textSpan.className = 'app-toast-text';
+        textSpan.textContent = message;
+        toastContent.appendChild(textSpan);
+
+        // Add close button
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'app-toast-close';
+        closeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+        closeBtn.onclick = () => {
+            toast.classList.remove('show');
+            toast.classList.add('hide');
+            setTimeout(() => toast.remove(), 400);
+        };
+        toastContent.appendChild(closeBtn);
+
+        toast.appendChild(toastContent);
+        document.body.appendChild(toast);
+
+        // Force reflow to trigger animation
+        toast.offsetHeight;
+        toast.classList.add('show');
+
+        // Auto remove after 6 seconds
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.classList.remove('show');
+                toast.classList.add('hide');
+                setTimeout(() => {
+                    if (toast.parentNode) toast.remove();
+                }, 400);
+            }
+        }, 6000);
     }
 
     async function highlightAlert(hash) {

@@ -49,6 +49,27 @@
                         </svg>
                     </button>
                 </p>
+                <div id="refresh-progress" class="refresh-progress-console hidden">
+                    <!-- Header Row (Always visible, triggers collapse/expand) -->
+                    <div class="progress-console-header" id="progress-console-toggle" role="button" aria-expanded="false" tabindex="0">
+                        <span class="progress-console-title" id="progress-console-title" data-i18n="refreshing_providers">Aktualizowanie dostawców (0/0)...</span>
+                        <svg class="progress-console-chevron" id="progress-chevron-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </div>
+                    
+                    <!-- Expanded Detail Wall of Providers -->
+                    <div class="progress-console-details hidden" id="progress-console-details">
+                        <div class="progress-providers-grid" id="progress-providers-list">
+                            <!-- Programmatically rendered state grids -->
+                        </div>
+                    </div>
+                    
+                    <!-- Subtle Boundary Progress Bar -->
+                    <div class="progress-console-bar">
+                        <div class="progress-console-bar-fill" id="progress-console-bar-fill"></div>
+                    </div>
+                </div>
                 <select id="address-filter" class="address-filter">
                     <option value="-1" data-i18n="addr_filter_all">All addresses</option>
                 </select>

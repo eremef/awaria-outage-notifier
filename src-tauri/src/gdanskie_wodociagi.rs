@@ -65,7 +65,7 @@ fn parse_planned_date(text: &str) -> Option<(NaiveDateTime, NaiveDateTime)> {
         r"(?x)
         (\d{1,2})                 # Start day
         (?:/(\d{1,2}))?           # Optional end day (e.g. /29)
-        \.(\d{2})\.(\d{4})        # Month, Year
+        \.\s*(\d{2})\.(\d{4})     # Month, Year (optional space after dot)
         \s*r\.\s*godz\.\s*
         (\d{2}):(\d{2})           # Start hour:min
         \s*-\s*
@@ -354,5 +354,10 @@ mod tests {
         let (start2, end2) = parse_planned_date(text2).unwrap();
         assert_eq!(start2.format("%Y-%m-%d %H:%M:%S").to_string(), "2026-05-28 22:00:00");
         assert_eq!(end2.format("%Y-%m-%d %H:%M:%S").to_string(), "2026-05-29 06:00:00");
+
+        let text3 = "01/02.06.2026 r. godz. 22:00 - 04:00 - ul. Magellana 2, 2A, 3, 4, 4A, 6, 6A, 8, 8A, 12, 14, Kolumba 5 ABCDE, 6 ABCDE,";
+        let (start3, end3) = parse_planned_date(text3).unwrap();
+        assert_eq!(start3.format("%Y-%m-%d %H:%M:%S").to_string(), "2026-06-01 22:00:00");
+        assert_eq!(end3.format("%Y-%m-%d %H:%M:%S").to_string(), "2026-06-02 04:00:00");
     }
 }

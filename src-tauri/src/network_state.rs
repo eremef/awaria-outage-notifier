@@ -85,19 +85,41 @@ impl NetworkState {
     }
 
     pub async fn check_internet_connection(client: &Client) -> bool {
+        use std::sync::Mutex;
+        use std::time::{Instant, Duration};
+        use std::sync::OnceLock;
+
+        static LAST_CHECK: OnceLock<Mutex<Option<(Instant, bool)>>> = OnceLock::new();
+        let cache_mutex = LAST_CHECK.get_or_init(|| Mutex::new(None));
+
+        if let Ok(guard) = cache_mutex.lock() {
+            if let Some((time, result)) = *guard {
+                if time.elapsed() < Duration::from_secs(5) {
+                    return result;
+                }
+            }
+        }
+
         let urls = [
             "http://clients3.google.com/generate_204",
             "http://captive.apple.com/hotspot-detect.html",
             "http://1.1.1.1",
         ];
 
+        let mut is_online = false;
         for url in urls {
             if let Ok(res) = client.get(url).timeout(std::time::Duration::from_secs(2)).send().await {
                 if res.status().is_success() || res.status().as_u16() == 204 {
-                    return true;
+                    is_online = true;
+                    break;
                 }
             }
         }
-        false
+
+        if let Ok(mut guard) = cache_mutex.lock() {
+            *guard = Some((Instant::now(), is_online));
+        }
+
+        is_online
     }
 }

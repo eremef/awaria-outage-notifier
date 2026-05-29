@@ -173,7 +173,10 @@ const translations = {
         "err_no_internet": "No internet connection. Please check your network.",
         "msg_offline": "No internet - showing cached data:",
         "msg_using_cache": "Data refresh in progress - showing cached data:",
-        "btn_collapse_expand_all": "Collapse/Expand All"
+        "btn_collapse_expand_all": "Collapse/Expand All",
+        "toast_slow_fetching_warning": "Fetching outages from Enea and PSG may take longer than other providers.",
+        "refresh_progress_prefix": "Refreshing",
+        "refreshing_providers": "Refreshing providers"
     },
     pl: {
         "title": "Awaria",
@@ -346,7 +349,10 @@ const translations = {
         "err_no_internet": "Brak połączenia z internetem. Sprawdź swoje połączenie sieciowe.",
         "msg_offline": "Brak internetu - wyświetlam informacje z:",
         "msg_using_cache": "Aktualizacja danych w tle - wyświetlam informacje z:",
-        "btn_collapse_expand_all": "Zwiń/Rozwiń wszystko"
+        "btn_collapse_expand_all": "Zwiń/Rozwiń wszystko",
+        "toast_slow_fetching_warning": "Pobieranie wyłączeń od Enea i PSG może zająć więcej czasu niż od pozostałych dostawców.",
+        "refresh_progress_prefix": "Pobieranie",
+        "refreshing_providers": "Aktualizowanie dostawców"
     }
 };
 

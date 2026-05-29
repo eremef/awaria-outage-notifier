@@ -140,7 +140,8 @@
     "mpwik_wroclaw",
     "mpwik_warszawa",
     "wmk",
-    "tauron_heat"
+    "tauron_heat",
+    "gdanskie_wodociagi"
   ],
   "notificationPreferences": {
     "water": true,
@@ -154,7 +155,8 @@
     "tauron_heat": true,
     "tauron": true,
     "mpwik_wroclaw": true,
-    "mpwik_warszawa": true
+    "mpwik_warszawa": true,
+    "gdanskie_wodociagi": true
   },
   "upcomingNotificationEnabled": true,
   "upcomingNotificationHours": 2,

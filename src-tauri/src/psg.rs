@@ -633,8 +633,6 @@ pub fn parse_psg_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAle
             }
 
             if !matched_indices.is_empty() {
-                let is_awaria = outage_type.to_lowercase().contains("awaria");
-                
                 let reason_trimmed = reason.trim();
                 let final_message = if reason_trimmed.is_empty() || reason_trimmed == "Info Button Text" || reason_trimmed == "Info" {
                     outage_type.clone() + " - " + &area.clone()
@@ -642,17 +640,14 @@ pub fn parse_psg_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAle
                     format!("{}: {}", reason_trimmed, outage_type.clone() + " - " + &area)
                 };
 
-                let final_message = if is_awaria && !end_date.trim().is_empty() {
-                    format!("{} (Przewidywany czas usunięcia: {})", final_message, end_date)
-                } else {
-                    final_message
-                };
+                let parsed_start = crate::utils::parse_date(&start_date).map(|dt| dt.to_rfc3339()).unwrap_or(start_date.clone());
+                let parsed_end = crate::utils::parse_date(&end_date).map(|dt| dt.to_rfc3339()).unwrap_or(end_date.clone());
 
                 for &idx in &matched_indices {
                     alerts.push(UnifiedAlert {
                         source: AlertSource::Psg,
-                        startDate: Some(start_date.clone()),
-                        endDate: if is_awaria { None } else { Some(end_date.clone()) },
+                        startDate: Some(parsed_start.clone()),
+                        endDate: Some(parsed_end.clone()),
                         message: Some(final_message.clone()),
                         location: Some(format!("Miejscowość: {}", city)),
                         address_index: Some(idx),
