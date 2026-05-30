@@ -2418,7 +2418,7 @@ if (typeof document !== 'undefined') {
             filterAlerts,
             formatDate,
             matchesStreetName,
-            renderAlerts,
+            renderAlerts: _renderAlerts,
             updateNotifyStatus,
             updateUpcomingStatus,
             matchesAddress,

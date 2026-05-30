@@ -324,7 +324,7 @@ mod tests {
         assert_eq!(unified.source, AlertSource::Pge);
         assert_eq!(
             unified.message,
-            Some("ul. Wiejska 1, 2, 3; ul. Polna 10-20 (Rejon Gliwice)".to_string())
+            Some("ul. Wiejska, Numery: 1, 2, 3; ul. Polna, Numery: 10-20 (Rejon Gliwice)".to_string())
         );
         assert_eq!(unified.location, Some("Planned maintenance".to_string()));
     }

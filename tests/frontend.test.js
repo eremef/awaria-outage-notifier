@@ -348,8 +348,8 @@ describe('Frontend Logic', () => {
             
             expect(container.innerHTML).toContain('Your location');
             expect(container.innerHTML).toContain('Probusa 1');
-            // Legnicka 1 should be in "Other alerts" (rendered in timeout, so we might need to wait or just check initial state)
-            expect(container.innerHTML).not.toContain('Legnicka 1');
+            // Legnicka 1 is in "Other alerts" (now rendered synchronously alongside local alerts)
+            expect(container.innerHTML).toContain('Legnicka 1');
         });
     });
 });

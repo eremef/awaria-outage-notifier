@@ -558,13 +558,15 @@ impl AquanetItem {
                 let fallback_hours = 24;
                 self.start_date.as_deref().and_then(|s| {
                     crate::utils::parse_date(s).map(|dt| {
+                        use chrono_tz::Europe::Warsaw;
                         let end = dt + Duration::hours(fallback_hours);
-                        end.format("%Y-%m-%dT%H:%M:00").to_string()
+                        end.with_timezone(&Warsaw).format("%Y-%m-%dT%H:%M:00").to_string()
                     })
                 }).or_else(|| {
                     // No start date either, assume current time + fallback_hours
+                    use chrono_tz::Europe::Warsaw;
                     let end = Utc::now() + Duration::hours(fallback_hours);
-                    Some(end.format("%Y-%m-%dT%H:%M:00").to_string())
+                    Some(end.with_timezone(&Warsaw).format("%Y-%m-%dT%H:%M:00").to_string())
                 })
             } else {
                 None

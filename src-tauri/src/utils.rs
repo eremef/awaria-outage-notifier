@@ -55,7 +55,8 @@ pub fn parse_date(date_str: &str) -> Option<chrono::DateTime<chrono::Utc>> {
 }
 
 pub fn format_date(dt: chrono::DateTime<chrono::Utc>) -> String {
-    dt.format("%d-%m-%Y %H:%M").to_string()
+    use chrono_tz::Europe::Warsaw;
+    dt.with_timezone(&Warsaw).format("%d-%m-%Y %H:%M").to_string()
 }
 
 pub async fn retry<T, E, F, Fut>(mut f: F, max_retries: usize) -> Result<T, E>
