@@ -1,0 +1,39 @@
+<pl-PL>
+Co nowego w tej wersji:
+• Wyeliminowano problem migotania interfejsu podczas odświeżania.
+• Przyspieszono pobieranie danych dla dostawców PWiK Kalisz oraz GPEC.
+• Poprawiono wyświetlanie czasu lokalnego w powiadomieniach.
+• Udoskonalono wygląd ustawień, ułatwiając czytanie długich nazw dostawców (np. Katowickie Wodociągi).
+</pl-PL>
+
+<en-US>
+What's new in this version:
+• Fixed interface flickering during data refresh.
+• Sped up data fetching for PWiK Kalisz and GPEC providers.
+• Fixed local time and timezone formatting in notifications.
+• Improved settings layout to better accommodate long provider names.
+</en-US>
+
+<en-GB>
+What's new in this version:
+• Fixed interface flickering during data refresh.
+• Sped up data fetching for PWiK Kalisz and GPEC providers.
+• Fixed local time and timezone formatting in notifications.
+• Improved settings layout to better accommodate long provider names.
+</en-GB>
+
+<en-CA>
+What's new in this version:
+• Fixed interface flickering during data refresh.
+• Sped up data fetching for PWiK Kalisz and GPEC providers.
+• Fixed local time and timezone formatting in notifications.
+• Improved settings layout to better accommodate long provider names.
+</en-CA>
+
+<en-AU>
+What's new in this version:
+• Fixed interface flickering during data refresh.
+• Sped up data fetching for PWiK Kalisz and GPEC providers.
+• Fixed local time and timezone formatting in notifications.
+• Improved settings layout to better accommodate long provider names.
+</en-AU>
