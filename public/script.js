@@ -1699,23 +1699,35 @@ if (typeof document !== 'undefined') {
         const listEl = document.getElementById('progress-providers-list');
         if (!listEl) return;
 
-        // Clear existing list
-        listEl.innerHTML = '';
-
-        // Render each enabled provider status card
         const enabled = currentSettings && Array.isArray(currentSettings.enabledSources)
             ? currentSettings.enabledSources
             : [];
+
+        // Remove elements for providers that are no longer enabled
+        Array.from(listEl.children).forEach(child => {
+            if (!enabled.includes(child.dataset.sourceId)) {
+                child.remove();
+            }
+        });
 
         enabled.forEach(sourceId => {
             const src = SOURCES.find(s => s.id === sourceId);
             const label = src ? (t(src.i18nShort) || src.label) : sourceId;
             const status = consoleRefreshState.providers[sourceId] || 'pending';
 
-            const badge = document.createElement('div');
-            badge.className = `provider-status-badge ${status}`;
+            let badge = listEl.querySelector(`[data-source-id="${sourceId}"]`);
+            if (!badge) {
+                badge = document.createElement('div');
+                badge.dataset.sourceId = sourceId;
+                listEl.appendChild(badge);
+            }
 
-            // Create indicator icon based on state
+            // Only update DOM if className or HTML changes
+            const newClassName = `provider-status-badge ${status}`;
+            if (badge.className !== newClassName) {
+                badge.className = newClassName;
+            }
+
             let iconHtml = '';
             if (status === 'fetching') {
                 iconHtml = '<span class="status-pulse-dot" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;"></span>';
@@ -1727,8 +1739,10 @@ if (typeof document !== 'undefined') {
                 iconHtml = '<span class="status-idle-dot" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--secondary-text);opacity:0.3;"></span>';
             }
 
-            badge.innerHTML = `${iconHtml}<span>${label}</span>`;
-            listEl.appendChild(badge);
+            const newHtml = `${iconHtml}<span>${label}</span>`;
+            if (badge.innerHTML !== newHtml) {
+                badge.innerHTML = newHtml;
+            }
         });
     }
 
@@ -1921,7 +1935,19 @@ if (typeof document !== 'undefined') {
     }
 
 
+    let renderAlertsTimeout = null;
+    let renderAlertsArgs = null;
+
     function renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
+        renderAlertsArgs = { alerts, container, settings, selectedAddrIdx };
+        if (renderAlertsTimeout) clearTimeout(renderAlertsTimeout);
+        renderAlertsTimeout = setTimeout(() => {
+            _renderAlerts(renderAlertsArgs.alerts, renderAlertsArgs.container, renderAlertsArgs.settings, renderAlertsArgs.selectedAddrIdx);
+            renderAlertsTimeout = null;
+        }, 100);
+    }
+
+    function _renderAlerts(alerts, container, settings, selectedAddrIdx = -1) {
         const expandedGroups = new Set();
         if (container) {
             container.querySelectorAll('.collapsible:not(.collapsed)').forEach(el => {
@@ -2266,50 +2292,43 @@ if (typeof document !== 'undefined') {
         `;
         }
 
-        container.innerHTML = html;
-
-        // Step 2: Defer "Other Alerts" to keep UI interactive
+        // Step 2: Render "Other Alerts" synchronously to prevent blinking
         if (hasOtherAlerts && showOther) {
-            if (window.renderTimeoutId) {
-                clearTimeout(window.renderTimeoutId);
-            }
-            window.renderTimeoutId = setTimeout(() => {
-                let otherHtml = '';
-                const lblDivider = typeof t !== 'undefined' ? t('lbl_other_alerts_divider') : 'Other alerts';
-                const titleCollapse = typeof t !== 'undefined' ? t('btn_collapse_expand_all') : 'Collapse/Expand All';
-                otherHtml += `
-                <div class="other-divider">
-                    <span>${escapeHtml(lblDivider)}</span>
-                    <button class="collapse-local-btn" onclick="toggleOtherCollapse(this)" title="${escapeHtml(titleCollapse)}">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                    </button>
-                </div>`;
+            const lblDivider = typeof t !== 'undefined' ? t('lbl_other_alerts_divider') : 'Other alerts';
+            const titleCollapse = typeof t !== 'undefined' ? t('btn_collapse_expand_all') : 'Collapse/Expand All';
+            html += `
+            <div class="other-divider">
+                <span>${escapeHtml(lblDivider)}</span>
+                <button class="collapse-local-btn" onclick="toggleOtherCollapse(this)" title="${escapeHtml(titleCollapse)}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+            </div>`;
 
-                SOURCES.forEach(s => {
-                    const list = otherLists[s.id];
-                    if (list && list.length > 0) {
-                        const lblSection = (typeof t !== 'undefined' ? t(`lbl_section_${s.id}`) : null) || `${s.category} (${s.label})`;
-                        const groupId = `other-source-${s.id}`;
-                        const isExpanded = expandedGroups.has(groupId);
-                        const collapsedClass = isExpanded ? '' : ' collapsed';
-                        otherHtml += `
-                        <div class="collapsible other-alert-group source-${s.id}${collapsedClass}">
-                            <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
-                                <span>${escapeHtml(lblSection)} (${list.length})</span>
-                                <span class="toggle-icon">▼</span>
-                            </div>
-                            <div class="collapsible-content">
-                                ${renderCards(list, s.id)}
-                            </div>
+            SOURCES.forEach(s => {
+                const list = otherLists[s.id];
+                if (list && list.length > 0) {
+                    const lblSection = (typeof t !== 'undefined' ? t(`lbl_section_${s.id}`) : null) || `${s.category} (${s.label})`;
+                    const groupId = `other-source-${s.id}`;
+                    const isExpanded = expandedGroups.has(groupId);
+                    const collapsedClass = isExpanded ? '' : ' collapsed';
+                    html += `
+                    <div class="collapsible other-alert-group source-${s.id}${collapsedClass}">
+                        <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
+                            <span>${escapeHtml(lblSection)} (${list.length})</span>
+                            <span class="toggle-icon">▼</span>
                         </div>
-                    `;
-                    }
-                });
-                container.insertAdjacentHTML('beforeend', otherHtml);
-            }, 0);
+                        <div class="collapsible-content">
+                            ${renderCards(list, s.id)}
+                        </div>
+                    </div>
+                `;
+                }
+            });
         }
+        
+        container.innerHTML = html;
     }
 
     window.toggleOtherCollapse = function (btn) {

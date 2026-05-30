@@ -228,8 +228,19 @@ impl AlertProvider for PwikKaliszProvider {
 
         match retry(|| fetch_pwik_kalisz_main(&native_client), 3).await {
             Ok(links) => {
+                let mut futures_list = Vec::new();
                 for link in links {
-                    match retry(|| fetch_pwik_kalisz_article(&native_client, &link), 3).await {
+                    let native_client = native_client.clone();
+                    futures_list.push(async move {
+                        let article_res = retry(|| fetch_pwik_kalisz_article(&native_client, &link), 3).await;
+                        (link, article_res)
+                    });
+                }
+
+                let results = futures::future::join_all(futures_list).await;
+
+                for (link, res) in results {
+                    match res {
                         Ok(article) => {
                             let unified = article.to_unified();
                             

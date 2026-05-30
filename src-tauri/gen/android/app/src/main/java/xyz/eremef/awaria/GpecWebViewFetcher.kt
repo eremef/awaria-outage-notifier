@@ -123,7 +123,20 @@ object GpecWebViewFetcher {
                                     }
                                     
                                     if (document.querySelector('.no-acc-info') || document.querySelector('.cloud-info') || document.querySelector('.dashed') || document.querySelector('.grupagpec-pl-przerwy-w-dostawie') || bodyText.includes('Brak przerw w dostawie') || bodyText.includes('Brak przerw')) {
-                                        return bodyHtml;
+                                        let relevantHtml = '';
+                                        const noAcc = document.querySelector('.no-acc-info');
+                                        if (noAcc) relevantHtml += noAcc.outerHTML + '\n';
+                                        
+                                        const cloudInfos = document.querySelectorAll('.cloud-info');
+                                        cloudInfos.forEach(el => relevantHtml += el.outerHTML + '\n');
+
+                                        const dashed = document.querySelectorAll('.dashed');
+                                        dashed.forEach(el => relevantHtml += el.outerHTML + '\n');
+                                        
+                                        if (!relevantHtml.trim()) {
+                                            relevantHtml = 'Brak przerw';
+                                        }
+                                        return relevantHtml;
                                     }
 
                                     return 'waiting';
