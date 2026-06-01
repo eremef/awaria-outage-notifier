@@ -85,6 +85,8 @@ if (typeof document !== 'undefined') {
     let selectedStreetId = null;
     let selectedStreetName = '';
     let selectedStreetName1 = '';
+
+
     let selectedStreetName2 = null;
     let cityDebounceTimer = null;
     let streetDebounceTimer = null;
@@ -704,7 +706,7 @@ if (typeof document !== 'undefined') {
                     await autoSaveSettings();
                     if (sourceCheckbox.checked) {
                         fetchOutages(s.id);
-                        if (s.id === 'enea' || s.id === 'psg' || s.id === 'pwik_kalisz' || s.id === "gpec") {
+                        if (s.id === 'enea' || s.id === 'psg' || s.id === 'pge' || s.id === 'pwik_kalisz' || s.id === "gpec") {
                             showToast(typeof t !== 'undefined' ? t('toast_slow_fetching_warning') + ' ' + s.label : 'Fetching outages from this provider may take longer:');
                         }
                     } else {
