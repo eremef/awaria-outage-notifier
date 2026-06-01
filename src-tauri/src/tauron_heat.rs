@@ -243,7 +243,12 @@ impl AlertProvider for TauronHeatProvider {
     ) -> (Vec<UnifiedAlert>, Vec<String>) {
         let mut tasks = Vec::new();
 
-        for (idx, addr) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
+        for (idx, addr) in settings
+            .addresses
+            .iter()
+            .enumerate()
+            .filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::TauronHeat, a))
+        {
             let addr = addr.clone();
             // Use the HTTP/1-only client — cieplo.tauron.pl fails H2 TLS on Android emulator
             let client_c = client_http1.clone();

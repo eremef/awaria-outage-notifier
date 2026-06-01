@@ -412,6 +412,38 @@ pub trait AlertProvider: Send + Sync {
     ) -> (Vec<UnifiedAlert>, Vec<String>);
 }
 
+pub fn is_address_applicable_for_provider(source: &AlertSource, a: &AddressEntry) -> bool {
+    let voivodeships = match source.service_voivodeships() {
+        Some(v) => v,
+        None => return true, // Nationwide
+    };
+
+    if a.voivodeship.is_empty() {
+        // Fallback for missing voivodeship data
+        return true;
+    }
+    let v = a.voivodeship.trim().to_uppercase();
+    voivodeships.iter().any(|&sv| {
+        if sv == v { return true; }
+        let sv_norm = sv.replace("Ł", "L").replace("Ś", "S");
+        let v_norm = v.replace("Ł", "L").replace("Ś", "S");
+        if sv_norm == v_norm { return true; }
+        
+        // Handle `?` corruption (e.g. MA?OPOLSKIE)
+        if v.contains('?') && v.len() == sv.len() {
+            let mut match_with_wildcard = true;
+            for (c1, c2) in v.chars().zip(sv.chars()) {
+                if c1 != '?' && c1 != c2 {
+                    match_with_wildcard = false;
+                    break;
+                }
+            }
+            if match_with_wildcard { return true; }
+        }
+        false
+    })
+}
+
 pub fn is_provider_applicable(source: AlertSource, settings: &Settings) -> bool {
     let voivodeships = match source.service_voivodeships() {
         Some(v) => v,
@@ -426,32 +458,7 @@ pub fn is_provider_applicable(source: AlertSource, settings: &Settings) -> bool 
         return true;
     }
 
-    let res = active_addresses.iter().any(|a| {
-        if a.voivodeship.is_empty() {
-            // Fallback for missing voivodeship data
-            return true;
-        }
-        let v = a.voivodeship.trim().to_uppercase();
-        voivodeships.iter().any(|&sv| {
-            if sv == v { return true; }
-            let sv_norm = sv.replace("Ł", "L").replace("Ś", "S");
-            let v_norm = v.replace("Ł", "L").replace("Ś", "S");
-            if sv_norm == v_norm { return true; }
-            
-            // Handle `?` corruption (e.g. MA?OPOLSKIE)
-            if v.contains('?') && v.len() == sv.len() {
-                let mut match_with_wildcard = true;
-                for (c1, c2) in v.chars().zip(sv.chars()) {
-                    if c1 != '?' && c1 != c2 {
-                        match_with_wildcard = false;
-                        break;
-                    }
-                }
-                if match_with_wildcard { return true; }
-            }
-            false
-        })
-    });
+    let res = active_addresses.iter().any(|a| is_address_applicable_for_provider(&source, a));
     if matches!(source, AlertSource::Gpec) {
         log::info!("is_provider_applicable for Gpec returned {}, voivodeships={:?}, active={:?}", res, voivodeships, active_addresses.iter().map(|a| a.voivodeship.clone()).collect::<Vec<_>>());
     }

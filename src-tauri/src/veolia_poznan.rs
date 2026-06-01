@@ -105,7 +105,7 @@ impl AlertProvider for VeoliaPoznanProvider {
             .addresses
             .iter()
             .enumerate()
-            .filter(|(_, a)| a.is_active && crate::aquanet::is_poznan_area(a))
+            .filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::VeoliaPoznan, a) && crate::aquanet::is_poznan_area(a))
             .map(|(idx, a)| (idx, a.street_name_1.clone()))
             .collect();
 

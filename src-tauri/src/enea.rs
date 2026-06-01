@@ -290,7 +290,7 @@ impl AlertProvider for EneaProvider {
         _app_handle: Option<&tauri::AppHandle>,
     ) -> (Vec<UnifiedAlert>, Vec<String>) {
         let mut target_regions = Vec::new();
-        for addr in settings.addresses.iter().filter(|a| a.is_active) {
+        for addr in settings.addresses.iter().filter(|a| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::Enea, a)) {
             target_regions.extend(get_enea_regions_for_district(&addr.district));
         }
         target_regions.sort();

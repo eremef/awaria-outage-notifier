@@ -743,7 +743,7 @@ impl AlertProvider for AquanetProvider {
                     .addresses
                     .iter()
                     .enumerate()
-                    .filter(|(_, a)| a.is_active && is_poznan_area(a))
+                    .filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::Aquanet, a) && is_poznan_area(a))
                     .map(|(idx, a)| (idx, std::sync::Arc::new(CompiledAquanetRegex::new(a))))
                     .collect();
 

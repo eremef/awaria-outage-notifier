@@ -269,7 +269,7 @@ impl AlertProvider for GdanskieWodociagiProvider {
 }
 
 fn check_local_matching(alert: &mut UnifiedAlert, settings: &Settings, city: &str, combined_text: &str) {
-    for (idx, a) in settings.addresses.iter().enumerate() {
+    for (idx, a) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::GdanskieWodociagi, a)) {
         if !a.is_active { continue; }
         let a_city = a.city_name.to_lowercase();
         // Allow fallback matching if configured address city is Gdańsk (or similar)

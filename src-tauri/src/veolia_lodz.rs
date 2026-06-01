@@ -137,7 +137,7 @@ impl AlertProvider for VeoliaLodzProvider {
             .addresses
             .iter()
             .enumerate()
-            .filter(|(_, a)| a.is_active && crate::api_logic::is_lodz(a))
+            .filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::VeoliaLodz, a) && crate::api_logic::is_lodz(a))
             .map(|(idx, a)| (idx, a.street_name_1.clone(), Arc::new(CompiledMpwikRegex::new(a))))
             .collect();
 

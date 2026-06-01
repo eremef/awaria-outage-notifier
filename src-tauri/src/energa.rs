@@ -213,7 +213,7 @@ impl AlertProvider for EnergaProvider {
                         .addresses
                         .iter()
                         .enumerate()
-                        .filter(|(_, a)| a.is_active)
+                        .filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::Energa, a))
                         .map(|(idx, a)| {
                             (idx, Arc::new(CompiledEnergaRegex::new(&a.city_name, &a.commune, &a.street_name_1, &a.street_name_2)), a.city_name.clone())
                         })

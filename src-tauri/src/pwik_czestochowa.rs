@@ -9,7 +9,7 @@ use std::collections::hash_map::DefaultHasher;
 use regex::Regex;
 
 fn extract_date_and_times(text: &str) -> (Option<NaiveDateTime>, Option<NaiveDateTime>) {
-    let date_re = Regex::new(r"(\d{2})\.(\d{2})\.(\d{4})").unwrap();
+    let date_re = Regex::new(r"(\d{1,2})\.(\d{1,2})\.(\d{4})").unwrap();
     let time_re = Regex::new(r"(\d{1,2}):(\d{2})").unwrap();
 
     let mut base_date = Local::now().naive_local().date();
@@ -102,7 +102,7 @@ impl AlertProvider for PwikCzestochowaProvider {
 
                             // Try to determine incident type
                             let title_lower = title.to_lowercase();
-                            let incident_type = if title_lower.contains("planowan") || content.to_lowercase().contains("rozbudową wodociągu") {
+                            let incident_type = if title_lower.contains("planowan") || content.to_lowercase().contains("rozbudową wodociągu") || content.to_lowercase().contains("rozbudową sieci wodociągowej") || content.to_lowercase().contains("rozbudową sieci") {
                                 "Prace planowane"
                             } else {
                                 "Awaria"
@@ -165,7 +165,7 @@ impl AlertProvider for PwikCzestochowaProvider {
 
                             let combined_text = format!("{} {} {}", city, title, content).to_lowercase();
 
-                            for (idx, a) in settings.addresses.iter().enumerate() {
+                            for (idx, a) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::PwikCzestochowa, a)) {
                                 if !a.is_active {
                                     continue;
                                 }
@@ -190,19 +190,22 @@ impl AlertProvider for PwikCzestochowaProvider {
                                         if significant_words.is_empty() {
                                             return combined_text.contains(&s_lower);
                                         }
-                                        for w in significant_words {
-                                            let stem = if w.ends_with('a') && w.chars().count() > 4 {
-                                                let mut chars = w.chars();
-                                                chars.next_back();
-                                                chars.as_str()
-                                            } else {
-                                                w
-                                            };
-                                            if !combined_text.contains(stem) {
-                                                return false;
-                                            }
+                                        let last_word = *significant_words.last().unwrap();
+                                        let stem = if last_word.ends_with("ego") && last_word.chars().count() > 5 {
+                                            &last_word[..last_word.len()-3]
+                                        } else if last_word.ends_with("ej") && last_word.chars().count() > 4 {
+                                            &last_word[..last_word.len()-2]
+                                        } else if last_word.ends_with('a') && last_word.chars().count() > 4 {
+                                            let mut chars = last_word.chars();
+                                            chars.next_back();
+                                            chars.as_str()
+                                        } else {
+                                            last_word
+                                        };
+                                        if combined_text.contains(stem) {
+                                            return true;
                                         }
-                                        true
+                                        combined_text.contains(&s_lower)
                                     };
 
                                     if check_street(&a.street_name_1) {
@@ -317,7 +320,7 @@ mod tests {
                     let content = p_element.text().collect::<Vec<_>>().join(" ").trim().to_string();
                     
                     let title_lower = title.to_lowercase();
-                    let incident_type = if title_lower.contains("planowan") || content.to_lowercase().contains("rozbudową wodociągu") {
+                    let incident_type = if title_lower.contains("planowan") || content.to_lowercase().contains("rozbudową wodociągu") || content.to_lowercase().contains("rozbudową sieci wodociągowej") || content.to_lowercase().contains("rozbudową sieci") {
                         "Prace planowane"
                     } else {
                         "Awaria"
@@ -361,7 +364,7 @@ mod tests {
 
                     let combined_text = format!("{} {} {}", city, title, content).to_lowercase();
 
-                    for (idx, a) in settings.addresses.iter().enumerate() {
+                    for (idx, a) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::PwikCzestochowa, a)) {
                         if !a.is_active { continue; }
                         let a_city = a.city_name.to_lowercase();
                         if a_city == city.to_lowercase() || a_city.is_empty() {
@@ -382,19 +385,22 @@ mod tests {
                                 if significant_words.is_empty() {
                                     return combined_text.contains(&s_lower);
                                 }
-                                for w in significant_words {
-                                    let stem = if w.ends_with('a') && w.chars().count() > 4 {
-                                        let mut chars = w.chars();
-                                        chars.next_back();
-                                        chars.as_str()
-                                    } else {
-                                        w
-                                    };
-                                    if !combined_text.contains(stem) {
-                                        return false;
-                                    }
+                                let last_word = *significant_words.last().unwrap();
+                                let stem = if last_word.ends_with("ego") && last_word.chars().count() > 5 {
+                                    &last_word[..last_word.len()-3]
+                                } else if last_word.ends_with("ej") && last_word.chars().count() > 4 {
+                                    &last_word[..last_word.len()-2]
+                                } else if last_word.ends_with('a') && last_word.chars().count() > 4 {
+                                    let mut chars = last_word.chars();
+                                    chars.next_back();
+                                    chars.as_str()
+                                } else {
+                                    last_word
+                                };
+                                if combined_text.contains(stem) {
+                                    return true;
                                 }
-                                true
+                                combined_text.contains(&s_lower)
                             };
 
                             let mut is_match = false;

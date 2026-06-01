@@ -154,7 +154,7 @@ impl AlertProvider for FortumProvider {
         settings: &Settings,
         _app_handle: Option<&tauri::AppHandle>,
     ) -> (Vec<UnifiedAlert>, Vec<String>) {
-        let active_addresses = settings.addresses.iter().filter(|a| a.is_active).collect::<Vec<_>>();
+        let active_addresses = settings.addresses.iter().filter(|a| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::Fortum, a)).collect::<Vec<_>>();
         if active_addresses.is_empty() {
             return (Vec::new(), Vec::new());
         }

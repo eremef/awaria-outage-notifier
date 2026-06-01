@@ -177,7 +177,7 @@ impl AlertProvider for WmkProvider {
                     .iter()
                     .enumerate()
                     .filter(|(_, a)| {
-                        let active = a.is_active && is_krakow(a);
+                        let active = a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::Wmk, a) && is_krakow(a);
                         if active {
                             log::info!("WMK: Checking address: {}", a.name);
                         }

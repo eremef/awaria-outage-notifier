@@ -1,6 +1,8 @@
 use reqwest::{Client, Error};
 use tokio::sync::OnceCell;
 use std::sync::Arc;
+#[cfg(not(target_os = "android"))]
+use rustls_platform_verifier::BuilderVerifierExt;
 
 /// A no-op TLS certificate verifier used on Android for the `native_tls`-equivalent client.
 /// On desktop, `native-tls` uses SChannel/SecureTransport which is lenient with non-standard

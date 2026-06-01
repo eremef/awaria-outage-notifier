@@ -106,7 +106,7 @@ impl AlertProvider for StoenProvider {
                 let mut alerts = Vec::new();
                 for outage in outages {
                     let mut local_match = None;
-                    for (idx, addr) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
+                    for (idx, addr) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::Stoen, a)) {
                         if matches_address(&outage, addr) {
                             local_match = Some((idx, addr.clone()));
                             break;

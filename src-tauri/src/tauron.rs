@@ -400,7 +400,12 @@ impl AlertProvider for TauronProvider {
     ) -> (Vec<UnifiedAlert>, Vec<String>) {
         let mut tasks = Vec::new();
 
-        for (idx, addr) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
+        for (idx, addr) in settings
+            .addresses
+            .iter()
+            .enumerate()
+            .filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::Tauron, a))
+        {
             let addr = addr.clone();
             let compiled = Arc::new(CompiledTauronRegex::new(&addr.city_name, &addr.street_name_1, &addr.street_name_2));
             let client_c = client.clone();

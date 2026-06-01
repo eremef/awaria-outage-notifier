@@ -46,7 +46,7 @@ impl AlertProvider for PsgProvider {
         settings: &Settings,
         app_handle: Option<&AppHandle>,
     ) -> (Vec<UnifiedAlert>, Vec<String>) {
-        let active_addresses: Vec<_> = settings.addresses.iter().filter(|a| a.is_active).collect();
+        let active_addresses: Vec<_> = settings.addresses.iter().filter(|a| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::Psg, a)).collect();
         if active_addresses.is_empty() {
             return (Vec::new(), Vec::new());
         }
@@ -591,7 +591,7 @@ pub fn parse_psg_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAle
             let norm_city = normalize(&city);
             let norm_area = normalize(&area);
 
-            for (idx, addr) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
+            for (idx, addr) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::Psg, a)) {
                 let addr_street = normalize(&addr.street_name_1);
 
                 // For direct matching, check if the normalized scraped city matches the user's city

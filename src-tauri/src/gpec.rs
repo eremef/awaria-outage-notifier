@@ -332,7 +332,7 @@ pub fn parse_gpec_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAl
 }
 
 fn check_local_matching(alert: &mut UnifiedAlert, settings: &Settings, city: &str, combined_text: &str) {
-    for (idx, a) in settings.addresses.iter().enumerate() {
+    for (idx, a) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::Gpec, a)) {
         if !a.is_active { continue; }
         let a_city = a.city_name.to_lowercase();
         if a_city == city.to_lowercase() || a_city.is_empty() {

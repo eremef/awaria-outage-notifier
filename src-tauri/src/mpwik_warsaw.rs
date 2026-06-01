@@ -202,7 +202,7 @@ impl AlertProvider for MpwikWarszawaProvider {
                     .addresses
                     .iter()
                     .enumerate()
-                    .filter(|(_, a)| a.is_active && crate::api_logic::is_warszawa(a))
+                    .filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::MpwikWarszawa, a) && crate::api_logic::is_warszawa(a))
                     .map(|(idx, a)| (idx, Arc::new(CompiledMpwikRegex::new(a))))
                     .collect();
 

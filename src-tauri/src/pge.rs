@@ -193,7 +193,7 @@ impl AlertProvider for PgeProvider {
                 let prepared_addresses: Vec<PgePreparedAddress> = settings.addresses
                     .iter()
                     .enumerate()
-                    .filter(|(_, a)| a.is_active)
+                    .filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::Pge, a))
                     .map(|(idx, addr)| PgePreparedAddress::new(addr, idx))
                     .collect();
 

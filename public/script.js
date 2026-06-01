@@ -704,7 +704,7 @@ if (typeof document !== 'undefined') {
                     await autoSaveSettings();
                     if (sourceCheckbox.checked) {
                         fetchOutages(s.id);
-                        if (s.id === 'enea' || s.id === 'psg') {
+                        if (s.id === 'enea' || s.id === 'psg' || s.id === 'pwik_kalisz' || s.id === "gpec") {
                             showToast(typeof t !== 'undefined' ? t('toast_slow_fetching_warning') + ' ' + s.label : 'Fetching outages from this provider may take longer:');
                         }
                     } else {
@@ -1244,9 +1244,12 @@ if (typeof document !== 'undefined') {
                     document.getElementById('show-other-outages-check').checked = settings.showOtherOutages !== false;
                 }
 
-                // Check permissions/optimization warnings on load
-                checkAndRequestNotificationPermission();
-                checkAndRequestBatteryOptimization();
+                // Check permissions/optimization warnings on load with a slight delay
+                // to allow Tauri's internal WebView URL state to settle from about:blank
+                setTimeout(() => {
+                    checkAndRequestNotificationPermission();
+                    checkAndRequestBatteryOptimization();
+                }, 500);
 
                 updateAddressFilter();
                 renderAddressesList();

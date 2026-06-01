@@ -155,7 +155,7 @@ impl AlertProvider for MpwikProvider {
                     .addresses
                     .iter()
                     .enumerate()
-                    .filter(|(_, a)| a.is_active && is_wroclaw(a))
+                    .filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::MpwikWroclaw, a) && is_wroclaw(a))
                     .map(|(idx, a)| (idx, Arc::new(CompiledMpwikRegex::new(a))))
                     .collect();
 

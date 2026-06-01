@@ -134,7 +134,7 @@ impl AlertProvider for KatowickieWodociagiProvider {
                     .iter()
                     .enumerate()
                     .filter(|(_, a)| {
-                        a.is_active && 
+                        a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::KatowickieWodociagi, a) && 
                         (a.city_name.to_lowercase().contains("katowice") || 
                          a.commune.to_lowercase().contains("katowice") ||
                          a.city_name.to_lowercase().contains("siemianowice") ||

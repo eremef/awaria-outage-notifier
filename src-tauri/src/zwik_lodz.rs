@@ -130,8 +130,9 @@ impl AlertProvider for ZwikLodzProvider {
             return (Vec::new(), Vec::new());
         }
         
-        let has_lodz_addresses = settings.addresses.iter()
-            .any(|a| a.is_active && crate::api_logic::is_lodz(a));
+        let has_lodz_addresses = settings.addresses.iter().any(|a| {
+            a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::ZwikLodz, a) && (a.city_name.trim().to_lowercase().starts_with("łódź") || a.city_name.trim().to_lowercase().starts_with("lodz") || a.city_name.is_empty())
+        });
 
         if !has_lodz_addresses {
             return (Vec::new(), Vec::new());
@@ -209,7 +210,7 @@ impl AlertProvider for ZwikLodzProvider {
 
                             let combined_text = format!("Łódź {}", li_text).to_lowercase();
                                 
-                            for (idx, a) in settings.addresses.iter().enumerate() {
+                            for (idx, a) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::ZwikLodz, a)) {
                                 let mut is_match = false;
                                 if !a.is_active || !crate::api_logic::is_lodz(a) {
                                     continue;
@@ -372,7 +373,7 @@ mod tests {
 
                         let combined_text = format!("Łódź {}", li_text).to_lowercase();
                         
-                        for (idx, a) in settings.addresses.iter().enumerate() {
+                        for (idx, a) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::ZwikLodz, a)) {
                             let mut is_match = false;
                             if !a.is_active || !crate::api_logic::is_lodz(a) {
                                 continue;
@@ -503,7 +504,7 @@ mod tests {
 
                         let combined_text = format!("Łódź {}", li_text).to_lowercase();
                         
-                        for (idx, a) in settings.addresses.iter().enumerate() {
+                        for (idx, a) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::ZwikLodz, a)) {
                             let mut is_match = false;
                             if !a.is_active || !crate::api_logic::is_lodz(a) {
                                 continue;

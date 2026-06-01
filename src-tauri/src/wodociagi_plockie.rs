@@ -162,7 +162,7 @@ impl AlertProvider for WodociagiPlockieProvider {
 
                             let combined_text = format!("{} {} {}", city, combined_desc, streets.join(" ")).to_lowercase().replace("\"", "");
 
-                            for (idx, a) in settings.addresses.iter().enumerate() {
+                            for (idx, a) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::WodociagiPlockie, a)) {
                                 if !a.is_active { continue; }
                                 let a_city = a.city_name.to_lowercase();
                                 if a_city == city.to_lowercase() || a_city.is_empty() {
