@@ -128,10 +128,12 @@ object GpecWebViewFetcher {
                                         if (noAcc) relevantHtml += noAcc.outerHTML + '\n';
                                         
                                         const cloudInfos = document.querySelectorAll('.cloud-info');
-                                        cloudInfos.forEach(el => relevantHtml += el.outerHTML + '\n');
-
-                                        const dashed = document.querySelectorAll('.dashed');
-                                        dashed.forEach(el => relevantHtml += el.outerHTML + '\n');
+                                        if (cloudInfos.length > 0) {
+                                            cloudInfos.forEach(el => relevantHtml += el.outerHTML + '\n');
+                                        } else {
+                                            const dashed = document.querySelectorAll('.dashed');
+                                            dashed.forEach(el => relevantHtml += el.outerHTML + '\n');
+                                        }
                                         
                                         if (!relevantHtml.trim()) {
                                             relevantHtml = 'Brak przerw';
