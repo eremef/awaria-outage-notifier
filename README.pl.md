@@ -13,6 +13,9 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
 - [Sklep Google Play](https://play.google.com/store/apps/details?id=xyz.eremef.awaria)
 - [https://eremef.xyz/awaria](https://eremef.xyz/awaria)
 
+## Inne linki
+- [Facebook](https://www.facebook.com/awaria.info)
+
 ## Wspierani Dostawcy
 
 - **⚡ Prąd**
