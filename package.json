@@ -8,8 +8,6 @@
     "dev": "tauri dev",
     "android:build": "tauri android build",
     "android:dev": "tauri android dev",
-    "ios:build": "tauri ios build",
-    "ios:init": "tauri ios init --ci",
     "test": "npm run test:frontend && npm run test:backend && npm run test:android",
     "test:frontend": "vitest run",
     "test:backend": "cd src-tauri && cargo test",
@@ -22,7 +20,7 @@
     "mempalace:sync": "mempalace sync --apply --wing awaria",
     "kill:em:all": "taskkill /f /im cargo.exe & taskkill /f /im rustc.exe & taskkill /f /im rust-analyzer.exe",
     "build:install": "",
-    "logcat": "powershell -Command \"$AppPid = adb shell pidof -s xyz.eremef.awaria; if ($AppPid) { adb logcat --pid=$AppPid } else { Write-Host 'App is not running!' -ForegroundColor Red }\""
+    "logcat": "powershell -Command \"$AppPid = adb shell pidof -s xyz.eremef.awaria; if ($AppPid) { adb logcat -v color --pid=$AppPid } else { Write-Host 'App is not running!' -ForegroundColor Red }\""
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.11.1",

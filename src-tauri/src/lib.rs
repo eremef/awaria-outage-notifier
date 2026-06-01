@@ -733,6 +733,13 @@ async fn fetch_all_alerts_internal(
             log::warn!("Fetch failed for all providers, but recovered {} items from persistent cache", all_alerts.len());
             return Ok(api_logic::AlertsResponse { alerts: all_alerts, is_stale: true, is_offline: true });
         }
+        // For a specific-source refresh, don't throw ERR_NO_INTERNET — JS suppresses UI errors
+        // for single-source fetches anyway (see script.js specificSource check). A hard Err would
+        // still cause a noisy console error and break the merge logic on the frontend.
+        if sources.is_some() {
+            log::warn!("Fetch failed for all {} providers in single-source mode, returning empty stale response", attempted_providers);
+            return Ok(api_logic::AlertsResponse { alerts: vec![], is_stale: true, is_offline: false });
+        }
         if let Some(cached) = cache_state.get_stale() {
             log::warn!("Fetch failed for all {} providers ({} errors), falling back to stale cache ({} items)", attempted_providers, errors.len(), cached.len());
             return Ok(api_logic::AlertsResponse { alerts: cached, is_stale: true, is_offline: true });
@@ -794,6 +801,7 @@ async fn fetch_all_alerts_internal(
         }
     }
 
+    log::info!("app_lib: fetch_all_alerts_internal returning {} alerts", all_alerts.len());
     Ok(api_logic::AlertsResponse { alerts: all_alerts, is_stale: false, is_offline: false })
 }
 

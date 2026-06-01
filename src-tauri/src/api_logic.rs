@@ -426,7 +426,7 @@ pub fn is_provider_applicable(source: AlertSource, settings: &Settings) -> bool 
         return true;
     }
 
-    active_addresses.iter().any(|a| {
+    let res = active_addresses.iter().any(|a| {
         if a.voivodeship.is_empty() {
             // Fallback for missing voivodeship data
             return true;
@@ -451,7 +451,11 @@ pub fn is_provider_applicable(source: AlertSource, settings: &Settings) -> bool 
             }
             false
         })
-    })
+    });
+    if matches!(source, AlertSource::Gpec) {
+        log::info!("is_provider_applicable for Gpec returned {}, voivodeships={:?}, active={:?}", res, voivodeships, active_addresses.iter().map(|a| a.voivodeship.clone()).collect::<Vec<_>>());
+    }
+    res
 }
 
 pub fn is_wroclaw(addr: &AddressEntry) -> bool {
@@ -965,3 +969,4 @@ mod tests {
         engine.process_alerts(alerts);
     }
 }
+

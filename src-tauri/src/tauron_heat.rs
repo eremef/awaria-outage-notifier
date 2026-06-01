@@ -236,8 +236,8 @@ impl AlertProvider for TauronHeatProvider {
 
     async fn fetch(
         &self,
-        client: &Client,
-        _client_http1: &Client,
+        _client: &Client,
+        client_http1: &Client,
         settings: &Settings,
         _app_handle: Option<&tauri::AppHandle>,
     ) -> (Vec<UnifiedAlert>, Vec<String>) {
@@ -245,7 +245,8 @@ impl AlertProvider for TauronHeatProvider {
 
         for (idx, addr) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active) {
             let addr = addr.clone();
-            let client_c = client.clone();
+            // Use the HTTP/1-only client — cieplo.tauron.pl fails H2 TLS on Android emulator
+            let client_c = client_http1.clone();
             tasks.push(tauri::async_runtime::spawn(async move {
                 match retry(|| fetch_tauron_heat_outages(&client_c, &addr), 3).await {
                     Ok(response) => {

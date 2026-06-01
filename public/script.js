@@ -705,7 +705,7 @@ if (typeof document !== 'undefined') {
                     if (sourceCheckbox.checked) {
                         fetchOutages(s.id);
                         if (s.id === 'enea' || s.id === 'psg') {
-                            showToast(typeof t !== 'undefined' ? t('toast_slow_fetching_warning') : 'Fetching outages from Enea and PSG may take longer than other providers.');
+                            showToast(typeof t !== 'undefined' ? t('toast_slow_fetching_warning') + ' ' + s.label : 'Fetching outages from this provider may take longer:');
                         }
                     } else {
                         const container = document.getElementById('outages-container');
@@ -1834,7 +1834,7 @@ if (typeof document !== 'undefined') {
 
         // Sources that provide addressIndex and isLocal from backend
         if (SOURCES.map(s => s.id).includes(alert.source)) {
-            if (alert.isLocal === true && (alert.addressIndex === addrIdx || alert.addressIndex === -1)) {
+            if (alert.isLocal === true && (addrIdx === -1 || alert.addressIndex === addrIdx || alert.addressIndex === -1)) {
                 return true;
             }
         }
@@ -1964,7 +1964,7 @@ if (typeof document !== 'undefined') {
         const enabledSources = (settings && settings.enabledSources) ? settings.enabledSources : SOURCES.map(s => s.id);
 
         const seen = new Set();
-        const activeAlerts = alerts.filter(item => {
+        console.log('DEBUG ALERTS RECEIVED:', JSON.stringify(alerts)); const activeAlerts = alerts.filter(item => {
             if (!enabledSources.includes(item.source)) return false;
             if (item.hash) {
                 if (seen.has(item.hash)) return false;
@@ -2338,7 +2338,7 @@ if (typeof document !== 'undefined') {
                 }
             });
         }
-        
+
         container.innerHTML = html;
     }
 
