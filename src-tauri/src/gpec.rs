@@ -65,7 +65,7 @@ fn parse_date_with_godz(text: &str) -> Option<NaiveDateTime> {
 fn extract_dates(text: &str) -> (Option<NaiveDateTime>, Option<NaiveDateTime>) {
     // Look for "od <date> do <date>" or similar
     let date_range_re = Regex::new(
-        r"(?i)(?:od\s+)?(\d{1,2}\.\d{2}\.\d{4}(?:\s+godz\.\s*\d{2}:\d{2})?)\s+(?:do\s+)?(\d{1,2}\.\d{2}\.\d{4}(?:\s+godz\.\s*\d{2}:\d{2})?)"
+        r"(?i)(?:od\s+)?(\d{1,2}\.\d{2}\.\d{4}(?:\s+godz\.\s*\d{2}:\d{2})?|\d{4}-\d{2}-\d{2}(?:\s+godz\.\s*\d{2}:\d{2})?)\s+(?:do\s+)?(\d{1,2}\.\d{2}\.\d{4}(?:\s+godz\.\s*\d{2}:\d{2})?|\d{4}-\d{2}-\d{2}(?:\s+godz\.\s*\d{2}:\d{2})?)"
     ).unwrap();
 
     if let Some(caps) = date_range_re.captures(text) {
@@ -75,7 +75,7 @@ fn extract_dates(text: &str) -> (Option<NaiveDateTime>, Option<NaiveDateTime>) {
     }
 
     // Try fallback simple date match in text
-    let single_date_re = Regex::new(r"\d{1,2}\.\d{2}\.\d{4}(?:\s+godz\.\s*\d{2}:\d{2})?").unwrap();
+    let single_date_re = Regex::new(r"\d{1,2}\.\d{2}\.\d{4}(?:\s+godz\.\s*\d{2}:\d{2})?|\d{4}-\d{2}-\d{2}(?:\s+godz\.\s*\d{2}:\d{2})?").unwrap();
     let matches: Vec<_> = single_date_re.find_iter(text).collect();
     if matches.len() >= 2 {
         let start = parse_date_with_godz(matches[0].as_str());
@@ -223,21 +223,42 @@ pub fn parse_gpec_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAl
         }
 
         // Dates are in <span> elements directly in .cloud-info (outside .dashed)
-        let spans: Vec<String> = item.select(&Selector::parse("span").unwrap())
+        let spans: Vec<String> = item.select(&Selector::parse("span:not(.dashed__city)").unwrap())
             .map(|el| el.text().collect::<Vec<_>>().join("").trim().to_string())
             .filter(|s| !s.is_empty())
             .collect();
 
         let full_text = item.text().collect::<Vec<_>>().join(" ").trim().to_string();
-        let (start_dt, end_dt) = if spans.len() >= 2 {
-            let start = parse_date_with_godz(&spans[0]);
+        let mut start_dt = None;
+        let mut end_dt = None;
+        log::info!("[GPEC] Extracted spans: {:?}", spans);
+
+        if spans.len() >= 2 {
+            start_dt = parse_date_with_godz(&spans[0]);
             // End date may include "godziny nocne" etc, try to parse just date part
+            let end_word1 = spans[1].split_whitespace().next().unwrap_or("");
             let end_str = spans[1].split_whitespace().take(2).collect::<Vec<_>>().join(" ");
-            let end = parse_date_with_godz(&end_str).or_else(|| parse_date_with_godz(&spans[1]));
-            (start, end)
-        } else {
-            extract_dates(&full_text)
-        };
+            end_dt = parse_date_with_godz(&end_str)
+                .or_else(|| parse_date_with_godz(end_word1))
+                .or_else(|| parse_date_with_godz(&spans[1]));
+        }
+
+        if start_dt.is_none() && end_dt.is_none() {
+            log::info!("[GPEC] Falling back to extract_dates for text: {}", full_text);
+            let extracted = extract_dates(&full_text);
+            start_dt = extracted.0;
+            end_dt = extracted.1;
+        }
+
+        // If end_dt is at 00:00:00, the user requested we make it 23:59:59 so it doesn't look like it ends at midnight
+        if let Some(mut ed) = end_dt {
+            if ed.time() == chrono::NaiveTime::from_hms_opt(0, 0, 0).unwrap() {
+                ed = chrono::NaiveDateTime::new(ed.date(), chrono::NaiveTime::from_hms_opt(23, 59, 59).unwrap());
+                end_dt = Some(ed);
+            }
+        }
+
+        log::info!("[GPEC] Parsed dates: start={:?}, end={:?}", start_dt, end_dt);
 
         let message = format!("{} - {}. Wstrzymanie dostawy ciepłej wody i ogrzewania.", incident_type, street_details);
 
@@ -471,8 +492,13 @@ async fn do_webview_fetch(app: &tauri::AppHandle) -> Result<String, String> {
                         const noAcc = document.querySelector('.no-acc-info');
                         if (noAcc) relevantHtml += noAcc.outerHTML + '\n';
                         
-                        const dashed = document.querySelectorAll('.dashed');
-                        dashed.forEach(el => relevantHtml += el.outerHTML + '\n');
+                        const cloudInfos = document.querySelectorAll('.cloud-info');
+                        if (cloudInfos.length > 0) {
+                            cloudInfos.forEach(el => relevantHtml += el.outerHTML + '\n');
+                        } else {
+                            const dashed = document.querySelectorAll('.dashed');
+                            dashed.forEach(el => relevantHtml += el.outerHTML + '\n');
+                        }
                         
                         if (!relevantHtml.trim()) {
                             relevantHtml = 'Brak przerw';
@@ -645,5 +671,30 @@ mod tests {
         check_local_matching(&mut alert, &settings, "Gdańsk", &combined_text);
         assert_eq!(alert.is_local, Some(true));
         assert_eq!(alert.address_index, Some(0));
+    }
+
+    #[test]
+    fn test_parse_gpec_html_mocked() {
+        let html_content = r#"<div class="cloud-info-wrapper">
+            <div class="row cloud-info red" style="max-height: 340px; overflow-y: scroll;">
+                <h3>PRZERWA W DOSTAWIE</h3>
+                <div class="dashed">
+                    <span class="dashed__city">Gdańsk</span><br>
+                    <div class="listed_steets" style="display: none;"><p>ul. Franciszka Schuberta 70</p></div>
+                    <div class="all_streets" style="display: block;"><p>ul. Franciszka Schuberta 70</p></div>
+                    <div id="show_streets" class="btn_streets">zwiń</div>
+                </div>
+                <p>wstrzymanie</p>        
+                <span>2026-06-01</span>
+                <p>Planowane wznowienie</p>        
+                <span>2026-06-01 Godziny popołudniowe</span>                        
+            </div>
+        </div>"#;
+        
+        let settings = Settings::default();
+        let alerts = parse_gpec_html(html_content, &settings);
+        assert_eq!(alerts.len(), 1);
+        assert_eq!(alerts[0].startDate.as_deref(), Some("2026-06-01T00:00:00"));
+        assert_eq!(alerts[0].endDate.as_deref(), Some("2026-06-01T23:59:59"));
     }
 }
