@@ -1,0 +1,44 @@
+<pl-PL>
+Co nowego w tej wersji:
+• Naprawiono błąd ukrywający wyłączenia PWiK Częstochowa z jednocyfrowymi datami.
+• Ulepszono dopasowywanie nazw ulic dla lokalnych awarii (PWiK Częstochowa).
+• Dodano ostrzeżenie podczas pobierania danych z wolniejszych dostawców (m.in. PGE, GPEC).
+• Poprawiono stabilność okien dialogowych przy starcie aplikacji.
+• Lepsza obsługa gestu cofania w nowszych wersjach Androida.
+</pl-PL>
+
+<en-GB>
+What's new in this version:
+• Fixed a bug hiding PWiK Częstochowa outages with single-digit dates.
+• Improved street name matching for local outages (PWiK Częstochowa).
+• Added a warning when fetching data from slower providers (e.g., PGE, GPEC).
+• Improved stability of permission dialogs on app startup.
+• Better back gesture support on newer Android versions.
+</en-GB>
+
+<en-US>
+What's new in this version:
+• Fixed a bug hiding PWiK Częstochowa outages with single-digit dates.
+• Improved street name matching for local outages (PWiK Częstochowa).
+• Added a warning when fetching data from slower providers (e.g., PGE, GPEC).
+• Improved stability of permission dialogs on app startup.
+• Better back gesture support on newer Android versions.
+</en-US>
+
+<en-CA>
+What's new in this version:
+• Fixed a bug hiding PWiK Częstochowa outages with single-digit dates.
+• Improved street name matching for local outages (PWiK Częstochowa).
+• Added a warning when fetching data from slower providers (e.g., PGE, GPEC).
+• Improved stability of permission dialogs on app startup.
+• Better back gesture support on newer Android versions.
+</en-CA>
+
+<en-AU>
+What's new in this version:
+• Fixed a bug hiding PWiK Częstochowa outages with single-digit dates.
+• Improved street name matching for local outages (PWiK Częstochowa).
+• Added a warning when fetching data from slower providers (e.g., PGE, GPEC).
+• Improved stability of permission dialogs on app startup.
+• Better back gesture support on newer Android versions.
+</en-AU>
