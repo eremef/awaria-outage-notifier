@@ -12,6 +12,9 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
 - [Google Play store](https://play.google.com/store/apps/details?id=xyz.eremef.awaria)
 - [https://eremef.xyz/awaria](https://eremef.xyz/awaria)
 
+## Other links
+- [Facebook](https://www.facebook.com/awaria.info)
+
 ## Supported Providers
 
 - **⚡ Power**
