@@ -53,6 +53,10 @@ jobs:
           path: ~/.gradle/caches
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
           
+      - name: Enable KVM group access
+        run: |
+          sudo chmod 0666 /dev/kvm
+          
       - name: Run Native Android Scrapers on Emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
