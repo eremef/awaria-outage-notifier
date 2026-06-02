@@ -235,7 +235,7 @@ jobs:
           fi
 
           # Windows
-          if [[ "${{ matrix.platform }}" == "windows-latest" ]]; then
+          if [[ "${{ matrix.platform }}" == windows-* ]]; then
             safe_move "*.msi" "awaria-windows-${{ github.ref_name }}-${ARCH_NAME}.msi"
             safe_move "*.exe" "awaria-windows-${{ github.ref_name }}-${ARCH_NAME}.exe"
           fi
