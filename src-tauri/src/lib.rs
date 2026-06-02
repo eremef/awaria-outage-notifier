@@ -1,4 +1,4 @@
-mod api_logic;
+pub mod api_logic;
 mod aquanet;
 mod enea;
 mod energa;
@@ -6,7 +6,7 @@ mod fortum;
 mod mpwik;
 mod mpwik_warsaw;
 mod pge;
-mod network_state;
+pub mod network_state;
 mod state_db;
 mod stoen;
 mod tauron;
@@ -508,7 +508,7 @@ async fn import_settings(app: tauri::AppHandle<tauri::Wry>, cache_state: tauri::
 }
 
 
-fn get_providers() -> Vec<Box<dyn AlertProvider>> {
+pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
     vec![
         Box::new(tauron::TauronProvider),
         Box::new(mpwik::MpwikProvider),
