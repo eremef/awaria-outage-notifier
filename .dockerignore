@@ -1,0 +1,31 @@
+# Ignore giant build and dependency directories from Docker build context
+target/
+target_android/
+target_clippy/
+target_test/
+target_test_gpec/
+target_test_gpec_3/
+node_modules/
+.git/
+.github/
+coverage/
+
+# Tauri/Rust targets
+src-tauri/target/
+
+# Android build outputs and intermediate files
+src-tauri/gen/android/.gradle/
+src-tauri/gen/android/build/
+src-tauri/gen/android/app/build/
+
+# IDE files
+.idea/
+.vscode/
+
+# Binary files and caches
+*.exe
+*.pdb
+*.msi
+*.apk
+*.zip
+*.tar.gz
