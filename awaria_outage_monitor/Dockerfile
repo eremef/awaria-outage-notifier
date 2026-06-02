@@ -1,5 +1,5 @@
 # Multi-stage build for Awaria Daemon
-FROM rust:1.77-alpine AS builder
+FROM rust:1.82-alpine AS builder
 
 RUN apk add --no-cache musl-dev openssl-dev openssl-libs-static pkgconfig git
 
