@@ -197,200 +197,217 @@ object PsgWebViewFetcher {
      */
     private suspend fun fetchViaWebView(context: Context): String? {
         val deferred = CompletableDeferred<String?>()
+        var webView: WebView? = null
 
-        withContext(Dispatchers.Main) {
-            try {
-                val webView = WebView(context).apply {
-                    // Give the WebView a physical size to satisfy scripts that check for visibility
-                    layoutParams = ViewGroup.LayoutParams(1080, 1920)
-                    
-                    settings.javaScriptEnabled = true
-                    settings.domStorageEnabled = true
-                    settings.useWideViewPort = true
-                    settings.loadWithOverviewMode = true
-                    settings.userAgentString = MOBILE_USER_AGENT
-                }
-
-                CookieManager.getInstance().setAcceptCookie(true)
-
-                webView.webViewClient = object : WebViewClient() {
-                    override fun onPageFinished(view: WebView, url: String) {
-                        Log.d(TAG, "PSG-FETCH: Page finished loading: $url")
+        try {
+            withContext(Dispatchers.Main) {
+                try {
+                    val wv = WebView(context).apply {
+                        // Give the WebView a physical size to satisfy scripts that check for visibility
+                        layoutParams = ViewGroup.LayoutParams(1080, 1920)
                         
-                        var pollAttempts = 0
-                        val maxPollAttempts = 90 // 90 seconds max
+                        settings.javaScriptEnabled = true
+                        settings.domStorageEnabled = true
+                        settings.useWideViewPort = true
+                        settings.loadWithOverviewMode = true
+                        settings.userAgentString = MOBILE_USER_AGENT
+                    }
+                    webView = wv
 
-                        fun pollState() {
-                            if (deferred.isCompleted) return
-                            pollAttempts++
-                            if (pollAttempts > maxPollAttempts) {
-                                Log.e(TAG, "PSG-FETCH: Timeout waiting for state machine")
-                                deferred.complete(null)
-                                return
-                            }
+                    CookieManager.getInstance().setAcceptCookie(true)
 
-                             view.evaluateJavascript(
-                                """
-                                (function() {
-                                     let activeCaptured = sessionStorage.getItem('psg_activeCaptured') === 'true';
-                                     let plannedCaptured = sessionStorage.getItem('psg_plannedCaptured') === 'true';
-                                     let activeHtml = sessionStorage.getItem('psg_activeHtml') || '';
-                                     let plannedHtml = sessionStorage.getItem('psg_plannedHtml') || '';
-                                     
-                                     let startTimeStr = sessionStorage.getItem('psg_startTime');
-                                     if (!startTimeStr) {
-                                         startTimeStr = Date.now().toString();
-                                         sessionStorage.setItem('psg_startTime', startTimeStr);
-                                         sessionStorage.setItem('psg_lastActionTime', startTimeStr);
-                                     }
-                                     let startTime = parseInt(startTimeStr);
+                    wv.webViewClient = object : WebViewClient() {
+                        override fun onPageFinished(view: WebView, url: String) {
+                            Log.d(TAG, "PSG-FETCH: Page finished loading: $url")
+                            
+                            var pollAttempts = 0
+                            val maxPollAttempts = 90 // 90 seconds max
 
-                                     function isTableMatchingState(state) {
-                                         const container = document.getElementById('supply-interruptions-filter-form') || document.body;
-                                         const text = container.innerText || '';
+                            fun pollState() {
+                                if (deferred.isCompleted) return
+                                pollAttempts++
+                                if (pollAttempts > maxPollAttempts) {
+                                    Log.e(TAG, "PSG-FETCH: Timeout waiting for state machine")
+                                    deferred.complete(null)
+                                    return
+                                }
+
+                                 view.evaluateJavascript(
+                                    """
+                                    (function() {
+                                         let activeCaptured = sessionStorage.getItem('psg_activeCaptured') === 'true';
+                                         let plannedCaptured = sessionStorage.getItem('psg_plannedCaptured') === 'true';
+                                         let activeHtml = sessionStorage.getItem('psg_activeHtml') || '';
+                                         let plannedHtml = sessionStorage.getItem('psg_plannedHtml') || '';
                                          
-                                         if (state === 'active') {
-                                             if (text.includes('Brak trwających') || text.includes('Brak przerw')) {
-                                                 return true;
-                                             }
-                                         } else {
-                                             if (text.includes('Brak planowanych')) {
-                                                 return true;
-                                             }
+                                         let startTimeStr = sessionStorage.getItem('psg_startTime');
+                                         if (!startTimeStr) {
+                                             startTimeStr = Date.now().toString();
+                                             sessionStorage.setItem('psg_startTime', startTimeStr);
+                                             sessionStorage.setItem('psg_lastActionTime', startTimeStr);
                                          }
-                                         
-                                         const rows = document.querySelectorAll('table tr');
-                                         for (let i = 1; i < rows.length; i++) {
-                                             const rowText = rows[i].innerText || '';
+                                         let startTime = parseInt(startTimeStr);
+
+                                         function isTableMatchingState(state) {
+                                             const container = document.getElementById('supply-interruptions-filter-form') || document.body;
+                                             const text = container.innerText || '';
+                                             
                                              if (state === 'active') {
-                                                 if (rowText.toLowerCase().includes('awaria') || rowText.toLowerCase().includes('aktywna')) {
+                                                 if (text.includes('Brak trwających') || text.includes('Brak przerw')) {
                                                      return true;
                                                  }
                                              } else {
-                                                 if (rowText.toLowerCase().includes('planowane') || rowText.toLowerCase().includes('planowana')) {
+                                                 if (text.includes('Brak planowanych')) {
                                                      return true;
                                                  }
                                              }
+                                             
+                                             const rows = document.querySelectorAll('table tr');
+                                             for (let i = 1; i < rows.length; i++) {
+                                                 const rowText = rows[i].innerText || '';
+                                                 if (state === 'active') {
+                                                     if (rowText.toLowerCase().includes('awaria') || rowText.toLowerCase().includes('aktywna')) {
+                                                         return true;
+                                                     }
+                                                 } else {
+                                                     if (rowText.toLowerCase().includes('planowane') || rowText.toLowerCase().includes('planowana')) {
+                                                         return true;
+                                                     }
+                                                 }
+                                             }
+                                             
+                                             // Fallback: if we have waited more than 5 seconds after clicking, assume it loaded
+                                             const lastAction = parseInt(sessionStorage.getItem('psg_lastActionTime') || '0');
+                                             if (lastAction > 0 && (Date.now() - lastAction > 5000)) {
+                                                 console.log('PSG-FETCH: Matching state fallback triggered');
+                                                 return true;
+                                             }
+                                             
+                                             return false;
                                          }
-                                         
-                                         // Fallback: if we have waited more than 5 seconds after clicking, assume it loaded
-                                         const lastAction = parseInt(sessionStorage.getItem('psg_lastActionTime') || '0');
-                                         if (lastAction > 0 && (Date.now() - lastAction > 5000)) {
-                                             console.log('PSG-FETCH: Matching state fallback triggered');
-                                             return true;
+
+                                         const now = Date.now();
+                                         const body = document.body ? document.body.innerHTML : '';
+
+                                         if (body.includes('Checking your browser') || body.includes('Verify you are human') || body.includes('Cloudflare')) {
+                                             return 'waiting';
                                          }
-                                         
-                                         return false;
-                                     }
 
-                                     const now = Date.now();
-                                     const body = document.body ? document.body.innerHTML : '';
+                                         const checkbox0 = document.getElementById('checkbox0'); // active (aktywna)
+                                         const checkbox1 = document.getElementById('checkbox1'); // planned (planowana)
 
-                                     if (body.includes('Checking your browser') || body.includes('Verify you are human') || body.includes('Cloudflare')) {
+                                         const isActiveChecked = checkbox0 && checkbox0.checked;
+                                         const isPlannedChecked = checkbox1 && checkbox1.checked;
+
+                                         if (isActiveChecked) {
+                                             if (!activeCaptured && isTableMatchingState('active')) {
+                                                 activeHtml = body;
+                                                 activeCaptured = true;
+                                                 sessionStorage.setItem('psg_activeHtml', body);
+                                                 sessionStorage.setItem('psg_activeCaptured', 'true');
+                                             }
+                                         } else if (isPlannedChecked) {
+                                             if (!plannedCaptured && isTableMatchingState('planned')) {
+                                                 plannedHtml = body;
+                                                 plannedCaptured = true;
+                                                 sessionStorage.setItem('psg_plannedHtml', body);
+                                                 sessionStorage.setItem('psg_plannedCaptured', 'true');
+                                             }
+                                         }
+
+                                         if (activeCaptured && plannedCaptured) {
+                                             sessionStorage.removeItem('psg_activeCaptured');
+                                             sessionStorage.removeItem('psg_plannedCaptured');
+                                             sessionStorage.removeItem('psg_activeHtml');
+                                             sessionStorage.removeItem('psg_plannedHtml');
+                                             sessionStorage.removeItem('psg_startTime');
+                                             sessionStorage.removeItem('psg_lastActionTime');
+                                             return (activeHtml || '') + "\n<hr>\n" + (plannedHtml || '');
+                                         }
+
+                                         if (!activeCaptured) {
+                                             if (!isActiveChecked && checkbox0) {
+                                                 sessionStorage.setItem('psg_lastActionTime', now.toString());
+                                                 checkbox0.click();
+                                                 checkbox0.dispatchEvent(new Event('change', { bubbles: true }));
+                                             }
+                                             return 'waiting';
+                                         }
+
+                                         if (!plannedCaptured) {
+                                             if (!isPlannedChecked && checkbox1) {
+                                                 sessionStorage.setItem('psg_lastActionTime', now.toString());
+                                                 checkbox1.click();
+                                                 checkbox1.dispatchEvent(new Event('change', { bubbles: true }));
+                                             }
+                                             return 'waiting';
+                                         }
+
+                                         if (now - startTime > 45000) {
+                                             sessionStorage.removeItem('psg_activeCaptured');
+                                             sessionStorage.removeItem('psg_plannedCaptured');
+                                             sessionStorage.removeItem('psg_activeHtml');
+                                             sessionStorage.removeItem('psg_plannedHtml');
+                                             sessionStorage.removeItem('psg_startTime');
+                                             sessionStorage.removeItem('psg_lastActionTime');
+                                             return (activeHtml || '') + "\n<hr>\n" + (plannedHtml || '');
+                                         }
+
                                          return 'waiting';
-                                     }
-
-                                     const checkbox0 = document.getElementById('checkbox0'); // active (aktywna)
-                                     const checkbox1 = document.getElementById('checkbox1'); // planned (planowana)
-
-                                     const isActiveChecked = checkbox0 && checkbox0.checked;
-                                     const isPlannedChecked = checkbox1 && checkbox1.checked;
-
-                                     if (isActiveChecked) {
-                                         if (!activeCaptured && isTableMatchingState('active')) {
-                                             activeHtml = body;
-                                             activeCaptured = true;
-                                             sessionStorage.setItem('psg_activeHtml', body);
-                                             sessionStorage.setItem('psg_activeCaptured', 'true');
-                                         }
-                                     } else if (isPlannedChecked) {
-                                         if (!plannedCaptured && isTableMatchingState('planned')) {
-                                             plannedHtml = body;
-                                             plannedCaptured = true;
-                                             sessionStorage.setItem('psg_plannedHtml', body);
-                                             sessionStorage.setItem('psg_plannedCaptured', 'true');
+                                     })()
+                                    """.trimIndent()
+                                 ) { result ->
+                                     if (deferred.isCompleted) return@evaluateJavascript
+                                     val res = if (result != null && result != "null") unescapeJsString(result) else "waiting"
+                                     if (res == "waiting") {
+                                         Handler(Looper.getMainLooper()).postDelayed({ pollState() }, 1000)
+                                     } else {
+                                         if (res.isNotEmpty()) {
+                                             Log.d(TAG, "PSG-FETCH: Done! Length: ${res.length}")
+                                             cacheCookies(context)
+                                             deferred.complete(res)
+                                         } else {
+                                             deferred.complete(null)
                                          }
                                      }
+                                 }
+                            }
+                            
+                            pollState()
+                        }
 
-                                     if (activeCaptured && plannedCaptured) {
-                                         sessionStorage.removeItem('psg_activeCaptured');
-                                         sessionStorage.removeItem('psg_plannedCaptured');
-                                         sessionStorage.removeItem('psg_activeHtml');
-                                         sessionStorage.removeItem('psg_plannedHtml');
-                                         sessionStorage.removeItem('psg_startTime');
-                                         sessionStorage.removeItem('psg_lastActionTime');
-                                         return (activeHtml || '') + "\n<hr>\n" + (plannedHtml || '');
-                                     }
-
-                                     if (!activeCaptured) {
-                                         if (!isActiveChecked && checkbox0) {
-                                             sessionStorage.setItem('psg_lastActionTime', now.toString());
-                                             checkbox0.click();
-                                             checkbox0.dispatchEvent(new Event('change', { bubbles: true }));
-                                         }
-                                         return 'waiting';
-                                     }
-
-                                     if (!plannedCaptured) {
-                                         if (!isPlannedChecked && checkbox1) {
-                                             sessionStorage.setItem('psg_lastActionTime', now.toString());
-                                             checkbox1.click();
-                                             checkbox1.dispatchEvent(new Event('change', { bubbles: true }));
-                                         }
-                                         return 'waiting';
-                                     }
-
-                                     if (now - startTime > 45000) {
-                                         sessionStorage.removeItem('psg_activeCaptured');
-                                         sessionStorage.removeItem('psg_plannedCaptured');
-                                         sessionStorage.removeItem('psg_activeHtml');
-                                         sessionStorage.removeItem('psg_plannedHtml');
-                                         sessionStorage.removeItem('psg_startTime');
-                                         sessionStorage.removeItem('psg_lastActionTime');
-                                         return (activeHtml || '') + "\n<hr>\n" + (plannedHtml || '');
-                                     }
-
-                                     return 'waiting';
-                                 })()
-                                """.trimIndent()
-                            ) { result ->
-                                val res = if (result != null && result != "null") unescapeJsString(result) else "waiting"
-                                if (res == "waiting") {
-                                    Handler(Looper.getMainLooper()).postDelayed({ pollState() }, 1000)
-                                } else {
-                                    if (res.isNotEmpty()) {
-                                        Log.d(TAG, "PSG-FETCH: Done! Length: ${res.length}")
-                                        cacheCookies(context)
-                                        deferred.complete(res)
-                                    } else {
-                                        deferred.complete(null)
-                                    }
-                                }
+                        override fun onReceivedHttpError(
+                            view: WebView,
+                            request: WebResourceRequest,
+                            errorResponse: WebResourceResponse
+                        ) {
+                            if (request.isForMainFrame) {
+                                Log.e(TAG, "WebView HTTP error: ${errorResponse.statusCode}")
                             }
                         }
-                        
-                        pollState()
                     }
 
-                    override fun onReceivedHttpError(
-                        view: WebView,
-                        request: WebResourceRequest,
-                        errorResponse: WebResourceResponse
-                    ) {
-                        if (request.isForMainFrame) {
-                            Log.e(TAG, "WebView HTTP error: ${errorResponse.statusCode}")
-                        }
-                    }
+                    wv.loadUrl(PSG_URL)
+                } catch (e: Exception) {
+                    Log.e(TAG, "WebView creation error: ${e.message}")
+                    deferred.complete(null)
                 }
+            }
 
-                webView.loadUrl(PSG_URL)
-            } catch (e: Exception) {
-                Log.e(TAG, "WebView creation error: ${e.message}")
-                deferred.complete(null)
+            return withTimeoutOrNull(TIMEOUT_MS) { deferred.await() }
+        } finally {
+            if (!deferred.isCompleted) {
+                deferred.cancel()
+            }
+            withContext(Dispatchers.Main) {
+                try {
+                    webView?.stopLoading()
+                    webView?.destroy()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error cleaning up WebView: ${e.message}")
+                }
             }
         }
-
-        return withTimeoutOrNull(TIMEOUT_MS) { deferred.await() }
     }
 
     private fun cacheCookies(context: Context) {

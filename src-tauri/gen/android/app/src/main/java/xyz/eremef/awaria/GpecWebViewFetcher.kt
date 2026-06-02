@@ -77,100 +77,117 @@ object GpecWebViewFetcher {
 
     private suspend fun fetchViaWebView(context: Context): String? {
         val deferred = CompletableDeferred<String?>()
+        var webView: WebView? = null
 
-        withContext(Dispatchers.Main) {
-            try {
-                val webView = WebView(context).apply {
-                    layoutParams = ViewGroup.LayoutParams(1080, 1920)
-                    settings.javaScriptEnabled = true
-                    settings.domStorageEnabled = true
-                    settings.useWideViewPort = true
-                    settings.loadWithOverviewMode = true
-                    settings.userAgentString = MOBILE_USER_AGENT
-                }
+        try {
+            withContext(Dispatchers.Main) {
+                try {
+                    val wv = WebView(context).apply {
+                        layoutParams = ViewGroup.LayoutParams(1080, 1920)
+                        settings.javaScriptEnabled = true
+                        settings.domStorageEnabled = true
+                        settings.useWideViewPort = true
+                        settings.loadWithOverviewMode = true
+                        settings.userAgentString = MOBILE_USER_AGENT
+                    }
+                    webView = wv
 
-                CookieManager.getInstance().setAcceptCookie(true)
+                    CookieManager.getInstance().setAcceptCookie(true)
 
-                webView.webViewClient = object : WebViewClient() {
-                    override fun onPageFinished(view: WebView, url: String) {
-                        Log.d(TAG, "GPEC-FETCH: Page finished loading: ${'$'}url")
-                        
-                        var pollAttempts = 0
-                        val maxPollAttempts = 90
+                    wv.webViewClient = object : WebViewClient() {
+                        override fun onPageFinished(view: WebView, url: String) {
+                            Log.d(TAG, "GPEC-FETCH: Page finished loading: $url")
+                            
+                            var pollAttempts = 0
+                            val maxPollAttempts = 90
 
-                        fun pollState() {
-                            if (deferred.isCompleted) return
-                            pollAttempts++
-                            if (pollAttempts > maxPollAttempts) {
-                                Log.e(TAG, "GPEC-FETCH: Timeout waiting for DOM elements")
-                                deferred.complete(null)
-                                return
-                            }
+                            fun pollState() {
+                                if (deferred.isCompleted) return
+                                pollAttempts++
+                                if (pollAttempts > maxPollAttempts) {
+                                    Log.e(TAG, "GPEC-FETCH: Timeout waiting for DOM elements")
+                                    deferred.complete(null)
+                                    return
+                                }
 
-                             view.evaluateJavascript(
-                                """
-                                (function() {
-                                    const allowBtn = document.getElementById('CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll');
-                                    if (allowBtn && allowBtn.offsetParent !== null) {
-                                        allowBtn.click();
-                                    }
+                                 view.evaluateJavascript(
+                                    """
+                                    (function() {
+                                        const allowBtn = document.getElementById('CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll');
+                                        if (allowBtn && allowBtn.offsetParent !== null) {
+                                            allowBtn.click();
+                                        }
 
-                                    const bodyHtml = document.body ? document.body.innerHTML : '';
-                                    const bodyText = document.body ? document.body.innerText : '';
-                                    
-                                    if (document.title.includes('Just a moment') || bodyHtml.includes('Checking your browser') || bodyHtml.includes('Verify you are human')) {
+                                        const bodyHtml = document.body ? document.body.innerHTML : '';
+                                        const bodyText = document.body ? document.body.innerText : '';
+                                        
+                                        if (document.title.includes('Just a moment') || bodyHtml.includes('Checking your browser') || bodyHtml.includes('Verify you are human')) {
+                                            return 'waiting';
+                                        }
+                                        
+                                        if (document.querySelector('.no-acc-info') || document.querySelector('.cloud-info') || document.querySelector('.dashed') || document.querySelector('.grupagpec-pl-przerwy-w-dostawie') || bodyText.includes('Brak przerw w dostawie') || bodyText.includes('Brak przerw')) {
+                                            let relevantHtml = '';
+                                            const noAcc = document.querySelector('.no-acc-info');
+                                            if (noAcc) relevantHtml += noAcc.outerHTML + '\n';
+                                            
+                                            const cloudInfos = document.querySelectorAll('.cloud-info');
+                                            if (cloudInfos.length > 0) {
+                                                cloudInfos.forEach(el => relevantHtml += el.outerHTML + '\n');
+                                            } else {
+                                                const dashed = document.querySelectorAll('.dashed');
+                                                dashed.forEach(el => relevantHtml += el.outerHTML + '\n');
+                                            }
+                                            
+                                            if (!relevantHtml.trim()) {
+                                                relevantHtml = 'Brak przerw';
+                                            }
+                                            return relevantHtml;
+                                        }
+
                                         return 'waiting';
-                                    }
-                                    
-                                    if (document.querySelector('.no-acc-info') || document.querySelector('.cloud-info') || document.querySelector('.dashed') || document.querySelector('.grupagpec-pl-przerwy-w-dostawie') || bodyText.includes('Brak przerw w dostawie') || bodyText.includes('Brak przerw')) {
-                                        let relevantHtml = '';
-                                        const noAcc = document.querySelector('.no-acc-info');
-                                        if (noAcc) relevantHtml += noAcc.outerHTML + '\n';
-                                        
-                                        const cloudInfos = document.querySelectorAll('.cloud-info');
-                                        if (cloudInfos.length > 0) {
-                                            cloudInfos.forEach(el => relevantHtml += el.outerHTML + '\n');
-                                        } else {
-                                            const dashed = document.querySelectorAll('.dashed');
-                                            dashed.forEach(el => relevantHtml += el.outerHTML + '\n');
-                                        }
-                                        
-                                        if (!relevantHtml.trim()) {
-                                            relevantHtml = 'Brak przerw';
-                                        }
-                                        return relevantHtml;
-                                    }
-
-                                    return 'waiting';
-                                })()
-                                """.trimIndent()
-                            ) { result ->
-                                val res = if (result != null && result != "null") unescapeJsString(result) else "waiting"
-                                if (res == "waiting") {
-                                    Handler(Looper.getMainLooper()).postDelayed({ pollState() }, 1000)
-                                } else {
-                                    if (res.isNotEmpty()) {
-                                        Log.d(TAG, "GPEC-FETCH: Done! Length: ${'$'}{res.length}")
-                                        deferred.complete(res)
+                                    })()
+                                    """.trimIndent()
+                                ) { result ->
+                                    if (deferred.isCompleted) return@evaluateJavascript
+                                    val res = if (result != null && result != "null") unescapeJsString(result) else "waiting"
+                                    if (res == "waiting") {
+                                        Handler(Looper.getMainLooper()).postDelayed({ pollState() }, 1000)
                                     } else {
-                                        deferred.complete(null)
+                                        if (res.isNotEmpty()) {
+                                            Log.d(TAG, "GPEC-FETCH: Done! Length: ${res.length}")
+                                            deferred.complete(res)
+                                        } else {
+                                            deferred.complete(null)
+                                        }
                                     }
                                 }
                             }
+                            
+                            pollState()
                         }
-                        
-                        pollState()
                     }
-                }
 
-                webView.loadUrl(GPEC_URL)
-            } catch (e: Exception) {
-                Log.e(TAG, "WebView creation error: ${'$'}{e.message}")
-                deferred.complete(null)
+                    wv.loadUrl(GPEC_URL)
+                } catch (e: Exception) {
+                    Log.e(TAG, "WebView creation error: ${e.message}")
+                    deferred.complete(null)
+                }
+            }
+
+            return withTimeoutOrNull(TIMEOUT_MS) { deferred.await() }
+        } finally {
+            if (!deferred.isCompleted) {
+                deferred.cancel()
+            }
+            withContext(Dispatchers.Main) {
+                try {
+                    webView?.stopLoading()
+                    webView?.destroy()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error cleaning up WebView: ${e.message}")
+                }
             }
         }
-
-        return withTimeoutOrNull(TIMEOUT_MS) { deferred.await() }
     }
 
     private fun unescapeJsString(jsString: String): String {

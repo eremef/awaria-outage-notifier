@@ -78,9 +78,14 @@ Miejscowość: {address_city}
 - **Plugin Bug (tauri-plugin-share v2.0.5)**: Rust wrapper uses snake_case (`share_file`) while Kotlin registers camelCase (`shareFile`), causing "No command found" errors. Use direct JNI or manual command invocation as a workaround.
 
 ### Reqwest RequestBuilder & Query Parameter Type Inference
+ 
+ - **RequestBuilder query compilation issues**: In some environments, using `.query(&[("a", "b")])` on a `reqwest::RequestBuilder` with custom feature-restricted configurations can fail to compile due to missing standard query methods or cause type-inference errors on `.send().await` or `.map_err()`.
+ - **Solution**: To bypass reqwest RequestBuilder version/feature constraints, construct URLs manually using `format!` and the `urlencoding::encode` crate, e.g. `format!("https://host/api?a={}", urlencoding::encode(b))`. This is 100% robust, highly readable, and compiles flawlessly.
+ 
+### Android Instrumentation Tests & WebView Deadlocks
 
-- **RequestBuilder query compilation issues**: In some environments, using `.query(&[("a", "b")])` on a `reqwest::RequestBuilder` with custom feature-restricted configurations can fail to compile due to missing standard query methods or cause type-inference errors on `.send().await` or `.map_err()`.
-- **Solution**: To bypass reqwest RequestBuilder version/feature constraints, construct URLs manually using `format!` and the `urlencoding::encode` crate, e.g. `format!("https://host/api?a={}", urlencoding::encode(b))`. This is 100% robust, highly readable, and compiles flawlessly.
+- **WebView Event Loop Deadlock**: In Android instrumentation tests, using `runBlocking` on the test thread while orchestrating WebView events on `Dispatchers.Main` can lead to hangs. If `withTimeoutOrNull` triggers a timeout, it cancels the `deferred.await()` call, but the `CompletableDeferred` itself is not completed/cancelled. If a background Handler continues to post delayed tasks to the Main Looper recursively, the loop stays active forever, preventing the test runner from idling.
+- **Solution**: Always use a `try/finally` block inside WebView fetching methods to ensure the `deferred` promise is explicitly completed/cancelled and that `webView.stopLoading()` and `webView.destroy()` are called on the Main thread upon cancellation or timeout.
 
 ## Common Development Workflows
 
