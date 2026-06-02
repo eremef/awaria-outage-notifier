@@ -5,8 +5,6 @@ import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 /**
  * Instrumentation test to run live fetches and WebView interactions directly on Android.
@@ -30,21 +28,15 @@ class AndroidFetcherSmokeTest {
     @Test
     fun testPsgWebViewFetcher_LiveScraping() {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        val latch = CountDownLatch(1)
         var resultHtml: String? = null
 
-        // WebView requires UI Thread interaction
-        val mainExecutor = InstrumentationRegistry.getInstrumentation().runOnMainSync {
-            try {
-                // Execute the native webview scraper directly
-                resultHtml = PsgWebViewFetcher.fetchHtmlNative(appContext)
-                latch.countDown()
-            } catch (e: Exception) {
-                latch.countDown()
-            }
+        try {
+            // Execute the native webview scraper directly (internally handles Main dispatcher)
+            resultHtml = PsgWebViewFetcher.fetchHtmlNative(appContext)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
 
-        latch.await(30, TimeUnit.SECONDS)
         if (resultHtml == null) {
             System.err.println("[WARN] PSG WebView Scraper returned null (might be offline or blocking CI IP range). Skipping assertions.")
             return
@@ -55,21 +47,15 @@ class AndroidFetcherSmokeTest {
     @Test
     fun testGpecWebViewFetcher_LiveScraping() {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        val latch = CountDownLatch(1)
         var resultHtml: String? = null
 
-        // WebView requires UI Thread interaction
-        InstrumentationRegistry.getInstrumentation().runOnMainSync {
-            try {
-                // Execute the native webview scraper directly
-                resultHtml = GpecWebViewFetcher.fetchHtmlNative(appContext)
-                latch.countDown()
-            } catch (e: Exception) {
-                latch.countDown()
-            }
+        try {
+            // Execute the native webview scraper directly (internally handles Main dispatcher)
+            resultHtml = GpecWebViewFetcher.fetchHtmlNative(appContext)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
 
-        latch.await(30, TimeUnit.SECONDS)
         if (resultHtml == null) {
             System.err.println("[WARN] GPEC WebView Scraper returned null (might be offline or blocking CI IP range). Skipping assertions.")
             return
