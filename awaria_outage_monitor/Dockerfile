@@ -1,7 +1,7 @@
 # Multi-stage build for Awaria Daemon
 FROM rust:alpine AS builder
 
-RUN apk add --no-cache musl-dev openssl-dev openssl-libs-static pkgconfig git
+RUN apk add --no-cache musl-dev openssl-dev openssl-libs-static pkgconfig git glib-dev gtk+3.0-dev webkit2gtk-4.1-dev libayatana-appindicator-dev
 
 WORKDIR /usr/src/awaria
 
