@@ -19,6 +19,11 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 name = "live_provider_smoke_tests"
 required-features = ["smoke-tests"]
 
+[[bin]]
+name = "awaria-daemon"
+path = "src/bin/awaria_daemon.rs"
+
+
 [build-dependencies]
 tauri-build = { version = "2.5.6", features = [] }
 
@@ -26,6 +31,8 @@ tauri-build = { version = "2.5.6", features = [] }
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
+axum = "0.7"
+env_logger = "0.11"
 tauri = { version = "2.11.2", features = [] }
 tauri-plugin-log = "2.6.0"
 reqwest = { version = "0.13", default-features = false, features = ["json", "blocking", "rustls-no-provider", "cookies"] }
