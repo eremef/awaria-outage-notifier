@@ -3,6 +3,7 @@ name: Release Add-on
 on:
   release:
     types: [published]
+  workflow_dispatch: # Allows manual triggers on-demand
 
 jobs:
   build:
