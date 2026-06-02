@@ -15,6 +15,10 @@ default-run = "Awaria"
 name = "app_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
+[[test]]
+name = "live_provider_smoke_tests"
+required-features = ["smoke-tests"]
+
 [build-dependencies]
 tauri-build = { version = "2.5.6", features = [] }
 
@@ -66,3 +70,6 @@ lto = "thin"         # Faster linking than true LTO
 codegen-units = 16   # Compile different crates in parallel
 panic = "abort"      # Disables stack unwinding, reducing binary size and compile time
 strip = true         # Automatically strips symbols/debuginfo from the final binary
+
+[features]
+smoke-tests = []
