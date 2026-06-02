@@ -32,7 +32,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
           
       - name: Run Live Scraper Verification
-        run: cargo test --test live_provider_smoke_tests --target-dir target_test
+        run: cargo test --test live_provider_smoke_tests --target-dir target_test -- --ignored
         working-directory: src-tauri
 
   # Job 2: Test Android Custom bridges (Kotlin, WebView, Conscrypt)

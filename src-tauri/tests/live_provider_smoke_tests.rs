@@ -3,6 +3,7 @@ use app_lib::api_logic::{Settings, AddressEntry};
 use app_lib::network_state::NetworkState;
 
 #[tokio::test]
+#[ignore]
 async fn test_all_live_providers() {
     let client = NetworkState::build_client().expect("Failed to build HTTP client");
     let client_http1 = NetworkState::build_client_http1().expect("Failed to build HTTP/1.1 client");
