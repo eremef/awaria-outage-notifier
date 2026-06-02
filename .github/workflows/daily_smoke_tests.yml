@@ -102,4 +102,5 @@ jobs:
           api-level: 33
           target: google_apis
           arch: x86_64
-          script: npx tauri android build --debug --target x86_64 --apk --ci -- connectedAndroidTest -Pandroid.injected.abi=x86_64
+          script: ./gradlew connectedAndroidTest -Pandroid.injected.abi=x86_64 -x :app:rustBuildX86_64Debug -x :app:rustBuildArm64Debug -x :app:rustBuildX86Debug -x :app:rustBuildArmDebug
+          working-directory: src-tauri/gen/android
