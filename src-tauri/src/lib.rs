@@ -1383,8 +1383,10 @@ pub async fn get_psg_html_android() -> Result<String, String> {
     
     #[allow(deprecated)]
     tokio::task::spawn_blocking(move || -> Result<String, String> {
-        let vm_guard = JAVA_VM.lock().unwrap();
-        let vm = vm_guard.as_ref().unwrap();
+        let vm = {
+            let vm_guard = JAVA_VM.lock().unwrap();
+            vm_guard.as_ref().cloned()
+        }.ok_or_else(|| "JAVA_VM not initialized".to_string())?;
         let res: Result<String, jni::errors::Error> = vm.attach_current_thread(|env| {
             let context = context_ref.as_obj();
             
@@ -1427,8 +1429,10 @@ pub async fn get_gpec_html_android() -> Result<String, String> {
     
     #[allow(deprecated)]
     tokio::task::spawn_blocking(move || -> Result<String, String> {
-        let vm_guard = JAVA_VM.lock().unwrap();
-        let vm = vm_guard.as_ref().unwrap();
+        let vm = {
+            let vm_guard = JAVA_VM.lock().unwrap();
+            vm_guard.as_ref().cloned()
+        }.ok_or_else(|| "JAVA_VM not initialized".to_string())?;
         let res: Result<String, jni::errors::Error> = vm.attach_current_thread(|env| {
             let context = context_ref.as_obj();
             
@@ -1476,8 +1480,10 @@ pub async fn fetch_url_via_android(url: &str) -> Result<String, String> {
     let url_owned = url.to_string();
     #[allow(deprecated)]
     tokio::task::spawn_blocking(move || -> Result<String, String> {
-        let vm_guard = JAVA_VM.lock().unwrap();
-        let vm = vm_guard.as_ref().unwrap();
+        let vm = {
+            let vm_guard = JAVA_VM.lock().unwrap();
+            vm_guard.as_ref().cloned()
+        }.ok_or_else(|| "JAVA_VM not initialized".to_string())?;
         let res: Result<String, jni::errors::Error> = vm.attach_current_thread(|env| {
             let jurl = env.new_string(&url_owned)?;
             let result = env.call_static_method(
