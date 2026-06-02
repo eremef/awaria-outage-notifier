@@ -3,7 +3,7 @@ version: "1.0.0"
 slug: awaria_outage_monitor
 description: Headless outage monitor for Polish utility providers (Tauron, PGE, Enea, Energa, MPWiK, Stoen, Veolia, etc.)
 url: https://github.com/eremef/awaria-outage-notifier
-image: "ghcr.io/eremef/awaria-outage-monitor-{arch}"
+image: "ghcr.io/eremef/awaria-outage-monitor"
 arch:
   - aarch64
   - amd64
