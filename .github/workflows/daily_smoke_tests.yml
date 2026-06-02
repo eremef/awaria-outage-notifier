@@ -57,6 +57,10 @@ jobs:
         run: |
           sudo chmod 0666 /dev/kvm
           
+      - name: Make Gradle Wrapper Executable
+        run: chmod +x gradlew
+        working-directory: src-tauri/gen/android
+          
       - name: Run Native Android Scrapers on Emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
