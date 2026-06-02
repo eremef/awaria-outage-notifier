@@ -47,12 +47,40 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: 'npm'
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-linux-android
+
+      - name: Cache Cargo Dependencies
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            src-tauri/target/
+          key: ${{ runner.os }}-cargo-android-${{ hashFiles('**/Cargo.toml') }}
+
       - name: Cache Gradle Packages
         uses: actions/cache@v5
         with:
           path: ~/.gradle/caches
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
-          
+
+      - name: Install NPM dependencies
+        run: npm ci
+
+      - name: Build Tauri Android Project (Generate bindings and settings)
+        run: npx tauri android build --debug --target x86_64 --apk --ci
+
       - name: Enable KVM group access
         run: |
           sudo chmod 0666 /dev/kvm
