@@ -12,7 +12,7 @@ WORKDIR /usr/src/awaria/src-tauri
 
 # Build the daemon binary in release mode
 # Note: we use musl target to have a fully static binary
-RUN RUSTFLAGS="-C target-feature=+crt-static" cargo build --release --bin awaria-daemon
+RUN cargo build --release --bin awaria-daemon
 
 # Final minimal runner stage
 FROM alpine:3.19
