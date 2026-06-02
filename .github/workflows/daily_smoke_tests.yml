@@ -28,6 +28,7 @@ jobs:
           
       - name: Run Live Scraper Verification
         run: cargo test --test live_provider_smoke_tests --target-dir target_test
+        working-directory: src-tauri
 
   # Job 2: Test Android Custom bridges (Kotlin, WebView, Conscrypt)
   android-instrumentation-tests:
