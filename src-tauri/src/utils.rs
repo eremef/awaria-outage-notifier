@@ -136,4 +136,219 @@ mod tests {
         assert_eq!(result, Err("constant fail"));
         assert_eq!(counter.load(Ordering::SeqCst), 3);
     }
+
+    #[test]
+    fn test_parse_numeric_prefixes() {
+        assert_eq!(parse_numeric_prefixes("12"), vec![12]);
+        assert_eq!(parse_numeric_prefixes("12A"), vec![12]);
+        assert_eq!(parse_numeric_prefixes("12/14"), vec![12, 14]);
+        assert_eq!(parse_numeric_prefixes("12-14"), vec![12, 14]);
+        assert_eq!(parse_numeric_prefixes("od 1 do 9"), vec![1, 9]);
+        assert_eq!(parse_numeric_prefixes("budynki 2, 4, 10a"), vec![2, 4, 10]);
+        assert_eq!(parse_numeric_prefixes("brak"), Vec::<u32>::new());
+    }
+
+    #[test]
+    fn test_match_house_number() {
+        let match_hn = |u, s| match_house_number(u, s, None);
+
+        // Exact matches and letter ignoring
+        assert!(match_hn("15", "15"));
+        assert!(match_hn("15A", "15"));
+        assert!(match_hn("15", "15b"));
+        assert!(match_hn("15/3", "15"));
+        assert!(match_hn("15 B", "15"));
+
+        // Multi-lot user address
+        assert!(match_hn("12/14", "12"));
+        assert!(match_hn("12/14", "14"));
+        assert!(!match_hn("12/14", "13"));
+
+        // Comma-separated list matching
+        assert!(match_hn("12", "10, 12, 14"));
+        assert!(match_hn("12", "10,12,14"));
+        assert!(match_hn("12", "posesje: 10 , 12 , 14"));
+        assert!(!match_hn("13", "10, 12, 14"));
+
+        // Range matching (hyphen and Polish words)
+        assert!(match_hn("15", "10-20"));
+        assert!(match_hn("15", "od 10 do 20"));
+        assert!(match_hn("15", "od nr 10 do 20"));
+        assert!(!match_hn("25", "10-20"));
+
+        // Parity logic (even / odd)
+        assert!(match_hn("12", "10-20 parzyste"));
+        assert!(match_hn("12", "10-20 parz."));
+        assert!(match_hn("12", "10-20 parz"));
+        assert!(!match_hn("13", "10-20 parzyste"));
+
+        assert!(match_hn("15", "11-21 nieparzyste"));
+        assert!(match_hn("15", "11-21 nieparz."));
+        assert!(match_hn("15", "11-21 nieparz"));
+        assert!(!match_hn("16", "11-21 nieparzyste"));
+
+        // Empty spec (whole street / no numbers provided)
+        assert!(match_hn("15", "cała ulica"));
+        assert!(match_hn("15", ""));
+
+        // Segment isolation tests
+        let multi_street_spec = "Wschowa ul Wolsztyńska 10-20 parzyste, ul Grunwaldzka 1, 3, 5, ul Kolejowa 11-21 nieparz.";
+        assert!(match_house_number("12", multi_street_spec, Some("Wolsztyńska")));
+        assert!(!match_house_number("13", multi_street_spec, Some("Wolsztyńska")));
+        assert!(match_house_number("3", multi_street_spec, Some("Grunwaldzka")));
+        assert!(!match_house_number("2", multi_street_spec, Some("Grunwaldzka")));
+        assert!(match_house_number("15", multi_street_spec, Some("Kolejowa")));
+        assert!(!match_house_number("12", multi_street_spec, Some("Kolejowa")));
+    }
 }
+
+pub fn clean_text(s: &str) -> String {
+    s.to_lowercase()
+        .chars()
+        .map(|c| match c {
+            'ą' => 'a',
+            'ć' => 'c',
+            'ę' => 'e',
+            'ł' => 'l',
+            'ń' => 'n',
+            'ó' => 'o',
+            'ś' => 's',
+            'ź' | 'ż' => 'z',
+            _ => c,
+        })
+        .collect()
+}
+
+pub fn isolate_street_segment(spec: &str, street: &str) -> String {
+    let clean_spec = clean_text(spec);
+    let clean_street = clean_text(street);
+    
+    // Find the street name index
+    if let Some(idx) = clean_spec.find(&clean_street) {
+        let sub = &spec[idx + clean_street.len()..];
+        let sub_clean = &clean_spec[idx + clean_street.len()..];
+        
+        let prefixes = [
+            "ul.", "ul ", "al.", "al ", "pl.", "pl ", 
+            "ulica", "aleja", "plac", "os.", "osiedle", 
+            "rondo", "skwer"
+        ];
+        
+        let mut min_idx = sub.len();
+        for p in prefixes {
+            if let Some(p_idx) = sub_clean.find(p) {
+                if p_idx < min_idx {
+                    min_idx = p_idx;
+                }
+            }
+        }
+        
+        sub[..min_idx].to_string()
+    } else {
+        // Fallback to significant words
+        let words: Vec<&str> = clean_street.split_whitespace().collect();
+        let sig_words: Vec<&str> = words.into_iter()
+            .filter(|w| w.chars().count() > 3 && !w.chars().all(|c| c.is_numeric()))
+            .collect();
+        
+        for w in sig_words {
+            if let Some(idx) = clean_spec.find(w) {
+                let sub = &spec[idx + w.len()..];
+                let sub_clean = &clean_spec[idx + w.len()..];
+                
+                let prefixes = [
+                    "ul.", "ul ", "al.", "al ", "pl.", "pl ", 
+                    "ulica", "aleja", "plac", "os.", "osiedle", 
+                    "rondo", "skwer"
+                ];
+                
+                let mut min_idx = sub.len();
+                for p in prefixes {
+                    if let Some(p_idx) = sub_clean.find(p) {
+                        if p_idx < min_idx {
+                            min_idx = p_idx;
+                        }
+                    }
+                }
+                return sub[..min_idx].to_string();
+            }
+        }
+        
+        spec.to_string()
+    }
+}
+
+pub fn parse_numeric_prefixes(s: &str) -> Vec<u32> {
+    static RE: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
+    let re = RE.get_or_init(|| regex::Regex::new(r"\d+").unwrap());
+    re.find_iter(s)
+        .filter_map(|m| m.as_str().parse::<u32>().ok())
+        .collect()
+}
+
+pub fn match_house_number(user_house_no: &str, spec: &str, street_name: Option<&str>) -> bool {
+    let isolated_spec = if let Some(street) = street_name {
+        isolate_street_segment(spec, street)
+    } else {
+        spec.to_string()
+    };
+
+    let user_nums = parse_numeric_prefixes(user_house_no);
+    if user_nums.is_empty() {
+        return true;
+    }
+
+    let spec_lower = isolated_spec.to_lowercase();
+    let spec_nums = parse_numeric_prefixes(&spec_lower);
+    if spec_nums.is_empty() {
+        return true;
+    }
+
+    let is_odd = spec_lower.contains("nieparzyste") || spec_lower.contains("nieparz");
+    let is_even = (spec_lower.contains("parzyste") || spec_lower.contains("parz")) && !is_odd;
+
+    let check_parity = |n: u32| {
+        if is_odd {
+            n % 2 != 0
+        } else if is_even {
+            n % 2 == 0
+        } else {
+            true
+        }
+    };
+
+    for &u_num in &user_nums {
+        if !check_parity(u_num) {
+            continue;
+        }
+
+        // Check if u_num matches any ranges in the spec
+        static RANGE_RE: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
+        let range_re = RANGE_RE.get_or_init(|| regex::Regex::new(r"(\d+)\s*(?:-|do)\s*(\d+)").unwrap());
+        
+        let mut matched_in_range = false;
+        for caps in range_re.captures_iter(&spec_lower) {
+            if let (Some(s_match), Some(e_match)) = (caps.get(1), caps.get(2)) {
+                if let (Ok(start), Ok(end)) = (s_match.as_str().parse::<u32>(), e_match.as_str().parse::<u32>()) {
+                    let min = std::cmp::min(start, end);
+                    let max = std::cmp::max(start, end);
+                    if u_num >= min && u_num <= max {
+                        matched_in_range = true;
+                        break;
+                    }
+                }
+            }
+        }
+        if matched_in_range {
+            return true;
+        }
+
+        // Check standalone lists
+        if spec_nums.contains(&u_num) {
+            return true;
+        }
+    }
+
+    false
+}
+

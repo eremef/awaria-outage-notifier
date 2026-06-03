@@ -11,6 +11,7 @@ pub struct WodociagiKatowiceItem {
     pub title: String,
     pub description: String,
     pub raw_description: String,
+    pub link: String,
 }
 
 pub async fn fetch_rss(client: &Client) -> Result<Vec<WodociagiKatowiceItem>, String> {
@@ -31,12 +32,14 @@ pub async fn fetch_rss(client: &Client) -> Result<Vec<WodociagiKatowiceItem>, St
     let item_re = Regex::new(r"(?is)<item>(.*?)</item>").unwrap();
     let title_re = Regex::new(r"(?is)<title><!\[CDATA\[(.*?)\]\]></title>").unwrap();
     let desc_re = Regex::new(r"(?is)<description><!\[CDATA\[(.*?)\]\]></description>").unwrap();
+    let link_re = Regex::new(r"(?is)<link>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</link>").unwrap();
 
     let mut items = Vec::new();
     for cap in item_re.captures_iter(&text) {
         let block = &cap[1];
         let title = title_re.captures(block).map_or(String::new(), |c| c[1].trim().to_string());
         let raw_description = desc_re.captures(block).map_or(String::new(), |c| c[1].trim().to_string());
+        let link = link_re.captures(block).map_or(String::new(), |c| c[1].trim().to_string());
         let description = String::from("Miejscowość: Katowice");
 
         if !title.is_empty() {
@@ -44,6 +47,7 @@ pub async fn fetch_rss(client: &Client) -> Result<Vec<WodociagiKatowiceItem>, St
                 title,
                 description,
                 raw_description,
+                link,
             });
         }
     }
@@ -128,7 +132,32 @@ impl AlertProvider for KatowickieWodociagiProvider {
         _app_handle: Option<&tauri::AppHandle>,
     ) -> (Vec<UnifiedAlert>, Vec<String>) {
         match fetch_rss(client).await {
-            Ok(items) => {
+            Ok(mut items) => {
+                for item in &mut items {
+                    if !item.link.is_empty() {
+                        if let Ok(res) = client
+                            .get(&item.link)
+                            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+                            .send()
+                            .await
+                        {
+                            if res.status().is_success() {
+                                if let Ok(html) = res.text().await {
+                                    let document = scraper::Html::parse_document(&html);
+                                    let selector = scraper::Selector::parse(".aktualnosc-tresc").unwrap();
+                                    if let Some(element) = document.select(&selector).next() {
+                                        let text = element.text().collect::<Vec<_>>().join(" ");
+                                        let clean = text.split_whitespace().collect::<Vec<_>>().join(" ");
+                                        if !clean.is_empty() {
+                                            item.description = format!("Miejscowość: Katowice, Szczegóły: {}", clean);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
                 let active_addresses: Vec<(usize, std::sync::Arc<CompiledWodociagiRegex>)> = settings
                     .addresses
                     .iter()
@@ -198,5 +227,51 @@ impl AlertProvider for KatowickieWodociagiProvider {
             }
             Err(e) => (Vec::new(), vec![format!("KatowickieWodociagi: {}", e)]),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_compiled_wodociagi_regex_matching() {
+        let addr = AddressEntry {
+            name: "Home".to_string(),
+            city_name: "Katowice".to_string(),
+            voivodeship: "Śląskie".to_string(),
+            district: "Katowice".to_string(),
+            commune: "Katowice".to_string(),
+            street_name: "Lwowska".to_string(),
+            street_name_1: "Lwowska".to_string(),
+            street_name_2: None,
+            house_no: "44".to_string(),
+            city_id: None,
+            street_id: None,
+            is_active: true,
+        };
+
+        let regex = CompiledWodociagiRegex::new(&addr);
+        
+        let text = "Katowice – ul. Boliny, ul. Bzów, ul. Cmentarna, ul. Grodowa, ul. Hodowców (hodowla), ul. Leśnego Potoku, ul. Lwowska nr 42, 44, 46, 48, 50, 60";
+        assert!(regex.is_match(text));
+
+        // Test with mismatching street
+        let addr_mismatch = AddressEntry {
+            name: "Home".to_string(),
+            city_name: "Katowice".to_string(),
+            voivodeship: "Śląskie".to_string(),
+            district: "Katowice".to_string(),
+            commune: "Katowice".to_string(),
+            street_name: "Korfantego".to_string(),
+            street_name_1: "Korfantego".to_string(),
+            street_name_2: None,
+            house_no: "44".to_string(),
+            city_id: None,
+            street_id: None,
+            is_active: true,
+        };
+        let regex_mismatch = CompiledWodociagiRegex::new(&addr_mismatch);
+        assert!(!regex_mismatch.is_match(text));
     }
 }

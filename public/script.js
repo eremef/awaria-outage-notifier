@@ -801,6 +801,18 @@ if (typeof document !== 'undefined') {
                 }
             });
         }
+
+        const filterByHouseCheck = document.getElementById('filter-by-house-no-check');
+        if (filterByHouseCheck) {
+            filterByHouseCheck.addEventListener('change', async () => {
+                if (currentSettings) {
+                    currentSettings.filterByHouseNo = filterByHouseCheck.checked;
+                    await autoSaveSettings();
+                    const container = document.getElementById('outages-container');
+                    renderAlerts(lastAlerts || [], container, currentSettings, selectedAddressIndex);
+                }
+            });
+        }
     }
 
     function initAddressFilter() {
@@ -1245,6 +1257,9 @@ if (typeof document !== 'undefined') {
                 if (document.getElementById('show-other-outages-check')) {
                     document.getElementById('show-other-outages-check').checked = settings.showOtherOutages !== false;
                 }
+                if (document.getElementById('filter-by-house-no-check')) {
+                    document.getElementById('filter-by-house-no-check').checked = !!settings.filterByHouseNo;
+                }
 
                 // Check permissions/optimization warnings on load with a slight delay
                 // to allow Tauri's internal WebView URL state to settle from about:blank
@@ -1278,7 +1293,8 @@ if (typeof document !== 'undefined') {
                     theme: 'system',
                     language: 'system',
                     enabledSources: [],
-                    showOtherOutages: true
+                    showOtherOutages: true,
+                    filterByHouseNo: false
                 };
 
                 // Explicitly uncheck and disable all source/notify pairs on first run

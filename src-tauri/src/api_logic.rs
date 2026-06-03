@@ -547,6 +547,8 @@ pub struct Settings {
     pub upcoming_notification_hours: u32,
     #[serde(default = "default_true")]
     pub show_other_outages: bool,
+    #[serde(default)]
+    pub filter_by_house_no: bool,
 }
 
 fn default_upcoming_hours() -> u32 {
@@ -565,6 +567,7 @@ impl Default for Settings {
             upcoming_notification_enabled: false,
             upcoming_notification_hours: 24,
             show_other_outages: true,
+            filter_by_house_no: false,
         }
     }
 }

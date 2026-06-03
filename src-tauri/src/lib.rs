@@ -749,6 +749,37 @@ async fn fetch_all_alerts_internal(
 
     // Final filter to ensure no alerts from disabled addresses/cities slip through
     if let Some(ref s) = settings_orig {
+        if s.filter_by_house_no {
+            for alert in &mut all_alerts {
+                if alert.is_local == Some(true) {
+                    if let Some(idx) = alert.address_index {
+                        if idx < s.addresses.len() {
+                            let addr = &s.addresses[idx];
+                            let is_street_wide_only = matches!(
+                                alert.source,
+                                api_logic::AlertSource::TauronHeat
+                            );
+                            if !is_street_wide_only {
+                                let mut spec = String::new();
+                                if let Some(msg) = &alert.message {
+                                    spec.push_str(msg);
+                                }
+                                if let Some(loc) = &alert.location {
+                                    if !spec.is_empty() {
+                                        spec.push_str(" ");
+                                    }
+                                    spec.push_str(loc);
+                                }
+                                if !utils::match_house_number(&addr.house_no, &spec, Some(&addr.street_name_1)) {
+                                    alert.is_local = Some(false);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         all_alerts.retain(|alert| {
             if let Some(idx) = alert.address_index {
                 if idx < s.addresses.len() {

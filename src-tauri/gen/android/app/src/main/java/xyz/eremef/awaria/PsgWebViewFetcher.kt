@@ -578,16 +578,25 @@ object PsgWebViewFetcher {
 
                     val cleanSettingsStreet = stripStreetPrefixes(normSettingsStreet)
                     val cleanOutageArea = stripStreetPrefixes(normOutageArea)
-
                     val streetMatch = normSettingsStreet.isEmpty() || isLocalityWide || 
                                      normOutageArea.contains(normSettingsStreet) ||
                                      (cleanSettingsStreet.isNotEmpty() && 
                                       (normOutageArea.contains(cleanSettingsStreet) || cleanOutageArea.contains(cleanSettingsStreet)))
 
                     if (streetMatch) {
-                        Log.d(TAG, "[PSG] Match found for ${settings.cityName}: city=${outage.city}, area=${outage.area}")
-                        count++
-                        break // Count each outage only once for these settings
+                        val finalMatch = if (settings.filterByHouseNo) {
+                            matchHouseNumber(settings.houseNo, outage.area, settings.streetName1)
+                        } else {
+                            true
+                        }
+
+                        if (finalMatch) {
+                            Log.d(TAG, "[PSG] Match found for ${settings.cityName}: city=${outage.city}, area=${outage.area}")
+                            count++
+                            break // Count each outage only once for these settings
+                        } else {
+                            Log.d(TAG, "[PSG] City/Street match but house number mismatch for ${settings.cityName}: expected=${settings.houseNo}, area=${outage.area}")
+                        }
                     } else {
                         Log.d(TAG, "[PSG] City match but street mismatch for ${settings.cityName}: expected=${settings.streetName1}, area=${outage.area}")
                     }
@@ -596,6 +605,139 @@ object PsgWebViewFetcher {
         }
 
         return count
+    }
+
+    fun parseNumericPrefixes(s: String): List<Int> {
+        val list = mutableListOf<Int>()
+        val pattern = Pattern.compile("\\d+")
+        val matcher = pattern.matcher(s)
+        while (matcher.find()) {
+            matcher.group().toIntOrNull()?.let { list.add(it) }
+        }
+        return list
+    }
+
+    fun cleanText(s: String): String {
+        return s.lowercase().map { c ->
+            when (c) {
+                'ą' -> 'a'
+                'ć' -> 'c'
+                'ę' -> 'e'
+                'ł' -> 'l'
+                'ń' -> 'n'
+                'ó' -> 'o'
+                'ś' -> 's'
+                'ź', 'ż' -> 'z'
+                else -> c
+            }
+        }.joinToString("")
+    }
+
+    fun isolateStreetSegment(spec: String, street: String): String {
+        val cleanSpec = cleanText(spec)
+        val cleanStreet = cleanText(street)
+        
+        val idx = cleanSpec.indexOf(cleanStreet)
+        if (idx != -1) {
+            val sub = spec.substring(idx + cleanStreet.length)
+            val subClean = cleanSpec.substring(idx + cleanStreet.length)
+            
+            val prefixes = listOf(
+                "ul.", "ul ", "al.", "al ", "pl.", "pl ", 
+                "ulica", "aleja", "plac", "os.", "osiedle", 
+                "rondo", "skwer"
+            )
+            
+            var minIdx = sub.length
+            for (p in prefixes) {
+                val pIdx = subClean.indexOf(p)
+                if (pIdx != -1 && pIdx < minIdx) {
+                    minIdx = pIdx
+                }
+            }
+            return sub.substring(0, minIdx)
+        } else {
+            // Fallback to significant words
+            val words = cleanStreet.split("\\s+".toRegex())
+            val sigWords = words.filter { it.length > 3 && !it.all { c -> c.isDigit() } }
+            
+            for (w in sigWords) {
+                val sIdx = cleanSpec.indexOf(w)
+                if (sIdx != -1) {
+                    val sub = spec.substring(sIdx + w.length)
+                    val subClean = cleanSpec.substring(sIdx + w.length)
+                    
+                    val prefixes = listOf(
+                        "ul.", "ul ", "al.", "al ", "pl.", "pl ", 
+                        "ulica", "aleja", "plac", "os.", "osiedle", 
+                        "rondo", "skwer"
+                    )
+                    
+                    var minIdx = sub.length
+                    for (p in prefixes) {
+                        val pIdx = subClean.indexOf(p)
+                        if (pIdx != -1 && pIdx < minIdx) {
+                            minIdx = pIdx
+                        }
+                    }
+                    return sub.substring(0, minIdx)
+                }
+            }
+            return spec
+        }
+    }
+
+    fun matchHouseNumber(userHouseNo: String, spec: String, streetName: String?): Boolean {
+        val isolatedSpec = if (streetName != null) {
+            isolateStreetSegment(spec, streetName)
+        } else {
+            spec
+        }
+
+        val userNums = parseNumericPrefixes(userHouseNo)
+        if (userNums.isEmpty()) return true
+
+        val specLower = isolatedSpec.lowercase()
+        val specNums = parseNumericPrefixes(specLower)
+        if (specNums.isEmpty()) return true
+
+        val isOdd = specLower.contains("nieparzyste") || specLower.contains("nieparz")
+        val isEven = (specLower.contains("parzyste") || specLower.contains("parz")) && !isOdd
+
+        fun checkParity(n: Int): Boolean {
+            return when {
+                isOdd -> n % 2 != 0
+                isEven -> n % 2 == 0
+                else -> true
+            }
+        }
+
+        for (uNum in userNums) {
+            if (!checkParity(uNum)) continue
+
+            // Check if uNum matches any ranges in the spec
+            val rangePattern = Pattern.compile("(\\d+)\\s*(?:-|do)\\s*(\\d+)")
+            val matcher = rangePattern.matcher(specLower)
+            var matchedInRange = false
+            while (matcher.find()) {
+                val start = matcher.group(1).toIntOrNull()
+                val end = matcher.group(2).toIntOrNull()
+                if (start != null && end != null) {
+                    val min = Math.min(start, end)
+                    val max = Math.max(start, end)
+                    if (uNum in min..max) {
+                        matchedInRange = true
+                        break
+                    }
+                }
+            }
+            if (matchedInRange) return true
+
+            // Check standalone lists
+            if (specNums.contains(uNum)) return true
+        }
+
+        return false
     }
 
     /**
