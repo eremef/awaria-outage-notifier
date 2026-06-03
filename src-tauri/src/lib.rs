@@ -132,6 +132,15 @@ async fn teryt_lookup_street(
     teryt::lookup_streets(&app, city_id, &street_name)
 }
 
+fn clear_all_caches(app: &AppHandle, cache_state: &cache::CacheState) {
+    cache_state.clear();
+    if let Some(db_state) = app.try_state::<DbState>() {
+        if let Ok(conn) = db_state.conn.lock() {
+            let _ = state_db::set_kv(&conn, "alerts_cache", "");
+        }
+    }
+}
+
 // ── Settings persistence ──────────────────────────────────
 
 #[command]
@@ -142,7 +151,7 @@ async fn save_settings(
 ) -> Result<(), String> {
     let path = settings_path(&app)?;
     save_settings_to_path(&path, &settings)?;
-    cache_state.clear();
+    clear_all_caches(&app, &cache_state);
     Ok(())
 }
 
@@ -248,7 +257,7 @@ async fn add_address(
     }
 
     save_settings_to_path(&path, &settings)?;
-    cache_state.clear();
+    clear_all_caches(&app, &cache_state);
     Ok(settings)
 }
 
@@ -280,7 +289,7 @@ async fn remove_address(
     }
 
     save_settings_to_path(&path, &settings)?;
-    cache_state.clear();
+    clear_all_caches(&app, &cache_state);
     Ok(settings)
 }
 
@@ -299,7 +308,7 @@ async fn set_primary_address(
 
     settings.primary_address_index = Some(index);
     save_settings_to_path(&path, &settings)?;
-    cache_state.clear();
+    clear_all_caches(&app, &cache_state);
     Ok(settings)
 }
 
@@ -319,7 +328,7 @@ async fn update_address(
 
     settings.addresses[index] = address;
     save_settings_to_path(&path, &settings)?;
-    cache_state.clear();
+    clear_all_caches(&app, &cache_state);
     Ok(settings)
 }
 
@@ -498,7 +507,7 @@ async fn import_settings(app: tauri::AppHandle<tauri::Wry>, cache_state: tauri::
             e
         })?;
         
-        cache_state.clear();
+        clear_all_caches(&app, &cache_state);
         log::info!("Import: success!");
         return Ok(Some(settings));
     }
@@ -535,6 +544,83 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
     ]
 }
 
+fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Settings>) {
+    let s = match settings {
+        Some(s) => s,
+        None => return,
+    };
+
+    if s.filter_by_house_no {
+        for alert in alerts.iter_mut() {
+            if alert.is_local == Some(true) {
+                if let Some(idx) = alert.address_index {
+                    if idx < s.addresses.len() {
+                        let addr = &s.addresses[idx];
+                        let is_street_wide_only = matches!(
+                            alert.source,
+                            api_logic::AlertSource::TauronHeat
+                        );
+                        if !is_street_wide_only {
+                            let mut spec = String::new();
+                            if let Some(msg) = &alert.message {
+                                spec.push_str(msg);
+                            }
+                            if let Some(loc) = &alert.location {
+                                if !spec.is_empty() {
+                                    spec.push_str(" ");
+                                }
+                                spec.push_str(loc);
+                            }
+                            let street_to_match = if !addr.street_name_1.is_empty() {
+                                Some(addr.street_name_1.as_str())
+                            } else if !addr.street_name.is_empty() {
+                                Some(addr.street_name.as_str())
+                            } else {
+                                None
+                            };
+                            if !utils::match_house_number(&addr.house_no, &spec, street_to_match) {
+                                alert.is_local = Some(false);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    alerts.retain(|alert| {
+        if let Some(idx) = alert.address_index {
+            if idx < s.addresses.len() {
+                return s.addresses[idx].is_active;
+            }
+        }
+        
+        // For general city alerts
+        if alert.is_local == Some(false) {
+            if let Some(loc) = &alert.location {
+                if loc.contains("Wrocław") {
+                    return s.addresses.iter().any(|a| a.is_active && is_wroclaw(a));
+                }
+                if loc.contains("Warszawa") {
+                    return s.addresses.iter().any(|a| a.is_active && is_warszawa(a));
+                }
+                if loc.contains("Kraków") {
+                    return s.addresses.iter().any(|a| a.is_active && is_krakow(a));
+                }
+                // For other cities (dynamic check based on active addresses)
+                for addr in s.addresses.iter().filter(|a| a.is_active) {
+                    if loc.contains(&addr.city_name) {
+                        return true;
+                    }
+                }
+                return false; // Skip if no active address in this city
+            }
+        }
+
+        true
+    });
+}
+
 async fn fetch_all_alerts_internal(
     app: &AppHandle,
     sources: Option<Vec<String>>,
@@ -547,8 +633,11 @@ async fn fetch_all_alerts_internal(
     if cached_only.unwrap_or(false) {
         let conn = db_state.conn.lock().unwrap();
         if let Ok(Some(json_str)) = state_db::get_kv(&conn, "alerts_cache") {
-            if let Ok(cached_alerts) = serde_json::from_str::<Vec<UnifiedAlert>>(&json_str) {
+            if let Ok(mut cached_alerts) = serde_json::from_str::<Vec<UnifiedAlert>>(&json_str) {
                 log::info!("Serving fetch_all_alerts: persistent SQLite cache hits ({} items)", cached_alerts.len());
+                let path = settings_path(app)?;
+                let settings = load_settings_from_path(&path)?;
+                apply_alert_filtering(&mut cached_alerts, &settings);
                 return Ok(api_logic::AlertsResponse { alerts: cached_alerts, is_stale: true, is_offline: false });
             }
         }
@@ -557,8 +646,11 @@ async fn fetch_all_alerts_internal(
 
     // 2. Check Memory Cache (full refresh) or per-source cache (single-provider refresh)
     if sources.is_none() {
-        if let Some(cached) = cache_state.get() {
+        if let Some(mut cached) = cache_state.get() {
             log::info!("Serving fetch_all_alerts from cache ({} items)", cached.len());
+            let path = settings_path(app)?;
+            let settings = load_settings_from_path(&path)?;
+            apply_alert_filtering(&mut cached, &settings);
             return Ok(api_logic::AlertsResponse { alerts: cached, is_stale: false, is_offline: false });
         }
     } else if let Some(ref requested_sources) = sources {
@@ -572,11 +664,15 @@ async fn fetch_all_alerts_internal(
         }
         if all_hit {
             log::info!("Serving fetch_all_alerts for {:?} from per-source cache ({} items)", requested_sources, cached_results.len());
+            let path = settings_path(app)?;
+            let settings = load_settings_from_path(&path)?;
+            apply_alert_filtering(&mut cached_results, &settings);
             return Ok(api_logic::AlertsResponse { alerts: cached_results, is_stale: false, is_offline: false });
         }
     }
     let path = settings_path(app)?;
     let settings = load_settings_from_path(&path)?;
+    log::info!("fetch_all_alerts_internal: Loaded settings={:?}", settings);
     let settings_orig = settings.clone();
 
     let mut all_alerts: Vec<UnifiedAlert> = Vec::new();
@@ -620,10 +716,12 @@ async fn fetch_all_alerts_internal(
                 }
             }
             
+            apply_alert_filtering(&mut recovered_alerts, &settings_orig);
             if !recovered_alerts.is_empty() {
                 return Ok(api_logic::AlertsResponse { alerts: recovered_alerts, is_stale: true, is_offline: true });
             }
-            if let Some(cached) = cache_state.get_stale() {
+            if let Some(mut cached) = cache_state.get_stale() {
+                apply_alert_filtering(&mut cached, &settings_orig);
                 return Ok(api_logic::AlertsResponse { alerts: cached, is_stale: true, is_offline: true });
             }
             return Err("ERR_NO_INTERNET".to_string());
@@ -731,6 +829,7 @@ async fn fetch_all_alerts_internal(
     if failed_providers == attempted_providers && attempted_providers > 0 {
         if !all_alerts.is_empty() {
             log::warn!("Fetch failed for all providers, but recovered {} items from persistent cache", all_alerts.len());
+            apply_alert_filtering(&mut all_alerts, &settings_orig);
             return Ok(api_logic::AlertsResponse { alerts: all_alerts, is_stale: true, is_offline: true });
         }
         // For a specific-source refresh, don't throw ERR_NO_INTERNET — JS suppresses UI errors
@@ -740,78 +839,15 @@ async fn fetch_all_alerts_internal(
             log::warn!("Fetch failed for all {} providers in single-source mode, returning empty stale response", attempted_providers);
             return Ok(api_logic::AlertsResponse { alerts: vec![], is_stale: true, is_offline: false });
         }
-        if let Some(cached) = cache_state.get_stale() {
+        if let Some(mut cached) = cache_state.get_stale() {
             log::warn!("Fetch failed for all {} providers ({} errors), falling back to stale cache ({} items)", attempted_providers, errors.len(), cached.len());
+            apply_alert_filtering(&mut cached, &settings_orig);
             return Ok(api_logic::AlertsResponse { alerts: cached, is_stale: true, is_offline: true });
         }
         return Err("ERR_NO_INTERNET".to_string());
     }
 
-    // Final filter to ensure no alerts from disabled addresses/cities slip through
-    if let Some(ref s) = settings_orig {
-        if s.filter_by_house_no {
-            for alert in &mut all_alerts {
-                if alert.is_local == Some(true) {
-                    if let Some(idx) = alert.address_index {
-                        if idx < s.addresses.len() {
-                            let addr = &s.addresses[idx];
-                            let is_street_wide_only = matches!(
-                                alert.source,
-                                api_logic::AlertSource::TauronHeat
-                            );
-                            if !is_street_wide_only {
-                                let mut spec = String::new();
-                                if let Some(msg) = &alert.message {
-                                    spec.push_str(msg);
-                                }
-                                if let Some(loc) = &alert.location {
-                                    if !spec.is_empty() {
-                                        spec.push_str(" ");
-                                    }
-                                    spec.push_str(loc);
-                                }
-                                if !utils::match_house_number(&addr.house_no, &spec, Some(&addr.street_name_1)) {
-                                    alert.is_local = Some(false);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        all_alerts.retain(|alert| {
-            if let Some(idx) = alert.address_index {
-                if idx < s.addresses.len() {
-                    return s.addresses[idx].is_active;
-                }
-            }
-            
-            // For general city alerts
-            if alert.is_local == Some(false) {
-                if let Some(loc) = &alert.location {
-                    if loc.contains("Wrocław") {
-                        return s.addresses.iter().any(|a| a.is_active && is_wroclaw(a));
-                    }
-                    if loc.contains("Warszawa") {
-                        return s.addresses.iter().any(|a| a.is_active && is_warszawa(a));
-                    }
-                    if loc.contains("Kraków") {
-                        return s.addresses.iter().any(|a| a.is_active && is_krakow(a));
-                    }
-                    // For other cities (dynamic check based on active addresses)
-                    for addr in s.addresses.iter().filter(|a| a.is_active) {
-                        if loc.contains(&addr.city_name) {
-                            return true;
-                        }
-                    }
-                    return false; // Skip if no active address in this city
-                }
-            }
-
-            true
-        });
-    }
+    apply_alert_filtering(&mut all_alerts, &settings_orig);
 
     if sources.is_none() {
         cache_state.set(all_alerts.clone());

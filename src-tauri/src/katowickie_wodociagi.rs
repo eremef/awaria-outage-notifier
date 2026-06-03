@@ -149,7 +149,7 @@ impl AlertProvider for KatowickieWodociagiProvider {
                                         let text = element.text().collect::<Vec<_>>().join(" ");
                                         let clean = text.split_whitespace().collect::<Vec<_>>().join(" ");
                                         if !clean.is_empty() {
-                                            item.description = format!("Miejscowość: Katowice, Szczegóły: {}", clean);
+                                            item.title = clean;
                                         }
                                     }
                                 }

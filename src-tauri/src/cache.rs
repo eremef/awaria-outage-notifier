@@ -50,6 +50,8 @@ impl CacheState {
     pub fn clear(&self) {
         let mut lock = self.cache.lock().unwrap();
         *lock = None;
+        let mut source_lock = self.source_cache.lock().unwrap();
+        source_lock.clear();
     }
 
     /// Returns cached alerts for a specific source if still within TTL.

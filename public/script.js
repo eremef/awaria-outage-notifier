@@ -807,6 +807,9 @@ if (typeof document !== 'undefined') {
             filterByHouseCheck.addEventListener('change', async () => {
                 if (currentSettings) {
                     currentSettings.filterByHouseNo = filterByHouseCheck.checked;
+                    if (filterByHouseCheck.checked) {
+                        showToast(typeof t !== 'undefined' ? t('toast_house_no_filter_warning') : 'Warning: Filtering by house number might skip some outages if the provider\'s description is malformed.');
+                    }
                     await autoSaveSettings();
                     const container = document.getElementById('outages-container');
                     renderAlerts(lastAlerts || [], container, currentSettings, selectedAddressIndex);
@@ -1542,8 +1545,8 @@ if (typeof document !== 'undefined') {
                     } catch (e) {
                         console.error('Error during progressive fetching:', e);
                     } finally {
-                        isFetching = false;
                         setTimeout(() => {
+                            isFetching = false;
                             if (progressEl) {
                                 progressEl.classList.add('hidden');
                                 // Reset title and progress bar
@@ -1634,7 +1637,7 @@ if (typeof document !== 'undefined') {
         // Update the progress bar fill
         const barFillEl = document.getElementById('progress-console-bar-fill');
 
-        if (currentTotal === 0) {
+        if (!isFetching) {
             // Single source fetch fallback
             const activeNames = Array.from(fetchingSources).map(id => {
                 const src = SOURCES.find(s => s.id === id);
@@ -1853,15 +1856,12 @@ if (typeof document !== 'undefined') {
         const addr = addresses[addrIdx];
         if (!addr || addr.isActive === false) return false;
 
-        // Sources that provide addressIndex and isLocal from backend
-        if (SOURCES.map(s => s.id).includes(alert.source)) {
-            if (alert.isLocal === true && (addrIdx === -1 || alert.addressIndex === addrIdx || alert.addressIndex === -1)) {
-                return true;
-            }
+        // Trust backend evaluation if available
+        if (alert.isLocal !== undefined && alert.isLocal !== null) {
+            return alert.isLocal && (addrIdx === -1 || alert.addressIndex === addrIdx || alert.addressIndex === -1);
         }
 
-        // Sources that might need frontend matching (e.g. if backend doesn't provide enough detail)
-        // or legacy behavior.
+        // Fallback for alerts that don't have isLocal from backend
         if (!alert.message) return false;
         return matchesStreetName(alert, addr);
     }

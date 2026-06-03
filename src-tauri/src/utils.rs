@@ -199,6 +199,11 @@ mod tests {
         assert!(!match_house_number("2", multi_street_spec, Some("Grunwaldzka")));
         assert!(match_house_number("15", multi_street_spec, Some("Kolejowa")));
         assert!(!match_house_number("12", multi_street_spec, Some("Kolejowa")));
+
+        // Regression: time range matching (e.g. 8:00 do 18:00 shouldn't match house number 1)
+        let czestochowa_msg = "Prace planowane - W związku z rozbudową sieci wodociągowej w dn. 3.06.2026 r. mieszkańcy ul. Wały Dwernickiego ( od ul. Kiedrzyńskiej do ul. Cmentarnej ) oraz ul. Dekabrystów 84 zostaną pozbawieni dopływu wody w godz. od 8:00 do 18:00. Za utrudnienia przepraszamy.";
+        assert!(!match_house_number("1", czestochowa_msg, Some("Dekabrystów")));
+        assert!(match_house_number("84", czestochowa_msg, Some("Dekabrystów")));
     }
 }
 
@@ -286,11 +291,28 @@ pub fn parse_numeric_prefixes(s: &str) -> Vec<u32> {
         .collect()
 }
 
+pub fn strip_time_patterns(s: &str) -> String {
+    // 1. Remove patterns like HH:MM and HH.MM (e.g. 8:00, 18.00)
+    static TIME_RE: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
+    let time_re = TIME_RE.get_or_init(|| regex::Regex::new(r"\d{1,2}[:.]\d{2}").unwrap());
+    let s = time_re.replace_all(s, "");
+
+    // 2. Remove hour ranges like "godz. 8-18", "w godz. od 8 do 18", "godz 8 do 18"
+    static HOUR_RANGE_RE: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
+    let hour_range_re = HOUR_RANGE_RE.get_or_init(|| {
+        regex::Regex::new(r"(?i)godz\p{L}*\.?\s*(?:od\s*)?\d{1,2}\s*(?:-|do)\s*\d{1,2}").unwrap()
+    });
+    let s = hour_range_re.replace_all(&s, "");
+
+    s.into_owned()
+}
+
 pub fn match_house_number(user_house_no: &str, spec: &str, street_name: Option<&str>) -> bool {
+    let spec_stripped = strip_time_patterns(spec);
     let isolated_spec = if let Some(street) = street_name {
-        isolate_street_segment(spec, street)
+        isolate_street_segment(&spec_stripped, street)
     } else {
-        spec.to_string()
+        spec_stripped
     };
 
     let user_nums = parse_numeric_prefixes(user_house_no);

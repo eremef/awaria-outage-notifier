@@ -108,5 +108,27 @@ class PsgWebViewFetcherTest {
         // 6. With filterByHouseNo = false, even mismatching house number should match (behaves as street-wide)
         val s6 = s2.copy(filterByHouseNo = false)
         assertEquals(1, PsgWebViewFetcher.countMatchingOutages(outages, listOf(s6)))
+
+        // 7. Regression: time range matching (e.g. 8:00 do 18:00 shouldn't match house number 1)
+        val czestochowaOutages = listOf(
+            PsgWebViewFetcher.PsgOutage(
+                province = "Śląskie",
+                city = "Częstochowa",
+                area = "ul. Wały Dwernickiego ( od ul. Kiedrzyńskiej do ul. Cmentarnej ) oraz ul. Dekabrystów 84 zostaną pozbawieni dopływu wody w godz. od 8:00 do 18:00.",
+                startDate = "03.06.2026 godz. 08:00",
+                endDate = "03.06.2026 godz. 18:00",
+                info = "awaria",
+                type = "awaria",
+                status = "aktywna"
+            )
+        )
+        val s7 = WidgetSettings(
+            name = "Test", cityName = "Częstochowa", voivodeship = "Śląskie", district = "Częstochowa", commune = "Częstochowa",
+            streetName = "Dekabrystów", streetName1 = "Dekabrystów", streetName2 = null,
+            houseNo = "1", cityId = 1, streetId = 1, theme = "system", language = "pl",
+            isActive = true, sourceEnabled = true, filterByHouseNo = true
+        )
+        assertEquals(0, PsgWebViewFetcher.countMatchingOutages(czestochowaOutages, listOf(s7)))
+        assertEquals(1, PsgWebViewFetcher.countMatchingOutages(czestochowaOutages, listOf(s7.copy(houseNo = "84"))))
     }
 }

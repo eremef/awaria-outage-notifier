@@ -687,11 +687,22 @@ object PsgWebViewFetcher {
         }
     }
 
+    fun stripTimePatterns(s: String): String {
+        val timeRe = Regex("\\d{1,2}[:.]\\d{2}")
+        var res = timeRe.replace(s, "")
+
+        val hourRangeRe = Regex("godz\\p{L}*\\.?\\s*(?:od\\s*)?\\d{1,2}\\s*(?:-|do)\\s*\\d{1,2}", RegexOption.IGNORE_CASE)
+        res = hourRangeRe.replace(res, "")
+
+        return res
+    }
+
     fun matchHouseNumber(userHouseNo: String, spec: String, streetName: String?): Boolean {
+        val specStripped = stripTimePatterns(spec)
         val isolatedSpec = if (streetName != null) {
-            isolateStreetSegment(spec, streetName)
+            isolateStreetSegment(specStripped, streetName)
         } else {
-            spec
+            specStripped
         }
 
         val userNums = parseNumericPrefixes(userHouseNo)

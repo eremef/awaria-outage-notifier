@@ -176,6 +176,7 @@ const translations = {
         "msg_using_cache": "Data refresh in progress - showing cached data:",
         "btn_collapse_expand_all": "Collapse/Expand All",
         "toast_slow_fetching_warning": "Fetching outages from this provider may take longer.",
+        "toast_house_no_filter_warning": "Warning: Filtering by house number might skip some outages if the provider's description is incorrect.",
         "refresh_progress_prefix": "Refreshing",
         "refreshing_providers": "Refreshing providers"
     },
@@ -353,6 +354,7 @@ const translations = {
         "msg_using_cache": "Aktualizacja danych w tle - wyświetlam informacje z:",
         "btn_collapse_expand_all": "Zwiń/Rozwiń wszystko",
         "toast_slow_fetching_warning": "Aktualizowanie danych u tego dostawcy może potrwać chwilę dłużej:",
+        "toast_house_no_filter_warning": "Uwaga: Filtrowanie po numerach budynków może pomijać niektóre zdarzenia przy nieprawidłowych danych dostawcy.",
         "refresh_progress_prefix": "Pobieranie",
         "refreshing_providers": "Aktualizowanie dostawców"
     }

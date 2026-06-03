@@ -1,0 +1,18 @@
+feat: add house number filtering and fix cache staleness
+
+Maintainer Notes:
+- Cache invalidation: Implemented clear_all_caches in lib.rs to ensure memory and SQLite caches are synced during settings updates.
+- Progressive state: Fixed progress console flickering by deferring isFetching=false until success timeout completes.
+- Translation conflicts: Removed data-i18n from dynamically updated elements to prevent overwrite by i18n.js.
+
+Summary of Changes:
+- Added frontend checkbox for house number filtering with toast warning
+- Updated matchesAddress to trust backend's isLocal property
+- Added clear_all_caches hook to all settings modification commands
+- Fixed translation overwrites on dynamic DOM elements
+- Refactored Android WebView worker tests and scraper logic for PSG
+
+User-facing impacts:
+- Users can now filter outages specifically by house number instead of just street
+- Outage list immediately refreshes without staleness after changing addresses/settings
+- Fixed an issue where the refreshing progress numbers would disappear
