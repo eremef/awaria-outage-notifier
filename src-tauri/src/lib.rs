@@ -569,7 +569,7 @@ fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Setti
                             }
                             if let Some(loc) = &alert.location {
                                 if !spec.is_empty() {
-                                    spec.push_str(" ");
+                                    spec.push(' ');
                                 }
                                 spec.push_str(loc);
                             }

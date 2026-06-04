@@ -342,15 +342,15 @@ pub fn match_house_number(user_house_no: &str, spec: &str, street_name: Option<&
         }
     };
 
+    static RANGE_RE: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
+    let range_re = RANGE_RE.get_or_init(|| regex::Regex::new(r"(\d+)\s*(?:-|do)\s*(\d+)").unwrap());
+
     for &u_num in &user_nums {
         if !check_parity(u_num) {
             continue;
         }
 
         // Check if u_num matches any ranges in the spec
-        static RANGE_RE: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
-        let range_re = RANGE_RE.get_or_init(|| regex::Regex::new(r"(\d+)\s*(?:-|do)\s*(\d+)").unwrap());
-        
         let mut matched_in_range = false;
         for caps in range_re.captures_iter(&spec_lower) {
             if let (Some(s_match), Some(e_match)) = (caps.get(1), caps.get(2)) {
