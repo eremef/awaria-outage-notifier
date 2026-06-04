@@ -135,12 +135,6 @@ Settings are stored in `settings.json` in the app's data directory:
 - **Desktop**: `%APPDATA%\xyz.eremef.awaria\` (Windows)
 - **Android**: `/data/user/0/xyz.eremef.awaria/files/`
 
-## Troubleshooting
-
-- **Widget shows "?"**: The settings haven't been configured yet. Open the main app and set your location.
-- **EOF Errors**: Most likely a temporary race condition during settings sync. The app includes resilient logic to retry or fall back to defaults.
-- **Missing Alerts**: Check if you have the specific outage category enabled in the settings. **Note**: For new users, all sources are disabled by default.
-
 ## Home Assistant Add-on (Highly Experimental)
 
 An experimental Home Assistant Add-on is available to run `awaria-daemon` headlessly in your Home Assistant supervisor environment. It exposes a web interface/JSON API on port 8000.
@@ -173,4 +167,10 @@ show_other_outages: true
 ```
 
 Start the add-on and access the API or web view at `http://<your-ha-ip>:8000`.
+
+## Troubleshooting
+
+- **Widget shows "?"**: The settings haven't been configured yet. Open the main app and set your location.
+- **EOF Errors**: Most likely a temporary race condition during settings sync. The app includes resilient logic to retry or fall back to defaults.
+- **Missing Alerts**: Check if you have the specific outage category enabled in the settings. **Note**: For new users, all sources are disabled by default.
 
