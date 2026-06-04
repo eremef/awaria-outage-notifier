@@ -32,6 +32,7 @@
     <string name="widget_label_pwik_czestochowa">PWiK Częstochowa</string>    
     <string name="widget_label_gdanskie_wodociagi">Gdańskie Wodociągi</string>
     <string name="widget_label_gpec">GPEC Gdańsk</string>
+    <string name="widget_label_puk_rokietnica">PUK Rokietnica</string>
     <string name="widget_label_tri">Address: power, heat, water</string>
     <string name="widget_label_all">Address: all utilities</string>
     <string name="msg_setup_needed">Setup needed</string>
@@ -61,6 +62,7 @@
     <string name="provider_pwik_czestochowa">PWiK CZW</string>
     <string name="provider_gdanskie_wodociagi">GW GDA</string>
     <string name="provider_gpec">GPEC GDA</string>
+    <string name="provider_puk_rokietnica">PUK Rokietnica</string>
     <string name="notif_channel_name">Outage Alerts</string>
     <string name="notif_channel_desc">Notifications about new and upcoming power, water, heat, and gas outages.</string>
     <string name="placeholder_time">--:--</string>

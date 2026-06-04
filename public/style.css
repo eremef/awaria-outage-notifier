@@ -64,6 +64,7 @@
     --pwik_czestochowa-color: #005EC2;
     --gdanskie_wodociagi-color: #0375AE;
     --gpec-color: #DB002D;
+    --puk_rokietnica-color: #8CCAEC;
     --nav-bg: rgba(248, 250, 252, 0.85);
 }
 
@@ -112,6 +113,7 @@
     --pwik_czestochowa-color: #3b82f6;
     --gdanskie_wodociagi-color: #1493D7;
     --gpec-color: #ff335f;
+    --puk_rokietnica-color: #8CCAEC;
     --nav-bg: rgba(15, 23, 42, 0.85);
 }
 
@@ -155,6 +157,7 @@
     --pwik_czestochowa-color: #1d4ed8;
     --gdanskie_wodociagi-color: #0284c7;
     --gpec-color: #be123c;
+    --puk_rokietnica-color: #0284c7;
     --nav-bg: rgba(240, 253, 244, 0.85);
 }
 
@@ -199,6 +202,7 @@
     --pwik_czestochowa-color: #38bdf8;
     --gdanskie_wodociagi-color: #38bdf8;
     --gpec-color: #fca5a5;
+    --puk_rokietnica-color: #38bdf8;
     --nav-bg: rgba(8, 51, 68, 0.85);
 }
 
@@ -242,6 +246,7 @@
     --pwik_czestochowa-color: #81a1c1;
     --gdanskie_wodociagi-color: #81a1c1;
     --gpec-color: #bf616a;
+    --puk_rokietnica-color: #88c0d0;
     --nav-bg: rgba(46, 52, 64, 0.85);
 }
 
@@ -285,6 +290,7 @@
     --pwik_czestochowa-color: #8be9fd;
     --gdanskie_wodociagi-color: #8be9fd;
     --gpec-color: #ff5555;
+    --puk_rokietnica-color: #8be9fd;
 }
 
 [data-theme="sepia"] {
@@ -327,6 +333,7 @@
     --pwik_czestochowa-color: #3d5a80;
     --gdanskie_wodociagi-color: #3d5a80;
     --gpec-color: #9b2226;
+    --puk_rokietnica-color: #3d5a80;
 }
 
 [data-theme="latte"] {
@@ -369,6 +376,7 @@
     --pwik_czestochowa-color: #2a6f97;
     --gdanskie_wodociagi-color: #2a6f97;
     --gpec-color: #c1121f;
+    --puk_rokietnica-color: #2a6f97;
 }
 
 [data-theme="monochrome-light"] {
@@ -413,6 +421,7 @@
     --pwik_czestochowa-color: #525252;
     --gdanskie_wodociagi-color: #525252;
     --gpec-color: #525252;
+    --puk_rokietnica-color: #525252;
 }
 
 [data-theme="monochrome-dark"] {
@@ -457,6 +466,7 @@
     --pwik_czestochowa-color: #a3a3a3;
     --gdanskie_wodociagi-color: #a3a3a3;
     --gpec-color: #a3a3a3;
+    --puk_rokietnica-color: #a3a3a3;
 }
 
 * {
@@ -1122,7 +1132,11 @@ h1 {
     border-top: 4px solid var(--gpec-color);
 }
 
-.card:not(.source-tauron):not(.source-mpwik_wroclaw):not(.source-fortum):not(.source-energa):not(.source-enea):not(.source-pge):not(.source-stoen):not(.source-psg):not(.source-wmk):not(.source-tauron_heat):not(.source-aquanet):not(.source-katowickie_wodociagi):not(.source-mpwik_warszawa):not(.source-veolia_warszawa):not(.source-veolia_poznan):not(.source-veolia_lodz):not(.source-zwik_lodz):not(.source-wodociagi_plockie):not(.source-pwik_kalisz):not(.source-pwik_czestochowa):not(.source-gdanskie_wodociagi):not(.source-gpec) {
+.card.source-puk_rokietnica {
+    border-top: 4px solid var(--puk_rokietnica-color);
+}
+
+.card:not(.source-tauron):not(.source-mpwik_wroclaw):not(.source-fortum):not(.source-energa):not(.source-enea):not(.source-pge):not(.source-stoen):not(.source-psg):not(.source-wmk):not(.source-tauron_heat):not(.source-aquanet):not(.source-katowickie_wodociagi):not(.source-mpwik_warszawa):not(.source-veolia_warszawa):not(.source-veolia_poznan):not(.source-veolia_lodz):not(.source-zwik_lodz):not(.source-wodociagi_plockie):not(.source-pwik_kalisz):not(.source-pwik_czestochowa):not(.source-gdanskie_wodociagi):not(.source-gpec):not(.source-puk_rokietnica) {
     border-top: 4px solid #7c7c7c;
 }
 
@@ -1208,6 +1222,10 @@ h1 {
 
 .card.source-gpec .outage-type {
     color: var(--gpec-color);
+}
+
+.card.source-puk_rokietnica .outage-type {
+    color: var(--puk_rokietnica-color);
 }
 
 .outage-time {
@@ -1413,6 +1431,10 @@ h1 {
 
 .collapsible.source-gpec .section-label.other {
     color: var(--gpec-color);
+}
+
+.collapsible.source-puk_rokietnica .section-label.other {
+    color: var(--puk_rokietnica-color);
 }
 
 .other-divider {

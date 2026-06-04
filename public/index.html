@@ -52,7 +52,7 @@
                 <div id="refresh-progress" class="refresh-progress-console hidden">
                     <!-- Header Row (Always visible, triggers collapse/expand) -->
                     <div class="progress-console-header" id="progress-console-toggle" role="button" aria-expanded="false" tabindex="0">
-                        <span class="progress-console-title" id="progress-console-title" data-i18n="refreshing_providers">Aktualizowanie dostawców (0/0)...</span>
+                        <span class="progress-console-title" id="progress-console-title">Aktualizowanie dostawców (0/0)...</span>
                         <svg class="progress-console-chevron" id="progress-chevron-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="6 9 12 15 18 9"></polyline>
                         </svg>
@@ -147,6 +147,10 @@
                     <input type="checkbox" id="show-other-outages-check">
                     <label for="show-other-outages-check" data-i18n="settings_show_other_outages">Show other outages
                         list for other locations</label>
+                </div>
+                <div class="settings-checkbox-row">
+                    <input type="checkbox" id="filter-by-house-no-check">
+                    <label for="filter-by-house-no-check" data-i18n="settings_filter_by_house_no">Filter alerts for street to match configured house number</label>
                 </div>
 
                 <div id="sources-settings-title" class="settings-title" data-i18n="settings_sources">Alert Sources</div>

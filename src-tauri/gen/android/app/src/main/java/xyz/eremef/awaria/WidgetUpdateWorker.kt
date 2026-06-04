@@ -217,6 +217,14 @@ class WidgetUpdateWorker(
             gpecProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        // Update PUK Rokietnica widgets
+        val pukRokietnicaName = ComponentName(context, PukRokietnicaWidgetProvider::class.java)
+        val pukRokietnicaIds = appWidgetManager.getAppWidgetIds(pukRokietnicaName)
+        val pukRokietnicaProvider = PukRokietnicaWidgetProvider()
+        for (id in pukRokietnicaIds) {
+            pukRokietnicaProvider.updateWidget(context, appWidgetManager, id)
+        }
+
 
 
         return androidx.work.ListenableWorker.Result.success()

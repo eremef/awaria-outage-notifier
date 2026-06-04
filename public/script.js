@@ -113,6 +113,7 @@ if (typeof document !== 'undefined') {
         { id: 'katowickie_wodociagi', label: 'Katowickie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_katowickie_wodociagi_name', i18nShort: 'source_katowickie_wodociagi_short' },
         { id: 'mpwik_warszawa', label: 'MPWiK Warszawa', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_warszawa_name', i18nShort: 'source_mpwik_warszawa_short' },
         { id: 'mpwik_wroclaw', label: 'MPWiK Wrocław', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_wroclaw_name', i18nShort: 'source_mpwik_wroclaw_short' },
+        { id: 'puk_rokietnica', label: 'PUK Rokietnica', category: 'water', defaultNotify: true, i18nLabel: 'source_puk_rokietnica_name', i18nShort: 'source_puk_rokietnica_short' },
         { id: 'pwik_czestochowa', label: 'PWiK Częstochowa', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_czestochowa_name', i18nShort: 'source_pwik_czestochowa_short' },
         { id: 'pwik_kalisz', label: 'PWiK Kalisz', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_kalisz_name', i18nShort: 'source_pwik_kalisz_short' },
         { id: 'wmk', label: 'WMK', category: 'water', defaultNotify: true, i18nLabel: 'source_wmk_name', i18nShort: 'source_wmk_short' },
@@ -801,6 +802,21 @@ if (typeof document !== 'undefined') {
                 }
             });
         }
+
+        const filterByHouseCheck = document.getElementById('filter-by-house-no-check');
+        if (filterByHouseCheck) {
+            filterByHouseCheck.addEventListener('change', async () => {
+                if (currentSettings) {
+                    currentSettings.filterByHouseNo = filterByHouseCheck.checked;
+                    if (filterByHouseCheck.checked) {
+                        showToast(typeof t !== 'undefined' ? t('toast_house_no_filter_warning') : 'Warning: Filtering by house number might skip some outages if the provider\'s description is malformed.');
+                    }
+                    await autoSaveSettings();
+                    const container = document.getElementById('outages-container');
+                    renderAlerts(lastAlerts || [], container, currentSettings, selectedAddressIndex);
+                }
+            });
+        }
     }
 
     function initAddressFilter() {
@@ -1245,6 +1261,9 @@ if (typeof document !== 'undefined') {
                 if (document.getElementById('show-other-outages-check')) {
                     document.getElementById('show-other-outages-check').checked = settings.showOtherOutages !== false;
                 }
+                if (document.getElementById('filter-by-house-no-check')) {
+                    document.getElementById('filter-by-house-no-check').checked = !!settings.filterByHouseNo;
+                }
 
                 // Check permissions/optimization warnings on load with a slight delay
                 // to allow Tauri's internal WebView URL state to settle from about:blank
@@ -1278,7 +1297,8 @@ if (typeof document !== 'undefined') {
                     theme: 'system',
                     language: 'system',
                     enabledSources: [],
-                    showOtherOutages: true
+                    showOtherOutages: true,
+                    filterByHouseNo: false
                 };
 
                 // Explicitly uncheck and disable all source/notify pairs on first run
@@ -1380,7 +1400,7 @@ if (typeof document !== 'undefined') {
             setTimeout(() => {
                 status.textContent = '';
                 if (currentSettings.addresses.length === 1) {
-                    document.getElementById('settings-view').classList.remove('open');
+                    toggleSettings(false);
                 }
             }, 1500);
 
@@ -1526,8 +1546,8 @@ if (typeof document !== 'undefined') {
                     } catch (e) {
                         console.error('Error during progressive fetching:', e);
                     } finally {
-                        isFetching = false;
                         setTimeout(() => {
+                            isFetching = false;
                             if (progressEl) {
                                 progressEl.classList.add('hidden');
                                 // Reset title and progress bar
@@ -1618,7 +1638,7 @@ if (typeof document !== 'undefined') {
         // Update the progress bar fill
         const barFillEl = document.getElementById('progress-console-bar-fill');
 
-        if (currentTotal === 0) {
+        if (!isFetching) {
             // Single source fetch fallback
             const activeNames = Array.from(fetchingSources).map(id => {
                 const src = SOURCES.find(s => s.id === id);
@@ -1837,15 +1857,12 @@ if (typeof document !== 'undefined') {
         const addr = addresses[addrIdx];
         if (!addr || addr.isActive === false) return false;
 
-        // Sources that provide addressIndex and isLocal from backend
-        if (SOURCES.map(s => s.id).includes(alert.source)) {
-            if (alert.isLocal === true && (addrIdx === -1 || alert.addressIndex === addrIdx || alert.addressIndex === -1)) {
-                return true;
-            }
+        // Trust backend evaluation if available
+        if (alert.isLocal !== undefined && alert.isLocal !== null) {
+            return alert.isLocal && (addrIdx === -1 || alert.addressIndex === addrIdx || alert.addressIndex === -1);
         }
 
-        // Sources that might need frontend matching (e.g. if backend doesn't provide enough detail)
-        // or legacy behavior.
+        // Fallback for alerts that don't have isLocal from backend
         if (!alert.message) return false;
         return matchesStreetName(alert, addr);
     }
@@ -1862,7 +1879,7 @@ if (typeof document !== 'undefined') {
 
         // Prevent cross-city street matches for multi-city providers
         if (cityName) {
-            const singleCityProviders = ['mpwik_wroclaw', 'mpwik_warszawa', 'stoen', 'wmk', 'zwik_lodz', 'wodociagi_plockie', 'katowickie_wodociagi', 'pwik_kalisz', 'gdanskie_wodociagi', 'gpec'];
+            const singleCityProviders = ['mpwik_wroclaw', 'mpwik_warszawa', 'stoen', 'wmk', 'zwik_lodz', 'wodociagi_plockie', 'katowickie_wodociagi', 'pwik_kalisz', 'gdanskie_wodociagi', 'gpec', 'puk_rokietnica'];
             if (singleCityProviders.includes(alert.source)) {
                 // For single-city providers, reject matching if the saved address is in a completely different city
                 const cityLower = cityName.toLowerCase();
@@ -1873,6 +1890,7 @@ if (typeof document !== 'undefined') {
                 if (alert.source === 'wodociagi_plockie' && !cityLower.startsWith('pło') && !cityLower.startsWith('plo')) return false;
                 if (alert.source === 'pwik_kalisz' && !cityLower.startsWith('kalisz')) return false;
                 if (alert.source === 'katowickie_wodociagi' && !cityLower.startsWith('katow')) return false;
+                if (alert.source === 'puk_rokietnica' && !isRokietnica(addr)) return false;
                 if ((alert.source === 'gdanskie_wodociagi' || alert.source === 'gpec') &&
                     !cityLower.startsWith('gdań') &&
                     !cityLower.startsWith('gdan') &&
@@ -2131,6 +2149,17 @@ if (typeof document !== 'undefined') {
             const city = (addr.cityName || '').trim().toLowerCase();
             return city.startsWith('katowice') || addr.cityId === 937474;
         };
+        const isRokietnica = (addr) => {
+            if (!addr) return false;
+            const city = (addr.cityName || '').trim().toLowerCase();
+            const commune = (addr.commune || '').trim().toLowerCase();
+            const rokietnicaVillages = [
+                'rokietnica', 'bytkowo', 'cerekwica', 'kiekrz', 'krzyszkowo', 'mrowino',
+                'napachanie', 'przybroda', 'rostworowo', 'rogierówko', 'rogierowko',
+                'sobota', 'starzyny', 'żydowo', 'zydowo', 'dalekie'
+            ];
+            return rokietnicaVillages.some(v => city.startsWith(v)) || commune.includes('rokietnica');
+        };
 
         const hasAnyWarszawa = addresses.some(a => a.isActive !== false && isWarszawa(a));
         const hasAnyWroclaw = addresses.some(a => a.isActive !== false && isWroclaw(a));
@@ -2142,6 +2171,7 @@ if (typeof document !== 'undefined') {
         const hasAnyPlock = addresses.some(a => a.isActive !== false && isPlock(a));
         const hasAnyGdansk = addresses.some(a => a.isActive !== false && isGdansk(a));
         const hasAnyKatowice = addresses.some(a => a.isActive !== false && isKatowice(a));
+        const hasAnyRokietnica = addresses.some(a => a.isActive !== false && isRokietnica(a));
 
         const localLists = {};
         const otherLists = {};
@@ -2177,6 +2207,8 @@ if (typeof document !== 'undefined') {
                         if (isGdansk(addr)) otherLists[item.source].push(item);
                     } else if (item.source === 'katowickie_wodociagi') {
                         if (isKatowice(addr)) otherLists[item.source].push(item);
+                    } else if (item.source === 'puk_rokietnica') {
+                        if (isRokietnica(addr)) otherLists[item.source].push(item);
                     } else if (item.source === 'stoen' || item.source === 'veolia' || item.source === 'mpwik_warszawa') {
                         if (isWarszawa(addr)) otherLists[item.source].push(item);
                     } else {
@@ -2209,6 +2241,8 @@ if (typeof document !== 'undefined') {
                         if (hasAnyGdansk) otherLists[item.source].push(item);
                     } else if (item.source === 'katowickie_wodociagi') {
                         if (hasAnyKatowice) otherLists[item.source].push(item);
+                    } else if (item.source === 'puk_rokietnica') {
+                        if (hasAnyRokietnica) otherLists[item.source].push(item);
                     } else if (item.source === 'stoen' || item.source === 'veolia' || item.source === 'mpwik_warszawa') {
                         if (hasAnyWarszawa) otherLists[item.source].push(item);
                     } else {

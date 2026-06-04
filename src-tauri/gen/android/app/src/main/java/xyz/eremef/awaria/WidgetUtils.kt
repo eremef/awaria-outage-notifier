@@ -392,9 +392,11 @@ object WidgetUtils {
             root.put("upcomingNotificationEnabled", fullJson.optBoolean("upcomingNotificationEnabled", false))
             root.put("upcomingNotificationHours", fullJson.optInt("upcomingNotificationHours", 24))
             root.put("enabledSources", fullJson.optJSONArray("enabledSources") ?: org.json.JSONArray())
+            root.put("filterByHouseNo", fullJson.optBoolean("filterByHouseNo", false))
         } else {
             root.put("upcomingNotificationEnabled", false)
             root.put("upcomingNotificationHours", 24)
+            root.put("filterByHouseNo", false)
         }
         
         return root.toString()

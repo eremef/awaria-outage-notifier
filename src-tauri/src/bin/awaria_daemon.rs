@@ -17,6 +17,8 @@ struct HaOptions {
     port: u16,
     #[serde(default = "default_true", rename = "show_other_outages")]
     show_other_outages: bool,
+    #[serde(default, rename = "filter_by_house_no")]
+    filter_by_house_no: bool,
 }
 
 fn default_port() -> u16 {
@@ -58,6 +60,7 @@ async fn main() {
             enabled_sources: Vec::new(),
             port: 8000,
             show_other_outages: true,
+            filter_by_house_no: false,
         }
     });
 
@@ -73,6 +76,7 @@ async fn main() {
         upcoming_notification_enabled: false,
         upcoming_notification_hours: 24,
         show_other_outages: options.show_other_outages,
+        filter_by_house_no: options.filter_by_house_no,
     };
 
     let shared_alerts: SharedAlerts = Arc::new(Mutex::new(Vec::new()));

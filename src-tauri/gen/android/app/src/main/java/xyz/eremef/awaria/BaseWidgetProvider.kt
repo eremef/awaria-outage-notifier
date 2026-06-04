@@ -41,7 +41,8 @@ data class WidgetSettings(
         val language: String,
         val isActive: Boolean,
         val sourceEnabled: Boolean,
-        val isPrimary: Boolean = false
+        val isPrimary: Boolean = false,
+        val filterByHouseNo: Boolean = false
 )
 
 /** Global cache to share fetch results between different widgets during the same update cycle. */
@@ -278,7 +279,8 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                                     language = json.optString("language", "system"),
                                     isActive = addr.optBoolean("isActive", true),
                                     sourceEnabled = isSourceEnabled,
-                                    isPrimary = (i == primaryIndex)
+                                    isPrimary = (i == primaryIndex),
+                                    filterByHouseNo = json.optBoolean("filterByHouseNo", false)
                             )
                         }
                 Pair(list, json)
@@ -367,6 +369,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             "pwik_czestochowa" -> context.getString(R.string.provider_pwik_czestochowa)
             "gdanskie_wodociagi" -> context.getString(R.string.provider_gdanskie_wodociagi)
             "gpec" -> context.getString(R.string.provider_gpec)
+            "puk_rokietnica" -> context.getString(R.string.provider_puk_rokietnica)
             else ->
                     key.replaceFirstChar {
                         if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
