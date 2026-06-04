@@ -203,7 +203,10 @@ mod tests {
         // Regression: time range matching (e.g. 8:00 do 18:00 shouldn't match house number 1)
         let czestochowa_msg = "Prace planowane - W związku z rozbudową sieci wodociągowej w dn. 3.06.2026 r. mieszkańcy ul. Wały Dwernickiego ( od ul. Kiedrzyńskiej do ul. Cmentarnej ) oraz ul. Dekabrystów 84 zostaną pozbawieni dopływu wody w godz. od 8:00 do 18:00. Za utrudnienia przepraszamy.";
         assert!(!match_house_number("1", czestochowa_msg, Some("Dekabrystów")));
-        assert!(match_house_number("84", czestochowa_msg, Some("Dekabrystów")));
+        // Stoen regression test
+        let stoen_msg = "Modernizacja sieci 0.4 kV. Adresy: Radzymińska 194, 196, 198, 200, 202 - 202A";
+        assert!(match_house_number("200", stoen_msg, Some("Radzymińska")));
+        assert!(!match_house_number("201", stoen_msg, Some("Radzymińska")));
     }
 }
 
