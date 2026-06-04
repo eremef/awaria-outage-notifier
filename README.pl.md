@@ -137,12 +137,6 @@ Ustawienia są przechowywane w pliku `settings.json` w katalogu danych aplikacji
 - **Desktop**: `%APPDATA%\xyz.eremef.awaria\` (Windows)
 - **Android**: `/data/user/0/xyz.eremef.awaria/files/`
 
-## Rozwiązywanie Problemów
-
-- **Widżet pokazuje "?"**: Ustawienia nie zostały jeszcze skonfigurowane. Otwórz główną aplikację i ustaw swoją lokalizację.
-- **Błędy EOF**: Najprawdopodobniej chwilowy błąd dostępu podczas synchronizacji ustawień. Aplikacja posiada logikę ponawiania prób.
-- **Brak Alertów**: Sprawdź, czy dana kategoria mediów jest włączona w ustawieniach. **Uwaga**: Dla nowych użytkowników wszystkie źródła są domyślnie wyłączone.
-
 ## Dodatek Home Assistant (Wysoce Eksperymentalny)
 
 Dostępny jest eksperymentalny dodatek (Add-on) do Home Assistant, który pozwala na uruchomienie `awaria-daemon` w trybie headless. Udostępnia on interfejs webowy/API JSON na porcie 8000.
@@ -177,3 +171,9 @@ show_other_outages: true
 ```
 
 Uruchom dodatek i uzyskaj dostęp do interfejsu lub API pod adresem `http://<twoje-ip-ha>:8000`.
+
+## Rozwiązywanie Problemów
+
+- **Widżet pokazuje "?"**: Ustawienia nie zostały jeszcze skonfigurowane. Otwórz główną aplikację i ustaw swoją lokalizację.
+- **Błędy EOF**: Najprawdopodobniej chwilowy błąd dostępu podczas synchronizacji ustawień. Aplikacja posiada logikę ponawiania prób.
+- **Brak Alertów**: Sprawdź, czy dana kategoria mediów jest włączona w ustawieniach. **Uwaga**: Dla nowych użytkowników wszystkie źródła są domyślnie wyłączone.
