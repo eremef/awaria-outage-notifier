@@ -26,6 +26,7 @@ pub mod pwik_kalisz;
 pub mod pwik_czestochowa;
 pub mod gdanskie_wodociagi;
 pub mod gpec;
+pub mod puk_rokietnica;
 
 
 use crate::network_state::NetworkState;
@@ -541,6 +542,7 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(pwik_czestochowa::PwikCzestochowaProvider),
         Box::new(gdanskie_wodociagi::GdanskieWodociagiProvider),
         Box::new(gpec::GpecProvider),
+        Box::new(puk_rokietnica::PukRokietnicaProvider),
     ]
 }
 

@@ -169,7 +169,7 @@ class AllWidgetProvider : BaseWidgetProvider() {
                                     .sum()
                         }
                         val w = async {
-                            val waterSources = listOf("mpwik_wroclaw", "mpwik_warszawa", "wmk", "aquanet", "katowickie_wodociagi", "zwik_lodz", "pwik_kalisz", "pwik_czestochowa", "wodociagi_plockie", "gdanskie_wodociagi")
+                            val waterSources = listOf("mpwik_wroclaw", "mpwik_warszawa", "wmk", "aquanet", "katowickie_wodociagi", "zwik_lodz", "pwik_kalisz", "pwik_czestochowa", "wodociagi_plockie", "gdanskie_wodociagi", "puk_rokietnica")
                                     .filter { allEnabledByDefault || it in enabledSources }
                             waterSources
                                 .map { source ->
@@ -314,7 +314,7 @@ class AllWidgetProvider : BaseWidgetProvider() {
         val heatEnabled =
                 allEnabledByDefault || listOf("fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec").any { it in enabledSources }
         val waterEnabled =
-                allEnabledByDefault || listOf("mpwik_wroclaw", "mpwik_warszawa", "wmk", "aquanet", "katowickie_wodociagi", "zwik_lodz", "pwik_kalisz", "pwik_czestochowa", "wodociagi_plockie", "gdanskie_wodociagi").any { it in enabledSources }
+                allEnabledByDefault || listOf("mpwik_wroclaw", "mpwik_warszawa", "wmk", "aquanet", "katowickie_wodociagi", "zwik_lodz", "pwik_kalisz", "pwik_czestochowa", "wodociagi_plockie", "gdanskie_wodociagi", "puk_rokietnica").any { it in enabledSources }
         val gasEnabled = allEnabledByDefault || listOf("psg").any { it in enabledSources }
 
         // Theme

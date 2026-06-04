@@ -113,6 +113,7 @@ if (typeof document !== 'undefined') {
         { id: 'katowickie_wodociagi', label: 'Katowickie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_katowickie_wodociagi_name', i18nShort: 'source_katowickie_wodociagi_short' },
         { id: 'mpwik_warszawa', label: 'MPWiK Warszawa', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_warszawa_name', i18nShort: 'source_mpwik_warszawa_short' },
         { id: 'mpwik_wroclaw', label: 'MPWiK Wrocław', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_wroclaw_name', i18nShort: 'source_mpwik_wroclaw_short' },
+        { id: 'puk_rokietnica', label: 'PUK Rokietnica', category: 'water', defaultNotify: true, i18nLabel: 'source_puk_rokietnica_name', i18nShort: 'source_puk_rokietnica_short' },
         { id: 'pwik_czestochowa', label: 'PWiK Częstochowa', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_czestochowa_name', i18nShort: 'source_pwik_czestochowa_short' },
         { id: 'pwik_kalisz', label: 'PWiK Kalisz', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_kalisz_name', i18nShort: 'source_pwik_kalisz_short' },
         { id: 'wmk', label: 'WMK', category: 'water', defaultNotify: true, i18nLabel: 'source_wmk_name', i18nShort: 'source_wmk_short' },
@@ -1878,7 +1879,7 @@ if (typeof document !== 'undefined') {
 
         // Prevent cross-city street matches for multi-city providers
         if (cityName) {
-            const singleCityProviders = ['mpwik_wroclaw', 'mpwik_warszawa', 'stoen', 'wmk', 'zwik_lodz', 'wodociagi_plockie', 'katowickie_wodociagi', 'pwik_kalisz', 'gdanskie_wodociagi', 'gpec'];
+            const singleCityProviders = ['mpwik_wroclaw', 'mpwik_warszawa', 'stoen', 'wmk', 'zwik_lodz', 'wodociagi_plockie', 'katowickie_wodociagi', 'pwik_kalisz', 'gdanskie_wodociagi', 'gpec', 'puk_rokietnica'];
             if (singleCityProviders.includes(alert.source)) {
                 // For single-city providers, reject matching if the saved address is in a completely different city
                 const cityLower = cityName.toLowerCase();
@@ -1889,6 +1890,7 @@ if (typeof document !== 'undefined') {
                 if (alert.source === 'wodociagi_plockie' && !cityLower.startsWith('pło') && !cityLower.startsWith('plo')) return false;
                 if (alert.source === 'pwik_kalisz' && !cityLower.startsWith('kalisz')) return false;
                 if (alert.source === 'katowickie_wodociagi' && !cityLower.startsWith('katow')) return false;
+                if (alert.source === 'puk_rokietnica' && !isRokietnica(addr)) return false;
                 if ((alert.source === 'gdanskie_wodociagi' || alert.source === 'gpec') &&
                     !cityLower.startsWith('gdań') &&
                     !cityLower.startsWith('gdan') &&
@@ -2147,6 +2149,17 @@ if (typeof document !== 'undefined') {
             const city = (addr.cityName || '').trim().toLowerCase();
             return city.startsWith('katowice') || addr.cityId === 937474;
         };
+        const isRokietnica = (addr) => {
+            if (!addr) return false;
+            const city = (addr.cityName || '').trim().toLowerCase();
+            const commune = (addr.commune || '').trim().toLowerCase();
+            const rokietnicaVillages = [
+                'rokietnica', 'bytkowo', 'cerekwica', 'kiekrz', 'krzyszkowo', 'mrowino',
+                'napachanie', 'przybroda', 'rostworowo', 'rogierówko', 'rogierowko',
+                'sobota', 'starzyny', 'żydowo', 'zydowo', 'dalekie'
+            ];
+            return rokietnicaVillages.some(v => city.startsWith(v)) || commune.includes('rokietnica');
+        };
 
         const hasAnyWarszawa = addresses.some(a => a.isActive !== false && isWarszawa(a));
         const hasAnyWroclaw = addresses.some(a => a.isActive !== false && isWroclaw(a));
@@ -2158,6 +2171,7 @@ if (typeof document !== 'undefined') {
         const hasAnyPlock = addresses.some(a => a.isActive !== false && isPlock(a));
         const hasAnyGdansk = addresses.some(a => a.isActive !== false && isGdansk(a));
         const hasAnyKatowice = addresses.some(a => a.isActive !== false && isKatowice(a));
+        const hasAnyRokietnica = addresses.some(a => a.isActive !== false && isRokietnica(a));
 
         const localLists = {};
         const otherLists = {};
@@ -2193,6 +2207,8 @@ if (typeof document !== 'undefined') {
                         if (isGdansk(addr)) otherLists[item.source].push(item);
                     } else if (item.source === 'katowickie_wodociagi') {
                         if (isKatowice(addr)) otherLists[item.source].push(item);
+                    } else if (item.source === 'puk_rokietnica') {
+                        if (isRokietnica(addr)) otherLists[item.source].push(item);
                     } else if (item.source === 'stoen' || item.source === 'veolia' || item.source === 'mpwik_warszawa') {
                         if (isWarszawa(addr)) otherLists[item.source].push(item);
                     } else {
@@ -2225,6 +2241,8 @@ if (typeof document !== 'undefined') {
                         if (hasAnyGdansk) otherLists[item.source].push(item);
                     } else if (item.source === 'katowickie_wodociagi') {
                         if (hasAnyKatowice) otherLists[item.source].push(item);
+                    } else if (item.source === 'puk_rokietnica') {
+                        if (hasAnyRokietnica) otherLists[item.source].push(item);
                     } else if (item.source === 'stoen' || item.source === 'veolia' || item.source === 'mpwik_warszawa') {
                         if (hasAnyWarszawa) otherLists[item.source].push(item);
                     } else {

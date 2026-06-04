@@ -47,6 +47,8 @@ pub enum AlertSource {
     GdanskieWodociagi,
     #[serde(rename = "gpec")]
     Gpec,
+    #[serde(rename = "puk_rokietnica")]
+    PukRokietnica,
 }
 
 impl AlertSource {
@@ -100,6 +102,7 @@ impl AlertSource {
             AlertSource::PwikCzestochowa => Some(vec!["ŚLĄSKIE"]),
             AlertSource::GdanskieWodociagi => Some(vec!["POMORSKIE"]),
             AlertSource::Gpec => Some(vec!["POMORSKIE"]),
+            AlertSource::PukRokietnica => Some(vec!["WIELKOPOLSKIE"]),
             AlertSource::Fortum => Some(vec![
                 "DOLNOŚLĄSKIE",
                 "ŚLĄSKIE",
@@ -302,7 +305,7 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea | AlertSource::Pge | AlertSource::Stoen => {
             if is_pl { "wyłączenie prądu" } else { "power outage" }
         }
-        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::WodociagiPlockie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa | AlertSource::GdanskieWodociagi => {
+        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::WodociagiPlockie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa | AlertSource::GdanskieWodociagi | AlertSource::PukRokietnica => {
             if is_pl { "wyłączenie wody" } else { "water outage" }
         }
         AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz | AlertSource::Gpec => {
@@ -394,6 +397,7 @@ impl std::fmt::Display for AlertSource {
             AlertSource::PwikCzestochowa => "pwik_czestochowa",
             AlertSource::GdanskieWodociagi => "gdanskie_wodociagi",
             AlertSource::Gpec => "gpec",
+            AlertSource::PukRokietnica => "puk_rokietnica",
         };
         write!(f, "{}", s)
     }
@@ -494,6 +498,22 @@ pub fn is_kalisz(addr: &AddressEntry) -> bool {
 pub fn is_gdansk(addr: &AddressEntry) -> bool {
     let name = addr.city_name.trim().to_lowercase();
     name.starts_with("gdańsk") || name.starts_with("gdansk") || addr.city_id == Some(908123)
+}
+
+pub fn is_rokietnica(addr: &AddressEntry) -> bool {
+    let name = addr.city_name.trim().to_lowercase();
+    let name_norm = name.replace("ó", "o")
+        .replace("ż", "z")
+        .replace("ł", "l")
+        .replace("ś", "s")
+        .replace("ć", "c")
+        .replace("ą", "a")
+        .replace("ę", "e")
+        .replace("ń", "n")
+        .replace("ź", "z");
+    matches!(name_norm.as_str(), 
+        "rokietnica" | "bytkowo" | "cerekwica" | "kiekrz" | "krzyszkowo" | "mrowino" | "napachanie" | "przybroda" | "rostworowo" | "rogierowko" | "sobota" | "starzyny" | "zydowo" | "dalekie"
+    ) || addr.commune.trim().to_lowercase().contains("rokietnica")
 }
 
 // ── Address & Settings ────────────────────────────────────

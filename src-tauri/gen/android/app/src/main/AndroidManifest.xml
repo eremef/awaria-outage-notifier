@@ -393,6 +393,22 @@
 
 
         <receiver
+            android:name=".PukRokietnicaWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_puk_rokietnica">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_PUK_ROKIETNICA" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_puk_rokietnica_info" />
+        </receiver>
+
+        <receiver
             android:name=".AllWidgetProvider"
             android:exported="true"
             android:label="@string/widget_label_all">
