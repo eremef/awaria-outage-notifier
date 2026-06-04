@@ -140,3 +140,37 @@ Settings are stored in `settings.json` in the app's data directory:
 - **Widget shows "?"**: The settings haven't been configured yet. Open the main app and set your location.
 - **EOF Errors**: Most likely a temporary race condition during settings sync. The app includes resilient logic to retry or fall back to defaults.
 - **Missing Alerts**: Check if you have the specific outage category enabled in the settings. **Note**: For new users, all sources are disabled by default.
+
+## Home Assistant Add-on (Highly Experimental)
+
+An experimental Home Assistant Add-on is available to run `awaria-daemon` headlessly in your Home Assistant supervisor environment. It exposes a web interface/JSON API on port 8000.
+
+### Configuration & Start
+
+To add this repository to your Home Assistant Add-on store:
+1. Go to **Settings** > **Add-ons** > **Add-on Store**.
+2. Click the three dots in the top right and select **Repositories**.
+3. Add the repository URL: `https://github.com/eremef/awaria-outage-notifier`.
+4. Locate **Awaria Outage Monitor** in the list and click **Install**.
+
+Configure the add-on using the Home Assistant Configuration tab. Example:
+```yaml
+addresses:
+  - name: "Dom"
+    cityName: "Warszawa"
+    voivodeship: "Mazowieckie"
+    streetName: "ul. Marszałkowska"
+    streetName1: "Marszałkowska"
+    houseNo: "1"
+    isActive: true
+enabled_sources:
+  - tauron
+  - pge
+  - stoen
+  - mpwik_warszawa
+port: 8000
+show_other_outages: true
+```
+
+Start the add-on and access the API or web view at `http://<your-ha-ip>:8000`.
+

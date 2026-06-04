@@ -14,6 +14,7 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
 - [https://eremef.xyz/awaria](https://eremef.xyz/awaria)
 
 ## Inne linki
+
 - [Facebook](https://www.facebook.com/awaria.info)
 
 ## Wspierani Dostawcy
@@ -141,3 +142,38 @@ Ustawienia są przechowywane w pliku `settings.json` w katalogu danych aplikacji
 - **Widżet pokazuje "?"**: Ustawienia nie zostały jeszcze skonfigurowane. Otwórz główną aplikację i ustaw swoją lokalizację.
 - **Błędy EOF**: Najprawdopodobniej chwilowy błąd dostępu podczas synchronizacji ustawień. Aplikacja posiada logikę ponawiania prób.
 - **Brak Alertów**: Sprawdź, czy dana kategoria mediów jest włączona w ustawieniach. **Uwaga**: Dla nowych użytkowników wszystkie źródła są domyślnie wyłączone.
+
+## Dodatek Home Assistant (Wysoce Eksperymentalny)
+
+Dostępny jest eksperymentalny dodatek (Add-on) do Home Assistant, który pozwala na uruchomienie `awaria-daemon` w trybie headless. Udostępnia on interfejs webowy/API JSON na porcie 8000.
+
+### Konfiguracja i uruchomienie
+
+Aby dodać to repozytorium do sklepu z dodatkami Home Assistant:
+
+1. Przejdź do **Ustawienia** > **Dodatki** > **Sklep z dodatkami**.
+2. Kliknij trzy kropki w prawym górnym rogu i wybierz **Repozytoria**.
+3. Dodaj URL repozytorium: `https://github.com/eremef/awaria-outage-notifier`.
+4. Znajdź **Awaria Outage Monitor** na liście i kliknij **Zainstaluj**.
+
+Skonfiguruj dodatek w zakładce konfiguracji Home Assistant. Przykład:
+
+```yaml
+addresses:
+  - name: "Dom"
+    cityName: "Warszawa"
+    voivodeship: "Mazowieckie"
+    streetName: "ul. Marszałkowska"
+    streetName1: "Marszałkowska"
+    houseNo: "1"
+    isActive: true
+enabled_sources:
+  - tauron
+  - pge
+  - stoen
+  - mpwik_warszawa
+port: 8000
+show_other_outages: true
+```
+
+Uruchom dodatek i uzyskaj dostęp do interfejsu lub API pod adresem `http://<twoje-ip-ha>:8000`.
