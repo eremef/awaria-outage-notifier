@@ -469,6 +469,51 @@
     --puk_rokietnica-color: #a3a3a3;
 }
 
+[data-theme="high-contrast"] {
+    /* Maximum Accessibility (WCAG AAA) */
+    --primary-color: #ffff00;
+    --background-color: #000000;
+    --card-background: #111111;
+    --text-color: #ffffff;
+    --secondary-text: #f0f0f0;
+    --shadow: none;
+    --input-border: #ffffff;
+    --input-focus: #ffff00;
+    --checkbox-accent: #ffffff;
+    --error-bg: #440000;
+    --error-text: #ff9999;
+    --error-border: #ff0000;
+    --success-bg: #003300;
+    --success-text: #99ff99;
+    --success-border: #00ff00;
+    --message-border: #ffffff;
+    --label-border: #ffffff;
+    --source-color: #ffffff;
+    --tauron-color: #ff99cc;
+    --tauron_heat-color: #ff99cc;
+    --mpwik_wroclaw-color: #99ccff;
+    --fortum-color: #99ff99;
+    --energa-color: #ff9999;
+    --enea-color: #99ccff;
+    --pge-color: #99ccff;
+    --stoen-color: #ff9999;
+    --psg-color: #99ccff;
+    --wmk-color: #99ccff;
+    --aquanet-color: #99ccff;
+    --katowickie_wodociagi-color: #99ccff;
+    --mpwik_warszawa-color: #99ccff;
+    --veolia-color: #ff9999;
+    --veolia_poznan-color: var(--veolia-color);
+    --veolia_lodz-color: var(--veolia-color);
+    --zwik_lodz-color: #99ccff;
+    --wodociagi_plockie-color: #99ccff;
+    --pwik_kalisz-color: #99ccff;
+    --pwik_czestochowa-color: #99ccff;
+    --gdanskie_wodociagi-color: #99ccff;
+    --gpec-color: #ff9999;
+    --puk_rokietnica-color: #99ccff;
+}
+
 * {
     box-sizing: border-box;
 }
