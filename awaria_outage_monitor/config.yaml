@@ -36,7 +36,7 @@ schema:
     - name: str
       cityName: str
       streetName: str
-      houseNo: str?
+      houseNo: str
       isActive: bool?
   enabled_sources:
     - list(tauron|mpwik_wroclaw|mpwik_warszawa|fortum|energa|enea|pge|stoen|wmk|tauron_heat|aquanet|katowickie_wodociagi|veolia_warszawa|veolia_poznan|veolia_lodz|zwik_lodz|wodociagi_plockie|pwik_czestochowa|gdanskie_wodociagi)

@@ -169,6 +169,7 @@ Dla każdego adresu, który chcesz monitorować, dodaj wpis zawierający:
 - **name**: Przyjazna nazwa (np. `Dom`, `Praca`)
 - **cityName**: Dokładna nazwa miejscowości (np. `Warszawa`, `Wrocław`)
 - **streetName**: Dokładna nazwa ulicy **bez przedrostka "ul."** (np. `Marszałkowska`, `Rynek`)
+- **houseNo**: Dokładny numer domu/budynku (np. `12`, `45/2`). Opcjonalne, ale wysoce zalecane dla precyzyjnego dopasowywania (szczególnie dla dostawców takich jak Tauron).
 - **isActive**: Ustaw na `true`, aby aktywować monitorowanie tego adresu.
 
 *Uwaga: Awaria automatycznie uzupełni województwo, powiat, gminę oraz wewnętrzne identyfikatory, korzystając ze zintegrowanej bazy danych TERYT.*

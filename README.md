@@ -169,6 +169,7 @@ For each address you want to monitor, add an entry with:
 - **name**: A friendly name (e.g., `Home`, `Office`)
 - **cityName**: The exact city name (e.g., `Warszawa`, `Wrocław`)
 - **streetName**: The exact street name **without "ul."** (e.g., `Marszałkowska`, `Rynek`)
+- **houseNo**: The exact house number (e.g., `12`, `45/2`). Optional, but highly recommended for accurate matching (especially for providers like Tauron).
 - **isActive**: `true` to enable monitoring for this address.
 
 *Note: Awaria will automatically resolve the district, commune, and internal IDs using its bundled Teryt database.*
