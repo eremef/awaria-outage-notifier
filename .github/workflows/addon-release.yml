@@ -1,8 +1,9 @@
 name: Release Add-on
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch: # Allows manual triggers on-demand
 
 jobs:

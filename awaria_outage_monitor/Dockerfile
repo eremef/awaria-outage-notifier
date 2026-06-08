@@ -13,7 +13,11 @@ WORKDIR /usr/src/awaria/src-tauri
 
 # Build the daemon binary in release mode
 # Note: we use musl target to have a fully static binary
-RUN RUSTFLAGS="-C target-feature=-crt-static" cargo build --release --bin awaria-daemon
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/git \
+    --mount=type=cache,target=/usr/src/awaria/src-tauri/target \
+    RUSTFLAGS="-C target-feature=-crt-static" cargo build --release --bin awaria-daemon && \
+    cp /usr/src/awaria/src-tauri/target/release/awaria-daemon /tmp/awaria-daemon
 
 # Final minimal runner stage
 FROM alpine:3.19
@@ -21,7 +25,7 @@ FROM alpine:3.19
 RUN apk add --no-cache ca-certificates tzdata glib gtk+3.0 webkit2gtk-4.1 libayatana-appindicator
 
 # Copy compiled binary from builder
-COPY --from=builder /usr/src/awaria/src-tauri/target/release/awaria-daemon /usr/local/bin/awaria-daemon
+COPY --from=builder /tmp/awaria-daemon /usr/local/bin/awaria-daemon
 
 EXPOSE 8000
 
