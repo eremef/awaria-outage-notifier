@@ -56,6 +56,8 @@ rustls = { version = "0.23", default-features = false, features = ["ring", "std"
 scraper = "0.26.0"
 android_logger = "0.15"
 urlencoding = "2.1.3"
+rumqttc = "0.25.1"
+tower-http = { version = "0.6.11", features = ["fs"] }
 
 [target.'cfg(not(target_os = "android"))'.dependencies]
 # native-tls (SChannel on Windows, SecureTransport on macOS) for desktop-only providers

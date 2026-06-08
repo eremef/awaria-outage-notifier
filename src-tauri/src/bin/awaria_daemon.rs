@@ -6,11 +6,24 @@ use serde::{Deserialize, Serialize};
 use app_lib::get_providers;
 use app_lib::api_logic::{AddressEntry, Settings, UnifiedAlert};
 use app_lib::network_state::NetworkState;
+use rumqttc::{AsyncClient, MqttOptions, QoS};
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+struct HaAddress {
+    name: String,
+    #[serde(rename = "cityName")]
+    city_name: String,
+    #[serde(rename = "streetName")]
+    street_name: String,
+    #[serde(default = "default_true", rename = "isActive")]
+    is_active: bool,
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 struct HaOptions {
-    addresses: Vec<AddressEntry>,
+    addresses: Vec<HaAddress>,
     #[serde(rename = "enabled_sources")]
     enabled_sources: Vec<String>,
     #[serde(default = "default_port")]
@@ -66,8 +79,52 @@ async fn main() {
 
     log::info!("Loaded {} addresses and {} enabled sources.", options.addresses.len(), options.enabled_sources.len());
 
+    // Resolve Teryt
+    let teryt_path = std::path::PathBuf::from(std::env::var("AWARIA_TERYT_PATH").unwrap_or_else(|_| "/usr/local/share/awaria/assets/teryt".to_string()));
+    let teryt_path = if teryt_path.exists() { teryt_path } else { std::path::PathBuf::from("../src-tauri/assets/teryt") };
+
+    let mut resolved_addresses = Vec::new();
+    for ha_addr in &options.addresses {
+        let mut entry = AddressEntry {
+            name: ha_addr.name.clone(),
+            city_name: ha_addr.city_name.clone(),
+            street_name: ha_addr.street_name.clone(),
+            is_active: ha_addr.is_active,
+            voivodeship: "".to_string(),
+            district: "".to_string(),
+            commune: "".to_string(),
+            street_name_1: "".to_string(),
+            street_name_2: None,
+            house_no: "".to_string(),
+            city_id: None,
+            street_id: None,
+        };
+
+        if teryt_path.exists() {
+            if let Ok(cities) = app_lib::teryt::lookup_cities_by_path(&teryt_path, &ha_addr.city_name) {
+                if let Some(city) = cities.into_iter().find(|c| c.city.to_lowercase() == ha_addr.city_name.to_lowercase()) {
+                    entry.voivodeship = city.voivodeship;
+                    entry.district = city.district;
+                    entry.commune = city.commune;
+                    entry.city_id = Some(city.city_id);
+
+                    if !ha_addr.street_name.is_empty() {
+                        if let Ok(streets) = app_lib::teryt::lookup_streets_by_path(&teryt_path, city.city_id, &ha_addr.street_name) {
+                            if let Some(street) = streets.into_iter().find(|s| s.street_name_1.to_lowercase() == ha_addr.street_name.to_lowercase() || s.full_street_name.to_lowercase().contains(&ha_addr.street_name.to_lowercase())) {
+                                entry.street_id = Some(street.street_id);
+                                entry.street_name_1 = street.street_name_1.clone();
+                                entry.street_name_2 = street.street_name_2.clone();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        resolved_addresses.push(entry);
+    }
+
     let settings = Settings {
-        addresses: options.addresses,
+        addresses: resolved_addresses,
         primary_address_index: Some(0),
         theme: None,
         language: Some("pl".to_string()),
@@ -83,7 +140,11 @@ async fn main() {
     let shared_alerts_clone = shared_alerts.clone();
     let settings_clone = settings.clone();
 
+    // Setup MQTT
+    let mqtt_client = setup_mqtt(&settings).await;
+
     // Start background fetching task
+    let mqtt_client_loop = mqtt_client.clone();
     tokio::spawn(async move {
         let fetch_interval = Duration::from_secs(15 * 60); // Fetch every 15 minutes
         loop {
@@ -91,8 +152,14 @@ async fn main() {
             match fetch_alerts(&settings_clone).await {
                 Ok(alerts) => {
                     log::info!("Successfully fetched and processed {} alerts.", alerts.len());
-                    let mut lock = shared_alerts_clone.lock().unwrap();
-                    *lock = alerts;
+                    {
+                        let mut lock = shared_alerts_clone.lock().unwrap();
+                        *lock = alerts.clone();
+                    }
+
+                    if let Some(client) = &mqtt_client_loop {
+                        publish_mqtt_state(client, &settings_clone, &alerts).await;
+                    }
                 }
                 Err(e) => {
                     log::error!("Error during alerts fetch cycle: {}", e);
@@ -103,22 +170,91 @@ async fn main() {
         }
     });
 
+    let public_dir = std::env::var("AWARIA_PUBLIC_DIR")
+        .unwrap_or_else(|_| "/usr/local/share/awaria/public".to_string());
+    let public_dir = if std::path::Path::new(&public_dir).exists() { public_dir } else { "../public".to_string() };
+
+    let serve_dir = tower_http::services::ServeDir::new(&public_dir);
+
     // Build axum router
     let app = Router::new()
-        .route("/alerts", get(get_alerts_handler))
+        .nest_service("/", serve_dir)
+        .route("/api/alerts", get(get_alerts_handler))
+        .route("/api/settings", get(get_settings_handler))
         .route("/health", get(health_handler))
-        .layer(Extension(shared_alerts));
+        .layer(Extension(shared_alerts))
+        .layer(Extension(settings));
 
     let addr = format!("0.0.0.0:{}", options.port);
-    log::info!("Listening REST API on http://{}", addr);
+    log::info!("Listening REST API and UI on http://{}", addr);
 
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn get_alerts_handler(Extension(alerts): Extension<SharedAlerts>) -> Json<Vec<UnifiedAlert>> {
+async fn setup_mqtt(settings: &Settings) -> Option<AsyncClient> {
+    let mqtt_host = std::env::var("MQTT_HOST").ok()?;
+    let user = std::env::var("MQTT_USER").unwrap_or_default();
+    let pass = std::env::var("MQTT_PASSWORD").unwrap_or_default();
+    let port: u16 = std::env::var("MQTT_PORT").unwrap_or_else(|_| "1883".to_string()).parse().unwrap_or(1883);
+
+    log::info!("Connecting to MQTT Broker at {}:{}", mqtt_host, port);
+    let mut mqttoptions = MqttOptions::new("awaria_daemon", mqtt_host, port);
+    mqttoptions.set_credentials(user, pass);
+    mqttoptions.set_keep_alive(Duration::from_secs(5));
+
+    let (client, mut connection) = AsyncClient::new(mqttoptions, 10);
+
+    tokio::spawn(async move {
+        loop {
+            if let Err(e) = connection.poll().await {
+                log::error!("MQTT connection error: {:?}", e);
+                tokio::time::sleep(Duration::from_secs(5)).await;
+            }
+        }
+    });
+
+    // Publish discovery configs
+    for provider in get_providers() {
+        if settings.enabled_sources.as_ref().unwrap().contains(&provider.id()) {
+            let topic = format!("homeassistant/sensor/awaria_{}/config", provider.id());
+            let payload = serde_json::json!({
+                "name": format!("Awaria {}", provider.id()),
+                "state_topic": format!("homeassistant/sensor/awaria_{}/state", provider.id()),
+                "json_attributes_topic": format!("homeassistant/sensor/awaria_{}/attributes", provider.id()),
+                "unique_id": format!("awaria_{}", provider.id()),
+                "icon": "mdi:power-plug-off",
+            });
+            let _ = client.publish(topic, QoS::AtLeastOnce, true, serde_json::to_vec(&payload).unwrap()).await;
+        }
+    }
+
+    Some(client)
+}
+
+async fn publish_mqtt_state(client: &AsyncClient, settings: &Settings, alerts: &Vec<UnifiedAlert>) {
+    let enabled = settings.enabled_sources.as_ref().unwrap();
+    for provider in get_providers() {
+        if !enabled.contains(&provider.id()) { continue; }
+
+        let provider_alerts: Vec<_> = alerts.iter().filter(|a| a.source == provider.source()).collect();
+        let local_count = provider_alerts.iter().filter(|a| a.is_local == Some(true)).count();
+
+        let state_topic = format!("homeassistant/sensor/awaria_{}/state", provider.id());
+        let attrs_topic = format!("homeassistant/sensor/awaria_{}/attributes", provider.id());
+
+        let _ = client.publish(state_topic, QoS::AtLeastOnce, true, local_count.to_string()).await;
+        let _ = client.publish(attrs_topic, QoS::AtLeastOnce, true, serde_json::to_vec(&serde_json::json!({"alerts": provider_alerts})).unwrap()).await;
+    }
+}
+
+async fn get_alerts_handler(Extension(alerts): Extension<SharedAlerts>) -> Json<serde_json::Value> {
     let lock = alerts.lock().unwrap();
-    Json(lock.clone())
+    Json(serde_json::json!({ "alerts": lock.clone(), "is_stale": false, "is_offline": false }))
+}
+
+async fn get_settings_handler(Extension(settings): Extension<Settings>) -> Json<Settings> {
+    Json(settings)
 }
 
 async fn health_handler() -> Json<serde_json::Value> {

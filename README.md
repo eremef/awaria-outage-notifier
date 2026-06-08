@@ -9,10 +9,12 @@
 A modern desktop (Tauri) and Android application providing real-time alerts for planned and emergency outages. **AWARIA** aggregates data from multiple utility providers into a centralized interface.
 
 ## Downloads
+
 - [Google Play store](https://play.google.com/store/apps/details?id=xyz.eremef.awaria)
 - [https://eremef.xyz/awaria](https://eremef.xyz/awaria)
 
 ## Other links
+
 - [Facebook](https://www.facebook.com/awaria.info)
 
 ## Supported Providers
@@ -54,7 +56,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
 - **Smart Prefiltration**: Optimizes network usage by only querying providers applicable to your selected voivodeships.
 - **Throttled Parallelism**: Modern backend logic that fetches from all providers simultaneously with smart retries for maximum reliability.
 - **Settings Portability**: Easily **Export and Import** your settings (addresses and enabled sources) to move between devices or back up your configuration.
-- **Android Optimizations**: 
+- **Android Optimizations**:
   - **Battery Management**: Built-in support to request exclusion from battery optimizations to ensure reliable background checks and notifications.
   - **Native Widgets**: Quick access to alert counts directly from your home screen.
 - **Premium Design**:
@@ -137,40 +139,59 @@ Settings are stored in `settings.json` in the app's data directory:
 
 ## Home Assistant Add-on (Highly Experimental)
 
-An experimental Home Assistant Add-on is available to run `awaria-daemon` headlessly in your Home Assistant supervisor environment. It exposes a web interface/JSON API on port 8000.
-
-### Configuration & Start
+Awaria is a headless monitor for utility outages in Poland. This Add-on seamlessly integrates Awaria into Home Assistant.
 
 To add this repository to your Home Assistant Add-on store:
+
 1. Go to **Settings** > **Add-ons** > **Add-on Store**.
 2. Click the three dots in the top right and select **Repositories**.
 3. Add the repository URL: `https://github.com/eremef/awaria-outage-notifier`.
 4. Locate **Awaria Outage Monitor** in the list and click **Install**.
 
-Configure the add-on using the Home Assistant Configuration tab. Example:
-```yaml
-addresses:
-  - name: "Dom"
-    cityName: "Warszawa"
-    voivodeship: "Mazowieckie"
-    streetName: "ul. Marszałkowska"
-    streetName1: "Marszałkowska"
-    houseNo: "1"
-    isActive: true
-enabled_sources:
-  - tauron
-  - pge
-  - stoen
-  - mpwik_warszawa
-port: 8000
-show_other_outages: true
-```
+### Features
 
-Start the add-on and access the API or web view at `http://<your-ha-ip>:8000`.
+- **Ingress UI:** Access the Awaria dashboard directly from your Home Assistant sidebar.
+- **MQTT Discovery:** Automatically creates sensors in Home Assistant for active outages.
+- **Auto-Resolution:** Simplifies setup by auto-resolving full Teryt database locations from basic city and street names.
+
+### Prerequisites
+
+- **MQTT Broker:** To get sensors and triggers in Home Assistant, you must have an MQTT broker configured (e.g., the Mosquitto broker Add-on). Awaria will connect to it automatically.
+
+### Configuration
+
+Go to the **Configuration** tab of this Add-on to set your addresses and providers.
+
+#### Addresses
+
+For each address you want to monitor, add an entry with:
+
+- **name**: A friendly name (e.g., `Home`, `Office`)
+- **cityName**: The exact city name (e.g., `Warszawa`, `Wrocław`)
+- **streetName**: The exact street name **without "ul."** (e.g., `Marszałkowska`, `Rynek`)
+- **isActive**: `true` to enable monitoring for this address.
+
+*Note: Awaria will automatically resolve the district, commune, and internal IDs using its bundled Teryt database.*
+
+#### Enabled Sources
+
+Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `mpwik_warszawa`).
+
+### Usage
+
+Once configured and started:
+
+1. Click **Open Web UI** to view the Awaria dashboard.
+2. In Home Assistant, go to **Settings -> Devices & Services -> MQTT**. You should see a new device named `Awaria` with sensors for each of your enabled providers.
+3. The sensors will show the count of active local outages.
+4. The sensors contain detailed JSON attributes (`alerts`) with full outage descriptions, start/end dates, and locations. You can use these in Home Assistant Templates to trigger notifications!
+
+### Important Note on Settings
+
+Because Home Assistant manages the configuration of this Add-on, the "Settings" menu inside the Awaria Web UI is disabled. All configuration changes (adding addresses, changing providers) must be done via the HA Add-on **Configuration** tab.
 
 ## Troubleshooting
 
 - **Widget shows "?"**: The settings haven't been configured yet. Open the main app and set your location.
 - **EOF Errors**: Most likely a temporary race condition during settings sync. The app includes resilient logic to retry or fall back to defaults.
 - **Missing Alerts**: Check if you have the specific outage category enabled in the settings. **Note**: For new users, all sources are disabled by default.
-

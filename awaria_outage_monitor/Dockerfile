@@ -27,6 +27,12 @@ RUN apk add --no-cache ca-certificates tzdata glib gtk+3.0 webkit2gtk-4.1 libaya
 # Copy compiled binary from builder
 COPY --from=builder /tmp/awaria-daemon /usr/local/bin/awaria-daemon
 
+# Copy public directory for Ingress
+COPY --from=builder /usr/src/awaria/public /usr/local/share/awaria/public
+
+# Copy Teryt DB for Auto-Resolution
+COPY --from=builder /usr/src/awaria/src-tauri/assets /usr/local/share/awaria/assets
+
 EXPOSE 8000
 
 ENTRYPOINT ["/usr/local/bin/awaria-daemon"]

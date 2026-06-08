@@ -62,7 +62,11 @@ fn db_path(app: &AppHandle) -> Result<std::path::PathBuf, String> {
 
 pub fn lookup_cities(app: &AppHandle, city_name: &str) -> Result<Vec<TerytCity>, String> {
     let path = db_path(app)?;
-    let conn = Connection::open_with_flags(path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
+    lookup_cities_by_path(&path, city_name)
+}
+
+pub fn lookup_cities_by_path(db_path: &std::path::Path, city_name: &str) -> Result<Vec<TerytCity>, String> {
+    let conn = Connection::open_with_flags(db_path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
         .map_err(|e| format!("Failed to open teryt DB: {}", e))?;
     _lookup_cities(&conn, city_name)
 }
@@ -113,7 +117,15 @@ pub fn lookup_streets(
     street_name: &str,
 ) -> Result<Vec<TerytStreet>, String> {
     let path = db_path(app)?;
-    let conn = Connection::open_with_flags(path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
+    lookup_streets_by_path(&path, city_id, street_name)
+}
+
+pub fn lookup_streets_by_path(
+    db_path: &std::path::Path,
+    city_id: u64,
+    street_name: &str,
+) -> Result<Vec<TerytStreet>, String> {
+    let conn = Connection::open_with_flags(db_path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
         .map_err(|e| format!("Failed to open teryt DB: {}", e))?;
     _lookup_streets(&conn, city_id, street_name)
 }
@@ -160,7 +172,11 @@ fn _lookup_streets(
 
 pub fn city_has_streets(app: &AppHandle, city_id: u64) -> Result<bool, String> {
     let path = db_path(app)?;
-    let conn = Connection::open_with_flags(path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
+    city_has_streets_by_path(&path, city_id)
+}
+
+pub fn city_has_streets_by_path(db_path: &std::path::Path, city_id: u64) -> Result<bool, String> {
+    let conn = Connection::open_with_flags(db_path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
         .map_err(|e| format!("Failed to open teryt DB: {}", e))?;
     _city_has_streets(&conn, city_id)
 }

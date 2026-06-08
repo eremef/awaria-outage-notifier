@@ -139,9 +139,7 @@ Ustawienia są przechowywane w pliku `settings.json` w katalogu danych aplikacji
 
 ## Dodatek Home Assistant (Wysoce Eksperymentalny)
 
-Dostępny jest eksperymentalny dodatek (Add-on) do Home Assistant, który pozwala na uruchomienie `awaria-daemon` w trybie headless. Udostępnia on interfejs webowy/API JSON na porcie 8000.
-
-### Konfiguracja i uruchomienie
+Awaria to narzędzie działające w tle, służące do monitorowania przerw w dostawie mediów w Polsce. Ten dodatek w pełni integruje Awarię z Home Assistant.
 
 Aby dodać to repozytorium do sklepu z dodatkami Home Assistant:
 
@@ -150,27 +148,47 @@ Aby dodać to repozytorium do sklepu z dodatkami Home Assistant:
 3. Dodaj URL repozytorium: `https://github.com/eremef/awaria-outage-notifier`.
 4. Znajdź **Awaria Outage Monitor** na liście i kliknij **Zainstaluj**.
 
-Skonfiguruj dodatek w zakładce konfiguracji Home Assistant. Przykład:
+### Możliwości
 
-```yaml
-addresses:
-  - name: "Dom"
-    cityName: "Warszawa"
-    voivodeship: "Mazowieckie"
-    streetName: "ul. Marszałkowska"
-    streetName1: "Marszałkowska"
-    houseNo: "1"
-    isActive: true
-enabled_sources:
-  - tauron
-  - pge
-  - stoen
-  - mpwik_warszawa
-port: 8000
-show_other_outages: true
-```
+- **Interfejs Ingress:** Dostęp do panelu Awarii bezpośrednio z paska bocznego Home Assistant.
+- **Wykrywanie MQTT (Discovery):** Automatyczne tworzenie sensorów w Home Assistant dla aktywnych awarii.
+- **Automatyczne rozwiązywanie adresów:** Uproszczona konfiguracja dzięki automatycznemu wyszukiwaniu pełnych danych lokalizacyjnych w bazie TERYT na podstawie samej nazwy miejscowości i ulicy.
 
-Uruchom dodatek i uzyskaj dostęp do interfejsu lub API pod adresem `http://<twoje-ip-ha>:8000`.
+### Wymagania
+
+- **Broker MQTT:** Aby zyskać sensory i możliwość tworzenia automatyzacji w Home Assistant, konieczne jest posiadanie skonfigurowanego brokera MQTT (np. dodatek Mosquitto). Awaria połączy się z nim automatycznie.
+
+### Konfiguracja
+
+Przejdź do zakładki **Konfiguracja** tego dodatku, aby ustawić adresy i dostawców.
+
+#### Adresy (Addresses)
+
+Dla każdego adresu, który chcesz monitorować, dodaj wpis zawierający:
+
+- **name**: Przyjazna nazwa (np. `Dom`, `Praca`)
+- **cityName**: Dokładna nazwa miejscowości (np. `Warszawa`, `Wrocław`)
+- **streetName**: Dokładna nazwa ulicy **bez przedrostka "ul."** (np. `Marszałkowska`, `Rynek`)
+- **isActive**: Ustaw na `true`, aby aktywować monitorowanie tego adresu.
+
+*Uwaga: Awaria automatycznie uzupełni województwo, powiat, gminę oraz wewnętrzne identyfikatory, korzystając ze zintegrowanej bazy danych TERYT.*
+
+#### Aktywne źródła (Enabled Sources)
+
+Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `mpwik_warszawa`).
+
+### Użytkowanie
+
+Po skonfigurowaniu i uruchomieniu:
+
+1. Kliknij **Otwórz interfejs WWW** (Open Web UI), aby wyświetlić pulpit Awarii.
+2. W Home Assistant przejdź do **Ustawienia -> Urządzenia i usługi -> MQTT**. Powinno tam pojawić się nowe urządzenie o nazwie `Awaria` z sensorami dla każdego z wybranych dostawców.
+3. Sensory będą wskazywać liczbę aktualnie trwających lokalnych awarii.
+4. Sensory zawierają szczegółowe atrybuty JSON (`alerts`) z pełnymi opisami awarii, datami rozpoczęcia/zakończenia i lokalizacjami. Możesz użyć ich w szablonach (Templates) Home Assistant do tworzenia powiadomień!
+
+### Ważna informacja o ustawieniach
+
+Ponieważ konfiguracją tego dodatku zarządza Home Assistant, menu "Ustawienia" wewnątrz interfejsu WWW Awarii jest wyłączone. Wszelkich zmian w konfiguracji (dodawanie adresów, zmiana dostawców) należy dokonywać wyłącznie przez zakładkę **Konfiguracja** w panelu dodatku HA.
 
 ## Rozwiązywanie Problemów
 

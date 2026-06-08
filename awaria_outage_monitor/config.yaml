@@ -1,5 +1,5 @@
 name: Awaria Outage Monitor
-version: "1.0.62"
+version: "1.0.63"
 slug: awaria_outage_monitor
 description: Headless outage monitor for Polish utility providers (Tauron, PGE, Enea, Energa, MPWiK, Stoen, Veolia, etc.)
 url: https://github.com/eremef/awaria-outage-notifier
@@ -8,18 +8,19 @@ arch:
   - aarch64
   - amd64
 init: false
+ingress: true
+ingress_port: 8000
+panel_icon: "mdi:power-plug-off"
+panel_title: "Awaria"
+services:
+  - mqtt: want
 ports:
   8000/tcp: 8000
 options:
   addresses:
     - name: "Dom"
       cityName: "Warszawa"
-      voivodeship: "Mazowieckie"
-      district: ""
-      commune: ""
-      streetName: "ul. Marszałkowska"
-      streetName1: "Marszałkowska"
-      houseNo: "1"
+      streetName: "Marszałkowska"
       isActive: true
   enabled_sources:
     - tauron
@@ -32,15 +33,7 @@ schema:
   addresses:
     - name: str
       cityName: str
-      voivodeship: str?
-      district: str?
-      commune: str?
       streetName: str
-      streetName1: str?
-      streetName2: str?
-      houseNo: str
-      cityId: int?
-      streetId: int?
       isActive: bool?
   enabled_sources:
     - list(tauron|mpwik_wroclaw|mpwik_warszawa|fortum|energa|enea|pge|stoen|wmk|tauron_heat|aquanet|katowickie_wodociagi|veolia_warszawa|veolia_poznan|veolia_lodz|zwik_lodz|wodociagi_plockie|pwik_czestochowa|gdanskie_wodociagi)

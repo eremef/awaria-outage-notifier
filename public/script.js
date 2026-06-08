@@ -5,6 +5,52 @@ const ICONS = {
     DELETE: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-trash"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>'
 };
 
+// Mock Tauri IPC for Home Assistant Ingress environment
+if (typeof window !== 'undefined' && !window.__TAURI__) {
+    console.warn('Tauri API not found. Assuming Home Assistant Ingress environment.');
+    window.__TAURI__ = {
+        core: {
+            invoke: async (command, args) => {
+                console.log(`[HA Mock] invoke: ${command}`, args);
+                if (command === 'load_settings') {
+                    const res = await fetch('/api/settings');
+                    if (!res.ok) throw new Error('Failed to fetch settings');
+                    return await res.json();
+                }
+                if (command === 'fetch_all_alerts') {
+                    const res = await fetch('/api/alerts');
+                    if (!res.ok) throw new Error('Failed to fetch alerts');
+                    return await res.json(); // returns {alerts: [], is_stale, is_offline}
+                }
+                if (command === 'save_settings' || command === 'add_address' || command === 'remove_address' || command === 'set_primary_address') {
+                    console.warn('[HA Mock] Settings are read-only in Home Assistant Add-on mode. Edit via Add-on Configuration tab.');
+                    alert(typeof t !== 'undefined' ? t('ha_readonly_settings', 'Settings are read-only. Please edit them in the Home Assistant Add-on Configuration tab.') : 'Settings are read-only in HA Add-on mode.');
+                    return typeof currentSettings !== 'undefined' ? currentSettings : {};
+                }
+                if (command === 'get_app_version') {
+                    return "Home Assistant";
+                }
+                if (command.startsWith('teryt_')) {
+                    return [];
+                }
+                return null;
+            }
+        },
+        event: {
+            listen: async () => {},
+            emit: async () => {}
+        }
+    };
+
+    // Hide settings button in HA mode
+    document.addEventListener('DOMContentLoaded', () => {
+        const settingsBtn = document.getElementById('settings-btn');
+        if (settingsBtn) {
+            settingsBtn.style.display = 'none';
+        }
+    });
+}
+
 if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {
         // Initial theme pick from localStorage or system (prevents flash)
