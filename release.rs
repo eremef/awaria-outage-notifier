@@ -92,7 +92,8 @@ fn main() {
     update_tauri_conf(new_version);
     update_addon_config(new_version);
 
-    run_command("npm", &["install"], ".");
+    let npm_cmd = if cfg!(windows) { "npm.cmd" } else { "npm" };
+    run_command(npm_cmd, &["install"], ".");
     run_command("cargo", &["update"], "src-tauri");
     run_command("git", &["add", "."], ".");
     run_command("git", &["commit", "-m", &("release: v".to_string()+new_version)], ".");
