@@ -558,6 +558,8 @@ pub struct Settings {
     #[serde(default)]
     pub language: Option<String>,
     #[serde(default)]
+    pub font_size: Option<String>,
+    #[serde(default)]
     pub enabled_sources: Option<Vec<String>>,
     #[serde(default)]
     pub notification_preferences: HashMap<String, bool>,
@@ -582,6 +584,7 @@ impl Default for Settings {
             primary_address_index: None,
             theme: None,
             language: None,
+            font_size: None,
             enabled_sources: Some(Vec::new()),
             notification_preferences: HashMap::new(),
             upcoming_notification_enabled: false,

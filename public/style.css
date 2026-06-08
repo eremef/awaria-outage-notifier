@@ -532,6 +532,19 @@
 html {
     background-color: #000;
     overscroll-behavior: none;
+    font-size: 16px;
+}
+
+html[data-font-size="small"] {
+    font-size: 16px;
+}
+
+html[data-font-size="medium"] {
+    font-size: 18px;
+}
+
+html[data-font-size="large"] {
+    font-size: 20px;
 }
 
 body {

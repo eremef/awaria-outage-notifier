@@ -55,6 +55,7 @@ if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {
         // Initial theme pick from localStorage or system (prevents flash)
         applyTheme(localStorage.getItem('app-theme') || 'system');
+        applyFontSize(localStorage.getItem('app-font-size') || 'small');
 
         initSettings();
         initPullToRefresh();
@@ -504,6 +505,7 @@ if (typeof document !== 'undefined') {
         const saveBtn = document.getElementById('save-settings-btn');
         const themeSelect = document.getElementById('theme-select');
         const langSelect = document.getElementById('language-select');
+        const fontSizeSelect = document.getElementById('font-size-select');
         const addAddressBtn = document.getElementById('add-address-btn');
 
         if (btn) btn.addEventListener('click', () => toggleSettings());
@@ -705,6 +707,32 @@ if (typeof document !== 'undefined') {
             renderAlerts(lastAlerts || [], container, currentSettings, selectedAddressIndex);
             updateLastUpdated();
         });
+
+        if (fontSizeSelect) {
+            fontSizeSelect.addEventListener('change', async (e) => {
+                const newSize = e.target.value;
+                applyFontSize(newSize);
+
+                if (!currentSettings) {
+                    currentSettings = {
+                        addresses: [],
+                        primaryAddressIndex: null,
+                        theme: 'system',
+                        language: 'system',
+                        fontSize: newSize,
+                        enabledSources: [],
+                        showOtherOutages: true
+                    };
+                } else {
+                    currentSettings.fontSize = newSize;
+                }
+
+                await autoSaveSettings();
+                const container = document.getElementById('outages-container');
+                renderAlerts(lastAlerts || [], container, currentSettings, selectedAddressIndex);
+                updateLastUpdated();
+            });
+        }
 
         langSelect.addEventListener('change', async (e) => {
             const newLang = e.target.value;
@@ -1268,6 +1296,11 @@ if (typeof document !== 'undefined') {
                 }
                 applyTheme(settings.theme || 'system');
 
+                if (settings.fontSize && document.getElementById('font-size-select')) {
+                    document.getElementById('font-size-select').value = settings.fontSize;
+                }
+                applyFontSize(settings.fontSize || 'small');
+
                 // If enabledSources is present, auto-add any new providers with defaultNotify: true
                 // that were added after the user last saved settings (migration for existing users).
                 const sources = settings.enabledSources || [];
@@ -1342,6 +1375,7 @@ if (typeof document !== 'undefined') {
                     primaryAddressIndex: null,
                     theme: 'system',
                     language: 'system',
+                    fontSize: 'small',
                     enabledSources: [],
                     showOtherOutages: true,
                     filterByHouseNo: false
@@ -1471,6 +1505,16 @@ if (typeof document !== 'undefined') {
             root.setAttribute('data-theme', theme);
             localStorage.setItem('app-theme', theme);
         }
+    }
+
+    function applyFontSize(size) {
+        const root = document.documentElement;
+        let effectiveSize = size;
+        if (!size || size === 'system') {
+            effectiveSize = 'small';
+        }
+        root.setAttribute('data-font-size', effectiveSize);
+        localStorage.setItem('app-font-size', effectiveSize);
     }
 
     // Watch for system theme changes

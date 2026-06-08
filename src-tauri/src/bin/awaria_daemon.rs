@@ -138,6 +138,7 @@ async fn main() {
         primary_address_index: Some(0),
         theme: None,
         language: Some("pl".to_string()),
+        font_size: None,
         enabled_sources: Some(options.enabled_sources),
         notification_preferences: HashMap::new(),
         upcoming_notification_enabled: false,
@@ -306,9 +307,9 @@ async fn get_calendar_handler(Extension(alerts): Extension<SharedAlerts>) -> imp
 
         ics.push_str("BEGIN:VEVENT\r\n");
         ics.push_str(&format!("UID:{}@awaria\r\n", hash));
-        ics.push_str(&format!("DTSTAMP:{}Z\r\n", now_str));
-        ics.push_str(&format!("DTSTART:{}Z\r\n", start_ics.unwrap()));
-        ics.push_str(&format!("DTEND:{}Z\r\n", end_ics.unwrap()));
+        ics.push_str(&format!("DTSTAMP:{}\r\n", now_str));
+        ics.push_str(&format!("DTSTART:{}\r\n", start_ics.unwrap()));
+        ics.push_str(&format!("DTEND:{}\r\n", end_ics.unwrap()));
 
         let summary = match alert.source {
             app_lib::api_logic::AlertSource::Tauron 
