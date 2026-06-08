@@ -6,13 +6,30 @@ use std::process::Command;
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    if args.len() != 2 {
-        eprintln!("Usage: {} <version>", args[0]);
+    if args.len() < 2 || args.len() > 3 {
+        eprintln!("Usage: {} <version> [--fast]", args[0]);
         eprintln!("Example: {} 1.0.8", args[0]);
         std::process::exit(1);
     }
 
-    let new_version = &args[1];
+    let mut parsed_version = String::new();
+    let mut fast_track = false;
+
+    for arg in args.iter().skip(1) {
+        if arg == "--fast" {
+            fast_track = true;
+        } else {
+            parsed_version = arg.clone();
+        }
+    }
+
+    if parsed_version.is_empty() {
+        eprintln!("Error: Version is required.");
+        eprintln!("Usage: {} <version> [--fast]", args[0]);
+        std::process::exit(1);
+    }
+
+    let new_version = &parsed_version;
 
     let current_branch = get_current_branch();
     let is_production_or_beta = {
@@ -39,31 +56,35 @@ fn main() {
         std::process::exit(1);
     }
 
-    println!("Running tests...");
-    let npm_cmd = if cfg!(windows) { "npm.cmd" } else { "npm" };
-    
-    let check_commands = [
-        ["run", "test"],
-        ["run", "rust:clippy"],
-    ];
+    if !fast_track {
+        println!("Running tests...");
+        let npm_cmd = if cfg!(windows) { "npm.cmd" } else { "npm" };
+        
+        let check_commands = [
+            ["run", "test"],
+            ["run", "rust:clippy"],
+        ];
 
-    for args in check_commands {
-        let status = Command::new(npm_cmd)
-            .args(&args)
-            .current_dir(".")
-            .status();
+        for args in check_commands {
+            let status = Command::new(npm_cmd)
+                .args(&args)
+                .current_dir(".")
+                .status();
 
-        match status {
-            Ok(s) if s.success() => println!("Successfully ran npm {}", args.join(" ")),
-            Ok(s) => {
-                eprintln!("Error: npm {} failed with exit code: {:?}. Stopping release.", args.join(" "), s.code());
-                std::process::exit(1);
-            }
-            Err(e) => {
-                eprintln!("Error: Failed to execute npm {}: {}. Stopping release.", args.join(" "), e);
-                std::process::exit(1);
+            match status {
+                Ok(s) if s.success() => println!("Successfully ran npm {}", args.join(" ")),
+                Ok(s) => {
+                    eprintln!("Error: npm {} failed with exit code: {:?}. Stopping release.", args.join(" "), s.code());
+                    std::process::exit(1);
+                }
+                Err(e) => {
+                    eprintln!("Error: Failed to execute npm {}: {}. Stopping release.", args.join(" "), e);
+                    std::process::exit(1);
+                }
             }
         }
+    } else {
+        println!("Fast track enabled. Skipping tests and checks.");
     }
 
     update_cargo_toml(new_version);
