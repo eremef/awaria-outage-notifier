@@ -59,14 +59,16 @@ Zamiast wyświetlać cały interfejs aplikacji na pasku bocznym, możesz wyświe
 
 Dodatek dynamicznie generuje kanał iCalendar (`.ics`) zawierający wszystkie aktywne oraz nadchodzące awarie.
 
-1. Przejdź do **Ustawienia -> Urządzenia i usługi -> Dodaj integrację -> Lokalny kalendarz** (Local Calendar) lub zainstaluj zewnętrzną integrację kalendarza (np. `ICS Calendar` przez HACS).
+1. Zainstaluj integrację **ICS Calendar** (dostępną przez HACS), ponieważ domyślna integracja Lokalny kalendarz (Local Calendar) w Home Assistant nie obsługuje ładowania zewnętrznych/sieciowych plików `.ics`.
 2. Użyj następującego wewnętrznego adresu URL do synchronizacji:
 
-   ```text
-   http://awaria-outage-monitor:8000/api/calendar.ics
-   ```
+    ```text
+    http://<repo-hash>-awaria-outage-monitor:8000/api/calendar.ics
+    ```
 
-   *(Jeśli subskrybujesz kalendarz spoza sieci lokalnej kontenerów Home Assistant, użyj adresu `http://<ip-twojego-ha>:8000/api/calendar.ics`)*.
+    *Uwaga: Zastąp `<repo-hash>` 8-znakowym hashem wygenerowanym przez Home Assistant dla Twojego niestandardowego repozytorium (np. `385dfded-awaria-outage-monitor`). Jeśli zainstalowałeś dodatek lokalnie (nie z repozytorium), użyj `local-awaria-outage-monitor`.*
+
+    *(Jeśli subskrybujesz kalendarz spoza sieci lokalnej kontenerów Home Assistant, użyj adresu `http://<ip-twojego-ha>:8000/api/calendar.ics`)*.
 
 ## Blueprint powiadomień (Automatyzacje)
 
