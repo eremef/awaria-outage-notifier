@@ -13,7 +13,7 @@ ingress_port: 8000
 panel_icon: "mdi:power-plug-off"
 panel_title: "Awaria"
 services:
-  - mqtt: want
+  - "mqtt:want"
 ports:
   8000/tcp: 8000
 options:
