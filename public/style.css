@@ -41,6 +41,7 @@
     --success-text: #10b981;
     --success-border: #a7f3d0;
     --message-border: #f1f5f9;
+    --subtle-bg: #f1f5f9;
     --label-border: #e2e8f0;
     --tauron-color: #e3067e;
     --tauron_heat-color: #e3067e;
@@ -90,6 +91,7 @@
     --success-text: #6ee7b7;
     --success-border: #065f46;
     --message-border: #1e293b;
+    --subtle-bg: #1e293b;
     --label-border: #334155;
     --tauron-color: #df489b;
     --tauron_heat-color: #df489b;
@@ -134,6 +136,7 @@
     --success-text: #059669;
     --success-border: #d1fae5;
     --message-border: #ecfdf5;
+    --subtle-bg: #ecfdf5;
     --label-border: #dcfce7;
     --tauron-color: #ff048e;
     --tauron_heat-color: #ff048e;
@@ -179,6 +182,7 @@
     --success-text: #6ee7b7;
     --success-border: #065f46;
     --message-border: #164e63;
+    --subtle-bg: #164e63;
     --label-border: #164e63;
     --tauron-color: #f9a8d4;
     --tauron_heat-color: #f9a8d4;
@@ -223,6 +227,7 @@
     --success-text: #2e3440;
     --success-border: #2e3440;
     --message-border: #434c5e;
+    --subtle-bg: #434c5e;
     --label-border: #4c566a;
     --tauron-color: #df5ca4;
     --tauron_heat-color: #df5ca4;
@@ -267,6 +272,7 @@
     --success-text: #282a36;
     --success-border: #282a36;
     --message-border: #44475a;
+    --subtle-bg: #44475a;
     --label-border: #44475a;
     --tauron-color: #ff048e;
     --tauron_heat-color: #ff048e;
@@ -310,6 +316,7 @@
     --success-text: #6a994e;
     --success-border: #d8e5d8;
     --message-border: #e0d5ba;
+    --subtle-bg: #e0d5ba;
     --label-border: #d6ccb2;
     --tauron-color: #9c3a70;
     --tauron_heat-color: #9c3a70;
@@ -353,6 +360,7 @@
     --success-text: #6a994e;
     --success-border: #d8e5d8;
     --message-border: #f1e4d8;
+    --subtle-bg: #f1e4d8;
     --label-border: #ede0d4;
     --tauron-color: #bc6c25;
     --tauron_heat-color: #bc6c25;
@@ -397,6 +405,7 @@
     --success-text: #171717;
     --success-border: #a3a3a3;
     --message-border: #f5f5f5;
+    --subtle-bg: #f5f5f5;
     --label-border: #e5e5e5;
     --source-color: #525252;
     --tauron-color: #525252;
@@ -442,6 +451,7 @@
     --success-text: #fafafa;
     --success-border: #525252;
     --message-border: #262626;
+    --subtle-bg: #262626;
     --label-border: #404040;
     --source-color: #a3a3a3;
     --tauron-color: #a3a3a3;
@@ -487,6 +497,7 @@
     --success-text: #99ff99;
     --success-border: #00ff00;
     --message-border: #ffffff;
+    --subtle-bg: #000000;
     --label-border: #ffffff;
     --source-color: #ffffff;
     --tauron-color: #ff99cc;
@@ -617,7 +628,7 @@ h1 {
 
 .refresh-btn:hover {
     color: var(--primary-color);
-    background-color: var(--input-border);
+    background-color: var(--subtle-bg);
 }
 
 .refresh-btn:active {
@@ -1046,7 +1057,7 @@ h1 {
 .settings-close-btn {
     width: 100%;
     padding: 0.9rem;
-    background: var(--input-border);
+    background: var(--subtle-bg);
     color: var(--text-color);
     border: none;
     border-radius: 10px;
@@ -1340,11 +1351,11 @@ h1 {
 
 .collapse-local-btn:hover {
     color: var(--primary-text);
-    background: var(--label-border);
+    background: var(--subtle-bg);
 }
 
 .section-your-location span {
-    background: var(--label-border);
+    background: var(--subtle-bg);
     color: var(--secondary-text);
     padding: 0.4rem 1rem;
     border-radius: 100px;
@@ -1369,7 +1380,7 @@ h1 {
     content: "";
     flex: 1;
     height: 1px;
-    background: var(--label-border);
+    background: var(--subtle-bg);
     opacity: 0.6;
     border-radius: 2px;
 }
@@ -1492,7 +1503,7 @@ h1 {
 }
 
 .other-divider span {
-    background: var(--label-border);
+    background: var(--subtle-bg);
     color: var(--secondary-text);
     padding: 0.4rem 1rem;
     border-radius: 100px;
@@ -1760,7 +1771,7 @@ h1 {
 
 .address-form {
     padding: 1rem;
-    background: var(--message-border);
+    background: var(--subtle-bg);
     border-radius: 0.5rem;
     margin-top: 1rem;
     scroll-margin-top: calc(105px + var(--safe-area-inset-top));
@@ -1781,7 +1792,7 @@ h1 {
 }
 
 .cancel-btn:hover {
-    background: var(--message-border);
+    background: var(--subtle-bg);
     border-color: var(--secondary-text);
 }
 
@@ -1824,7 +1835,7 @@ h1 {
 
 .suggestion-item:hover,
 .suggestion-item:active {
-    background: var(--message-border);
+    background: var(--subtle-bg);
 }
 
 .suggestion-item.no-results {
@@ -2313,7 +2324,7 @@ input[type="checkbox"]:checked+.notify-bell-icon {
     margin-top: 0.75rem;
     margin-bottom: 0.5rem;
     padding: 0.4rem 0.5rem;
-    background: var(--message-border);
+    background: var(--subtle-bg);
     border-radius: 8px;
     border: 1px solid var(--input-border);
 }
@@ -2349,7 +2360,7 @@ input[type="checkbox"]:checked+.notify-bell-icon {
 
 .group-collapse-btn:hover {
     color: var(--primary-color);
-    background-color: var(--input-border);
+    background-color: var(--subtle-bg);
 }
 
 .chevron-icon {
