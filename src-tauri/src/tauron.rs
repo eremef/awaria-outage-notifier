@@ -74,10 +74,9 @@ pub async fn lookup_city(
     commune: &str,
 ) -> Result<Vec<GeoItem>, String> {
     let cache_bust = Utc::now().timestamp_millis().to_string();
-    let encoded_name = city_name.replace(' ', "%20");
     let url = format!(
         "{}/enum/geo/cities?partName={}&_={}",
-        get_base_url(), encoded_name, cache_bust
+        get_base_url(), urlencoding::encode(city_name), cache_bust
     );
 
     log::info!("Tauron API: GET {}", url);
@@ -133,10 +132,9 @@ pub async fn lookup_street(
     city_gaid: u64,
 ) -> Result<Vec<GeoItem>, String> {
     let cache_bust = Utc::now().timestamp_millis().to_string();
-    let encoded_name = street_name.replace(' ', "%20");
     let url = format!(
         "{}/enum/geo/streets?partName={}&ownerGAID={}&_={}",
-        get_base_url(), encoded_name, city_gaid, cache_bust
+        get_base_url(), urlencoding::encode(street_name), city_gaid, cache_bust
     );
 
     log::info!("Tauron API: GET {}", url);
@@ -304,7 +302,7 @@ pub async fn fetch_tauron_outages(
 
     let url = format!(
         "{}/outages/address?cityGAID={}&streetGAID={}&houseNo={}&fromDate={}&getLightingSupport=false&getServicedSwitchingoff=true&_={}",
-        get_base_url(), city.GAID, street.GAID, address.house_no.replace(' ', "%20"), from_date.replace(' ', "%20"), cache_bust
+        get_base_url(), city.GAID, street.GAID, urlencoding::encode(&address.house_no), urlencoding::encode(&from_date), cache_bust
     );
 
     log::info!("Tauron API (outages){}", url);
