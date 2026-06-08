@@ -11,7 +11,7 @@ mod state_db;
 mod stoen;
 mod tauron;
 pub mod teryt;
-mod utils;
+pub mod utils;
 mod cache;
 mod psg;
 mod wmk;

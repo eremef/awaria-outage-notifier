@@ -1,7 +1,8 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use axum::{routing::get, Json, Router, Extension};
+use axum::response::IntoResponse;
 use serde::{Deserialize, Serialize};
 use app_lib::get_providers;
 use app_lib::api_logic::{AddressEntry, Settings, UnifiedAlert};
@@ -157,6 +158,7 @@ async fn main() {
     let mqtt_client_loop = mqtt_client.clone();
     tokio::spawn(async move {
         let fetch_interval = Duration::from_secs(check_interval_minutes * 60);
+        let mut processed_hashes = HashSet::new();
         loop {
             log::info!("Starting alerts fetch cycle...");
             match fetch_alerts(&settings_clone).await {
@@ -170,6 +172,9 @@ async fn main() {
                     if let Some(client) = &mqtt_client_loop {
                         publish_mqtt_state(client, &settings_clone, &alerts).await;
                     }
+
+                    // Fire Home Assistant custom events for any NEW outages
+                    fire_ha_events(&alerts, &mut processed_hashes).await;
                 }
                 Err(e) => {
                     log::error!("Error during alerts fetch cycle: {}", e);
@@ -191,6 +196,7 @@ async fn main() {
         .nest_service("/", serve_dir)
         .route("/api/alerts", get(get_alerts_handler))
         .route("/api/settings", get(get_settings_handler))
+        .route("/api/calendar.ics", get(get_calendar_handler))
         .route("/health", get(health_handler))
         .layer(Extension(shared_alerts))
         .layer(Extension(settings));
@@ -242,7 +248,7 @@ async fn setup_mqtt(settings: &Settings) -> Option<AsyncClient> {
     Some(client)
 }
 
-async fn publish_mqtt_state(client: &AsyncClient, settings: &Settings, alerts: &Vec<UnifiedAlert>) {
+async fn publish_mqtt_state(client: &AsyncClient, settings: &Settings, alerts: &[UnifiedAlert]) {
     let enabled = settings.enabled_sources.as_ref().unwrap();
     for provider in get_providers() {
         if !enabled.contains(&provider.id()) { continue; }
@@ -269,6 +275,141 @@ async fn get_settings_handler(Extension(settings): Extension<Settings>) -> Json<
 
 async fn health_handler() -> Json<serde_json::Value> {
     Json(serde_json::json!({ "status": "ok" }))
+}
+
+async fn get_calendar_handler(Extension(alerts): Extension<SharedAlerts>) -> impl IntoResponse {
+    let lock = alerts.lock().unwrap();
+    let mut ics = String::new();
+    ics.push_str("BEGIN:VCALENDAR\r\n");
+    ics.push_str("VERSION:2.0\r\n");
+    ics.push_str("PRODID:-//eremef//Awaria Outage Monitor//PL\r\n");
+    ics.push_str("CALSCALE:GREGORIAN\r\n");
+    ics.push_str("METHOD:PUBLISH\r\n");
+
+    let now_str = format_ics_now();
+
+    for alert in lock.iter() {
+        if alert.is_local != Some(true) {
+            continue;
+        }
+
+        let hash = alert.hash.clone().unwrap_or_else(|| alert.to_hash());
+        let start_str = alert.startDate.as_deref().unwrap_or("");
+        let end_str = alert.endDate.as_deref().unwrap_or("");
+
+        let start_ics = format_ics_date(start_str);
+        let end_ics = format_ics_date(end_str);
+
+        if start_ics.is_none() || end_ics.is_none() {
+            continue;
+        }
+
+        ics.push_str("BEGIN:VEVENT\r\n");
+        ics.push_str(&format!("UID:{}@awaria\r\n", hash));
+        ics.push_str(&format!("DTSTAMP:{}Z\r\n", now_str));
+        ics.push_str(&format!("DTSTART:{}Z\r\n", start_ics.unwrap()));
+        ics.push_str(&format!("DTEND:{}Z\r\n", end_ics.unwrap()));
+
+        let summary = match alert.source {
+            app_lib::api_logic::AlertSource::Tauron 
+            | app_lib::api_logic::AlertSource::Energa 
+            | app_lib::api_logic::AlertSource::Enea 
+            | app_lib::api_logic::AlertSource::Pge 
+            | app_lib::api_logic::AlertSource::Stoen => "Awaria prądu",
+            app_lib::api_logic::AlertSource::Fortum 
+            | app_lib::api_logic::AlertSource::TauronHeat 
+            | app_lib::api_logic::AlertSource::VeoliaWarszawa 
+            | app_lib::api_logic::AlertSource::VeoliaPoznan 
+            | app_lib::api_logic::AlertSource::VeoliaLodz 
+            | app_lib::api_logic::AlertSource::Gpec => "Awaria ogrzewania",
+            app_lib::api_logic::AlertSource::Psg => "Awaria gazu",
+            _ => "Awaria wody",
+        };
+
+        let provider_name = alert.source.to_string().to_uppercase();
+        ics.push_str(&format!("SUMMARY:{} ({})\r\n", summary, provider_name));
+
+        let location = alert.location.as_deref().unwrap_or("").replace('\n', " ").replace('\r', "");
+        ics.push_str(&format!("LOCATION:{}\r\n", location));
+
+        let description = alert.message.as_deref().unwrap_or("").replace('\n', " ").replace('\r', "");
+        ics.push_str(&format!("DESCRIPTION:{}\r\n", description));
+        ics.push_str("END:VEVENT\r\n");
+    }
+
+    ics.push_str("END:VCALENDAR\r\n");
+
+    axum::response::Response::builder()
+        .header("Content-Type", "text/calendar; charset=utf-8")
+        .header("Content-Disposition", "inline; filename=calendar.ics")
+        .body(axum::body::Body::from(ics))
+        .unwrap()
+}
+
+fn format_ics_date(date_str: &str) -> Option<String> {
+    let dt = app_lib::utils::parse_date(date_str)?;
+    Some(dt.format("%Y%m%dT%H%M%SZ").to_string())
+}
+
+fn format_ics_now() -> String {
+    chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string()
+}
+
+async fn fire_ha_events(alerts: &[UnifiedAlert], processed_hashes: &mut HashSet<String>) {
+    let token = match std::env::var("SUPERVISOR_TOKEN") {
+        Ok(t) => t,
+        Err(_) => {
+            log::debug!("SUPERVISOR_TOKEN not found. Skipping event firing.");
+            return;
+        }
+    };
+
+    let client = match NetworkState::build_client() {
+        Ok(c) => c,
+        Err(e) => {
+            log::error!("Failed to build client for HA events: {}", e);
+            return;
+        }
+    };
+
+    let is_first_run = processed_hashes.is_empty();
+
+    for alert in alerts {
+        if alert.is_local != Some(true) {
+            continue;
+        }
+
+        let hash = alert.hash.clone().unwrap_or_else(|| alert.to_hash());
+
+        if !processed_hashes.insert(hash.clone()) {
+            continue;
+        }
+
+        if is_first_run {
+            log::debug!("Caching initial alert {} without firing event.", hash);
+            continue;
+        }
+
+        log::info!("Firing Home Assistant event awaria_outage for alert {}", hash);
+        let url = "http://supervisor/core/api/events/awaria_outage";
+        let res = client.post(url)
+            .header("Authorization", format!("Bearer {}", token))
+            .header("Content-Type", "application/json")
+            .json(alert)
+            .send()
+            .await;
+
+        match res {
+            Ok(resp) => {
+                if !resp.status().is_success() {
+                    log::error!("HA event POST returned error status: {:?}", resp.status());
+                }
+            }
+            Err(e) => {
+                log::error!("Failed to fire HA event: {}", e);
+            }
+        }
+    }
 }
 
 async fn fetch_alerts(settings: &Settings) -> Result<Vec<UnifiedAlert>, String> {

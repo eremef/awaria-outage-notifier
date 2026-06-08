@@ -12,6 +12,7 @@ ingress: true
 ingress_port: 8000
 panel_icon: "mdi:power-plug-off"
 panel_title: "Awaria"
+homeassistant_api: true
 services:
   - "mqtt:want"
 ports:
@@ -30,7 +31,7 @@ options:
     - mpwik_warszawa
   port: 8000
   show_other_outages: true
-  check_interval_minutes: 15
+  check_interval_minutes: 60
 schema:
   addresses:
     - name: str
