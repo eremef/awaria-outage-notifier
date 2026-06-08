@@ -13,12 +13,12 @@ if (typeof window !== 'undefined' && !window.__TAURI__) {
             invoke: async (command, args) => {
                 console.log(`[HA Mock] invoke: ${command}`, args);
                 if (command === 'load_settings') {
-                    const res = await fetch('/api/settings');
+                    const res = await fetch('api/settings');
                     if (!res.ok) throw new Error('Failed to fetch settings');
                     return await res.json();
                 }
                 if (command === 'fetch_all_alerts') {
-                    const res = await fetch('/api/alerts');
+                    const res = await fetch('api/alerts');
                     if (!res.ok) throw new Error('Failed to fetch alerts');
                     return await res.json(); // returns {alerts: [], is_stale, is_offline}
                 }
