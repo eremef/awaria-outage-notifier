@@ -69,6 +69,7 @@ fn main() {
     update_cargo_toml(new_version);
     update_package_json(new_version);
     update_tauri_conf(new_version);
+    update_addon_config(new_version);
 
     run_command("npm", &["install"], ".");
     run_command("cargo", &["update"], "src-tauri");
@@ -212,4 +213,35 @@ fn get_current_branch() -> String {
         .expect("Failed to execute git command");
 
     String::from_utf8_lossy(&output.stdout).trim().to_string()
+}
+
+fn update_addon_config(version: &str) {
+    let config_path = Path::new("awaria_outage_monitor").join("config.yaml");
+
+    if !config_path.exists() {
+        eprintln!("Warning: config.yaml not found at {}", config_path.display());
+        return;
+    }
+
+    let content = fs::read_to_string(&config_path).expect("Failed to read config.yaml");
+
+    let new_content = content
+        .lines()
+        .map(|line| {
+            if line.trim().starts_with("version:") {
+                let indent = line
+                    .chars()
+                    .take_while(|c| c.is_whitespace())
+                    .collect::<String>();
+                format!("{}version: \"{}\"", indent, version)
+            } else {
+                line.to_string()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    fs::write(&config_path, new_content).expect("Failed to write config.yaml");
+
+    println!("Updated awaria_outage_monitor/config.yaml");
 }
