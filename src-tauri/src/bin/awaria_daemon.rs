@@ -32,6 +32,8 @@ struct HaOptions {
     show_other_outages: bool,
     #[serde(default, rename = "filter_by_house_no")]
     filter_by_house_no: bool,
+    #[serde(default = "default_interval", rename = "check_interval_minutes")]
+    check_interval_minutes: u64,
 }
 
 fn default_port() -> u16 {
@@ -40,6 +42,10 @@ fn default_port() -> u16 {
 
 fn default_true() -> bool {
     true
+}
+
+fn default_interval() -> u64 {
+    15
 }
 
 type SharedAlerts = Arc<Mutex<Vec<UnifiedAlert>>>;
@@ -74,6 +80,7 @@ async fn main() {
             port: 8000,
             show_other_outages: true,
             filter_by_house_no: false,
+            check_interval_minutes: 15,
         }
     });
 
@@ -139,6 +146,7 @@ async fn main() {
     let shared_alerts: SharedAlerts = Arc::new(Mutex::new(Vec::new()));
     let shared_alerts_clone = shared_alerts.clone();
     let settings_clone = settings.clone();
+    let check_interval_minutes = options.check_interval_minutes;
 
     // Setup MQTT
     let mqtt_client = setup_mqtt(&settings).await;
@@ -146,7 +154,7 @@ async fn main() {
     // Start background fetching task
     let mqtt_client_loop = mqtt_client.clone();
     tokio::spawn(async move {
-        let fetch_interval = Duration::from_secs(15 * 60); // Fetch every 15 minutes
+        let fetch_interval = Duration::from_secs(check_interval_minutes * 60);
         loop {
             log::info!("Starting alerts fetch cycle...");
             match fetch_alerts(&settings_clone).await {
@@ -165,7 +173,7 @@ async fn main() {
                     log::error!("Error during alerts fetch cycle: {}", e);
                 }
             }
-            log::info!("Sleeping for 15 minutes...");
+            log::info!("Sleeping for {} minutes...", check_interval_minutes);
             tokio::time::sleep(fetch_interval).await;
         }
     });
