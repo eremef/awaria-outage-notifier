@@ -4,7 +4,7 @@
     <color name="widget_background">#1A1A1A</color>
     <color name="widget_text_primary">#FF4DA6</color>
     <color name="widget_text_label">#A0A0A0</color>
-    <color name="widget_text_updated">#777777</color>
+    <color name="widget_text_updated">#B0B0B0</color>
     <color name="widget_border">#333333</color>
     
     <!-- Utility Specific Colors (Dark - General) -->
@@ -24,7 +24,7 @@
     <color name="brand_wmk">#38BDF8</color>
     <color name="brand_psg">#38BDF8</color>
     <color name="brand_aquanet">#4DA6FF</color>
-    <color name="brand_katowickiewodociagi">#0089C8</color>
+    <color name="brand_katowickiewodociagi">#29B6F6</color>
     <color name="brand_mpwik_warszawa">#6085ff</color>
     <color name="brand_veolia">#FF645B</color>
     <color name="brand_veolia_poznan">#EF5350</color>

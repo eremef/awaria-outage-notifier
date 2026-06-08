@@ -189,17 +189,15 @@ if (typeof document !== 'undefined') {
             html += `
             <div class="settings-field-group" id="group-${catId}">
                 <div class="settings-group-header">
-                    <div class="settings-group-header-clickable">
-                        <button class="group-collapse-btn" aria-label="Toggle group collapse">
-                            ${chevronSvg}
-                        </button>
-                        <div class="settings-group-label" data-i18n="${catInfo.i18n}">${catInfo.label}</div>
-                    </div>
+                    <button class="settings-group-header-clickable" type="button" aria-expanded="false" aria-controls="sources-list-${catId}">
+                        ${chevronSvg}
+                        <span class="settings-group-label" data-i18n="${catInfo.i18n}">${catInfo.label}</span>
+                    </button>
                     <div class="master-checkbox-container">
                         <input type="checkbox" id="category-${catId}-check" title="Toggle all under ${catInfo.label}">
                     </div>
                 </div>
-                <div class="settings-group-sources">
+                <div class="settings-group-sources" id="sources-list-${catId}">
                     <div class="settings-field-row header indent">
                         <div class="source-group header-label" data-i18n="source_name">Source</div>
                         <div class="notify-group header-label" data-i18n="notify">Notify</div>
@@ -211,7 +209,7 @@ if (typeof document !== 'undefined') {
                                 <label for="source-${s.id}-check" ${s.i18nLabel ? `data-i18n="${s.i18nLabel}"` : ''}>${s.label}</label>
                             </div>
                             <div class="notify-group checkbox-pair mini">
-                                <input type="checkbox" id="notify-${s.id}-check">
+                                <input type="checkbox" id="notify-${s.id}-check" aria-label="${t('notify')} — ${s.label}">
                                 <svg class="notify-bell-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
                             </div>
                         </div>
@@ -233,6 +231,8 @@ if (typeof document !== 'undefined') {
                 const group = header.closest('.settings-field-group');
                 if (group) {
                     group.classList.toggle('expanded');
+                    const isExpanded = group.classList.contains('expanded');
+                    header.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
                 }
             });
         });
@@ -676,6 +676,9 @@ if (typeof document !== 'undefined') {
             }
         });
 
+        setupAutocompleteKeyboard(cityInput, document.getElementById('city-suggestions'));
+        setupAutocompleteKeyboard(streetInput, document.getElementById('street-suggestions'));
+
         document.addEventListener('click', (e) => {
             if (!e.target.closest('#city-input') && !e.target.closest('#city-suggestions')) {
                 hideSuggestions('city-suggestions');
@@ -1088,14 +1091,18 @@ if (typeof document !== 'undefined') {
 
     function renderCitySuggestions(cities) {
         const container = document.getElementById('city-suggestions');
+        const input = document.getElementById('city-input');
         if (!cities || cities.length === 0) {
             container.innerHTML = '<div class="suggestion-item no-results">No cities found</div>';
             container.classList.remove('hidden');
+            if (input) input.setAttribute('aria-expanded', 'true');
             return;
         }
 
-        container.innerHTML = cities.map(c => `
+        container.innerHTML = cities.map((c, idx) => `
         <div class="suggestion-item" 
+            id="city-opt-${idx}"
+            role="option"
             data-city-id="${c.city_id}" 
             data-city-name="${escapeHtml(c.city)}"
             data-voivodeship="${escapeHtml(c.voivodeship)}"
@@ -1105,6 +1112,8 @@ if (typeof document !== 'undefined') {
             <div class="suggestion-detail">${escapeHtml(c.voivodeship)} / ${escapeHtml(c.district)} / ${escapeHtml(c.commune)} / ${c.locality_type ? ` ${escapeHtml(c.locality_type)}` : ''}</div>
         </div>
     `).join('');
+
+        if (input) input.setAttribute('aria-expanded', 'true');
 
         container.querySelectorAll('.suggestion-item[data-city-id]').forEach(el => {
             el.addEventListener('click', () => {
@@ -1204,17 +1213,27 @@ if (typeof document !== 'undefined') {
 
     function renderStreetSuggestions(streets) {
         const container = document.getElementById('street-suggestions');
+        const input = document.getElementById('street-input');
         if (!streets || streets.length === 0) {
             container.innerHTML = '<div class="suggestion-item no-results">No streets found</div>';
             container.classList.remove('hidden');
+            if (input) input.setAttribute('aria-expanded', 'true');
             return;
         }
 
-        container.innerHTML = streets.map(s => `
-        <div class="suggestion-item" data-street-id="${s.street_id}" data-street-name="${escapeHtml(s.full_street_name)}" data-street-name1="${escapeHtml(s.street_name_1)}" data-street-name2="${s.street_name_2 ? escapeHtml(s.street_name_2) : ''}">
+        container.innerHTML = streets.map((s, idx) => `
+        <div class="suggestion-item" 
+            id="street-opt-${idx}"
+            role="option"
+            data-street-id="${s.street_id}" 
+            data-street-name="${escapeHtml(s.full_street_name)}" 
+            data-street-name1="${escapeHtml(s.street_name_1)}" 
+            data-street-name2="${s.street_name_2 ? escapeHtml(s.street_name_2) : ''}">
             <div class="suggestion-name">${escapeHtml(s.full_street_name)}</div>
         </div>
     `).join('');
+
+        if (input) input.setAttribute('aria-expanded', 'true');
 
         container.querySelectorAll('.suggestion-item[data-street-id]').forEach(el => {
             el.addEventListener('click', () => {
@@ -1255,6 +1274,72 @@ if (typeof document !== 'undefined') {
 
     function hideSuggestions(id) {
         document.getElementById(id).classList.add('hidden');
+        const inputId = id === 'city-suggestions' ? 'city-input' : 'street-input';
+        const input = document.getElementById(inputId);
+        if (input) {
+            input.setAttribute('aria-expanded', 'false');
+            input.removeAttribute('aria-activedescendant');
+        }
+    }
+
+    function setupAutocompleteKeyboard(input, suggestionsContainer) {
+        let activeIndex = -1;
+
+        function getItems() {
+            return suggestionsContainer.querySelectorAll('.suggestion-item:not(.no-results)');
+        }
+
+        function clearActive() {
+            getItems().forEach(item => item.classList.remove('active'));
+            activeIndex = -1;
+            input.removeAttribute('aria-activedescendant');
+        }
+
+        input.addEventListener('keydown', (e) => {
+            const items = getItems();
+            if (suggestionsContainer.classList.contains('hidden') || items.length === 0) {
+                return;
+            }
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeIndex = (activeIndex + 1) % items.length;
+                highlightItem(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeIndex = (activeIndex - 1 + items.length) % items.length;
+                highlightItem(items);
+            } else if (e.key === 'Enter') {
+                if (activeIndex >= 0 && activeIndex < items.length) {
+                    e.preventDefault();
+                    items[activeIndex].click();
+                    clearActive();
+                }
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                suggestionsContainer.classList.add('hidden');
+                input.setAttribute('aria-expanded', 'false');
+                clearActive();
+            }
+        });
+
+        function highlightItem(items) {
+            items.forEach((item, idx) => {
+                if (idx === activeIndex) {
+                    item.classList.add('active');
+                    input.setAttribute('aria-activedescendant', item.id || `opt-${idx}`);
+                    item.scrollIntoView({ block: 'nearest' });
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+
+        const observer = new MutationObserver(() => {
+            activeIndex = -1;
+            input.removeAttribute('aria-activedescendant');
+        });
+        observer.observe(suggestionsContainer, { childList: true });
     }
 
     function escapeHtml(str) {
@@ -2412,11 +2497,11 @@ if (typeof document !== 'undefined') {
                     const collapsedClass = isExpanded ? '' : ' collapsed';
                     html += `
                     <div class="collapsible local-alert-group source-${s.id}${collapsedClass}">
-                        <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
+                        <button class="section-label other" type="button" aria-expanded="${isExpanded ? 'true' : 'false'}" aria-controls="local-content-${s.id}" onclick="this.parentElement.classList.toggle('collapsed'); this.setAttribute('aria-expanded', !this.parentElement.classList.contains('collapsed'))">
                             <span>${escapeHtml(lblSection)} (${list.length})</span>
                             <span class="toggle-icon">▼</span>
-                        </div>
-                        <div class="collapsible-content">
+                        </button>
+                        <div class="collapsible-content" id="local-content-${s.id}">
                             ${renderCards(list, s.id)}
                         </div>
                     </div>
@@ -2455,11 +2540,11 @@ if (typeof document !== 'undefined') {
                     const collapsedClass = isExpanded ? '' : ' collapsed';
                     html += `
                     <div class="collapsible other-alert-group source-${s.id}${collapsedClass}">
-                        <div class="section-label other" onclick="this.parentElement.classList.toggle('collapsed')">
+                        <button class="section-label other" type="button" aria-expanded="${isExpanded ? 'true' : 'false'}" aria-controls="other-content-${s.id}" onclick="this.parentElement.classList.toggle('collapsed'); this.setAttribute('aria-expanded', !this.parentElement.classList.contains('collapsed'))">
                             <span>${escapeHtml(lblSection)} (${list.length})</span>
                             <span class="toggle-icon">▼</span>
-                        </div>
-                        <div class="collapsible-content">
+                        </button>
+                        <div class="collapsible-content" id="other-content-${s.id}">
                             ${renderCards(list, s.id)}
                         </div>
                     </div>
@@ -2479,10 +2564,18 @@ if (typeof document !== 'undefined') {
         const svg = btn.querySelector('polyline');
 
         if (anyExpanded) {
-            groups.forEach(g => g.classList.add('collapsed'));
+            groups.forEach(g => {
+                g.classList.add('collapsed');
+                const b = g.querySelector('.section-label.other');
+                if (b) b.setAttribute('aria-expanded', 'false');
+            });
             if (svg) svg.setAttribute('points', '6 9 12 15 18 9');
         } else {
-            groups.forEach(g => g.classList.remove('collapsed'));
+            groups.forEach(g => {
+                g.classList.remove('collapsed');
+                const b = g.querySelector('.section-label.other');
+                if (b) b.setAttribute('aria-expanded', 'true');
+            });
             if (svg) svg.setAttribute('points', '18 15 12 9 6 15');
         }
     };
@@ -2495,10 +2588,18 @@ if (typeof document !== 'undefined') {
         const svg = btn.querySelector('polyline');
 
         if (anyExpanded) {
-            groups.forEach(g => g.classList.add('collapsed'));
+            groups.forEach(g => {
+                g.classList.add('collapsed');
+                const b = g.querySelector('.section-label.other');
+                if (b) b.setAttribute('aria-expanded', 'false');
+            });
             if (svg) svg.setAttribute('points', '6 9 12 15 18 9');
         } else {
-            groups.forEach(g => g.classList.remove('collapsed'));
+            groups.forEach(g => {
+                g.classList.remove('collapsed');
+                const b = g.querySelector('.section-label.other');
+                if (b) b.setAttribute('aria-expanded', 'true');
+            });
             if (svg) svg.setAttribute('points', '18 15 12 9 6 15');
         }
     };

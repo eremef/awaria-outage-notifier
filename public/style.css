@@ -30,7 +30,7 @@
     --background-color: #f8fafc;
     --card-background: #ffffff;
     --text-color: #1e293b;
-    --secondary-text: #64748b;
+    --secondary-text: #475569;
     --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     --input-border: #e2e8f0;
     --input-focus: #818cf8;
@@ -261,7 +261,7 @@
     --background-color: #282a36;
     --card-background: #44475a;
     --text-color: #f8f8f2;
-    --secondary-text: #6272a4;
+    --secondary-text: #a2b4ec;
     --shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
     --input-border: #6272a4;
     --input-focus: #ff79c6;
@@ -527,6 +527,11 @@
 
 * {
     box-sizing: border-box;
+}
+
+:focus-visible {
+    outline: 3px solid var(--input-focus, var(--primary-color));
+    outline-offset: 2px;
 }
 
 html {
@@ -1399,6 +1404,9 @@ h1 {
 }
 
 .section-label.other {
+    width: 100%;
+    font-family: inherit;
+    text-align: left;
     background: var(--card-background);
     color: var(--primary-color);
     padding: 0.6rem 1rem;
@@ -1847,8 +1855,11 @@ h1 {
 }
 
 .suggestion-item:hover,
-.suggestion-item:active {
+.suggestion-item:active,
+.suggestion-item.active {
     background: var(--subtle-bg);
+    outline: 2px solid var(--input-focus, var(--primary-color));
+    outline-offset: -2px;
 }
 
 .suggestion-item.no-results {
@@ -2350,6 +2361,12 @@ input[type="checkbox"]:checked+.notify-bell-icon {
     flex-grow: 1;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+    text-align: left;
+    color: inherit;
 }
 
 .settings-group-header-clickable .settings-group-label {

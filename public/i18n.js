@@ -186,7 +186,14 @@ const translations = {
         "toast_slow_fetching_warning": "Fetching outages from this provider may take longer.",
         "toast_house_no_filter_warning": "Warning: Filtering by house number might skip some outages if the provider's description is incorrect.",
         "refresh_progress_prefix": "Refreshing",
-        "refreshing_providers": "Refreshing providers"
+        "refreshing_providers": "Refreshing providers",
+        "aria_address_filter": "Filter by address",
+        "aria_settings_btn": "Open settings",
+        "aria_close_settings_btn": "Close settings",
+        "aria_refresh_btn": "Refresh outages",
+        "aria_cappucino_support": "Buy me a virtual coffee",
+        "aria_github_link": "GitHub repository",
+        "aria_category_toggle": "Toggle utility category"
     },
     pl: {
         "title": "Awaria",
@@ -372,7 +379,14 @@ const translations = {
         "toast_slow_fetching_warning": "Aktualizowanie danych u tego dostawcy może potrwać chwilę dłużej:",
         "toast_house_no_filter_warning": "Uwaga: Filtrowanie po numerach budynków może pomijać niektóre zdarzenia przy nieprawidłowych danych dostawcy.",
         "refresh_progress_prefix": "Pobieranie",
-        "refreshing_providers": "Aktualizowanie dostawców"
+        "refreshing_providers": "Aktualizowanie dostawców",
+        "aria_address_filter": "Filtruj według adresu",
+        "aria_settings_btn": "Otwórz ustawienia",
+        "aria_close_settings_btn": "Zamknij ustawienia",
+        "aria_refresh_btn": "Odśwież wyłączenia",
+        "aria_cappucino_support": "Postaw mi wirtualną kawę",
+        "aria_github_link": "Repozytorium GitHub",
+        "aria_category_toggle": "Przełącz kategorię mediów"
     }
 };
 
@@ -415,10 +429,11 @@ function t(key) {
  */
 function applyTranslations() {
     document.documentElement.lang = currentLang;
-    const elements = document.querySelectorAll('[data-i18n], [data-i18n-title]');
+    const elements = document.querySelectorAll('[data-i18n], [data-i18n-title], [data-i18n-aria-label]');
     elements.forEach(el => {
         const key = el.getAttribute('data-i18n');
         const titleKey = el.getAttribute('data-i18n-title');
+        const ariaLabelKey = el.getAttribute('data-i18n-aria-label');
 
         if (key) {
             // Handle input placeholders specifically
@@ -447,6 +462,10 @@ function applyTranslations() {
 
         if (titleKey) {
             el.setAttribute('title', t(titleKey));
+        }
+
+        if (ariaLabelKey) {
+            el.setAttribute('aria-label', t(ariaLabelKey));
         }
     });
 }
