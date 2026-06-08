@@ -18,6 +18,8 @@ struct HaAddress {
     street_name: String,
     #[serde(default = "default_true", rename = "isActive")]
     is_active: bool,
+    #[serde(default, rename = "houseNo")]
+    house_no: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -102,7 +104,7 @@ async fn main() {
             commune: "".to_string(),
             street_name_1: "".to_string(),
             street_name_2: None,
-            house_no: "".to_string(),
+            house_no: ha_addr.house_no.clone(),
             city_id: None,
             street_id: None,
         };

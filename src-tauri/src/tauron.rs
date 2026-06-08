@@ -300,9 +300,15 @@ pub async fn fetch_tauron_outages(
     let from_date = now.to_rfc3339_opts(SecondsFormat::Millis, true);
     let cache_bust = now.timestamp_millis().to_string();
 
+    let house_no_val = if address.house_no.trim().is_empty() {
+        "null".to_string()
+    } else {
+        urlencoding::encode(address.house_no.trim()).to_string()
+    };
+
     let url = format!(
         "{}/outages/address?cityGAID={}&streetGAID={}&houseNo={}&fromDate={}&getLightingSupport=false&getServicedSwitchingoff=true&_={}",
-        get_base_url(), city.GAID, street.GAID, urlencoding::encode(&address.house_no), urlencoding::encode(&from_date), cache_bust
+        get_base_url(), city.GAID, street.GAID, house_no_val, urlencoding::encode(&from_date), cache_bust
     );
 
     log::info!("Tauron API (outages){}", url);
