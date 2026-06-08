@@ -66,7 +66,7 @@ Dodatek dynamicznie generuje kanał iCalendar (`.ics`) zawierający wszystkie ak
     http://<repo-hash>-awaria-outage-monitor:8000/api/calendar.ics
     ```
 
-    *Uwaga: Zastąp `<repo-hash>` 8-znakowym hashem wygenerowanym przez Home Assistant dla Twojego niestandardowego repozytorium (np. `385dfded-awaria-outage-monitor`). Jeśli zainstalowałeś dodatek lokalnie (nie z repozytorium), użyj `local-awaria-outage-monitor`.*
+    *Uwaga: Zastąp `<repo-hash>` 8-znakowym hashem wygenerowanym przez Home Assistant dla Twojego niestandardowego repozytorium (np. `385dfded-awaria-outage-monitor`). Ten hash możesz znaleźć, wchodząc na stronę dodatku w ustawieniach Home Assistant i kopiując przedrostek z paska adresu przeglądarki (np. `.../addon/385dfded_awaria_outage_monitor/info`). Jeśli zainstalowałeś dodatek lokalnie (nie z repozytorium), użyj `local-awaria-outage-monitor`.*
 
     *(Jeśli subskrybujesz kalendarz spoza sieci lokalnej kontenerów Home Assistant, użyj adresu `http://<ip-twojego-ha>:8000/api/calendar.ics`)*.
 
