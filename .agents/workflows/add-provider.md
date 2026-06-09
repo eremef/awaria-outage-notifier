@@ -56,12 +56,11 @@ Once the data source is identified, create an `implementation_plan.md` artifact.
    - **Plumbing**:
      - `BaseWidgetProvider.kt`: Add the `sourceKey` to `getSourceName()` so it correctly translates the label.
      - `WidgetConfigActivity.kt`: Add the new `*WidgetProvider` class to the `getProviderForWidget` `when` statement so users can select an address for it.
-     - `AndroidManifest.xml`: Declare a new `<receiver>` for the new widget provider class, pointing to its layout/info.
+     - `AndroidManifest.xml`: Declare a new `<receiver>` for the new widget provider class, pointing to the shared info XML: `@xml/widget_single_info`.
      - `strings.xml` (in both `values` and `values-en`): Define `@string/widget_label_provider` and `@string/provider_name`.
      - `colors.xml` (both `values` and `values-night`): Define the provider's brand color to fit the proper theme.
    - **Widget Classes & Layouts**:
      - Create a dedicated provider widget Kotlin class (e.g., `NewProviderWidgetProvider.kt`) extending `BaseWidgetProvider`.
-     - Create its info XML: `res/xml/widget_provider_info.xml` pointing to `@layout/widget_outage`.
      - `AllWidgetProvider.kt` & `TriWidgetProvider.kt`: Add the new provider source string to their data aggregation lists (e.g., `waterSources`).
    - **Workers**:
      - `WidgetUpdateWorker.kt`: Add the new provider to the background worker refresh logic.
