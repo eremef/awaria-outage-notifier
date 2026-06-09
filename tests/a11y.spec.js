@@ -7,6 +7,7 @@ let tauriProcess;
 let browser;
 
 test.beforeAll(async () => {
+    test.setTimeout(120000); // 120s for Tauri dev to start
     console.log('Starting Tauri app for A11y tests...');
     // Start Tauri with remote debugging enabled
     tauriProcess = spawn('npx', ['tauri', 'dev'], {
