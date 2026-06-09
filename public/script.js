@@ -2480,6 +2480,25 @@ if (typeof document !== 'undefined') {
             return;
         }
 
+        // Helper to get source text and emoji
+        const getSourceLabelText = (s) => {
+            return (typeof t !== 'undefined' ? t(s.i18nLabel) : null) || s.label;
+        };
+        const getSourceIcon = (s) => {
+            const svgBase = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="utility-svg"';
+            if (s.category === 'water') {
+                return `<svg ${svgBase}><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"></path></svg>`;
+            }
+            if (s.category === 'heating') {
+                return `<svg ${svgBase}><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path></svg>`;
+            }
+            if (s.category === 'gas') {
+                return `<svg ${svgBase}><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>`;
+            }
+            // Power
+            return `<svg ${svgBase}><polygon points="14 2 6 13 12 13 10 22 18 11 12 11 14 2"></polygon></svg>`;
+        };
+
         // Step 1: Render Local Alerts immediately
         if (hasLocalAlerts) {
             const totalLocal = Object.values(localLists).reduce((sum, l) => sum + l.length, 0);
@@ -2498,14 +2517,15 @@ if (typeof document !== 'undefined') {
             SOURCES.forEach(s => {
                 const list = localLists[s.id];
                 if (list && list.length > 0) {
-                    const lblSection = (typeof t !== 'undefined' ? t(`lbl_section_${s.id}`) : null) || `${s.category} (${s.label})`;
+                    const lblText = getSourceLabelText(s);
+                    const iconSvg = getSourceIcon(s);
                     const groupId = `local-source-${s.id}`;
                     const isExpanded = expandedGroups.has(groupId);
                     const collapsedClass = isExpanded ? '' : ' collapsed';
                     html += `
                     <div class="collapsible local-alert-group source-${s.id}${collapsedClass}">
                         <button class="section-label other" type="button" aria-expanded="${isExpanded ? 'true' : 'false'}" aria-controls="local-content-${s.id}" onclick="this.parentElement.classList.toggle('collapsed'); this.setAttribute('aria-expanded', !this.parentElement.classList.contains('collapsed'))">
-                            <span>${escapeHtml(lblSection)} (${list.length})</span>
+                            <span><span class="utility-icon ${s.category}-icon">${iconSvg}</span> ${escapeHtml(lblText)} (${list.length})</span>
                             <span class="toggle-icon">▼</span>
                         </button>
                         <div class="collapsible-content" id="local-content-${s.id}">
@@ -2541,14 +2561,15 @@ if (typeof document !== 'undefined') {
             SOURCES.forEach(s => {
                 const list = otherLists[s.id];
                 if (list && list.length > 0) {
-                    const lblSection = (typeof t !== 'undefined' ? t(`lbl_section_${s.id}`) : null) || `${s.category} (${s.label})`;
+                    const lblText = getSourceLabelText(s);
+                    const iconSvg = getSourceIcon(s);
                     const groupId = `other-source-${s.id}`;
                     const isExpanded = expandedGroups.has(groupId);
                     const collapsedClass = isExpanded ? '' : ' collapsed';
                     html += `
                     <div class="collapsible other-alert-group source-${s.id}${collapsedClass}">
                         <button class="section-label other" type="button" aria-expanded="${isExpanded ? 'true' : 'false'}" aria-controls="other-content-${s.id}" onclick="this.parentElement.classList.toggle('collapsed'); this.setAttribute('aria-expanded', !this.parentElement.classList.contains('collapsed'))">
-                            <span>${escapeHtml(lblSection)} (${list.length})</span>
+                            <span><span class="utility-icon ${s.category}-icon">${iconSvg}</span> ${escapeHtml(lblText)} (${list.length})</span>
                             <span class="toggle-icon">▼</span>
                         </button>
                         <div class="collapsible-content" id="other-content-${s.id}">
@@ -2612,23 +2633,8 @@ if (typeof document !== 'undefined') {
     };
 
     function renderCards(alerts, sourceId) {
-        let sourceLabel = sourceLabelCache[sourceId];
-        if (!sourceLabel) {
-            const s = SOURCES.find(src => src.id === sourceId);
-            sourceLabel = sourceId;
-            if (s) {
-                sourceLabel = (typeof t !== 'undefined' ? t(s.i18nLabel) : null) || s.label;
-                if (s.category === 'water') sourceLabel = '💧 ' + sourceLabel;
-                else if (s.category === 'heating') sourceLabel = '🌡️ ' + sourceLabel;
-                else if (s.category === 'gas') sourceLabel = '🔥 ' + sourceLabel;
-                else sourceLabel = '⚡ ' + sourceLabel;
-            }
-            sourceLabelCache[sourceId] = sourceLabel;
-        }
-
         return alerts.map(item => `
         <div class="card source-${item.source}" ${item.hash ? `data-hash="${item.hash}"` : ''}>
-            <span class="outage-type">${escapeHtml(sourceLabel)}</span>
             <div class="outage-time">
                 ${formatDate(item.startDate)} – ${formatDate(item.endDate)}
             </div>
