@@ -1583,7 +1583,12 @@ if (typeof document !== 'undefined') {
         let effectiveTheme = theme;
 
         if (!theme || theme === 'system') {
-            effectiveTheme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+            const isHighContrast = window.matchMedia && window.matchMedia('(prefers-contrast: more)').matches;
+            if (isHighContrast) {
+                effectiveTheme = 'high-contrast';
+            } else {
+                effectiveTheme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+            }
             root.setAttribute('data-theme', effectiveTheme);
             localStorage.setItem('app-theme', 'system');
         } else {
@@ -1604,12 +1609,14 @@ if (typeof document !== 'undefined') {
 
     // Watch for system theme changes
     if (window.matchMedia) {
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+        const handleThemeChange = () => {
             const currentSetting = document.getElementById('theme-select');
             if (currentSetting && currentSetting.value === 'system') {
                 applyTheme('system');
             }
-        });
+        };
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', handleThemeChange);
+        window.matchMedia('(prefers-contrast: more)').addEventListener('change', handleThemeChange);
     }
 
     // ── Pull to Refresh ───────────────────────────────────────
