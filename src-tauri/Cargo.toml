@@ -1,6 +1,6 @@
 [package]
 name = "Awaria"
-version = "1.0.62-alpha"
+version = "1.0.62"
 description = "Awaria"
 authors = ["eremef.xyz"]
 license = ""
@@ -78,7 +78,6 @@ opt-level = "s"      # Optimize for size (often compiles faster and is perfect f
 lto = "thin"         # Faster linking than true LTO
 codegen-units = 16   # Compile different crates in parallel
 panic = "abort"      # Disables stack unwinding, reducing binary size and compile time
-strip = true         # Automatically strips symbols/debuginfo from the final binary
 
 [features]
 smoke-tests = []
