@@ -1,11 +1,12 @@
-fix: Resolve crash in large widget layout on Android
+refactor: Consolidate identical Android widget info XML files
 
 Maintainer Notes:
-- UI: Replaced the unsupported `<Space>` view element with a `<FrameLayout>` in `widget_outage_large.xml`. 
-- Bug: `RemoteViews` (which renders Android app widgets) does not support the `<Space>` element. Its presence caused an `InflateException` when the Android launcher attempted to render the widget, resulting in a fallback error UI displaying the default "Naciśnij aby otworzyć tę aplikację..." message. Using an empty `<FrameLayout>` achieves the same `layout_weight` spacing while remaining compatible with `RemoteViews`.
+- Architecture: Consolidated 22 identical 1x1 widget provider configurations into a single `widget_single_info.xml` file. Android allows multiple `<receiver>` tags to reference the same `@xml/appwidget-provider` resource without issue, significantly reducing boilerplate and keeping the configurations DRY.
+- Cleanup: The 3x1 and 4x1 composite widgets (`AllWidgetProvider` and `TriWidgetProvider`) retain their separate config files because they define different dimensions and initial layouts.
 
 Summary of Changes:
-- `src-tauri/gen/android/app/src/main/res/layout/widget_outage_large.xml`: Swapped `<Space>` for `<FrameLayout>`.
+- `src-tauri/gen/android/app/src/main/res/xml/`: Deleted 21 duplicate `widget_*_info.xml` files and renamed `widget_tauron_info.xml` to `widget_single_info.xml`.
+- `src-tauri/gen/android/app/src/main/AndroidManifest.xml`: Updated the `<meta-data android:resource="..."/>` values for all single-provider receivers to point to `@xml/widget_single_info`.
 
 User-facing:
-- The large Android widgets now render correctly instead of crashing into a placeholder error view.
+- No visual or functional changes for the end-user. Just cleaning up the project's internal files.

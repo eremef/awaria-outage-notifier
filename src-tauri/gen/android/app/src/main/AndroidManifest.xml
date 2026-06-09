@@ -52,7 +52,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_tauron_info" />
+                android:resource="@xml/widget_single_info" />
         </receiver>
 
         <receiver
@@ -68,7 +68,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_mpwik_info" />
+                android:resource="@xml/widget_single_info" />
         </receiver>
 
         <receiver
@@ -84,7 +84,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_mpwik_warszawa_info" />
+                android:resource="@xml/widget_single_info" />
         </receiver>
 
         <receiver
@@ -100,7 +100,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_fortum_info" />
+                android:resource="@xml/widget_single_info" />
         </receiver>
 
         <receiver
@@ -116,7 +116,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_energa_info" />
+                android:resource="@xml/widget_single_info" />
         </receiver>
 
         <receiver
@@ -132,7 +132,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_enea_info" />
+                android:resource="@xml/widget_single_info" />
         </receiver>
 
         <receiver
@@ -148,7 +148,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_pge_info" />
+                android:resource="@xml/widget_single_info" />
         </receiver>
         
         <receiver
@@ -164,7 +164,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_stoen_info" />
+                android:resource="@xml/widget_single_info" />
         </receiver>
 
         <receiver
@@ -196,7 +196,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_psg_info" />
+                android:resource="@xml/widget_single_info" />
         </receiver>
         
         <receiver
@@ -212,7 +212,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_wmk_info" />
+                android:resource="@xml/widget_single_info" />
         </receiver>
 
         <receiver
@@ -228,7 +228,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_aquanet_info" />
+                android:resource="@xml/widget_single_info" />
         </receiver>
 
         <receiver
@@ -244,7 +244,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_katowickiewodociagi_info" />
+                android:resource="@xml/widget_single_info" />
         </receiver>
 
          <receiver
@@ -260,7 +260,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_veolia_info" />
+                android:resource="@xml/widget_single_info" />
         </receiver>
 
         <receiver
@@ -276,7 +276,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_veolia_poznan_info" />
+                android:resource="@xml/widget_single_info" />
         </receiver>
 
         <receiver
@@ -292,7 +292,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_veolia_lodz_info" />
+                android:resource="@xml/widget_single_info" />
         </receiver>
 
         <receiver
@@ -308,7 +308,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_zwik_lodz_info" />
+                android:resource="@xml/widget_single_info" />
         </receiver>
 
         <receiver
@@ -324,7 +324,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_pwik_kalisz_info" />
+                android:resource="@xml/widget_single_info" />
         </receiver>
 
         <receiver
@@ -340,7 +340,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_wodociagi_plockie_info" />
+                android:resource="@xml/widget_single_info" />
         </receiver>
 
         <receiver
@@ -356,7 +356,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_pwik_czestochowa_info" />
+                android:resource="@xml/widget_single_info" />
         </receiver>
 
         <receiver
@@ -372,7 +372,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_gdanskie_wodociagi_info" />
+                android:resource="@xml/widget_single_info" />
         </receiver>
 
         <receiver
@@ -388,7 +388,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_gpec_info" />
+                android:resource="@xml/widget_single_info" />
         </receiver>
 
 
@@ -405,7 +405,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_puk_rokietnica_info" />
+                android:resource="@xml/widget_single_info" />
         </receiver>
 
         <receiver
@@ -444,3 +444,4 @@
         </provider>
     </application>
 </manifest>
+
