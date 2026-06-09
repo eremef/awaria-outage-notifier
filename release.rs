@@ -116,7 +116,7 @@ fn update_cargo_toml(version: &str) {
 
     let content = fs::read_to_string(&cargo_path).expect("Failed to read Cargo.toml");
 
-    let new_content = content
+    let mut new_content = content
         .lines()
         .map(|line| {
             if line.trim().starts_with("version = ") {
@@ -127,6 +127,7 @@ fn update_cargo_toml(version: &str) {
         })
         .collect::<Vec<_>>()
         .join("\n");
+    new_content.push('\n');
 
     fs::write(&cargo_path, new_content).expect("Failed to write Cargo.toml");
 
@@ -143,7 +144,7 @@ fn update_package_json(version: &str) {
 
     let content = fs::read_to_string(package_path).expect("Failed to read package.json");
 
-    let new_content = content
+    let mut new_content = content
         .lines()
         .map(|line| {
             if line.trim().starts_with("\"version\":") {
@@ -154,6 +155,7 @@ fn update_package_json(version: &str) {
         })
         .collect::<Vec<_>>()
         .join("\n");
+    new_content.push('\n');
 
     fs::write(package_path, new_content).expect("Failed to write package.json");
 
@@ -186,7 +188,7 @@ fn update_tauri_conf(version: &str) {
         major * 10000 + minor * 100 + patch
     };
 
-    let new_content = content
+    let mut new_content = content
         .lines()
         .map(|line| {
             if line.contains("\"version\"") && !line.contains("$schema") {
@@ -212,6 +214,7 @@ fn update_tauri_conf(version: &str) {
         })
         .collect::<Vec<_>>()
         .join("\n");
+    new_content.push('\n');
 
     fs::write(&tauri_path, new_content).expect("Failed to write tauri.conf.json");
 
@@ -247,7 +250,7 @@ fn update_addon_config(version: &str) {
 
     let content = fs::read_to_string(&config_path).expect("Failed to read config.yaml");
 
-    let new_content = content
+    let mut new_content = content
         .lines()
         .map(|line| {
             if line.trim().starts_with("version:") {
@@ -262,6 +265,7 @@ fn update_addon_config(version: &str) {
         })
         .collect::<Vec<_>>()
         .join("\n");
+    new_content.push('\n');
 
     fs::write(&config_path, new_content).expect("Failed to write config.yaml");
 

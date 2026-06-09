@@ -1,6 +1,6 @@
 {
   "name": "awaria",
-  "version": "1.0.62",
+  "version": "1.0.62-alpha",
   "description": "Outage notifier — Tauri desktop & Android app",
   "scripts": {
     "tauri": "tauri",
@@ -8,8 +8,9 @@
     "dev": "tauri dev",
     "android:build": "tauri android build",
     "android:dev": "tauri android dev",
-    "test": "npm run test:frontend && npm run test:backend && npm run test:android",
+    "test": "npm run test:frontend && npm run test:backend && npm run test:android && npm run test:a11y",
     "test:frontend": "vitest run",
+    "test:a11y": "playwright test tests/a11y.spec.js",
     "test:backend": "cd src-tauri && cargo test",
     "test:android": "cd src-tauri/gen/android && gradlew.bat :app:testUniversalDebugUnitTest",
     "rust:check": "cd src-tauri && cargo check",
@@ -23,6 +24,8 @@
     "logcat": "powershell -Command \"$AppPid = adb shell pidof -s xyz.eremef.awaria; if ($AppPid) { adb logcat -v color --pid=$AppPid } else { Write-Host 'App is not running!' -ForegroundColor Red }\""
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
+    "@playwright/test": "^1.60.0",
     "@tauri-apps/cli": "^2.11.1",
     "@vitest/coverage-v8": "^4.1.8",
     "better-sqlite3": "^11.9.1",

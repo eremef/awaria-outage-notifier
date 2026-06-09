@@ -26,7 +26,7 @@
 <body>
     <div id="main-view" class="view active container">
         <div class="sticky-nav">
-            <button id="settings-btn" class="settings-btn" title="Settings" data-i18n-title="settings">
+            <button id="settings-btn" class="settings-btn" title="Settings" data-i18n-title="settings" data-i18n-aria-label="aria_settings_btn">
                 <svg class="icon-settings" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="3"></circle>
@@ -39,7 +39,7 @@
                 <h1 data-i18n="title">Outage Alerts</h1>
                 <p class="last-updated-row">
                     <span id="last-updated" data-i18n="checking_updates">Checking for updates...</span>
-                    <button id="refresh-btn" class="refresh-btn" title="Refresh">
+                    <button id="refresh-btn" class="refresh-btn" title="Refresh" data-i18n-aria-label="aria_refresh_btn">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 2v6h-6"></path>
@@ -74,24 +74,24 @@
                         <div class="progress-console-bar-fill" id="progress-console-bar-fill"></div>
                     </div>
                 </div>
-                <select id="address-filter" class="address-filter">
+                <select id="address-filter" class="address-filter" data-i18n-aria-label="aria_address_filter">
                     <option value="-1" data-i18n="addr_filter_all">All addresses</option>
                 </select>
             </header>
         </div>
 
-        <div id="pull-indicator" class="pull-indicator" data-i18n="refresh_pull">↻ Release to refresh</div>
+        <div id="pull-indicator" class="pull-indicator" data-i18n="refresh_pull" aria-hidden="true">↻ Release to refresh</div>
 
         <main id="outages-container">
             <div class="loading" data-i18n="loading_data">Loading alert data...</div>
         </main>
     </div>
 
-    <div id="settings-view" class="view settings-view">
+    <main id="settings-view" class="view settings-view" aria-label="Settings">
         <div class="container">
             <div class="sticky-nav">
                 <button id="settings-close-x" class="settings-btn open" title="Close Settings"
-                    data-i18n-title="settings_close">
+                    data-i18n-title="settings_close" data-i18n-aria-label="aria_close_settings_btn">
                     <svg class="icon-settings hidden" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round">
@@ -181,7 +181,7 @@
                             <label for="upcoming-notify-check" data-i18n="settings_upcoming_prefix"
                                 class="upcoming-notify-label">Notify</label>
                             <input type="number" id="upcoming-hours-input" min="1" max="168" value="24"
-                                class="upcoming-hours-input">
+                                class="upcoming-hours-input" aria-labelledby="upcoming-adjust-container">
                             <span data-i18n="settings_upcoming_suffix" class="upcoming-suffix">h before</span>
                         </div>
                     </div>
@@ -203,8 +203,9 @@
                             <div class="settings-field">
                                 <label for="city-input" data-i18n="settings_city">City</label>
                                 <input type="text" id="city-input" data-i18n="settings_city_placeholder"
-                                    placeholder="e.g. Wrocław" autocomplete="off">
-                                <div id="city-suggestions" class="suggestions-dropdown hidden"></div>
+                                    placeholder="e.g. Wrocław" autocomplete="off"
+                                    role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="city-suggestions">
+                                <div id="city-suggestions" class="suggestions-dropdown hidden" role="listbox" aria-label="City suggestions"></div>
                                 <div class="selection-hint" data-i18n="hint_select_from_list">Please select from the
                                     list.
                                 </div>
@@ -212,8 +213,9 @@
                             <div class="settings-field">
                                 <label for="street-input" data-i18n="settings_street">Street</label>
                                 <input type="text" id="street-input" data-i18n="settings_street_placeholder"
-                                    placeholder="e.g. Kuźnicza" autocomplete="off" disabled>
-                                <div id="street-suggestions" class="suggestions-dropdown hidden"></div>
+                                    placeholder="e.g. Kuźnicza" autocomplete="off" disabled
+                                    role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="street-suggestions">
+                                <div id="street-suggestions" class="suggestions-dropdown hidden" role="listbox" aria-label="Street suggestions"></div>
                                 <div class="selection-hint" data-i18n="hint_select_from_list">Please select from the
                                     list.
                                 </div>
@@ -248,16 +250,17 @@
                     settings</button>
             </div>
         </div>
-    </div>
-    </div>
+    </main>
 
-    <a href="https://cuplink.to/eremef.xyz" target="_blank" class="cuplink-btn" data-i18n-title="cuplink_support">
-        <div class="cuplink-icons-container">
-            <img src="assets/cappucino.png" class="cuplink-icon icon-1" alt="Cappucino">
-            <img src="assets/latte.png" class="cuplink-icon icon-2" alt="Latte">
-            <img src="assets/espresso.png" class="cuplink-icon icon-3" alt="Espresso">
-        </div>
-    </a>
+    <aside aria-label="Support">
+        <a href="https://cuplink.to/eremef.xyz" target="_blank" class="cuplink-btn" data-i18n-title="cuplink_support" data-i18n-aria-label="aria_cappucino_support">
+            <div class="cuplink-icons-container">
+                <img src="assets/cappucino.png" class="cuplink-icon icon-1" alt="Cappucino">
+                <img src="assets/latte.png" class="cuplink-icon icon-2" alt="Latte">
+                <img src="assets/espresso.png" class="cuplink-icon icon-3" alt="Espresso">
+            </div>
+        </a>
+    </aside>
     <script src="i18n.js"></script>
     <script src="script.js"></script>
 
@@ -283,8 +286,6 @@
             </div>
         </div>
     </footer>
-    </div>
-    </div>
     <!-- App Frame for rounded corners on mobile (Hardware accelerated for stability) -->
     <div id="app-frame"></div>
 </body>

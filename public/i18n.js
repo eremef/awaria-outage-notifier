@@ -57,29 +57,7 @@ const translations = {
         "lbl_other_outages": "Other outages",
         "msg_no_outages_local": "No local alerts found.",
         "lbl_planned_outage": "Planned Outage",
-        "lbl_section_tauron_heat": "Heat (Tauron)",
-        "lbl_section_tauron": "Power (Tauron)",
-        "lbl_section_mpwik_wroclaw": "Water (MPWiK Wrocław)",
-        "lbl_section_mpwik_warszawa": "Water (MPWiK Warszawa)",
-        "lbl_section_fortum": "Heat (Fortum)",
-        "lbl_section_energa": "Power (Energa)",
-        "lbl_section_enea": "Power (Enea)",
-        "lbl_section_pge": "Power (PGE)",
-        "lbl_section_stoen": "Power (Stoen)",
-        "lbl_section_psg": "Gas (PSG)",
-        "lbl_section_wmk": "Water (WMK)",
-        "lbl_section_aquanet": "Water (Aquanet)",
-        "lbl_section_katowickie_wodociagi": "Water (Katowickie Wodociągi)",
-        "lbl_section_veolia": "Heat (Veolia Warszawa)",
-        "lbl_section_veolia_poznan": "Heat (Veolia Poznań)",
-        "lbl_section_veolia_lodz": "Heat (Veolia Łódź)",
-        "lbl_section_zwik_lodz": "Water (ZWIK Łódź)",
-        "lbl_section_wodociagi_plockie": "Water (Wodociągi Płockie)",
-        "lbl_section_pwik_kalisz": "Water (PWiK Kalisz)",
-        "lbl_section_pwik_czestochowa": "Water (PWiK Częstochowa)",
-        "lbl_section_gdanskie_wodociagi": "Water (Gdańskie Wodociągi)",
-        "lbl_section_gpec": "Heat (GPEC Gdańsk)",
-        "lbl_section_puk_rokietnica": "Water (PUK Rokietnica)",
+
         "msg_no_alerts": "No active alerts.",
         "all_clear_title": "Everything looks good!",
         "all_clear_subtitle": "No outages detected in your monitored areas.",
@@ -186,7 +164,14 @@ const translations = {
         "toast_slow_fetching_warning": "Fetching outages from this provider may take longer.",
         "toast_house_no_filter_warning": "Warning: Filtering by house number might skip some outages if the provider's description is incorrect.",
         "refresh_progress_prefix": "Refreshing",
-        "refreshing_providers": "Refreshing providers"
+        "refreshing_providers": "Refreshing providers",
+        "aria_address_filter": "Filter by address",
+        "aria_settings_btn": "Open settings",
+        "aria_close_settings_btn": "Close settings",
+        "aria_refresh_btn": "Refresh outages",
+        "aria_cappucino_support": "Buy me a virtual coffee",
+        "aria_github_link": "GitHub repository",
+        "aria_category_toggle": "Toggle utility category"
     },
     pl: {
         "title": "Awaria",
@@ -243,29 +228,7 @@ const translations = {
         "lbl_other_outages": "Pozostałe wyłączenia",
         "msg_no_outages_local": "Brak alertów dla twojej lokalizacji.",
         "lbl_planned_outage": "Planowane wyłączenie",
-        "lbl_section_tauron_heat": "Ciepło (Tauron)",
-        "lbl_section_tauron": "Prąd (Tauron)",
-        "lbl_section_mpwik_wroclaw": "Woda (MPWiK Wrocław)",
-        "lbl_section_mpwik_warszawa": "Woda (MPWiK Warszawa)",
-        "lbl_section_fortum": "Ciepło (Fortum)",
-        "lbl_section_energa": "Prąd (Energa)",
-        "lbl_section_enea": "Prąd (Enea)",
-        "lbl_section_pge": "Prąd (PGE)",
-        "lbl_section_stoen": "Prąd (Stoen)",
-        "lbl_section_psg": "Gaz (PSG)",
-        "lbl_section_wmk": "Woda (WMK)",
-        "lbl_section_aquanet": "Woda (Aquanet)",
-        "lbl_section_katowickie_wodociagi": "Woda (Katowickie Wodociągi)",
-        "lbl_section_veolia_warszawa": "Ciepło (Veolia Warszawa)",
-        "lbl_section_veolia_poznan": "Ciepło (Veolia Poznań)",
-        "lbl_section_veolia_lodz": "Ciepło (Veolia Łódź)",
-        "lbl_section_zwik_lodz": "Woda (ZWIK Łódź)",
-        "lbl_section_wodociagi_plockie": "Woda (Wodociągi Płockie)",
-        "lbl_section_pwik_kalisz": "Woda (PWiK Kalisz)",
-        "lbl_section_pwik_czestochowa": "Woda (PWiK Częstochowa)",
-        "lbl_section_gdanskie_wodociagi": "Woda (Gdańskie Wodociągi)",
-        "lbl_section_gpec": "Ciepło (GPEC Gdańsk)",
-        "lbl_section_puk_rokietnica": "Woda (PUK Rokietnica)",
+
         "msg_no_alerts": "Brak aktywnych alertów.",
         "all_clear_title": "Wszystko gra!",
         "all_clear_subtitle": "Nie wykryto żadnych wyłączeń i awarii w monitorowanych obszarach.",
@@ -372,7 +335,14 @@ const translations = {
         "toast_slow_fetching_warning": "Aktualizowanie danych u tego dostawcy może potrwać chwilę dłużej:",
         "toast_house_no_filter_warning": "Uwaga: Filtrowanie po numerach budynków może pomijać niektóre zdarzenia przy nieprawidłowych danych dostawcy.",
         "refresh_progress_prefix": "Pobieranie",
-        "refreshing_providers": "Aktualizowanie dostawców"
+        "refreshing_providers": "Aktualizowanie dostawców",
+        "aria_address_filter": "Filtruj według adresu",
+        "aria_settings_btn": "Otwórz ustawienia",
+        "aria_close_settings_btn": "Zamknij ustawienia",
+        "aria_refresh_btn": "Odśwież wyłączenia",
+        "aria_cappucino_support": "Postaw mi wirtualną kawę",
+        "aria_github_link": "Repozytorium GitHub",
+        "aria_category_toggle": "Przełącz kategorię mediów"
     }
 };
 
@@ -415,10 +385,11 @@ function t(key) {
  */
 function applyTranslations() {
     document.documentElement.lang = currentLang;
-    const elements = document.querySelectorAll('[data-i18n], [data-i18n-title]');
+    const elements = document.querySelectorAll('[data-i18n], [data-i18n-title], [data-i18n-aria-label]');
     elements.forEach(el => {
         const key = el.getAttribute('data-i18n');
         const titleKey = el.getAttribute('data-i18n-title');
+        const ariaLabelKey = el.getAttribute('data-i18n-aria-label');
 
         if (key) {
             // Handle input placeholders specifically
@@ -447,6 +418,10 @@ function applyTranslations() {
 
         if (titleKey) {
             el.setAttribute('title', t(titleKey));
+        }
+
+        if (ariaLabelKey) {
+            el.setAttribute('aria-label', t(ariaLabelKey));
         }
     });
 }

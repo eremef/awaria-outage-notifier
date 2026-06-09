@@ -30,7 +30,7 @@
     --background-color: #f8fafc;
     --card-background: #ffffff;
     --text-color: #1e293b;
-    --secondary-text: #64748b;
+    --secondary-text: #475569;
     --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     --input-border: #e2e8f0;
     --input-focus: #818cf8;
@@ -261,7 +261,7 @@
     --background-color: #282a36;
     --card-background: #44475a;
     --text-color: #f8f8f2;
-    --secondary-text: #6272a4;
+    --secondary-text: #a2b4ec;
     --shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
     --input-border: #6272a4;
     --input-focus: #ff79c6;
@@ -500,33 +500,85 @@
     --subtle-bg: #000000;
     --label-border: #ffffff;
     --source-color: #ffffff;
-    --tauron-color: #ff99cc;
-    --tauron_heat-color: #ff99cc;
-    --mpwik_wroclaw-color: #99ccff;
-    --fortum-color: #99ff99;
-    --energa-color: #ff9999;
-    --enea-color: #99ccff;
-    --pge-color: #99ccff;
-    --stoen-color: #ff9999;
-    --psg-color: #99ccff;
-    --wmk-color: #99ccff;
-    --aquanet-color: #99ccff;
-    --katowickie_wodociagi-color: #99ccff;
-    --mpwik_warszawa-color: #99ccff;
-    --veolia-color: #ff9999;
-    --veolia_poznan-color: var(--veolia-color);
-    --veolia_lodz-color: var(--veolia-color);
-    --zwik_lodz-color: #99ccff;
-    --wodociagi_plockie-color: #99ccff;
-    --pwik_kalisz-color: #99ccff;
-    --pwik_czestochowa-color: #99ccff;
-    --gdanskie_wodociagi-color: #99ccff;
-    --gpec-color: #ff9999;
-    --puk_rokietnica-color: #99ccff;
+    --tauron-color: var(--primary-color);
+    --tauron_heat-color: var(--primary-color);
+    --mpwik_wroclaw-color: var(--primary-color);
+    --fortum-color: var(--primary-color);
+    --energa-color: var(--primary-color);
+    --enea-color: var(--primary-color);
+    --pge-color: var(--primary-color);
+    --stoen-color: var(--primary-color);
+    --psg-color: var(--primary-color);
+    --wmk-color: var(--primary-color);
+    --aquanet-color: var(--primary-color);
+    --katowickie_wodociagi-color: var(--primary-color);
+    --mpwik_warszawa-color: var(--primary-color);
+    --veolia-color: var(--primary-color);
+    --veolia_poznan-color: var(--primary-color);
+    --veolia_lodz-color: var(--primary-color);
+    --zwik_lodz-color: var(--primary-color);
+    --wodociagi_plockie-color: var(--primary-color);
+    --pwik_kalisz-color: var(--primary-color);
+    --pwik_czestochowa-color: var(--primary-color);
+    --gdanskie_wodociagi-color: var(--primary-color);
+    --gpec-color: var(--primary-color);
+    --puk_rokietnica-color: var(--primary-color);
+}
+
+[data-theme="high-contrast"] .utility-icon {
+    color: var(--primary-color) !important;
+}
+
+[data-theme="high-contrast"] input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+    border: 2px solid var(--text-color);
+    background-color: var(--background-color);
+    position: relative;
+    border-radius: 2px;
+    width: 1.2rem !important;
+    height: 1.2rem !important;
+    min-width: 1.2rem;
+    min-height: 1.2rem;
+    flex-shrink: 0;
+    margin: 0;
+}
+
+[data-theme="high-contrast"] input[type="checkbox"]:checked,
+[data-theme="high-contrast"] input[type="checkbox"]:indeterminate {
+    background-color: var(--text-color);
+}
+
+[data-theme="high-contrast"] input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 30%;
+    top: 10%;
+    width: 30%;
+    height: 60%;
+    border: solid var(--background-color);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+[data-theme="high-contrast"] input[type="checkbox"]:indeterminate::after {
+    content: '';
+    position: absolute;
+    left: 20%;
+    top: 45%;
+    width: 60%;
+    height: 2px;
+    background-color: var(--background-color);
 }
 
 * {
     box-sizing: border-box;
+}
+
+:focus-visible {
+    outline: 3px solid var(--input-focus, var(--primary-color));
+    outline-offset: 2px;
 }
 
 html {
@@ -1389,6 +1441,43 @@ h1 {
     gap: 0.5rem;
 }
 
+.section-label>span:first-child {
+    display: inline-flex;
+    align-items: center;
+}
+
+.utility-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.35rem;
+}
+
+.utility-svg {
+    width: 1.55em;
+    height: 1.55em;
+    min-width: 1.55em;
+    min-height: 1.55em;
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+
+.water-icon {
+    color: #3b82f6;
+}
+
+.heating-icon {
+    color: #ef4444;
+}
+
+.gas-icon {
+    color: #f59e0b;
+}
+
+.power-icon {
+    color: #eab308;
+}
+
 .section-label::after {
     content: "";
     flex: 1;
@@ -1399,9 +1488,12 @@ h1 {
 }
 
 .section-label.other {
+    width: 100%;
+    font-family: inherit;
+    text-align: left;
     background: var(--card-background);
     color: var(--primary-color);
-    padding: 0.6rem 1rem;
+    padding: 0.55rem 0.4rem 0.5rem 0.5rem;
     border-radius: 100px;
     margin-top: 1.5rem;
     border: 1px solid var(--message-border);
@@ -1847,8 +1939,11 @@ h1 {
 }
 
 .suggestion-item:hover,
-.suggestion-item:active {
+.suggestion-item:active,
+.suggestion-item.active {
     background: var(--subtle-bg);
+    outline: 2px solid var(--input-focus, var(--primary-color));
+    outline-offset: -2px;
 }
 
 .suggestion-item.no-results {
@@ -1923,6 +2018,11 @@ h1 {
     font-size: 0.85rem;
     padding-top: 0.25rem;
     display: inline-block;
+}
+
+[data-theme="high-contrast"] .app-footer,
+[data-theme="high-contrast"] [data-i18n="footer_version"] {
+    opacity: 1;
 }
 
 .footer-separator {
@@ -2350,6 +2450,12 @@ input[type="checkbox"]:checked+.notify-bell-icon {
     flex-grow: 1;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+    text-align: left;
+    color: inherit;
 }
 
 .settings-group-header-clickable .settings-group-label {
