@@ -1,0 +1,11 @@
+fix: Resolve crash in large widget layout on Android
+
+Maintainer Notes:
+- UI: Replaced the unsupported `<Space>` view element with a `<FrameLayout>` in `widget_outage_large.xml`. 
+- Bug: `RemoteViews` (which renders Android app widgets) does not support the `<Space>` element. Its presence caused an `InflateException` when the Android launcher attempted to render the widget, resulting in a fallback error UI displaying the default "Naciśnij aby otworzyć tę aplikację..." message. Using an empty `<FrameLayout>` achieves the same `layout_weight` spacing while remaining compatible with `RemoteViews`.
+
+Summary of Changes:
+- `src-tauri/gen/android/app/src/main/res/layout/widget_outage_large.xml`: Swapped `<Space>` for `<FrameLayout>`.
+
+User-facing:
+- The large Android widgets now render correctly instead of crashing into a placeholder error view.
