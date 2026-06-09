@@ -1936,6 +1936,11 @@ h1 {
     display: inline-block;
 }
 
+[data-theme="high-contrast"] .app-footer,
+[data-theme="high-contrast"] [data-i18n="footer_version"] {
+    opacity: 1;
+}
+
 .footer-separator {
     color: var(--label-border);
 }

@@ -194,7 +194,7 @@ if (typeof document !== 'undefined') {
                         <span class="settings-group-label" data-i18n="${catInfo.i18n}">${catInfo.label}</span>
                     </button>
                     <div class="master-checkbox-container">
-                        <input type="checkbox" id="category-${catId}-check" title="Toggle all under ${catInfo.label}">
+                        <input type="checkbox" id="category-${catId}-check" title="Toggle all under ${catInfo.label}" aria-label="Toggle all under ${catInfo.label}">
                     </div>
                 </div>
                 <div class="settings-group-sources" id="sources-list-${catId}">
@@ -955,7 +955,7 @@ if (typeof document !== 'undefined') {
         list.innerHTML = currentSettings.addresses.map((addr, idx) => `
         <div class="address-item ${addr.isActive === false ? 'disabled' : ''}">
             <div class="checkbox-pair mini" style="margin-right: 0.75rem; margin-top: 2px;">
-                <input type="checkbox" ${addr.isActive !== false ? 'checked' : ''} onchange="toggleAddressActive(${idx})" title="${addr.isActive === false ? (typeof t !== 'undefined' ? t('lbl_address_disabled') : 'Disabled') : (typeof t !== 'undefined' ? t('lbl_address_active') : 'Active')}">
+                <input type="checkbox" ${addr.isActive !== false ? 'checked' : ''} onchange="toggleAddressActive(${idx})" title="${addr.isActive === false ? (typeof t !== 'undefined' ? t('lbl_address_disabled') : 'Disabled') : (typeof t !== 'undefined' ? t('lbl_address_active') : 'Active')}" aria-label="Toggle address status for ${escapeHtml(addr.streetName1 || addr.cityName || 'address')}">
             </div>
             <div class="address-info">
                 <div class="address-name">${addr.name || (typeof t !== 'undefined' ? t('default_address_name') + ' ' + (idx + 1) : 'Address ' + (idx + 1))}</div>

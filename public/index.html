@@ -80,14 +80,14 @@
             </header>
         </div>
 
-        <div id="pull-indicator" class="pull-indicator" data-i18n="refresh_pull">↻ Release to refresh</div>
+        <div id="pull-indicator" class="pull-indicator" data-i18n="refresh_pull" aria-hidden="true">↻ Release to refresh</div>
 
         <main id="outages-container">
             <div class="loading" data-i18n="loading_data">Loading alert data...</div>
         </main>
     </div>
 
-    <div id="settings-view" class="view settings-view">
+    <main id="settings-view" class="view settings-view" aria-label="Settings">
         <div class="container">
             <div class="sticky-nav">
                 <button id="settings-close-x" class="settings-btn open" title="Close Settings"
@@ -250,15 +250,17 @@
                     settings</button>
             </div>
         </div>
-    </div>
+    </main>
 
-    <a href="https://cuplink.to/eremef.xyz" target="_blank" class="cuplink-btn" data-i18n-title="cuplink_support" data-i18n-aria-label="aria_cappucino_support">
-        <div class="cuplink-icons-container">
-            <img src="assets/cappucino.png" class="cuplink-icon icon-1" alt="Cappucino">
-            <img src="assets/latte.png" class="cuplink-icon icon-2" alt="Latte">
-            <img src="assets/espresso.png" class="cuplink-icon icon-3" alt="Espresso">
-        </div>
-    </a>
+    <aside aria-label="Support">
+        <a href="https://cuplink.to/eremef.xyz" target="_blank" class="cuplink-btn" data-i18n-title="cuplink_support" data-i18n-aria-label="aria_cappucino_support">
+            <div class="cuplink-icons-container">
+                <img src="assets/cappucino.png" class="cuplink-icon icon-1" alt="Cappucino">
+                <img src="assets/latte.png" class="cuplink-icon icon-2" alt="Latte">
+                <img src="assets/espresso.png" class="cuplink-icon icon-3" alt="Espresso">
+            </div>
+        </a>
+    </aside>
     <script src="i18n.js"></script>
     <script src="script.js"></script>
 

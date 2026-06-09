@@ -63,6 +63,7 @@ fn main() {
         let check_commands = [
             ["run", "test"],
             ["run", "rust:clippy"],
+            ["run", "test:a11y"],
         ];
 
         for args in check_commands {
