@@ -4,7 +4,7 @@ version = 3
 
 [[package]]
 name = "Awaria"
-version = "1.0.62"
+version = "1.0.62-alpha"
 dependencies = [
  "android_logger",
  "async-trait",

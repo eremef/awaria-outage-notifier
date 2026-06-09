@@ -63,6 +63,7 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
   - **Nowoczesny Interfejs**: System Indigo - przyjazny UI z żywymi wskaźnikami źródeł.
   - **Zwijane Kategorie**: Uporządkowany widok "Twoja Lokalizacja" oraz "Pozostałe Awarie".
   - **Responsywny Tryb Ciemny/Jasny**: Natywne wsparcie dla motywów systemowych.
+- **Dostępność**: Częściowa zgodność ze standardem WCAG 2.2 AAA. Obejmuje dedykowany tryb wysokiego kontrastu z całkowicie widocznymi, niestandardowymi polami wyboru oraz dynamicznie kolorowanymi, skalowalnymi ikonami SVG dla doskonałej czytelności.
 - **Widżety Android**:
   - **Osobne Widżety dla Źródeł**: Oddzielne widżety dla każdego dostawcy.
   - **Zoptymalizowany Układ**: Kompaktowy rozmiar 1x1 pokazujący liczbę alertów dla wybranej ulicy.

@@ -63,6 +63,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **Modern Interface**: Indigo-based "friendly" UI with vibrant source indicators (Rose/Sky).
   - **Collapsible categories**: Organized view of "Your Location" vs "Other Outages".
   - **Responsive Dark/Light mode**: Native transition support.
+- **Accessibility**: Built with WCAG 2.2 AAA partial compliance in mind. Features a dedicated High-Contrast mode with fully visible custom checkboxes and dynamically colored scalable SVG icons for superior readability.
 - **Android Widgets**:
   - **Individual Source Widgets**: Separate widgets for all providers.
   - **Optimized Layout**: Compact 1x1 design showing alert counts for your specific street.
