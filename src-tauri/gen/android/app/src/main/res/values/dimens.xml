@@ -1,6 +1,20 @@
 <resources>
+  <!-- Address Widgets Dimensions -->
   <dimen name="address_widget_count_size">19sp</dimen>
   <dimen name="address_widget_icon_width">16dp</dimen>
   <dimen name="address_widget_icon_height">16dp</dimen>
-  <dimen name="header_text_size">14sp</dimen>
+  
+  <!-- Single Provider Widget Dimensions -->
+  <dimen name="widget_padding">4dp</dimen>
+  <dimen name="widget_source_text_size">16sp</dimen>
+  <dimen name="widget_icon_size">20dp</dimen>
+  <dimen name="widget_count_text_size">32sp</dimen>
+  <dimen name="widget_updated_text_size">11sp</dimen>
+
+  <!-- Small Single Provider Widget Dimensions -->
+  <dimen name="widget_small_padding">2dp</dimen>
+  <dimen name="widget_small_source_text_size">10sp</dimen>
+  <dimen name="widget_small_count_padding_horizontal">4dp</dimen>
+  <dimen name="widget_small_count_text_size">17sp</dimen>
+  <dimen name="widget_small_updated_text_size">8sp</dimen>
 </resources>

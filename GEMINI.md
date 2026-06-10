@@ -78,14 +78,26 @@ Miejscowość: {address_city}
 - **Plugin Bug (tauri-plugin-share v2.0.5)**: Rust wrapper uses snake_case (`share_file`) while Kotlin registers camelCase (`shareFile`), causing "No command found" errors. Use direct JNI or manual command invocation as a workaround.
 
 ### Reqwest RequestBuilder & Query Parameter Type Inference
- 
- - **RequestBuilder query compilation issues**: In some environments, using `.query(&[("a", "b")])` on a `reqwest::RequestBuilder` with custom feature-restricted configurations can fail to compile due to missing standard query methods or cause type-inference errors on `.send().await` or `.map_err()`.
- - **Solution**: To bypass reqwest RequestBuilder version/feature constraints, construct URLs manually using `format!` and the `urlencoding::encode` crate, e.g. `format!("https://host/api?a={}", urlencoding::encode(b))`. This is 100% robust, highly readable, and compiles flawlessly.
- 
+
+- **RequestBuilder query compilation issues**: In some environments, using `.query(&[("a", "b")])` on a `reqwest::RequestBuilder` with custom feature-restricted configurations can fail to compile due to missing standard query methods or cause type-inference errors on `.send().await` or `.map_err()`.
+- **Solution**: To bypass reqwest RequestBuilder version/feature constraints, construct URLs manually using `format!` and the `urlencoding::encode` crate, e.g. `format!("https://host/api?a={}", urlencoding::encode(b))`. This is 100% robust, highly readable, and compiles flawlessly.
+
 ### Android Instrumentation Tests & WebView Deadlocks
 
 - **WebView Event Loop Deadlock**: In Android instrumentation tests, using `runBlocking` on the test thread while orchestrating WebView events on `Dispatchers.Main` can lead to hangs. If `withTimeoutOrNull` triggers a timeout, it cancels the `deferred.await()` call, but the `CompletableDeferred` itself is not completed/cancelled. If a background Handler continues to post delayed tasks to the Main Looper recursively, the loop stays active forever, preventing the test runner from idling.
 - **Solution**: Always use a `try/finally` block inside WebView fetching methods to ensure the `deferred` promise is explicitly completed/cancelled and that `webView.stopLoading()` and `webView.destroy()` are called on the Main thread upon cancellation or timeout.
+
+### Android Widgets Theme Change Performance & Fast Cache Updates
+
+- **The Problem**: Whenever the Android system configuration changed (such as screen rotation or dark/light mode toggles), the widgets experienced severe lag, momentarily showing loading placeholders (`–`) or freezing.
+- **The Cause**: On theme/config switches, the widget receiver woke up and executed a full update cycle, triggering slow background network/scraper calls.
+- **The Solution**: Re-added `ACTION_CONFIGURATION_CHANGED` to `AndroidManifest.xml` but routed it through a fast-path caching system (`onUpdateWithCache` / `useCacheOnly`). SharedPreferences caches the last fetched counts and timestamps, letting the widgets redraw theme styles instantly using locally stored data without making any network requests.
+
+### RemoteViews Method Safety & Kotlin Overrides
+
+- **RemoteViews setTextAppearance Crash**: Programmatic text styling via `setTextAppearance(int)` on `TextView` is NOT marked with `@RemotableViewMethod` in standard Android SDK. Calling `views.setInt(id, "setTextAppearance", styleResId)` results in `RemoteViews$ActionException: view: android.widget.TextView can't use method with RemoteViews: setTextAppearance(int)` inside the Android system Launcher process, causing the widget to crash and display the fallback message "Naciśnij, aby otworzyć..." ("Press to open...").
+- **Solution**: Set colors programmatically using the safe and supported `setTextColor` and `setColorFilter` RemoteViews actions, and delegate layout-wide styling to XML resources.
+- **Kotlin Overriding Default Arguments**: In Kotlin, if a superclass method has a default parameter (e.g. `useCacheOnly: Boolean = false`), the overriding subclass method signature must include the parameter but CANNOT specify the default value again (i.e. must write `useCacheOnly: Boolean` instead of `useCacheOnly: Boolean = false`).
 
 ## Common Development Workflows
 

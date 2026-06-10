@@ -71,6 +71,7 @@
           android:layout_width="@dimen/address_widget_icon_width"
           android:layout_height="@dimen/address_widget_icon_height"
           android:contentDescription="@null"
+          android:tint="@color/utility_power"
           android:src="@drawable/ic_electricity" />
 
       </LinearLayout>
@@ -106,6 +107,7 @@
           android:layout_width="@dimen/address_widget_icon_width"
           android:layout_height="@dimen/address_widget_icon_height"
           android:contentDescription="@null"
+          android:tint="@color/utility_heat"
           android:src="@drawable/ic_heating" />
       </LinearLayout>
 
@@ -140,6 +142,7 @@
           android:layout_width="@dimen/address_widget_icon_width"
           android:layout_height="@dimen/address_widget_icon_height"
           android:contentDescription="@null"
+          android:tint="@color/utility_water"
           android:src="@drawable/ic_water" />
 
       </LinearLayout>

@@ -86,6 +86,8 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
         private const val PREFS_NAME = "xyz.eremef.awaria.WidgetPrefs"
         private const val PREF_PREFIX_KEY = "address_"
+        private const val PREF_COUNT_PREFIX = "count_"
+        private const val PREF_UPDATED_PREFIX = "updated_"
 
         internal fun saveAddressId(context: Context, appWidgetId: Int, addressId: String) {
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
@@ -111,6 +113,61 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 set.add(enabledSources.getString(i))
             }
             return set
+        }
+
+        internal fun saveWidgetData(context: Context, appWidgetId: Int, count: String, updatedAt: String) {
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
+            prefs.putString(PREF_COUNT_PREFIX + appWidgetId, count)
+            prefs.putString(PREF_UPDATED_PREFIX + appWidgetId, updatedAt)
+            prefs.commit()
+        }
+
+        internal fun getWidgetData(context: Context, appWidgetId: Int): Pair<String, String>? {
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val count = prefs.getString(PREF_COUNT_PREFIX + appWidgetId, null)
+            val updatedAt = prefs.getString(PREF_UPDATED_PREFIX + appWidgetId, null)
+            if (count != null && updatedAt != null) {
+                return Pair(count, updatedAt)
+            }
+            return null
+        }
+
+        internal fun saveTriWidgetData(context: Context, appWidgetId: Int, power: String, heat: String, water: String, updatedAt: String) {
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
+            prefs.putString("tri_power_$appWidgetId", power)
+            prefs.putString("tri_heat_$appWidgetId", heat)
+            prefs.putString("tri_water_$appWidgetId", water)
+            prefs.putString("tri_updated_$appWidgetId", updatedAt)
+            prefs.commit()
+        }
+
+        internal fun getTriWidgetData(context: Context, appWidgetId: Int): List<String>? {
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val power = prefs.getString("tri_power_$appWidgetId", null) ?: return null
+            val heat = prefs.getString("tri_heat_$appWidgetId", null) ?: return null
+            val water = prefs.getString("tri_water_$appWidgetId", null) ?: return null
+            val updated = prefs.getString("tri_updated_$appWidgetId", null) ?: return null
+            return listOf(power, heat, water, updated)
+        }
+
+        internal fun saveAllWidgetData(context: Context, appWidgetId: Int, power: String, heat: String, water: String, gas: String, updatedAt: String) {
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
+            prefs.putString("all_power_$appWidgetId", power)
+            prefs.putString("all_heat_$appWidgetId", heat)
+            prefs.putString("all_water_$appWidgetId", water)
+            prefs.putString("all_gas_$appWidgetId", gas)
+            prefs.putString("all_updated_$appWidgetId", updatedAt)
+            prefs.commit()
+        }
+
+        internal fun getAllWidgetData(context: Context, appWidgetId: Int): List<String>? {
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val power = prefs.getString("all_power_$appWidgetId", null) ?: return null
+            val heat = prefs.getString("all_heat_$appWidgetId", null) ?: return null
+            val water = prefs.getString("all_water_$appWidgetId", null) ?: return null
+            val gas = prefs.getString("all_gas_$appWidgetId", null) ?: return null
+            val updated = prefs.getString("all_updated_$appWidgetId", null) ?: return null
+            return listOf(power, heat, water, gas, updated)
         }
     }
 
@@ -138,10 +195,33 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 onUpdate(context, mgr, allIds)
             }
         } else if (intent.action == Intent.ACTION_BOOT_COMPLETED ||
-                        intent.action == Intent.ACTION_CONFIGURATION_CHANGED
+                intent.action == Intent.ACTION_CONFIGURATION_CHANGED
         ) {
             if (allIds.isNotEmpty()) {
-                onUpdate(context, mgr, allIds)
+                onUpdateWithCache(context, mgr, allIds)
+            }
+        }
+    }
+
+    private fun onUpdateWithCache(
+            context: Context,
+            appWidgetManager: AppWidgetManager,
+            appWidgetIds: IntArray
+    ) {
+        WidgetUtils.initVerifier(context)
+        val pendingResult = goAsync()
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                delay(300) // Wait for system configuration to settle
+                appWidgetIds
+                        .map { appWidgetId ->
+                            async { updateWidget(context, appWidgetManager, appWidgetId, true) }
+                        }
+                        .awaitAll()
+            } catch (e: Exception) {
+                Log.e(TAG, "Cache update failed: ${e.message}")
+            } finally {
+                pendingResult.finish()
             }
         }
     }
@@ -156,6 +236,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         val pendingResult = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
+                delay(300) // Wait for system theme configuration to settle
                 withTimeoutOrNull(9000L) {
                     appWidgetIds
                             .map { appWidgetId ->
@@ -293,35 +374,16 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     }
 
     protected fun isDarkMode(context: Context): Boolean {
-        val sysConfig = android.content.res.Resources.getSystem().configuration
-        val nightMode = sysConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK
+        val nightMode = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
         return nightMode == Configuration.UI_MODE_NIGHT_YES
     }
 
-    private fun applyTheme(
-            context: Context,
-            views: RemoteViews,
-            dark: Boolean
-    ) {
-        val newConfig = Configuration(context.resources.configuration)
-        newConfig.uiMode = (newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK.inv()) or
-                (if (dark) Configuration.UI_MODE_NIGHT_YES else Configuration.UI_MODE_NIGHT_NO)
-        val themeContext = context.createConfigurationContext(newConfig)
 
-        // Brand color and icon tinting always need programmatic application since they differ per
-        // provider
-        val primary = themeContext.getColor(primaryColorRes)
-        views.setTextColor(R.id.widget_count, primary)
-        views.setInt(R.id.widget_icon, "setColorFilter", primary)
-
-        if (iconResId != 0) {
-            views.setImageViewResource(R.id.widget_icon, iconResId)
-        }
-    }
 
     private fun getSourceName(context: Context, key: String): String {
         return when (key) {
             "tauron" -> context.getString(R.string.provider_tauron)
+            "tauron_heat" -> context.getString(R.string.provider_tauron_heat)
             "stoen" -> context.getString(R.string.provider_stoen)
             "enea" -> context.getString(R.string.provider_enea)
             "energa" -> context.getString(R.string.provider_energa)
@@ -378,61 +440,97 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     open internal suspend fun updateWidget(
             context: Context,
             appWidgetManager: AppWidgetManager,
-            appWidgetId: Int
+            appWidgetId: Int,
+            useCacheOnly: Boolean = false
     ) {
         val settingsResult = loadSettings(context)
         val settingsList = settingsResult?.first
         val fullJson = settingsResult?.second
 
-        val language = settingsList?.firstOrNull()?.language ?: "system"
-        val theme = settingsList?.firstOrNull()?.theme ?: "system"
-        val dark = isDarkMode(context)
         val sourceEnabled = settingsList?.firstOrNull()?.sourceEnabled ?: true
 
         val activeSettings = settingsList?.filter { it.isActive } ?: emptyList()
-        var count = "?"
+        var count: String
         var statusMessage: String? = null
 
-        if (!sourceEnabled) {
-            count = "–"
-            statusMessage = getTranslation(context, "inactive")
-        } else if (settingsList == null || activeSettings.isEmpty()) {
-            count = "?"
-            statusMessage = getTranslation(context, "setup")
-        } else if (!WidgetUtils.isNetworkAvailable(context)) {
-            count = "!"
-            statusMessage = getTranslation(context, "offline")
+        val cachedData = getWidgetData(context, appWidgetId)
+
+        if (useCacheOnly && cachedData != null) {
+            count = cachedData.first
+            statusMessage = if (count == "–") getTranslation(context, "inactive")
+                            else if (count == "?") getTranslation(context, "setup")
+                            else if (count == "!") getTranslation(context, "offline")
+                            else null
         } else {
-            try {
-                // Shared fetch result between widgets
-                val hash = calculateHash(activeSettings)
-                val total =
-                        ProviderCache.getOrFetch(sourceKey, hash) {
-                            if (sourceKey == "psg") {
-                                PsgWebViewFetcher.fetchCount(context, activeSettings)
-                            } else {
-                                val settingsJson =
-                                        WidgetUtils.serializeSettingsForRust(
-                                                activeSettings,
-                                                fullJson
-                                        )
-                                WidgetUtils.fetchCountFromRust(context, sourceKey, settingsJson)
+            if (!sourceEnabled) {
+                count = "–"
+                statusMessage = getTranslation(context, "inactive")
+            } else if (settingsList == null || activeSettings.isEmpty()) {
+                count = "?"
+                statusMessage = getTranslation(context, "setup")
+            } else if (!WidgetUtils.isNetworkAvailable(context)) {
+                if (cachedData != null) {
+                    count = cachedData.first
+                } else {
+                    count = "!"
+                    statusMessage = getTranslation(context, "offline")
+                }
+            } else {
+                try {
+                    val hash = calculateHash(activeSettings)
+                    val total =
+                            ProviderCache.getOrFetch(sourceKey, hash) {
+                                if (sourceKey == "psg") {
+                                    PsgWebViewFetcher.fetchCount(context, activeSettings)
+                                } else {
+                                    val settingsJson =
+                                            WidgetUtils.serializeSettingsForRust(
+                                                    activeSettings,
+                                                    fullJson
+                                            )
+                                    WidgetUtils.fetchCountFromRust(context, sourceKey, settingsJson)
+                                }
                             }
-                        }
-                count = if (total >= 0) total.toString() else "!"
-            } catch (e: Exception) {
-                Log.e(TAG, "Error fetching count from Rust for $sourceKey: ${e.message}", e)
-                count = "!"
-                statusMessage = getTranslation(context, "error")
+                    count = if (total >= 0) total.toString() else "!"
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error fetching count from Rust for $sourceKey: ${e.message}", e)
+                    if (cachedData != null) {
+                        count = cachedData.first
+                    } else {
+                        count = "!"
+                        statusMessage = getTranslation(context, "error")
+                    }
+                }
             }
         }
 
-        val updatedAt =
-                statusMessage
-                        ?: run {
-                            val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-                            timeFormat.format(Date())
-                        }
+        val updatedAt = if (useCacheOnly && cachedData != null) {
+            cachedData.second
+        } else {
+            statusMessage
+                    ?: run {
+                        val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+                        timeFormat.format(Date())
+                    }
+        }
+
+        if (!useCacheOnly) {
+            saveWidgetData(context, appWidgetId, count, updatedAt)
+        }
+
+        val layoutId = when (sourceKey) {
+            "tauron", "stoen", "enea", "energa", "pge" -> R.layout.widget_outage_power
+            "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec" -> R.layout.widget_outage_heat
+            "psg" -> R.layout.widget_outage_gas
+            else -> R.layout.widget_outage_water
+        }
+        
+        val layoutSmallId = when (sourceKey) {
+            "tauron", "stoen", "enea", "energa", "pge" -> R.layout.widget_outage_power_small
+            "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec" -> R.layout.widget_outage_heat_small
+            "psg" -> R.layout.widget_outage_gas_small
+            else -> R.layout.widget_outage_water_small
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val viewMapping =
@@ -441,31 +539,17 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                                     createRemoteViews(
                                             context,
                                             appWidgetId,
-                                            R.layout.widget_outage_small,
+                                            layoutSmallId,
                                             count,
-                                            updatedAt,
-                                            language,
-                                            dark
+                                            updatedAt
                                     ),
                             SizeF(100f, 100f) to
                                     createRemoteViews(
                                             context,
                                             appWidgetId,
-                                            R.layout.widget_outage,
+                                            layoutId,
                                             count,
-                                            updatedAt,
-                                            language,
-                                            dark
-                                    ),
-                            SizeF(200f, 200f) to
-                                    createRemoteViews(
-                                            context,
-                                            appWidgetId,
-                                            R.layout.widget_outage_large,
-                                            count,
-                                            updatedAt,
-                                            language,
-                                            dark
+                                            updatedAt
                                     )
                     )
             val views = RemoteViews(viewMapping)
@@ -474,19 +558,16 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             val options = appWidgetManager.getAppWidgetOptions(appWidgetId)
             val minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
             val minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT)
-            val layoutId =
-                    if (minWidth < 100 || minHeight < 100) R.layout.widget_outage_small
-                    else if (minWidth < 200 || minHeight < 200) R.layout.widget_outage
-                    else R.layout.widget_outage_large
+            val chosenLayoutId =
+                    if (minWidth < 100 || minHeight < 100) layoutSmallId
+                    else layoutId
             val views =
                     createRemoteViews(
                             context,
                             appWidgetId,
-                            layoutId,
+                            chosenLayoutId,
                             count,
-                            updatedAt,
-                            language,
-                            dark
+                            updatedAt
                     )
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
@@ -496,9 +577,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             appWidgetId: Int,
             layoutId: Int,
             count: String,
-            updatedAt: String,
-            language: String,
-            dark: Boolean
+            updatedAt: String
     ): RemoteViews {
         val views = RemoteViews(context.packageName, layoutId)
         val refreshIntent =
@@ -534,22 +613,31 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                     else refreshPending
                 }
         views.setOnClickPendingIntent(R.id.widget_root, refreshPending)
-        views.setOnClickPendingIntent(R.id.widget_icon, clickPending)
         views.setOnClickPendingIntent(R.id.widget_count, clickPending)
-        applyTheme(context, views, dark)
+        
+        val isSmall = layoutId == R.layout.widget_outage_power_small || 
+                      layoutId == R.layout.widget_outage_heat_small || 
+                      layoutId == R.layout.widget_outage_water_small || 
+                      layoutId == R.layout.widget_outage_gas_small
+
+        if (!isSmall) {
+            views.setOnClickPendingIntent(R.id.widget_icon, clickPending)
+        }
+
         views.setTextViewText(R.id.widget_source, getSourceName(context, sourceKey))
-        views.setTextViewText(R.id.widget_label, getTranslation(context, labelKey))
         views.setTextViewText(R.id.widget_count, count)
         views.setTextViewText(R.id.widget_updated, updatedAt)
 
-        val iconDesc = when (sourceKey) {
-            "tauron", "stoen", "enea", "energa", "pge" -> getTranslation(context, "power")
-            "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec" -> getTranslation(context, "heat")
-            "mpwik_wroclaw", "mpwik_warszawa", "wmk", "aquanet", "katowickie_wodociagi", "zwik_lodz", "pwik_kalisz", "wodociagi_plockie", "pwik_czestochowa", "gdanskie_wodociagi", "puk_rokietnica" -> getTranslation(context, "water")
-            "psg" -> getTranslation(context, "gas")
-            else -> getSourceName(context, sourceKey)
+        if (!isSmall) {
+            val iconDesc = when (sourceKey) {
+                "tauron", "stoen", "enea", "energa", "pge" -> getTranslation(context, "power")
+                "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec" -> getTranslation(context, "heat")
+                "mpwik_wroclaw", "mpwik_warszawa", "wmk", "aquanet", "katowickie_wodociagi", "zwik_lodz", "pwik_kalisz", "wodociagi_plockie", "pwik_czestochowa", "gdanskie_wodociagi", "puk_rokietnica" -> getTranslation(context, "water")
+                "psg" -> getTranslation(context, "gas")
+                else -> getSourceName(context, sourceKey)
+            }
+            views.setContentDescription(R.id.widget_icon, iconDesc)
         }
-        views.setContentDescription(R.id.widget_icon, iconDesc)
 
         return views
     }

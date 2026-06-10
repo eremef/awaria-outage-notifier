@@ -7,8 +7,8 @@
     android:maxResizeWidth="320dp"
     android:maxResizeHeight="320dp"
     android:updatePeriodMillis="3600000"
-    android:initialLayout="@layout/widget_outage_small"
+    android:initialLayout="@layout/widget_outage_power_small"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
     android:widgetFeatures="reconfigurable|configuration_optional"
-    android:previewLayout="@layout/widget_outage_small" />
+    android:previewLayout="@layout/widget_outage_power_small" />

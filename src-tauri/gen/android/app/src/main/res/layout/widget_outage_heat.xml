@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
   android:id="@+id/widget_root"
   android:layout_width="match_parent"
@@ -6,7 +6,7 @@
   android:background="@drawable/widget_background"
   android:gravity="center_horizontal"
   android:orientation="vertical"
-  android:padding="4dp">
+  android:padding="@dimen/widget_padding">
 
   <TextView
     android:id="@+id/widget_source"
@@ -19,7 +19,7 @@
     android:text="@string/label_provider"
     android:textAlignment="center"
     android:textColor="@color/widget_text_updated"
-    android:textSize="16sp"
+    android:textSize="@dimen/widget_source_text_size"
     android:textStyle="bold" />
 
   <FrameLayout
@@ -29,19 +29,20 @@
 
   <ImageView
     android:id="@+id/widget_icon"
-    android:layout_width="20dp"
-    android:layout_height="20dp"
+    android:layout_width="@dimen/widget_icon_size"
+    android:layout_height="@dimen/widget_icon_size"
     android:layout_marginBottom="0dp"
     android:contentDescription="@string/icon_description"
-    android:src="@drawable/ic_electricity" />
+    android:tint="@color/utility_heat"
+    android:src="@drawable/ic_heating" />
 
   <TextView
     android:id="@+id/widget_count"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:text="@string/placeholder_dash"
-    android:textColor="@color/widget_text_primary"
-    android:textSize="32sp"
+    android:textColor="@color/utility_heat"
+    android:textSize="@dimen/widget_count_text_size"
     android:textStyle="bold" />
 
   <FrameLayout
@@ -57,6 +58,8 @@
     android:maxLines="1"
     android:text="@string/placeholder_time"
     android:textColor="@color/widget_text_updated"
-    android:textSize="11sp" />
+    android:textSize="@dimen/widget_updated_text_size" />
 
 </LinearLayout>
+
+

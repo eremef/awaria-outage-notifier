@@ -4,7 +4,7 @@ import android.content.Context
 
 class KatowickieWodociagiWidgetProvider : BaseWidgetProvider() {
     override val refreshAction: String = "xyz.eremef.awaria.ACTION_REFRESH_KATOWICKIEWODOCIAGI"
-    override val primaryColorRes: Int = R.color.brand_katowickiewodociagi
+    override val primaryColorRes: Int = R.color.utility_water
     override val iconResId: Int = R.drawable.ic_water
     override val labelKey: String = "outages"
     override val sourceKey: String = "katowickie_wodociagi"

@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/widget_root"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:background="@drawable/widget_background"
+  android:gravity="center_horizontal"
+  android:orientation="vertical"
+  android:padding="@dimen/widget_padding">
+
+  <TextView
+    android:id="@+id/widget_source"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="0dp"
+    android:breakStrategy="simple"
+    android:gravity="center"
+    android:hyphenationFrequency="none"
+    android:text="@string/label_provider"
+    android:textAlignment="center"
+    android:textColor="@color/widget_text_updated"
+    android:textSize="@dimen/widget_source_text_size"
+    android:textStyle="bold" />
+
+  <FrameLayout
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1" />
+
+  <ImageView
+    android:id="@+id/widget_icon"
+    android:layout_width="@dimen/widget_icon_size"
+    android:layout_height="@dimen/widget_icon_size"
+    android:layout_marginBottom="0dp"
+    android:contentDescription="@string/icon_description"
+    android:tint="@color/utility_gas"
+    android:src="@drawable/ic_gas" />
+
+  <TextView
+    android:id="@+id/widget_count"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="@string/placeholder_dash"
+    android:textColor="@color/utility_gas"
+    android:textSize="@dimen/widget_count_text_size"
+    android:textStyle="bold" />
+
+  <FrameLayout
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1" />
+
+  <TextView
+    android:id="@+id/widget_updated"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:ellipsize="end"
+    android:maxLines="1"
+    android:text="@string/placeholder_time"
+    android:textColor="@color/widget_text_updated"
+    android:textSize="@dimen/widget_updated_text_size" />
+
+</LinearLayout>
+
+

@@ -12,6 +12,7 @@
   <string name="label_outages">wyłączeń.</string>
   <string name="icon_description">ikona</string>
   <string name="widget_label_tauron">Tauron</string>
+  <string name="widget_label_tauron_heat">Tauron Ciepło</string>
   <string name="widget_label_mpwik">MPWiK Wrocław</string>
   <string name="widget_label_mpwik_warszawa">MPWiK Warszawa</string>
   <string name="widget_label_fortum">Fortum</string>
@@ -42,6 +43,7 @@
   <string name="msg_error">Błąd</string>
   <string name="msg_offline">Brak sieci</string>
   <string name="provider_tauron">Tauron</string>
+  <string name="provider_tauron_heat">Tauron Ciepło</string>
   <string name="provider_stoen">Stoen</string>
   <string name="provider_enea">Enea</string>
   <string name="provider_energa">Energa</string>
