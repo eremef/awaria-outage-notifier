@@ -292,52 +292,25 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    protected fun isDarkMode(context: Context, themeSetting: String): Boolean {
-        return when (themeSetting) {
-            "dark" -> true
-            "light" -> false
-            else -> {
-                val nightMode =
-                        context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
-                nightMode == Configuration.UI_MODE_NIGHT_YES
-            }
-        }
+    protected fun isDarkMode(context: Context): Boolean {
+        val sysConfig = android.content.res.Resources.getSystem().configuration
+        val nightMode = sysConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK
+        return nightMode == Configuration.UI_MODE_NIGHT_YES
     }
 
     private fun applyTheme(
             context: Context,
             views: RemoteViews,
-            themeSetting: String,
             dark: Boolean
     ) {
-        // If system theme is selected, the XML handles background and text colors automatically
-        // via resource qualifiers (values/ vs values-night/). We only explicitly set them here
-        // to support manual theme overrides (forcing dark/light) and to tint brand-specific
-        // elements.
-
-        if (themeSetting != "system") {
-            val bgRes =
-                    if (dark) R.drawable.widget_background_dark else R.drawable.widget_background
-            if (bgRes != 0) {
-                views.setInt(R.id.widget_root, "setBackgroundResource", bgRes)
-            }
-
-            val label =
-                    context.getColor(
-                            if (dark) R.color.widget_text_label else R.color.widget_text_label
-                    )
-            val updated =
-                    context.getColor(
-                            if (dark) R.color.widget_text_updated else R.color.widget_text_updated
-                    )
-
-            views.setTextColor(R.id.widget_label, label)
-            views.setTextColor(R.id.widget_updated, updated)
-        }
+        val newConfig = Configuration(context.resources.configuration)
+        newConfig.uiMode = (newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK.inv()) or
+                (if (dark) Configuration.UI_MODE_NIGHT_YES else Configuration.UI_MODE_NIGHT_NO)
+        val themeContext = context.createConfigurationContext(newConfig)
 
         // Brand color and icon tinting always need programmatic application since they differ per
         // provider
-        val primary = context.getColor(primaryColorRes)
+        val primary = themeContext.getColor(primaryColorRes)
         views.setTextColor(R.id.widget_count, primary)
         views.setInt(R.id.widget_icon, "setColorFilter", primary)
 
@@ -413,7 +386,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
         val language = settingsList?.firstOrNull()?.language ?: "system"
         val theme = settingsList?.firstOrNull()?.theme ?: "system"
-        val dark = isDarkMode(context, theme)
+        val dark = isDarkMode(context)
         val sourceEnabled = settingsList?.firstOrNull()?.sourceEnabled ?: true
 
         val activeSettings = settingsList?.filter { it.isActive } ?: emptyList()
@@ -472,7 +445,6 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                                             count,
                                             updatedAt,
                                             language,
-                                            theme,
                                             dark
                                     ),
                             SizeF(100f, 100f) to
@@ -483,7 +455,6 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                                             count,
                                             updatedAt,
                                             language,
-                                            theme,
                                             dark
                                     ),
                             SizeF(200f, 200f) to
@@ -494,7 +465,6 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                                             count,
                                             updatedAt,
                                             language,
-                                            theme,
                                             dark
                                     )
                     )
@@ -516,13 +486,11 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                             count,
                             updatedAt,
                             language,
-                            theme,
                             dark
                     )
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
     }
-
     private fun createRemoteViews(
             context: Context,
             appWidgetId: Int,
@@ -530,7 +498,6 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             count: String,
             updatedAt: String,
             language: String,
-            themeSetting: String,
             dark: Boolean
     ): RemoteViews {
         val views = RemoteViews(context.packageName, layoutId)
@@ -552,24 +519,24 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                     val launchIntent =
                             context.packageManager.getLaunchIntentForPackage(context.packageName)
                                     ?.apply {
-                                        flags =
+                                         flags =
                                                 Intent.FLAG_ACTIVITY_NEW_TASK or
-                                                        Intent.FLAG_ACTIVITY_CLEAR_TOP
-                                    }
+                                                         Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                     }
                     if (launchIntent != null)
                             PendingIntent.getActivity(
-                                    context,
-                                    appWidgetId,
-                                    launchIntent,
-                                    PendingIntent.FLAG_UPDATE_CURRENT or
-                                            PendingIntent.FLAG_IMMUTABLE
+                                     context,
+                                     appWidgetId,
+                                     launchIntent,
+                                     PendingIntent.FLAG_UPDATE_CURRENT or
+                                             PendingIntent.FLAG_IMMUTABLE
                             )
                     else refreshPending
                 }
         views.setOnClickPendingIntent(R.id.widget_root, refreshPending)
         views.setOnClickPendingIntent(R.id.widget_icon, clickPending)
         views.setOnClickPendingIntent(R.id.widget_count, clickPending)
-        applyTheme(context, views, themeSetting, dark)
+        applyTheme(context, views, dark)
         views.setTextViewText(R.id.widget_source, getSourceName(context, sourceKey))
         views.setTextViewText(R.id.widget_label, getTranslation(context, labelKey))
         views.setTextViewText(R.id.widget_count, count)

@@ -37,8 +37,8 @@ if (typeof window !== 'undefined' && !window.__TAURI__) {
             }
         },
         event: {
-            listen: async () => {},
-            emit: async () => {}
+            listen: async () => { },
+            emit: async () => { }
         }
     };
 
@@ -580,7 +580,7 @@ if (typeof document !== 'undefined') {
             hideSuggestions('street-suggestions');
 
             // Scroll to form
-            document.getElementById('address-form').scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('address-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
 
         document.getElementById('cancel-address-btn').addEventListener('click', function () {
@@ -896,20 +896,159 @@ if (typeof document !== 'undefined') {
         }
     }
 
+    function triggerAddAddressFlow() {
+        toggleSettings(true);
+        setTimeout(() => {
+            const section = document.getElementById('address-form');
+            const addBtn = document.getElementById('add-address-btn');
+            if (section && addBtn) {
+                addBtn.click();
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                const nameInput = document.getElementById('address-name-input');
+                if (nameInput) nameInput.focus({ preventScroll: true });
+            }
+        }, 600);
+    }
+
+    function selectCustomAddressIndex(val) {
+        selectedAddressIndex = val;
+        
+        // Sync native select value just in case
+        const filter = document.getElementById('address-filter');
+        if (filter) {
+            filter.value = val.toString();
+        }
+
+        // Close dropdown
+        const customSelect = document.getElementById('custom-address-select');
+        const optionsContainer = document.getElementById('custom-address-options');
+        if (customSelect && optionsContainer) {
+            customSelect.setAttribute('aria-expanded', 'false');
+            optionsContainer.classList.add('hidden');
+            document.body.classList.remove('dropdown-open');
+        }
+
+        // Re-render outages
+        const container = document.getElementById('outages-container');
+        renderAlerts(lastAlerts || [], container, currentSettings, selectedAddressIndex);
+
+        // Re-render the select trigger text and option highlights
+        updateAddressFilter();
+    }
+
+    function renderCustomAddressDropdown(activeAddresses) {
+        const triggerText = document.getElementById('custom-select-trigger-text');
+        const optionsContainer = document.getElementById('custom-address-options');
+        if (!optionsContainer || !triggerText) return;
+
+        optionsContainer.innerHTML = '';
+
+        // "All addresses" option
+        const allOptionEl = document.createElement('div');
+        allOptionEl.className = 'custom-select-option' + (selectedAddressIndex === -1 ? ' active' : '');
+        allOptionEl.role = 'option';
+        allOptionEl.ariaSelected = (selectedAddressIndex === -1).toString();
+        allOptionEl.dataset.value = '-1';
+        allOptionEl.innerHTML = `
+            <div class="custom-option-main">
+                <span>${escapeHtml(typeof t !== 'undefined' ? t('addr_filter_all') : 'All addresses')}</span>
+            </div>
+        `;
+        optionsContainer.appendChild(allOptionEl);
+
+        // Active addresses
+        activeAddresses.forEach((addr) => {
+            const optionEl = document.createElement('div');
+            optionEl.className = 'custom-select-option' + (selectedAddressIndex === addr.originalIndex ? ' active' : '');
+            optionEl.role = 'option';
+            optionEl.ariaSelected = (selectedAddressIndex === addr.originalIndex).toString();
+            optionEl.dataset.value = addr.originalIndex;
+
+            const nameText = addr.name || `${addr.streetName} ${addr.houseNo}`;
+            const addressSubText = addr.name ? `${addr.streetName} ${addr.houseNo}, ${addr.cityName}` : addr.cityName;
+            const starSvg = addr.originalIndex === currentSettings.primaryAddressIndex ? `<span class="custom-option-star">${ICONS.STAR}</span>` : '';
+
+            optionEl.innerHTML = `
+                <div class="custom-option-main">
+                    <span>${escapeHtml(nameText)}${starSvg}</span>
+                </div>
+                <div class="custom-option-sub">${escapeHtml(addressSubText)}</div>
+            `;
+            optionsContainer.appendChild(optionEl);
+        });
+
+        // Set trigger text
+        if (selectedAddressIndex === -1) {
+            triggerText.textContent = typeof t !== 'undefined' ? t('addr_filter_all') : 'All addresses';
+            triggerText.removeAttribute('data-i18n');
+        } else {
+            const selectedAddr = activeAddresses.find(a => a.originalIndex === selectedAddressIndex);
+            if (selectedAddr) {
+                triggerText.textContent = selectedAddr.name || `${selectedAddr.streetName} ${selectedAddr.houseNo}`;
+            } else {
+                triggerText.textContent = typeof t !== 'undefined' ? t('addr_filter_all') : 'All addresses';
+            }
+        }
+
+        // Add click events to options
+        optionsContainer.querySelectorAll('.custom-select-option').forEach(el => {
+            el.addEventListener('click', (e) => {
+                const val = parseInt(el.dataset.value, 10);
+                selectCustomAddressIndex(val);
+                e.stopPropagation();
+            });
+        });
+    }
+
     function initAddressFilter() {
         const filter = document.getElementById('address-filter');
-        filter.addEventListener('change', (e) => {
-            selectedAddressIndex = parseInt(e.target.value, 10);
-            const container = document.getElementById('outages-container');
-            renderAlerts(lastAlerts || [], container, currentSettings, selectedAddressIndex);
-        });
+        const customSelect = document.getElementById('custom-address-select');
+        const optionsContainer = document.getElementById('custom-address-options');
+
+        if (customSelect && optionsContainer) {
+            customSelect.addEventListener('click', (e) => {
+                const isExpanded = customSelect.getAttribute('aria-expanded') === 'true';
+                customSelect.setAttribute('aria-expanded', (!isExpanded).toString());
+                optionsContainer.classList.toggle('hidden');
+                document.body.classList.toggle('dropdown-open', !isExpanded);
+                e.stopPropagation();
+            });
+
+            // Close when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!customSelect.contains(e.target)) {
+                    customSelect.setAttribute('aria-expanded', 'false');
+                    optionsContainer.classList.add('hidden');
+                    document.body.classList.remove('dropdown-open');
+                }
+            });
+
+            // Close on Escape key
+            customSelect.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    customSelect.setAttribute('aria-expanded', 'false');
+                    optionsContainer.classList.add('hidden');
+                    document.body.classList.remove('dropdown-open');
+                    customSelect.focus();
+                }
+            });
+        }
+
+        const shortcutBtn = document.getElementById('add-address-shortcut-btn');
+        if (shortcutBtn) {
+            shortcutBtn.addEventListener('click', () => {
+                triggerAddAddressFlow();
+            });
+        }
     }
 
     function updateAddressFilter() {
         const filter = document.getElementById('address-filter');
+        const container = document.getElementById('address-filter-container') || filter;
         const allOpt = filter.querySelector('option[value="-1"]');
-        const wasHidden = filter.classList.contains('hidden');
+        const wasHidden = container.classList.contains('hidden');
         filter.innerHTML = '';
+
         if (allOpt) filter.appendChild(allOpt);
 
         const activeAddresses = (currentSettings && Array.isArray(currentSettings.addresses))
@@ -919,27 +1058,28 @@ if (typeof document !== 'undefined') {
         const activeCount = activeAddresses.length;
         console.log('updateAddressFilter: activeCount=', activeCount);
 
+        // Populate native select for any backward compatibility
+        activeAddresses.forEach((addr) => {
+            const opt = document.createElement('option');
+            opt.value = addr.originalIndex;
+            opt.textContent = addr.name || `${addr.streetName} ${addr.houseNo}`;
+            filter.appendChild(opt);
+        });
+
         if (activeCount === 0) {
-            filter.classList.add('hidden');
-        } else if (activeCount === 1) {
-            filter.classList.add('hidden');
-            selectedAddressIndex = activeAddresses[0].originalIndex;
+            container.classList.add('hidden');
         } else {
-            filter.classList.remove('hidden');
-            if (wasHidden) {
+            container.classList.remove('hidden');
+            if (activeCount === 1) {
+                selectedAddressIndex = activeAddresses[0].originalIndex;
+            }
+            if (wasHidden && activeCount > 1) {
                 selectedAddressIndex = -1;
                 filter.value = '-1';
             }
-            activeAddresses.forEach((addr) => {
-                const opt = document.createElement('option');
-                opt.value = addr.originalIndex;
-                opt.textContent = addr.name || `${addr.streetName} ${addr.houseNo}`;
-                if (addr.originalIndex === currentSettings.primaryAddressIndex) {
-                    opt.textContent += ' ⭐';
-                }
-                filter.appendChild(opt);
-            });
         }
+
+        renderCustomAddressDropdown(activeAddresses);
     }
 
     function renderAddressesList() {
@@ -1055,7 +1195,7 @@ if (typeof document !== 'undefined') {
         }
 
         // Scroll to form
-        document.getElementById('address-form').scrollIntoView({ behavior: 'smooth' });
+        document.getElementById('address-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
     async function autoSaveSettings() {
@@ -1626,10 +1766,7 @@ if (typeof document !== 'undefined') {
         if (!refreshBtn) return;
 
         refreshBtn.addEventListener('click', async () => {
-            if (refreshBtn.classList.contains('spinning')) return;
-            refreshBtn.classList.add('spinning');
             await fetchOutages();
-            refreshBtn.classList.remove('spinning');
         });
     }
 
@@ -1659,12 +1796,7 @@ if (typeof document !== 'undefined') {
             pulling = false;
             if (indicator.classList.contains('visible')) {
                 indicator.classList.remove('visible');
-                indicator.classList.add('refreshing');
-                indicator.textContent = typeof t !== 'undefined' ? t('refresh_loading') : '↻ Refreshing...';
-                fetchOutages().finally(() => {
-                    indicator.classList.remove('refreshing');
-                    indicator.textContent = typeof t !== 'undefined' ? t('refresh_pull') : '↻ Release to refresh';
-                });
+                fetchOutages();
             }
         });
     }
@@ -1680,6 +1812,8 @@ if (typeof document !== 'undefined') {
             if (isFetching && !cachedOnly) return;
             if (!cachedOnly) {
                 isFetching = true;
+                const refreshBtn = document.getElementById('refresh-btn');
+                if (refreshBtn) refreshBtn.classList.add('spinning');
 
                 // If it is a full fresh fetch, trigger progressive loading for all enabled sources
                 const enabled = currentSettings && Array.isArray(currentSettings.enabledSources)
@@ -1730,6 +1864,8 @@ if (typeof document !== 'undefined') {
                     } finally {
                         setTimeout(() => {
                             isFetching = false;
+                            const refreshBtn = document.getElementById('refresh-btn');
+                            if (refreshBtn) refreshBtn.classList.remove('spinning');
                             if (progressEl) {
                                 progressEl.classList.add('hidden');
                                 // Reset title and progress bar
@@ -1792,6 +1928,8 @@ if (typeof document !== 'undefined') {
             } else {
                 if (!cachedOnly) {
                     isFetching = false;
+                    const refreshBtn = document.getElementById('refresh-btn');
+                    if (refreshBtn) refreshBtn.classList.remove('spinning');
                 }
             }
         }
@@ -2206,7 +2344,7 @@ if (typeof document !== 'undefined') {
                 ctaBtn.addEventListener('click', () => {
                     toggleSettings(true);
                     setTimeout(() => {
-                        const section = document.getElementById('location-settings-section');
+                        const section = document.getElementById('address-form');
                         const addBtn = document.getElementById('add-address-btn');
                         if (section && addBtn) {
                             addBtn.click();
@@ -2485,7 +2623,7 @@ if (typeof document !== 'undefined') {
             return (typeof t !== 'undefined' ? t(s.i18nLabel) : null) || s.label;
         };
         const getSourceIcon = (s) => {
-            const svgBase = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="utility-svg"';
+            const svgBase = 'viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="utility-svg"';
             if (s.category === 'water') {
                 return `<svg ${svgBase}><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"></path></svg>`;
             }

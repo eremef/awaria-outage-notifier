@@ -68,5 +68,4 @@
     <string name="placeholder_time">--:--</string>
     <string name="placeholder_dash">–</string>
     <string name="config_cancel">Cancel</string>
-    <string name="date">00:00</string>
 </resources>

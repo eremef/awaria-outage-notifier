@@ -1,0 +1,6 @@
+<resources>
+  <dimen name="address_widget_count_size">19sp</dimen>
+  <dimen name="address_widget_icon_width">16dp</dimen>
+  <dimen name="address_widget_icon_height">16dp</dimen>
+  <dimen name="header_text_size">14sp</dimen>
+</resources>

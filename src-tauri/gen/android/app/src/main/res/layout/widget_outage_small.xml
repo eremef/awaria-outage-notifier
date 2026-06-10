@@ -1,64 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/widget_root"
+  android:id="@+id/widget_root"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:background="@drawable/widget_background"
+  android:gravity="center_horizontal"
+  android:orientation="vertical"
+  android:padding="2dp">
+
+  <TextView
+    android:id="@+id/widget_source"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/widget_background"
-    android:gravity="center_horizontal"
-    android:orientation="vertical"
-    android:padding="4dp">
-
-  <LinearLayout
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content">
-
-    <ImageView
-        android:id="@+id/widget_icon"
-        android:layout_width="14dp"
-        android:layout_height="14dp"
-        android:layout_gravity="center"
-        android:contentDescription="@string/icon_description"
-        android:src="@drawable/ic_electricity" />
-
-    <TextView
-      android:id="@+id/widget_source"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:layout_gravity="center"
-      android:breakStrategy="simple"
-      android:hyphenationFrequency="none"
-      android:text="@string/label_provider"
-      android:textAlignment="center"
-      android:textColor="@color/widget_text_label"
-      android:textSize="9sp"
-      android:textStyle="bold" />
-  </LinearLayout>
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:gravity="top|center"
+    android:lines="2"
+    android:breakStrategy="simple"
+    android:hyphenationFrequency="none"
+    android:text="@string/label_provider"
+    android:textAlignment="center"
+    android:textColor="@color/widget_text_label"
+    android:textSize="10sp"
+    android:textStyle="bold" />
 
   <FrameLayout
-      android:layout_width="match_parent"
-      android:layout_height="0dp"
-      android:layout_weight="1" />
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_marginVertical="-2dp"
+    android:layout_weight="1"
+    android:paddingVertical="-2dp" />
 
   <TextView
-      android:id="@+id/widget_count"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:text="–"
-      android:textColor="@color/widget_text_primary"
-      android:textSize="14sp"
-      android:textStyle="bold" />
+    android:id="@+id/widget_count"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:text="@string/placeholder_dash"
+    android:textColor="@color/widget_text_primary"
+    android:textSize="17sp"
+    android:textStyle="bold" />
 
   <FrameLayout
-      android:layout_width="match_parent"
-      android:layout_height="0dp"
-      android:layout_weight="1" />
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_marginVertical="-2dp"
+    android:layout_weight="1"
+    android:paddingVertical="-2dp" />
 
   <TextView
-      android:id="@+id/widget_updated"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:text="@string/date"
-      android:textColor="@color/widget_text_updated"
-      android:textSize="8sp" />
+    android:id="@+id/widget_updated"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="@string/placeholder_time"
+    android:textColor="@color/widget_text_updated"
+    android:textSize="8sp" />
 
 </LinearLayout>

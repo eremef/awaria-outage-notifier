@@ -38,7 +38,7 @@
         android:id="@+id/widget_count"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="–"
+        android:text="@string/placeholder_dash"
         android:textColor="@color/widget_text_primary"
         android:textSize="48sp"
         android:textStyle="bold" />
@@ -61,7 +61,7 @@
         android:id="@+id/widget_updated"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/date"
+        android:text="@string/placeholder_time"
         android:textColor="@color/widget_text_updated"
         android:textSize="16sp" />
 

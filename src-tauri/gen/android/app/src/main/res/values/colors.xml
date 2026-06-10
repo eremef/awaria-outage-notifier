@@ -1,39 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- General Widget Colors (Light) -->
-    <color name="widget_background">#FFFFFF</color>
-    <color name="widget_text_primary">#D9006C</color>
-    <color name="widget_text_label">#666666</color>
-    <color name="widget_text_updated">#606060</color>
-    <color name="widget_border">#999999</color>
-  
-    <!-- Utility Specific Colors (Light - General) -->
-    <color name="utility_power">#A15C00</color>
-    <color name="utility_heat">#C62828</color>
-    <color name="utility_water">#0077D9</color>
-    <color name="utility_gas">#0277BD</color>
+  <!-- General Widget Colors (Light) -->
+  <color name="widget_background">#FFFFFF</color>
+  <color name="widget_text_primary">#D9006C</color>
+  <color name="widget_text_label">#666666</color>
+  <color name="widget_text_updated">#606060</color>
+  <color name="widget_border">#999999</color>
 
-    <!-- Provider Specific Brand Colors (Light) -->
-    <color name="brand_tauron">#D9006C</color>
-    <color name="brand_stoen">#D31D0F</color>
-    <color name="brand_enea">#00225F</color>
-    <color name="brand_energa">#0160A9</color>
-    <color name="brand_pge">#1E3A8A</color>
-    <color name="brand_fortum">#007A40</color>
-    <color name="brand_mpwik">#0077D9</color>
-    <color name="brand_mpwik_warszawa">#3A5BC2</color>
-    <color name="brand_wmk">#01618F</color>
-    <color name="brand_psg">#0277BD</color>
-    <color name="brand_aquanet">#0077D9</color>
-    <color name="brand_katowickiewodociagi">#006AA0</color>
-    <color name="brand_veolia">#D31D0F</color>
-    <color name="brand_veolia_poznan">#E53935</color>
-    <color name="brand_veolia_lodz">#D31D0F</color>
-    <color name="brand_zwik_lodz">#0077AB</color>
-    <color name="brand_pwik_kalisz">#007CB0</color>
-    <color name="brand_wodociagi_plockie">#00808A</color>
-    <color name="brand_pwik_czestochowa">#005EC2</color>
-    <color name="brand_gdanskie_wodociagi">#0375AE</color>
-    <color name="brand_gpec">#DB002D</color>
-    <color name="brand_puk_rokietnica">#0288D1</color>
+  <!-- Utility Specific Colors (Light - General) -->
+  <color name="utility_power">#A15C00</color>
+  <color name="utility_heat">#C62828</color>
+  <color name="utility_water">#0077D9</color>
+  <color name="utility_gas">#0277BD</color>
+
+  <!-- Provider Specific Brand Colors (Light) -->
+  <color name="brand_tauron">#D9006C</color>
+  <color name="brand_stoen">#D31D0F</color>
+  <color name="brand_enea">#00225F</color>
+  <color name="brand_energa">#0160A9</color>
+  <color name="brand_pge">#1E3A8A</color>
+  <color name="brand_fortum">#007A40</color>
+  <color name="brand_mpwik">#0077D9</color>
+  <color name="brand_mpwik_warszawa">#3A5BC2</color>
+  <color name="brand_wmk">#01618F</color>
+  <color name="brand_psg">#0277BD</color>
+  <color name="brand_aquanet">#0077D9</color>
+  <color name="brand_katowickiewodociagi">#006AA0</color>
+  <color name="brand_veolia">#D31D0F</color>
+  <color name="brand_veolia_poznan">#E53935</color>
+  <color name="brand_veolia_lodz">#D31D0F</color>
+  <color name="brand_zwik_lodz">#0077AB</color>
+  <color name="brand_pwik_kalisz">#007CB0</color>
+  <color name="brand_wodociagi_plockie">#00808A</color>
+  <color name="brand_pwik_czestochowa">#005EC2</color>
+  <color name="brand_gdanskie_wodociagi">#0375AE</color>
+  <color name="brand_gpec">#DB002D</color>
+  <color name="brand_puk_rokietnica">#0288D1</color>
 </resources>

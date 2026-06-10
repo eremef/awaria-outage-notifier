@@ -26,7 +26,8 @@
 <body>
     <div id="main-view" class="view active container">
         <div class="sticky-nav">
-            <button id="settings-btn" class="settings-btn" title="Settings" data-i18n-title="settings" data-i18n-aria-label="aria_settings_btn">
+            <button id="settings-btn" class="settings-btn" title="Settings" data-i18n-title="settings"
+                data-i18n-aria-label="aria_settings_btn">
                 <svg class="icon-settings" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="3"></circle>
@@ -39,7 +40,8 @@
                 <h1 data-i18n="title">Outage Alerts</h1>
                 <p class="last-updated-row">
                     <span id="last-updated" data-i18n="checking_updates">Checking for updates...</span>
-                    <button id="refresh-btn" class="refresh-btn" title="Refresh" data-i18n-aria-label="aria_refresh_btn">
+                    <button id="refresh-btn" class="refresh-btn" title="Refresh"
+                        data-i18n-aria-label="aria_refresh_btn">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 2v6h-6"></path>
@@ -74,13 +76,37 @@
                         <div class="progress-console-bar-fill" id="progress-console-bar-fill"></div>
                     </div>
                 </div>
-                <select id="address-filter" class="address-filter" data-i18n-aria-label="aria_address_filter">
-                    <option value="-1" data-i18n="addr_filter_all">All addresses</option>
-                </select>
+                <div id="address-filter-container" class="address-filter-container">
+                    <select id="address-filter" class="address-filter" data-i18n-aria-label="aria_address_filter"
+                        style="display: none !important;">
+                        <option value="-1" data-i18n="addr_filter_all">All addresses</option>
+                    </select>
+                    <div id="custom-address-select" class="custom-address-select" role="combobox" aria-expanded="false"
+                        aria-haspopup="listbox" aria-controls="custom-address-options" tabindex="0">
+                        <div class="custom-select-trigger">
+                            <span id="custom-select-trigger-text" data-i18n="addr_filter_all">All addresses</span>
+                            <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
+                        <div id="custom-address-options" class="custom-select-options hidden" role="listbox"></div>
+                    </div>
+                    <button id="add-address-shortcut-btn" class="add-address-shortcut-btn" title="Add Address"
+                        data-i18n-title="empty_state_cta" data-i18n-aria-label="aria_add_address_btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </button>
+                </div>
             </header>
         </div>
 
-        <div id="pull-indicator" class="pull-indicator" data-i18n="refresh_pull" aria-hidden="true">↻ Release to refresh</div>
+        <div id="pull-indicator" class="pull-indicator" data-i18n="refresh_pull" aria-hidden="true">↻ Release to refresh
+        </div>
 
         <main id="outages-container">
             <div class="loading" data-i18n="loading_data">Loading alert data...</div>
@@ -193,7 +219,7 @@
                     </div>
                     <div>
                         <div id="addresses-list" class="addresses-list"></div>
-                        <button id="add-address-btn" class="save-btn" data-i18n="add_address">+ Add Address</button>
+                        <button id="add-address-btn" class="save-btn" data-i18n="empty_state_cta">+ Add Address</button>
                         <div id="address-form" class="address-form hidden">
                             <div class="settings-field">
                                 <label for="address-name-input" data-i18n="address_name">Name</label>
@@ -203,9 +229,10 @@
                             <div class="settings-field">
                                 <label for="city-input" data-i18n="settings_city">City</label>
                                 <input type="text" id="city-input" data-i18n="settings_city_placeholder"
-                                    placeholder="e.g. Wrocław" autocomplete="off"
-                                    role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="city-suggestions">
-                                <div id="city-suggestions" class="suggestions-dropdown hidden" role="listbox" aria-label="City suggestions"></div>
+                                    placeholder="e.g. Wrocław" autocomplete="off" role="combobox"
+                                    aria-autocomplete="list" aria-expanded="false" aria-controls="city-suggestions">
+                                <div id="city-suggestions" class="suggestions-dropdown hidden" role="listbox"
+                                    aria-label="City suggestions"></div>
                                 <div class="selection-hint" data-i18n="hint_select_from_list">Please select from the
                                     list.
                                 </div>
@@ -213,9 +240,10 @@
                             <div class="settings-field">
                                 <label for="street-input" data-i18n="settings_street">Street</label>
                                 <input type="text" id="street-input" data-i18n="settings_street_placeholder"
-                                    placeholder="e.g. Kuźnicza" autocomplete="off" disabled
-                                    role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="street-suggestions">
-                                <div id="street-suggestions" class="suggestions-dropdown hidden" role="listbox" aria-label="Street suggestions"></div>
+                                    placeholder="e.g. Kuźnicza" autocomplete="off" disabled role="combobox"
+                                    aria-autocomplete="list" aria-expanded="false" aria-controls="street-suggestions">
+                                <div id="street-suggestions" class="suggestions-dropdown hidden" role="listbox"
+                                    aria-label="Street suggestions"></div>
                                 <div class="selection-hint" data-i18n="hint_select_from_list">Please select from the
                                     list.
                                 </div>
@@ -253,7 +281,8 @@
     </main>
 
     <aside aria-label="Support">
-        <a href="https://cuplink.to/eremef.xyz" target="_blank" class="cuplink-btn" data-i18n-title="cuplink_support" data-i18n-aria-label="aria_cappucino_support">
+        <a href="https://cuplink.to/eremef.xyz" target="_blank" class="cuplink-btn" data-i18n-title="cuplink_support"
+            data-i18n-aria-label="aria_cappucino_support">
             <div class="cuplink-icons-container">
                 <img src="assets/cappucino.png" class="cuplink-icon icon-1" alt="Cappucino">
                 <img src="assets/latte.png" class="cuplink-icon icon-2" alt="Latte">

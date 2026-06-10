@@ -11,6 +11,7 @@ import java.util.*
 import kotlinx.coroutines.*
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import android.content.res.Configuration
 
 class AllWidgetProvider : BaseWidgetProvider() {
     override val refreshAction: String = "xyz.eremef.awaria.ACTION_REFRESH_ALL"
@@ -44,10 +45,10 @@ class AllWidgetProvider : BaseWidgetProvider() {
         views.setTextViewText(R.id.count_gas, "–")
         views.setTextViewText(R.id.widget_updated, context.getString(R.string.msg_updating))
         views.setTextViewText(R.id.widget_address_name, "")
-        views.setTextViewText(R.id.label_power, context.getString(R.string.label_power))
-        views.setTextViewText(R.id.label_heat, context.getString(R.string.label_heat))
-        views.setTextViewText(R.id.label_water, context.getString(R.string.label_water))
-        views.setTextViewText(R.id.label_gas, context.getString(R.string.label_gas))
+        // views.setTextViewText(R.id.label_power, context.getString(R.string.label_power))
+        // views.setTextViewText(R.id.label_heat, context.getString(R.string.label_heat))
+        // views.setTextViewText(R.id.label_water, context.getString(R.string.label_water))
+        // views.setTextViewText(R.id.label_gas, context.getString(R.string.label_gas))
         appWidgetManager.updateAppWidget(appWidgetId, views)
     }
 
@@ -89,8 +90,7 @@ class AllWidgetProvider : BaseWidgetProvider() {
                     primaryAddress
                 }
 
-        val theme = allSettings?.firstOrNull()?.theme ?: "system"
-        val dark = isDarkMode(context, theme)
+        val dark = isDarkMode(context)
 
         val enabledSources = getEnabledSources(fullJson)
         val allEnabledByDefault = fullJson?.has("enabledSources") == false
@@ -298,10 +298,10 @@ class AllWidgetProvider : BaseWidgetProvider() {
         views.setTextViewText(R.id.count_gas, gasCount)
 
         // Labels
-        views.setTextViewText(R.id.label_power, getTranslation(context, "power"))
-        views.setTextViewText(R.id.label_heat, getTranslation(context, "heat"))
-        views.setTextViewText(R.id.label_water, getTranslation(context, "water"))
-        views.setTextViewText(R.id.label_gas, getTranslation(context, "gas"))
+        // views.setTextViewText(R.id.label_power, getTranslation(context, "power"))
+        // views.setTextViewText(R.id.label_heat, getTranslation(context, "heat"))
+        // views.setTextViewText(R.id.label_water, getTranslation(context, "water"))
+        // views.setTextViewText(R.id.label_gas, getTranslation(context, "gas"))
 
         // Check enabled utilities
 
@@ -321,7 +321,6 @@ class AllWidgetProvider : BaseWidgetProvider() {
         applyAllTheme(
                 context,
                 views,
-                theme,
                 dark,
                 powerEnabled,
                 heatEnabled,
@@ -335,35 +334,21 @@ class AllWidgetProvider : BaseWidgetProvider() {
     private fun applyAllTheme(
             context: Context,
             views: RemoteViews,
-            themeSetting: String,
             dark: Boolean,
             powerEnabled: Boolean,
             heatEnabled: Boolean,
             waterEnabled: Boolean,
             gasEnabled: Boolean
     ) {
-        if (themeSetting != "system") {
-            val bgRes =
-                    if (dark) R.drawable.widget_background_dark else R.drawable.widget_background
-            if (bgRes != 0) {
-                views.setInt(R.id.widget_root, "setBackgroundResource", bgRes)
-            }
+        val newConfig = Configuration(context.resources.configuration)
+        newConfig.uiMode = (newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK.inv()) or
+                (if (dark) Configuration.UI_MODE_NIGHT_YES else Configuration.UI_MODE_NIGHT_NO)
+        val themeContext = context.createConfigurationContext(newConfig)
 
-            val labelColor = context.getColor(R.color.widget_text_label)
-            val updatedColor = context.getColor(R.color.widget_text_updated)
-
-            views.setTextColor(R.id.widget_address_name, updatedColor)
-            views.setTextColor(R.id.widget_updated, updatedColor)
-            views.setTextColor(R.id.label_power, labelColor)
-            views.setTextColor(R.id.label_heat, labelColor)
-            views.setTextColor(R.id.label_water, labelColor)
-            views.setTextColor(R.id.label_gas, labelColor)
-        }
-
-        val colorPower = context.getColor(R.color.utility_power)
-        val colorHeat = context.getColor(R.color.utility_heat)
-        val colorWater = context.getColor(R.color.utility_water)
-        val colorGas = context.getColor(R.color.utility_gas)
+        val colorPower = themeContext.getColor(R.color.utility_power)
+        val colorHeat = themeContext.getColor(R.color.utility_heat)
+        val colorWater = themeContext.getColor(R.color.utility_water)
+        val colorGas = themeContext.getColor(R.color.utility_gas)
 
         views.setTextColor(R.id.count_power, colorPower)
         views.setTextColor(R.id.count_heat, colorHeat)

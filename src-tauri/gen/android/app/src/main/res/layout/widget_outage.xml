@@ -10,16 +10,22 @@
 
   <TextView
     android:id="@+id/widget_source"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="0dp"
     android:breakStrategy="simple"
+    android:gravity="center"
     android:hyphenationFrequency="none"
     android:text="@string/label_provider"
     android:textAlignment="center"
     android:textColor="@color/widget_text_updated"
-    android:textSize="10sp"
+    android:textSize="16sp"
     android:textStyle="bold" />
+
+  <FrameLayout
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1" />
 
   <ImageView
     android:id="@+id/widget_icon"
@@ -29,27 +35,14 @@
     android:contentDescription="@string/icon_description"
     android:src="@drawable/ic_electricity" />
 
-  <FrameLayout
-    android:layout_width="match_parent"
-    android:layout_height="0dp"
-    android:layout_weight="1" />
-
   <TextView
     android:id="@+id/widget_count"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:text="–"
+    android:text="@string/placeholder_dash"
     android:textColor="@color/widget_text_primary"
-    android:textSize="14sp"
+    android:textSize="32sp"
     android:textStyle="bold" />
-
-  <TextView
-    android:id="@+id/widget_label"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="@string/label_outages"
-    android:textColor="@color/widget_text_label"
-    android:textSize="10sp" />
 
   <FrameLayout
     android:layout_width="match_parent"
@@ -62,8 +55,8 @@
     android:layout_height="wrap_content"
     android:ellipsize="end"
     android:maxLines="1"
-    android:text="@string/date"
+    android:text="@string/placeholder_time"
     android:textColor="@color/widget_text_updated"
-    android:textSize="10sp" />
+    android:textSize="11sp" />
 
 </LinearLayout>
