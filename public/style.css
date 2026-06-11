@@ -1820,6 +1820,7 @@ body.dropdown-open::after {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     max-height: 73.5vh;
     overflow-y: auto;
+    overscroll-behavior: contain;
     z-index: 1500;
     /* Standard scrollbar styling */
     scrollbar-width: thin;

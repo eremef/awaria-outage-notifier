@@ -1032,6 +1032,17 @@ if (typeof document !== 'undefined') {
                     customSelect.focus();
                 }
             });
+
+            // Prevent touch/scroll events on the dropdown from propagating and triggering pull-to-refresh or scrolling parent
+            optionsContainer.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+            }, { passive: true });
+            optionsContainer.addEventListener('touchmove', (e) => {
+                e.stopPropagation();
+            }, { passive: true });
+            optionsContainer.addEventListener('touchend', (e) => {
+                e.stopPropagation();
+            }, { passive: true });
         }
 
         const shortcutBtn = document.getElementById('add-address-shortcut-btn');
