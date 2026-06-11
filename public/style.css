@@ -806,7 +806,6 @@ h1 {
     max-width: 600px;
     margin: 0 auto;
     padding: 0 1rem;
-    padding-bottom: calc(var(--safe-area-inset-bottom) + 40vh);
 }
 
 .settings-title {

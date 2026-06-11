@@ -1788,6 +1788,9 @@ if (typeof document !== 'undefined') {
         const threshold = 80;
 
         document.addEventListener('touchstart', (e) => {
+            const settingsView = document.getElementById('settings-view');
+            if (settingsView && settingsView.classList.contains('open')) return;
+
             if (window.scrollY === 0) {
                 startY = e.touches[0].clientY;
                 pulling = true;
