@@ -99,6 +99,10 @@ Miejscowość: {address_city}
 - **Solution**: Set colors programmatically using the safe and supported `setTextColor` and `setColorFilter` RemoteViews actions, and delegate layout-wide styling to XML resources.
 - **Kotlin Overriding Default Arguments**: In Kotlin, if a superclass method has a default parameter (e.g. `useCacheOnly: Boolean = false`), the overriding subclass method signature must include the parameter but CANNOT specify the default value again (i.e. must write `useCacheOnly: Boolean` instead of `useCacheOnly: Boolean = false`).
 
+### Native Scrolling Overlays & Padding Hacks
+
+- **Avoiding Massive Bottom Padding**: When designing overlays (like the Settings view) that expand the document body and scroll natively via `window.scrollY`, avoid using large CSS `padding-bottom` hacks (e.g. `calc(var(--safe-area-inset-bottom) + 40vh)`). These were originally used in older WebViews to push content above navigation bars, but with modern edge-to-edge native scrolling, they simply result in massive amounts of dead space at the bottom of the screen.
+
 ## Common Development Workflows
 
 - **Android Release Build**: `npx tauri android build -- --target aarch64 --apk`
