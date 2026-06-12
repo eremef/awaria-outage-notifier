@@ -3,7 +3,7 @@
 # Application for Warning and Alerting of Repairs and Infrastructure Accidents
 
 <p align="center">
-  <img height="600" alt="image" src="https://github.com/user-attachments/assets/2901b970-f0ff-45f8-93d3-e00ad6564289" />
+  <img height="600" alt="image" src="https://github.com/user-attachments/assets/c15ed4a0-52b1-4cc7-9920-b63b87b60fc2" />
 </p>
 
 A modern desktop (Tauri) and Android application providing real-time alerts for planned and emergency outages. **AWARIA** aggregates data from multiple utility providers into a centralized interface.
