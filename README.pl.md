@@ -260,3 +260,8 @@ Ponieważ konfiguracją tego dodatku zarządza Home Assistant, menu "Ustawienia"
 - **Widżet pokazuje "?"**: Ustawienia nie zostały jeszcze skonfigurowane. Otwórz główną aplikację i ustaw swoją lokalizację.
 - **Błędy EOF**: Najprawdopodobniej chwilowy błąd dostępu podczas synchronizacji ustawień. Aplikacja posiada logikę ponawiania prób.
 - **Brak Alertów**: Sprawdź, czy dana kategoria mediów jest włączona w ustawieniach. **Uwaga**: Dla nowych użytkowników wszystkie źródła są domyślnie wyłączone.
+
+## Licencja
+
+[MIT](LICENSE)
+
