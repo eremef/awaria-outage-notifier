@@ -260,3 +260,7 @@ Because Home Assistant manages the configuration of this Add-on, the "Settings" 
 - **Widget shows "?"**: The settings haven't been configured yet. Open the main app and set your location.
 - **EOF Errors**: Most likely a temporary race condition during settings sync. The app includes resilient logic to retry or fall back to defaults.
 - **Missing Alerts**: Check if you have the specific outage category enabled in the settings. **Note**: For new users, all sources are disabled by default.
+
+## License
+
+[MIT](LICENSE)
