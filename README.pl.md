@@ -265,3 +265,5 @@ Ponieważ konfiguracją tego dodatku zarządza Home Assistant, menu "Ustawienia"
 
 [MIT](LICENSE)
 
+## [Licencje bibliotek zewnętrznych](THIRD-PARTY-LICENSES.md)
+
