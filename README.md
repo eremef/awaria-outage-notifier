@@ -1,6 +1,8 @@
 [English](README.md) | [Polski](README.pl.md)
 
 # Application for Warning and Alerting of Repairs and Infrastructure Accidents
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Feremef%2Fawaria-outage-notifier.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Feremef%2Fawaria-outage-notifier?ref=badge_shield)
+
 
 <p align="center">
   <img height="600" alt="image" src="https://github.com/user-attachments/assets/c15ed4a0-52b1-4cc7-9920-b63b87b60fc2" />
@@ -264,3 +266,6 @@ Because Home Assistant manages the configuration of this Add-on, the "Settings" 
 ## License
 
 [MIT](LICENSE)
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Feremef%2Fawaria-outage-notifier.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Feremef%2Fawaria-outage-notifier?ref=badge_large)
