@@ -1,5 +1,3 @@
----
-
 # 3rd-Party Software for [awaria-outage-notifier](https://github.com/eremef/awaria-outage-notifier)
 
 The following 3rd-party software packages may be used by or distributed with **awaria-outage-notifier**.  Any information relevant to third-party vendors listed below are collected using common, reasonable means.
