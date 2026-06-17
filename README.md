@@ -264,3 +264,5 @@ Because Home Assistant manages the configuration of this Add-on, the "Settings" 
 ## License
 
 [MIT](LICENSE)
+
+## [Third-party licenses](THIRD-PARTY-LICENSES.md)
