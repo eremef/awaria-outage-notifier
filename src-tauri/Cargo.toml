@@ -1,6 +1,6 @@
 [package]
 name = "Awaria"
-version = "1.0.64"
+version = "1.0.65"
 description = "Awaria"
 authors = ["eremef.xyz"]
 license = ""
