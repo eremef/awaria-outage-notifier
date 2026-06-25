@@ -1,7 +1,7 @@
 use reqwest::Client;
-use crate::api_logic::{AlertSource, UnifiedAlert, AlertProvider, Settings};
+use crate::api_logic::{AlertSource, UnifiedAlert, AlertProvider, Settings, AddressEntry};
 use crate::utils::retry;
-use crate::mpwik::CompiledMpwikRegex;
+use regex::Regex;
 use async_trait::async_trait;
 use serde::Deserialize;
 use std::sync::Arc;
@@ -158,6 +158,96 @@ impl VeoliaItem {
     }
 }
 
+pub struct CompiledVeoliaRegex {
+    pub candidates: Vec<Regex>,
+    pub api_query: String,
+}
+
+impl CompiledVeoliaRegex {
+    pub fn new(address: &AddressEntry) -> Self {
+        let mut candidates = Vec::new();
+        let n1 = address.street_name_1.trim();
+        let n2 = address.street_name_2.as_ref().map(|s| s.trim()).unwrap_or("");
+
+        let mut api_query = n1.to_string();
+
+        if n1.is_empty() {
+            return Self { candidates, api_query };
+        }
+
+        if n1.contains(' ') {
+            // Pick the longest word that is at least 3 chars long for a broader API query
+            if let Some(longest) = n1.split(|c: char| !c.is_alphanumeric()).filter(|w| w.len() >= 3).max_by_key(|w| w.len()) {
+                api_query = longest.to_string();
+            }
+        }
+
+        let mut raw_candidates = vec![n1.to_string()];
+
+        if !n2.is_empty() && n2 != "null" {
+            raw_candidates.push(format!("{} {}", n2, n1));
+            raw_candidates.push(format!("{} {}", n1, n2));
+            if let Some(first_char) = n2.chars().next() {
+                raw_candidates.push(format!("{} {}.", n1, first_char));
+            }
+        } else if n1.contains(' ') {
+            // If the user typed "Adama Mickiewicza" into streetName1
+            let words: Vec<&str> = n1.split_whitespace().collect();
+            if words.len() == 2 {
+                let first = words[0];
+                let second = words[1];
+                raw_candidates.push(format!("{} {}", second, first));
+                if let Some(c) = first.chars().next() {
+                    raw_candidates.push(format!("{} {}.", second, c));
+                }
+                if let Some(c) = second.chars().next() {
+                    raw_candidates.push(format!("{} {}.", first, c));
+                }
+                raw_candidates.push(first.to_string());
+                raw_candidates.push(second.to_string());
+            }
+        }
+
+        // Add normalized versions
+        let mut normalized = Vec::new();
+        for cand in &raw_candidates {
+            let clean = cand.replace("\"", "").replace("ul.", "").replace("al.", "").replace("pl.", "").trim().to_string();
+            if !clean.is_empty() && clean != *cand {
+                normalized.push(clean);
+            }
+        }
+        raw_candidates.extend(normalized);
+
+        // Add just the longest word as a fallback candidate to be safe
+        raw_candidates.push(api_query.clone());
+
+        for c in raw_candidates {
+            let p = format!(r"(?i){}", regex::escape(&c));
+            if let Ok(r) = Regex::new(&p) {
+                candidates.push(r);
+            }
+        }
+
+        Self { candidates, api_query }
+    }
+
+    pub fn is_match(&self, street: &str, details: &Option<VeoliaDetail>) -> bool {
+        if self.candidates.is_empty() {
+            return false;
+        }
+
+        let mut full_text = street.to_lowercase();
+        if let Some(d) = details {
+            full_text.push(' ');
+            full_text.push_str(&d.description.to_lowercase());
+            full_text.push(' ');
+            full_text.push_str(&d.affected_addresses.join(" ").to_lowercase());
+        }
+
+        self.candidates.iter().any(|c| c.is_match(&full_text))
+    }
+}
+
 pub struct VeoliaWarszawaProvider;
 
 #[async_trait]
@@ -177,12 +267,12 @@ impl AlertProvider for VeoliaWarszawaProvider {
         settings: &Settings,
         _app_handle: Option<&tauri::AppHandle>,
     ) -> (Vec<UnifiedAlert>, Vec<String>) {
-        let active_addresses: Vec<(usize, String, Arc<CompiledMpwikRegex>)> = settings
+        let active_addresses: Vec<(usize, Arc<CompiledVeoliaRegex>)> = settings
             .addresses
             .iter()
             .enumerate()
             .filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::VeoliaWarszawa, a) && crate::api_logic::is_warszawa(a))
-            .map(|(idx, a)| (idx, a.street_name_1.clone(), Arc::new(CompiledMpwikRegex::new(a))))
+            .map(|(idx, a)| (idx, Arc::new(CompiledVeoliaRegex::new(a))))
             .collect();
 
         if active_addresses.is_empty() {
@@ -193,8 +283,8 @@ impl AlertProvider for VeoliaWarszawaProvider {
         let mut seen_ids = std::collections::HashSet::new();
         let mut alerts = Vec::new();
 
-        for (idx, street_name, _compiled) in &active_addresses {
-            match retry(|| fetch_veolia_alerts_for_street(client_http1, street_name), 3).await {
+        for (idx, compiled) in &active_addresses {
+            match retry(|| fetch_veolia_alerts_for_street(client_http1, &compiled.api_query), 3).await {
                 Ok(items) => {
                     for item in items {
                         if !seen_ids.insert(item.id) {
@@ -209,6 +299,10 @@ impl AlertProvider for VeoliaWarszawaProvider {
                             }
                         };
 
+                        if !compiled.is_match(&item.street, &details) {
+                            continue;
+                        }
+
                         let mut alert = item.to_unified(&details);
                         alert.address_index = Some(*idx);
                         alert.is_local = Some(true);
@@ -216,7 +310,7 @@ impl AlertProvider for VeoliaWarszawaProvider {
                     }
                 }
                 Err(e) => {
-                    let err_msg = format!("Veolia (ul. {}): {}", street_name, e);
+                    let err_msg = format!("Veolia (zapytanie {}): {}", compiled.api_query, e);
                     log::error!("{}", err_msg);
                     errors.push(err_msg);
                 }
