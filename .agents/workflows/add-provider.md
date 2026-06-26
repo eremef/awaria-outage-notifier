@@ -53,7 +53,7 @@ Once the data source is identified, create an `implementation_plan.md` artifact.
        - Add the `sourceKey` to `getSourceName()` so it correctly translates the label.
        - Add the new provider's `sourceKey` to the appropriate layout group (power, heat, gas, or water) in the `when (sourceKey)` statements for both `layoutId` and `layoutSmallId`. This is critical for dynamically inflating the correct widget layout.
      - `WidgetConfigActivity.kt`: Add the new `*WidgetProvider` class to the `getProviderForWidget` `when` statement so users can select an address for it.
-     - `AndroidManifest.xml`: Declare a new `<receiver>` for the new widget provider class, pointing to the shared info XML: `@xml/widget_single_info`.
+     - `AndroidManifest.xml`: Declare a new `<receiver>` for the new widget provider class, pointing to the shared info XML: `@xml/widget_single_info`. **CRITICAL**: Do NOT create a custom `[provider]_widget_info.xml` file in `res/xml/`. Always reuse `@xml/widget_single_info` for new providers.
      - `strings.xml` (in both `values` and `values-en`): Define the widget and provider names using STRICTLY the following naming convention to match the rest of the application:
        `<string name="provider_[id]">[Short Provider Name]</string>`
        `<string name="widget_label_[id]">[Full Provider Name]</string>`
