@@ -49,6 +49,10 @@ pub enum AlertSource {
     Gpec,
     #[serde(rename = "puk_rokietnica")]
     PukRokietnica,
+    Sec,
+    Lpec,
+    #[serde(rename = "mpwik_lublin")]
+    MpwikLublin,
 }
 
 impl AlertSource {
@@ -115,6 +119,9 @@ impl AlertSource {
                 "MAŁOPOLSKIE",
                 "DOLNOŚLĄSKIE",
             ]),
+            AlertSource::Sec => Some(vec!["ZACHODNIOPOMORSKIE"]),
+            AlertSource::Lpec => Some(vec!["LUBELSKIE"]),
+            AlertSource::MpwikLublin => Some(vec!["LUBELSKIE"]),
             AlertSource::Psg => None, // Nationwide
         }
     }
@@ -305,10 +312,10 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea | AlertSource::Pge | AlertSource::Stoen => {
             if is_pl { "wyłączenie prądu" } else { "power outage" }
         }
-        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::WodociagiPlockie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa | AlertSource::GdanskieWodociagi | AlertSource::PukRokietnica => {
+        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::WodociagiPlockie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa | AlertSource::GdanskieWodociagi | AlertSource::PukRokietnica | AlertSource::MpwikLublin => {
             if is_pl { "wyłączenie wody" } else { "water outage" }
         }
-        AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz | AlertSource::Gpec => {
+        AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz | AlertSource::Gpec | AlertSource::Sec | AlertSource::Lpec => {
             if is_pl { "wyłączenie ogrzewania" } else { "heat outage" }
         }
         AlertSource::Psg => {
@@ -398,6 +405,9 @@ impl std::fmt::Display for AlertSource {
             AlertSource::GdanskieWodociagi => "gdanskie_wodociagi",
             AlertSource::Gpec => "gpec",
             AlertSource::PukRokietnica => "puk_rokietnica",
+            AlertSource::Sec => "sec",
+            AlertSource::Lpec => "lpec",
+            AlertSource::MpwikLublin => "mpwik_lublin",
         };
         write!(f, "{}", s)
     }
@@ -492,6 +502,16 @@ pub fn is_lodz(addr: &AddressEntry) -> bool {
 pub fn is_kalisz(addr: &AddressEntry) -> bool {
     let name = addr.city_name.trim().to_lowercase();
     name.starts_with("kalisz") || addr.city_id == Some(936579)
+}
+
+pub fn is_szczecin(addr: &AddressEntry) -> bool {
+    let name = addr.city_name.trim().to_lowercase();
+    name.starts_with("szczecin") || addr.city_id == Some(977976)
+}
+
+pub fn is_lublin(addr: &AddressEntry) -> bool {
+    let name = addr.city_name.trim().to_lowercase();
+    name.starts_with("lublin") || addr.city_id == Some(959423)
 }
 
 #[allow(dead_code)]

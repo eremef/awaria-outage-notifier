@@ -150,6 +150,8 @@ if (typeof document !== 'undefined') {
         // Heating
         { id: 'fortum', label: 'Fortum', category: 'heating', defaultNotify: true, i18nLabel: 'source_fortum_name', i18nShort: 'source_fortum_short' },
         { id: 'gpec', label: 'GPEC Gdańsk', category: 'heating', defaultNotify: true, i18nLabel: 'source_gpec_name', i18nShort: 'source_gpec_short' },
+        { id: 'sec', label: 'SEC', category: 'heating', defaultNotify: true, i18nLabel: 'source_sec_name', i18nShort: 'source_sec_short' },
+        { id: 'lpec', label: 'LPEC', category: 'heating', defaultNotify: true, i18nLabel: 'source_lpec_name', i18nShort: 'source_lpec_short' },
         { id: 'tauron_heat', label: 'Tauron Ciepło', category: 'heating', defaultNotify: true, i18nLabel: 'source_tauron_heat_name', i18nShort: 'source_tauron_heat_short' },
         { id: 'veolia_lodz', label: 'Veolia Łódź', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_lodz_name', i18nShort: 'source_veolia_lodz_short' },
         { id: 'veolia_poznan', label: 'Veolia Poznań', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_poznan_name', i18nShort: 'source_veolia_poznan_short' },
@@ -158,6 +160,7 @@ if (typeof document !== 'undefined') {
         { id: 'aquanet', label: 'Aquanet', category: 'water', defaultNotify: true, i18nLabel: 'source_aquanet_name', i18nShort: 'source_aquanet_short' },
         { id: 'gdanskie_wodociagi', label: 'Gdańskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_gdanskie_wodociagi_name', i18nShort: 'source_gdanskie_wodociagi_short' },
         { id: 'katowickie_wodociagi', label: 'Katowickie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_katowickie_wodociagi_name', i18nShort: 'source_katowickie_wodociagi_short' },
+        { id: 'mpwik_lublin', label: 'MPWiK Lublin', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_lublin_name', i18nShort: 'source_mpwik_lublin_short' },
         { id: 'mpwik_warszawa', label: 'MPWiK Warszawa', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_warszawa_name', i18nShort: 'source_mpwik_warszawa_short' },
         { id: 'mpwik_wroclaw', label: 'MPWiK Wrocław', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_wroclaw_name', i18nShort: 'source_mpwik_wroclaw_short' },
         { id: 'puk_rokietnica', label: 'PUK Rokietnica', category: 'water', defaultNotify: true, i18nLabel: 'source_puk_rokietnica_name', i18nShort: 'source_puk_rokietnica_short' },
@@ -2213,7 +2216,11 @@ if (typeof document !== 'undefined') {
 
         // Prevent cross-city street matches for multi-city providers
         if (cityName) {
-            const singleCityProviders = ['mpwik_wroclaw', 'mpwik_warszawa', 'stoen', 'wmk', 'zwik_lodz', 'wodociagi_plockie', 'katowickie_wodociagi', 'pwik_kalisz', 'gdanskie_wodociagi', 'gpec', 'puk_rokietnica'];
+            const singleCityProviders = [
+                'mpwik_wroclaw', 'mpwik_warszawa', 'katowickie_wodociagi',
+                'veolia_warszawa', 'veolia_poznan', 'veolia_lodz', 'zwik_lodz',
+                'wodociagi_plockie', 'pwik_kalisz', 'pwik_czestochowa', 'gdanskie_wodociagi', 'gpec', 'puk_rokietnica', 'sec', 'lpec', 'mpwik_lublin'
+            ];
             if (singleCityProviders.includes(alert.source)) {
                 // For single-city providers, reject matching if the saved address is in a completely different city
                 const cityLower = cityName.toLowerCase();
@@ -2225,6 +2232,8 @@ if (typeof document !== 'undefined') {
                 if (alert.source === 'pwik_kalisz' && !cityLower.startsWith('kalisz')) return false;
                 if (alert.source === 'katowickie_wodociagi' && !cityLower.startsWith('katow')) return false;
                 if (alert.source === 'puk_rokietnica' && !isRokietnica(addr)) return false;
+                if (alert.source === 'sec' && !(cityLower.startsWith('szczecin') || addr.cityId === 977976)) return false;
+                if (alert.source === 'lpec' && !(cityLower.startsWith('lublin') || addr.cityId === 959423)) return false;
                 if ((alert.source === 'gdanskie_wodociagi' || alert.source === 'gpec') &&
                     !cityLower.startsWith('gdań') &&
                     !cityLower.startsWith('gdan') &&
@@ -2483,6 +2492,11 @@ if (typeof document !== 'undefined') {
             const city = (addr.cityName || '').trim().toLowerCase();
             return city.startsWith('katowice') || addr.cityId === 937474;
         };
+        const isSzczecin = (addr) => {
+            if (!addr) return false;
+            const city = (addr.cityName || '').trim().toLowerCase();
+            return city.startsWith('szczecin') || addr.cityId === 977976;
+        };
         const isRokietnica = (addr) => {
             if (!addr) return false;
             const city = (addr.cityName || '').trim().toLowerCase();
@@ -2493,6 +2507,11 @@ if (typeof document !== 'undefined') {
                 'sobota', 'starzyny', 'żydowo', 'zydowo', 'dalekie'
             ];
             return rokietnicaVillages.some(v => city.startsWith(v)) || commune.includes('rokietnica');
+        };
+        const isLublin = (addr) => {
+            if (!addr) return false;
+            const city = (addr.cityName || '').trim().toLowerCase();
+            return city.startsWith('lublin') || addr.cityId === 959423;
         };
 
         const hasAnyWarszawa = addresses.some(a => a.isActive !== false && isWarszawa(a));
@@ -2505,7 +2524,9 @@ if (typeof document !== 'undefined') {
         const hasAnyPlock = addresses.some(a => a.isActive !== false && isPlock(a));
         const hasAnyGdansk = addresses.some(a => a.isActive !== false && isGdansk(a));
         const hasAnyKatowice = addresses.some(a => a.isActive !== false && isKatowice(a));
+        const hasAnySzczecin = addresses.some(a => a.isActive !== false && isSzczecin(a));
         const hasAnyRokietnica = addresses.some(a => a.isActive !== false && isRokietnica(a));
+        const hasAnyLublin = addresses.some(a => a.isActive !== false && isLublin(a));
 
         const localLists = {};
         const otherLists = {};
@@ -2541,6 +2562,10 @@ if (typeof document !== 'undefined') {
                         if (isGdansk(addr)) otherLists[item.source].push(item);
                     } else if (item.source === 'katowickie_wodociagi') {
                         if (isKatowice(addr)) otherLists[item.source].push(item);
+                    } else if (item.source === 'sec') {
+                        if (isSzczecin(addr)) otherLists[item.source].push(item);
+                    } else if (item.source === 'lpec') {
+                        if (isLublin(addr)) otherLists[item.source].push(item);
                     } else if (item.source === 'puk_rokietnica') {
                         if (isRokietnica(addr)) otherLists[item.source].push(item);
                     } else if (item.source === 'stoen' || item.source === 'veolia' || item.source === 'mpwik_warszawa') {
@@ -2575,6 +2600,10 @@ if (typeof document !== 'undefined') {
                         if (hasAnyGdansk) otherLists[item.source].push(item);
                     } else if (item.source === 'katowickie_wodociagi') {
                         if (hasAnyKatowice) otherLists[item.source].push(item);
+                    } else if (item.source === 'sec') {
+                        if (hasAnySzczecin) otherLists[item.source].push(item);
+                    } else if (item.source === 'lpec') {
+                        if (hasAnyLublin) otherLists[item.source].push(item);
                     } else if (item.source === 'puk_rokietnica') {
                         if (hasAnyRokietnica) otherLists[item.source].push(item);
                     } else if (item.source === 'stoen' || item.source === 'veolia' || item.source === 'mpwik_warszawa') {

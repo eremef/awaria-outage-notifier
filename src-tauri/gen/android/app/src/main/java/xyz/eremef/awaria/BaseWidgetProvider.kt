@@ -405,6 +405,9 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             "gdanskie_wodociagi" -> context.getString(R.string.provider_gdanskie_wodociagi)
             "gpec" -> context.getString(R.string.provider_gpec)
             "puk_rokietnica" -> context.getString(R.string.provider_puk_rokietnica)
+            "sec" -> context.getString(R.string.provider_sec)
+            "lpec" -> context.getString(R.string.provider_lpec)
+            "mpwik_lublin" -> context.getString(R.string.provider_mpwik_lublin)
             else ->
                     key.replaceFirstChar {
                         if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
@@ -631,8 +634,8 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         if (!isSmall) {
             val iconDesc = when (sourceKey) {
                 "tauron", "stoen", "enea", "energa", "pge" -> getTranslation(context, "power")
-                "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec" -> getTranslation(context, "heat")
-                "mpwik_wroclaw", "mpwik_warszawa", "wmk", "aquanet", "katowickie_wodociagi", "zwik_lodz", "pwik_kalisz", "wodociagi_plockie", "pwik_czestochowa", "gdanskie_wodociagi", "puk_rokietnica" -> getTranslation(context, "water")
+                "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "sec", "lpec" -> getTranslation(context, "heat")
+                "mpwik_wroclaw", "mpwik_warszawa", "wmk", "aquanet", "katowickie_wodociagi", "zwik_lodz", "pwik_kalisz", "wodociagi_plockie", "pwik_czestochowa", "gdanskie_wodociagi", "puk_rokietnica", "mpwik_lublin" -> getTranslation(context, "water")
                 "psg" -> getTranslation(context, "gas")
                 else -> getSourceName(context, sourceKey)
             }
