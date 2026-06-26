@@ -1,7 +1,7 @@
 use reqwest::Client;
 use crate::api_logic::{AlertSource, UnifiedAlert, AlertProvider, Settings};
 use async_trait::async_trait;
-use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+use chrono::NaiveDateTime;
 use scraper::{Html, Selector};
 use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
