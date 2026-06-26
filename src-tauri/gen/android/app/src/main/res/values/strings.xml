@@ -1,28 +1,28 @@
 <resources>
   <string name="app_name">Awaria</string>
-  <string name="main_activity_title">Awaria</string>
-  <string name="config_select_address">Wybierz adres dla widżetu</string>
-  <string name="config_primary_address">Używaj adresu głównego</string>
+  <string name="config_cancel">Anuluj</string>
   <string name="config_confirm">Zatwierdź</string>
-  <string name="label_power">Prąd</string>
-  <string name="label_heat">CO</string>
-  <string name="label_water">Woda</string>
-  <string name="label_gas">Gaz</string>
-  <string name="label_provider">Dostawca</string>
-  <string name="label_outages">wyłączeń.</string>
+  <string name="config_primary_address">Używaj adresu głównego</string>
+  <string name="config_select_address">Wybierz adres dla widżetu</string>
+  <string name="date">00:00</string>
   <string name="icon_description">ikona</string>
-  <string name="msg_setup_needed">Skonfiguruj</string>
-  <string name="msg_updating">Aktualizacja...</string>
+  <string name="label_gas">Gaz</string>
+  <string name="label_heat">CO</string>
+  <string name="label_outages">wyłączeń.</string>
+  <string name="label_power">Prąd</string>
+  <string name="label_provider">Dostawca</string>
+  <string name="label_water">Woda</string>
+  <string name="main_activity_title">Awaria</string>
+  <string name="msg_error">Błąd</string>
   <string name="msg_inactive">Nieaktywne</string>
   <string name="msg_no_address">Brak adresu</string>
-  <string name="msg_error">Błąd</string>
   <string name="msg_offline">Brak sieci</string>
-  <string name="notif_channel_name">Alerty o wyłączeniach</string>
+  <string name="msg_setup_needed">Skonfiguruj</string>
+  <string name="msg_updating">Aktualizacja...</string>
   <string name="notif_channel_desc">Powiadomienia o nowych i nadchodzących awariach oraz wyłączeniach (prąd, woda, ciepło, gaz).</string>
-  <string name="placeholder_time">--:--</string>
+  <string name="notif_channel_name">Alerty o wyłączeniach</string>
   <string name="placeholder_dash">–</string>
-  <string name="config_cancel">Anuluj</string>
-  <string name="date">00:00</string>
+  <string name="placeholder_time">--:--</string>
   <string name="provider_aquanet">Aquanet</string>
   <string name="provider_enea">Enea</string>
   <string name="provider_energa">Energa</string>
@@ -78,5 +78,3 @@
   <string name="widget_label_wodociagi_plockie">Wodociągi Płockie</string>
   <string name="widget_label_zwik_lodz">ZWIK Łódź</string>
 </resources>
-
-
