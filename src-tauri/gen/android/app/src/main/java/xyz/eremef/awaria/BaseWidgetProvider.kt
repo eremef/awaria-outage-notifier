@@ -523,14 +523,14 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
         val layoutId = when (sourceKey) {
             "tauron", "stoen", "enea", "energa", "pge" -> R.layout.widget_outage_power
-            "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec" -> R.layout.widget_outage_heat
+            "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "sec", "lpec" -> R.layout.widget_outage_heat
             "psg" -> R.layout.widget_outage_gas
             else -> R.layout.widget_outage_water
         }
         
         val layoutSmallId = when (sourceKey) {
             "tauron", "stoen", "enea", "energa", "pge" -> R.layout.widget_outage_power_small
-            "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec" -> R.layout.widget_outage_heat_small
+            "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "sec", "lpec" -> R.layout.widget_outage_heat_small
             "psg" -> R.layout.widget_outage_gas_small
             else -> R.layout.widget_outage_water_small
         }
