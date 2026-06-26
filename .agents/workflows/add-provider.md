@@ -49,7 +49,9 @@ Once the data source is identified, create an `implementation_plan.md` artifact.
 
 3. **Android Widgets (`src-tauri/gen/android/`)**:
    - **Plumbing**:
-     - `BaseWidgetProvider.kt`: Add the `sourceKey` to `getSourceName()` so it correctly translates the label.
+     - `BaseWidgetProvider.kt`: 
+       - Add the `sourceKey` to `getSourceName()` so it correctly translates the label.
+       - Add the new provider's `sourceKey` to the appropriate layout group (power, heat, gas, or water) in the `when (sourceKey)` statements for both `layoutId` and `layoutSmallId`. This is critical for dynamically inflating the correct widget layout.
      - `WidgetConfigActivity.kt`: Add the new `*WidgetProvider` class to the `getProviderForWidget` `when` statement so users can select an address for it.
      - `AndroidManifest.xml`: Declare a new `<receiver>` for the new widget provider class, pointing to the shared info XML: `@xml/widget_single_info`.
      - `strings.xml` (in both `values` and `values-en`): Define the widget and provider names using STRICTLY the following naming convention to match the rest of the application:
@@ -57,7 +59,7 @@ Once the data source is identified, create an `implementation_plan.md` artifact.
        `<string name="widget_label_[id]">[Full Provider Name]</string>`
        (e.g., `<string name="provider_sec">SEC</string>` and `<string name="widget_label_sec">SEC Szczecin</string>`). Do NOT use prefixes like `widget_name_` or `source_` for Android resources. Do NOT prefix the value with `Awaria - ` or add utility type suffixes like `(Woda)`. Just the provider name.
    - **Widget Classes & Layouts**:
-     - Create a dedicated provider widget Kotlin class (e.g., `NewProviderWidgetProvider.kt`) extending `BaseWidgetProvider`.
+     - Create a dedicated provider widget Kotlin class (e.g., `NewProviderWidgetProvider.kt`) extending `BaseWidgetProvider`. It must correctly override `refreshAction`, `primaryColorRes`, `iconResId`, `labelKey`, and `sourceKey`. Do NOT manually override `updateAppWidget` or manually inflate layouts—`BaseWidgetProvider` handles this using the shared layouts.
      - `AllWidgetProvider.kt` & `TriWidgetProvider.kt`: Add the new provider source string to their data aggregation lists (e.g., `waterSources`).
    - **Workers**:
      - `WidgetUpdateWorker.kt`: Add the new provider to the background worker refresh logic.
