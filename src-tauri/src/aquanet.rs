@@ -506,7 +506,23 @@ pub async fn fetch_aquanet_alerts(client: &Client) -> Result<Vec<AquanetItem>, S
     Ok(items)
 }
 
-
+pub const POZNAN_COMMUNES: &[&str] = &[
+    "poznań", "poznan",
+    "czerwonak",
+    "dopiewo",
+    "kleszczewo",
+    "komorniki",
+    "kórnik", "kornik",
+    "luboń", "lubon",
+    "mosina",
+    "murowana goślina", "murowana goslina",
+    "puszczykowo",
+    "rokietnica",
+    "suchy las",
+    "swarzędz", "swarzedz",
+    "tarnowo podgórne", "tarnowo podgorne",
+    "brodnica",
+];
 
 pub fn clean_aquanet_description(desc: &str) -> String {
     let mut cleaned = desc.to_string();
@@ -563,7 +579,7 @@ impl AquanetItem {
                     } else {
                         let loc_trimmed = loc.trim();
                         let loc_lower = loc_trimmed.to_lowercase();
-                        let is_commune = crate::api_logic::POZNAN_COMMUNES.iter().any(|&c| loc_lower.contains(c));
+                        let is_commune = POZNAN_COMMUNES.iter().any(|&c| loc_lower.contains(c));
                         if is_commune && !loc_lower.contains("ul.") && !loc_lower.contains("al.") && !loc_lower.contains("os.") {
                             (loc_trimmed.to_string(), String::new())
                         } else {
@@ -772,6 +788,7 @@ impl AlertProvider for AquanetProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::api_logic::is_poznan_area;
 
     #[test]
     fn test_parse_aquanet_date_dot_format() {

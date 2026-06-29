@@ -235,6 +235,7 @@ impl AlertProvider for WmkProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::api_logic::is_krakow;
 
     #[test]
     fn test_parse_wmk_dates() {

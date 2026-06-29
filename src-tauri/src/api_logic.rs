@@ -484,89 +484,50 @@ pub fn is_provider_applicable(source: AlertSource, settings: &Settings) -> bool 
     res
 }
 
-pub fn is_wroclaw(addr: &AddressEntry) -> bool {
-    let name = addr.city_name.trim().to_lowercase();
-    name.starts_with("wrocław") || name.starts_with("wroclaw") || addr.city_id == Some(986283)
+macro_rules! city_checker {
+    ($func_name:ident, $city_id:expr, $($name:expr),+) => {
+        #[allow(dead_code)]
+        pub fn $func_name(addr: &AddressEntry) -> bool {
+            let name = addr.city_name.trim().to_lowercase();
+            
+            $(
+                if name.starts_with($name) { return true; }
+            )+
+
+            if let Some(id) = $city_id {
+                if addr.city_id == Some(id) { return true; }
+            }
+
+            let name_norm = name.replace("ó", "o").replace("ż", "z").replace("ł", "l").replace("ś", "s").replace("ć", "c").replace("ą", "a").replace("ę", "e").replace("ń", "n").replace("ź", "z");
+
+            $(
+                if name_norm.starts_with($name) { return true; }
+            )+
+
+            false
+        }
+    };
 }
 
-pub fn is_warszawa(addr: &AddressEntry) -> bool {
-    let name = addr.city_name.trim().to_lowercase();
-    name.starts_with("warszawa") || name.starts_with("warsaw") || addr.city_id == Some(918123)
-}
+city_checker!(is_wroclaw, Some(986283_u64), "wrocław", "wroclaw");
+city_checker!(is_warszawa, Some(918123_u64), "warszawa", "warsaw");
+city_checker!(is_krakow, Some(950463_u64), "kraków", "krakow");
+city_checker!(is_lodz, Some(958153_u64), "łódź", "lodz");
+city_checker!(is_kalisz, Some(936579_u64), "kalisz");
+city_checker!(is_szczecin, Some(977976_u64), "szczecin");
+city_checker!(is_lublin, Some(959423_u64), "lublin");
+city_checker!(is_gdansk, Some(908123_u64), "gdańsk", "gdansk");
+city_checker!(is_katowice, None::<u64>, "katowice");
+city_checker!(is_plock, None::<u64>, "płock", "plock");
+city_checker!(is_czestochowa, None::<u64>, "częstochowa", "czestochowa");
+city_checker!(is_poznan_area, None::<u64>, "poznań", "poznan", "czerwonak", "dopiewo", "kleszczewo", "komorniki", "kórnik", "kornik", "luboń", "lubon", "mosina", "murowana goślina", "murowana goslina", "puszczykowo", "suchy las", "swarzędz", "swarzedz", "tarnowo podgórne", "tarnowo podgorne", "brodnica");
+city_checker!(is_rokietnica, None::<u64>, "rokietnica", "bytkowo", "cerekwica", "kiekrz", "krzyszkowo", "mrowino", "napachanie", "przybroda", "rostworowo", "rogierowko", "sobota", "starzyny", "zydowo", "dalekie");
 
-pub fn is_krakow(addr: &AddressEntry) -> bool {
-    let name = addr.city_name.trim().to_lowercase();
-    name.starts_with("kraków") || name.starts_with("krakow") || addr.city_id == Some(950463)
-}
 
-pub fn is_lodz(addr: &AddressEntry) -> bool {
-    let name = addr.city_name.trim().to_lowercase();
-    name.starts_with("łódź") || name.starts_with("lodz") || addr.city_id == Some(958153)
-}
 
-pub fn is_kalisz(addr: &AddressEntry) -> bool {
-    let name = addr.city_name.trim().to_lowercase();
-    name.starts_with("kalisz") || addr.city_id == Some(936579)
-}
 
-pub fn is_szczecin(addr: &AddressEntry) -> bool {
-    let name = addr.city_name.trim().to_lowercase();
-    name.starts_with("szczecin") || addr.city_id == Some(977976)
-}
 
-pub fn is_lublin(addr: &AddressEntry) -> bool {
-    let name = addr.city_name.trim().to_lowercase();
-    name.starts_with("lublin") || addr.city_id == Some(959423)
-}
 
-#[allow(dead_code)]
-pub fn is_gdansk(addr: &AddressEntry) -> bool {
-    let name = addr.city_name.trim().to_lowercase();
-    name.starts_with("gdańsk") || name.starts_with("gdansk") || addr.city_id == Some(908123)
-}
-
-pub fn is_rokietnica(addr: &AddressEntry) -> bool {
-    let name = addr.city_name.trim().to_lowercase();
-    let name_norm = name.replace("ó", "o")
-        .replace("ż", "z")
-        .replace("ł", "l")
-        .replace("ś", "s")
-        .replace("ć", "c")
-        .replace("ą", "a")
-        .replace("ę", "e")
-        .replace("ń", "n")
-        .replace("ź", "z");
-    matches!(name_norm.as_str(), 
-        "rokietnica" | "bytkowo" | "cerekwica" | "kiekrz" | "krzyszkowo" | "mrowino" | "napachanie" | "przybroda" | "rostworowo" | "rogierowko" | "sobota" | "starzyny" | "zydowo" | "dalekie"
-    ) || addr.commune.trim().to_lowercase().contains("rokietnica")
-}
-
-pub const POZNAN_COMMUNES: &[&str] = &[
-    "poznań", "poznan",
-    "czerwonak",
-    "dopiewo",
-    "kleszczewo",
-    "komorniki",
-    "kórnik", "kornik",
-    "luboń", "lubon",
-    "mosina",
-    "murowana goślina", "murowana goslina",
-    "puszczykowo",
-    "rokietnica",
-    "suchy las",
-    "swarzędz", "swarzedz",
-    "tarnowo podgórne", "tarnowo podgorne",
-    "brodnica",
-];
-
-pub fn is_poznan_area(addr: &AddressEntry) -> bool {
-    let city = addr.city_name.trim().to_lowercase();
-    let commune = addr.commune.trim().to_lowercase();
-
-    POZNAN_COMMUNES.iter().any(|&c| {
-        city.starts_with(c) || commune.starts_with(c)
-    })
-}
 
 // ── Address & Settings ────────────────────────────────────
 
@@ -1055,17 +1016,3 @@ mod tests {
     }
 }
 
-pub fn is_katowice(addr: &AddressEntry) -> bool {
-    let name = addr.city_name.trim().to_lowercase();
-    name.starts_with("katowice")
-}
-
-pub fn is_plock(addr: &AddressEntry) -> bool {
-    let name = addr.city_name.trim().to_lowercase();
-    name.starts_with("płock") || name.starts_with("plock")
-}
-
-pub fn is_czestochowa(addr: &AddressEntry) -> bool {
-    let name = addr.city_name.trim().to_lowercase();
-    name.starts_with("częstochowa") || name.starts_with("czestochowa")
-}
