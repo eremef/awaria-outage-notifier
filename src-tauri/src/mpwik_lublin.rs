@@ -56,7 +56,7 @@ fn check_local_matching(alert: &mut UnifiedAlert, settings: &Settings, combined_
     
     let mut active_addresses = Vec::new();
     for (idx, addr) in settings.addresses.iter().enumerate() {
-        if addr.is_active && crate::api_logic::is_lublin(addr) {
+        if addr.is_active && crate::api_logic::is_address_applicable_for_provider(&crate::api_logic::AlertSource::MpwikLublin, addr) {
             let street_name = if !addr.street_name_1.is_empty() {
                 &addr.street_name_1
             } else {

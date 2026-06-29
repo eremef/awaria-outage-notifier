@@ -400,7 +400,7 @@ if (typeof document !== 'undefined') {
         }
     }
 
-    function toggleSettings(forceState = null) {
+    function toggleSettings(forceState = null, fromPopState = false) {
         const btn = document.getElementById('settings-btn');
         const settingsView = document.getElementById('settings-view');
         const mainView = document.getElementById('main-view');
@@ -413,7 +413,13 @@ if (typeof document !== 'undefined') {
             shouldOpen = !settingsView.classList.contains('open');
         }
 
+        if (shouldOpen === settingsView.classList.contains('open')) return;
+
         if (shouldOpen) {
+            if (!fromPopState) {
+                history.pushState({ view: 'settings' }, '', '#settings');
+            }
+
             // Prepare for opening transition
             savedScrollY = window.scrollY;
 
@@ -438,6 +444,9 @@ if (typeof document !== 'undefined') {
                 }
             }, 400); // Match CSS transition time
         } else {
+            if (!fromPopState && history.state && history.state.view === 'settings') {
+                history.back();
+            }
             // Switch surfaces before closing transition
             mainView.classList.remove('hidden');
 
@@ -518,6 +527,20 @@ if (typeof document !== 'undefined') {
         if (bottomCloseBtn) {
             bottomCloseBtn.addEventListener('click', () => toggleSettings(false));
         }
+
+        window.addEventListener('popstate', (e) => {
+            const settingsView = document.getElementById('settings-view');
+            if (!settingsView) return;
+            if (!e.state || e.state.view !== 'settings') {
+                if (settingsView.classList.contains('open')) {
+                    toggleSettings(false, true);
+                }
+            } else if (e.state && e.state.view === 'settings') {
+                if (!settingsView.classList.contains('open')) {
+                    toggleSettings(true, true);
+                }
+            }
+        });
 
         const exportBtn = document.getElementById('export-settings-btn');
         if (exportBtn) {

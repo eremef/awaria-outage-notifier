@@ -36,7 +36,6 @@ use api_logic::{
     load_settings_from_path, save_settings_to_path,
     AddressEntry, Settings, UnifiedAlert,
     AlertProvider,
-    is_wroclaw, is_warszawa, is_krakow,
 };
 use tauri::command;
 use tauri::AppHandle;
@@ -606,13 +605,13 @@ fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Setti
         if alert.is_local == Some(false) {
             if let Some(loc) = &alert.location {
                 if loc.contains("Wrocław") {
-                    return s.addresses.iter().any(|a| a.is_active && is_wroclaw(a));
+                    return s.addresses.iter().any(|a| a.is_active);
                 }
                 if loc.contains("Warszawa") {
-                    return s.addresses.iter().any(|a| a.is_active && is_warszawa(a));
+                    return s.addresses.iter().any(|a| a.is_active);
                 }
                 if loc.contains("Kraków") {
-                    return s.addresses.iter().any(|a| a.is_active && is_krakow(a));
+                    return s.addresses.iter().any(|a| a.is_active);
                 }
                 // For other cities (dynamic check based on active addresses)
                 for addr in s.addresses.iter().filter(|a| a.is_active) {

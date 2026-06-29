@@ -55,10 +55,16 @@ pub enum AlertSource {
     MpwikLublin,
 }
 
+pub enum ServiceLocation {
+    Nationwide,
+    Voivodeships(Vec<&'static str>),
+    Cities(Vec<fn(&AddressEntry) -> bool>),
+}
+
 impl AlertSource {
-    pub fn service_voivodeships(&self) -> Option<Vec<&'static str>> {
+    pub fn service_locations(&self) -> ServiceLocation {
         match self {
-            AlertSource::Tauron => Some(vec![
+            AlertSource::Tauron => ServiceLocation::Voivodeships(vec![
                 "DOLNOŚLĄSKIE",
                 "MAŁOPOLSKIE",
                 "OPOLSKIE",
@@ -66,7 +72,7 @@ impl AlertSource {
                 "ŚWIĘTOKRZYSKIE",
                 "PODKARPACKIE",
             ]),
-            AlertSource::Energa => Some(vec![
+            AlertSource::Energa => ServiceLocation::Voivodeships(vec![
                 "POMORSKIE",
                 "WARMIŃSKO-MAZURSKIE",
                 "KUJAWSKO-POMORSKIE",
@@ -75,13 +81,13 @@ impl AlertSource {
                 "WIELKOPOLSKIE",
                 "ŁÓDZKIE",
             ]),
-            AlertSource::Enea => Some(vec![
+            AlertSource::Enea => ServiceLocation::Voivodeships(vec![
                 "WIELKOPOLSKIE",
                 "LUBUSKIE",
                 "ZACHODNIOPOMORSKIE",
                 "KUJAWSKO-POMORSKIE",
             ]),
-            AlertSource::Pge => Some(vec![
+            AlertSource::Pge => ServiceLocation::Voivodeships(vec![
                 "PODLASKIE",
                 "LUBELSKIE",
                 "PODKARPACKIE",
@@ -91,38 +97,39 @@ impl AlertSource {
                 "MAŁOPOLSKIE",
                 "WIELKOPOLSKIE",
             ]),
-            AlertSource::Stoen => Some(vec!["MAZOWIECKIE"]),
-            AlertSource::MpwikWroclaw => Some(vec!["DOLNOŚLĄSKIE"]),
-            AlertSource::MpwikWarszawa => Some(vec!["MAZOWIECKIE"]),
-            AlertSource::Wmk => Some(vec!["MAŁOPOLSKIE"]),
-            AlertSource::Aquanet => Some(vec!["WIELKOPOLSKIE"]),
-            AlertSource::KatowickieWodociagi => Some(vec!["ŚLĄSKIE"]),
-            AlertSource::VeoliaWarszawa => Some(vec!["MAZOWIECKIE"]),
-            AlertSource::VeoliaPoznan => Some(vec!["WIELKOPOLSKIE"]),
-            AlertSource::VeoliaLodz => Some(vec!["ŁÓDZKIE"]),
-            AlertSource::ZwikLodz => Some(vec!["ŁÓDZKIE"]),
-            AlertSource::WodociagiPlockie => Some(vec!["MAZOWIECKIE"]),
-            AlertSource::PwikKalisz => Some(vec!["WIELKOPOLSKIE"]),
-            AlertSource::PwikCzestochowa => Some(vec!["ŚLĄSKIE"]),
-            AlertSource::GdanskieWodociagi => Some(vec!["POMORSKIE"]),
-            AlertSource::Gpec => Some(vec!["POMORSKIE"]),
-            AlertSource::PukRokietnica => Some(vec!["WIELKOPOLSKIE"]),
-            AlertSource::Fortum => Some(vec![
+            AlertSource::Fortum => ServiceLocation::Voivodeships(vec![
                 "DOLNOŚLĄSKIE",
                 "ŚLĄSKIE",
                 "MAZOWIECKIE",
                 "WIELKOPOLSKIE",
                 "ŁÓDZKIE",
             ]),
-            AlertSource::TauronHeat => Some(vec![
+            AlertSource::TauronHeat => ServiceLocation::Voivodeships(vec![
                 "ŚLĄSKIE",
                 "MAŁOPOLSKIE",
                 "DOLNOŚLĄSKIE",
             ]),
-            AlertSource::Sec => Some(vec!["ZACHODNIOPOMORSKIE"]),
-            AlertSource::Lpec => Some(vec!["LUBELSKIE"]),
-            AlertSource::MpwikLublin => Some(vec!["LUBELSKIE"]),
-            AlertSource::Psg => None, // Nationwide
+            AlertSource::KatowickieWodociagi => ServiceLocation::Cities(vec![is_katowice]),
+            AlertSource::WodociagiPlockie => ServiceLocation::Cities(vec![is_plock]),
+            AlertSource::PwikCzestochowa => ServiceLocation::Cities(vec![is_czestochowa]),
+            AlertSource::Psg => ServiceLocation::Nationwide,
+            
+            AlertSource::Stoen => ServiceLocation::Cities(vec![is_warszawa]),
+            AlertSource::MpwikWroclaw => ServiceLocation::Cities(vec![is_wroclaw]),
+            AlertSource::MpwikWarszawa => ServiceLocation::Cities(vec![is_warszawa]),
+            AlertSource::Wmk => ServiceLocation::Cities(vec![is_krakow]),
+            AlertSource::Aquanet => ServiceLocation::Cities(vec![is_poznan_area]),
+            AlertSource::VeoliaWarszawa => ServiceLocation::Cities(vec![is_warszawa]),
+            AlertSource::VeoliaPoznan => ServiceLocation::Cities(vec![is_poznan_area]),
+            AlertSource::VeoliaLodz => ServiceLocation::Cities(vec![is_lodz]),
+            AlertSource::ZwikLodz => ServiceLocation::Cities(vec![is_lodz]),
+            AlertSource::PwikKalisz => ServiceLocation::Cities(vec![is_kalisz]),
+            AlertSource::GdanskieWodociagi => ServiceLocation::Cities(vec![is_gdansk]),
+            AlertSource::Gpec => ServiceLocation::Cities(vec![is_gdansk]),
+            AlertSource::PukRokietnica => ServiceLocation::Cities(vec![is_rokietnica]),
+            AlertSource::Sec => ServiceLocation::Cities(vec![is_szczecin]),
+            AlertSource::Lpec => ServiceLocation::Cities(vec![is_lublin]),
+            AlertSource::MpwikLublin => ServiceLocation::Cities(vec![is_lublin]),
         }
     }
 }
@@ -427,43 +434,41 @@ pub trait AlertProvider: Send + Sync {
 }
 
 pub fn is_address_applicable_for_provider(source: &AlertSource, a: &AddressEntry) -> bool {
-    let voivodeships = match source.service_voivodeships() {
-        Some(v) => v,
-        None => return true, // Nationwide
-    };
-
-    if a.voivodeship.is_empty() {
-        // Fallback for missing voivodeship data
-        return true;
-    }
-    let v = a.voivodeship.trim().to_uppercase();
-    voivodeships.iter().any(|&sv| {
-        if sv == v { return true; }
-        let sv_norm = sv.replace("Ł", "L").replace("Ś", "S");
-        let v_norm = v.replace("Ł", "L").replace("Ś", "S");
-        if sv_norm == v_norm { return true; }
-        
-        // Handle `?` corruption (e.g. MA?OPOLSKIE)
-        if v.contains('?') && v.len() == sv.len() {
-            let mut match_with_wildcard = true;
-            for (c1, c2) in v.chars().zip(sv.chars()) {
-                if c1 != '?' && c1 != c2 {
-                    match_with_wildcard = false;
-                    break;
-                }
+    match source.service_locations() {
+        ServiceLocation::Nationwide => true,
+        ServiceLocation::Cities(city_checkers) => {
+            city_checkers.iter().any(|check| check(a))
+        },
+        ServiceLocation::Voivodeships(voivodeships) => {
+            if a.voivodeship.is_empty() {
+                // Fallback for missing voivodeship data
+                return true;
             }
-            if match_with_wildcard { return true; }
+            let v = a.voivodeship.trim().to_uppercase();
+            voivodeships.iter().any(|&sv| {
+                if sv == v { return true; }
+                let sv_norm = sv.replace("Ł", "L").replace("Ś", "S");
+                let v_norm = v.replace("Ł", "L").replace("Ś", "S");
+                if sv_norm == v_norm { return true; }
+                
+                // Handle `?` corruption (e.g. MA?OPOLSKIE)
+                if v.contains('?') && v.len() == sv.len() {
+                    let mut match_with_wildcard = true;
+                    for (c1, c2) in v.chars().zip(sv.chars()) {
+                        if c1 != '?' && c1 != c2 {
+                            match_with_wildcard = false;
+                            break;
+                        }
+                    }
+                    if match_with_wildcard { return true; }
+                }
+                false
+            })
         }
-        false
-    })
+    }
 }
 
 pub fn is_provider_applicable(source: AlertSource, settings: &Settings) -> bool {
-    let voivodeships = match source.service_voivodeships() {
-        Some(v) => v,
-        None => return true, // Nationwide
-    };
-
     let active_addresses: Vec<_> = settings.addresses.iter().filter(|a| a.is_active).collect();
     if active_addresses.is_empty() {
         // If there are no active addresses, we don't have a basis for pre-filtration.
@@ -474,7 +479,7 @@ pub fn is_provider_applicable(source: AlertSource, settings: &Settings) -> bool 
 
     let res = active_addresses.iter().any(|a| is_address_applicable_for_provider(&source, a));
     if matches!(source, AlertSource::Gpec) {
-        log::info!("is_provider_applicable for Gpec returned {}, voivodeships={:?}, active={:?}", res, voivodeships, active_addresses.iter().map(|a| a.voivodeship.clone()).collect::<Vec<_>>());
+        log::info!("is_provider_applicable for Gpec returned {}, active={:?}", res, active_addresses.iter().map(|a| a.voivodeship.clone()).collect::<Vec<_>>());
     }
     res
 }
@@ -534,6 +539,33 @@ pub fn is_rokietnica(addr: &AddressEntry) -> bool {
     matches!(name_norm.as_str(), 
         "rokietnica" | "bytkowo" | "cerekwica" | "kiekrz" | "krzyszkowo" | "mrowino" | "napachanie" | "przybroda" | "rostworowo" | "rogierowko" | "sobota" | "starzyny" | "zydowo" | "dalekie"
     ) || addr.commune.trim().to_lowercase().contains("rokietnica")
+}
+
+pub const POZNAN_COMMUNES: &[&str] = &[
+    "poznań", "poznan",
+    "czerwonak",
+    "dopiewo",
+    "kleszczewo",
+    "komorniki",
+    "kórnik", "kornik",
+    "luboń", "lubon",
+    "mosina",
+    "murowana goślina", "murowana goslina",
+    "puszczykowo",
+    "rokietnica",
+    "suchy las",
+    "swarzędz", "swarzedz",
+    "tarnowo podgórne", "tarnowo podgorne",
+    "brodnica",
+];
+
+pub fn is_poznan_area(addr: &AddressEntry) -> bool {
+    let city = addr.city_name.trim().to_lowercase();
+    let commune = addr.commune.trim().to_lowercase();
+
+    POZNAN_COMMUNES.iter().any(|&c| {
+        city.starts_with(c) || commune.starts_with(c)
+    })
 }
 
 // ── Address & Settings ────────────────────────────────────
@@ -1023,3 +1055,17 @@ mod tests {
     }
 }
 
+pub fn is_katowice(addr: &AddressEntry) -> bool {
+    let name = addr.city_name.trim().to_lowercase();
+    name.starts_with("katowice")
+}
+
+pub fn is_plock(addr: &AddressEntry) -> bool {
+    let name = addr.city_name.trim().to_lowercase();
+    name.starts_with("płock") || name.starts_with("plock")
+}
+
+pub fn is_czestochowa(addr: &AddressEntry) -> bool {
+    let name = addr.city_name.trim().to_lowercase();
+    name.starts_with("częstochowa") || name.starts_with("czestochowa")
+}
