@@ -13,6 +13,7 @@ pub struct SecProvider;
 
 fn check_local_matching(alert: &mut UnifiedAlert, settings: &Settings, combined_text: &str) {
     if !settings.filter_by_house_no {
+        alert.is_local = Some(true);
         return;
     }
     
@@ -22,16 +23,18 @@ fn check_local_matching(alert: &mut UnifiedAlert, settings: &Settings, combined_
     let mut active_addresses = Vec::new();
     for (idx, addr) in settings.addresses.iter().enumerate() {
         if addr.is_active && crate::api_logic::is_address_applicable_for_provider(&crate::api_logic::AlertSource::Sec, addr) {
-            let street_name = if !addr.street_name_1.is_empty() {
+            let raw_street_name = if !addr.street_name_1.is_empty() {
                 &addr.street_name_1
             } else {
                 &addr.street_name
             };
             
+            let street_name = crate::utils::strip_street_prefixes(raw_street_name);
+            
             if !street_name.is_empty() {
                 let pattern = format!(r"(?i)\b{}\b", regex::escape(street_name));
                 if let Ok(re) = Regex::new(&pattern) {
-                    active_addresses.push((idx, street_name.clone(), re));
+                    active_addresses.push((idx, street_name.to_string(), re));
                 }
             }
         }

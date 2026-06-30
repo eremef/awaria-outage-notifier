@@ -2474,4 +2474,4 @@ input[type="checkbox"]:checked+.notify-bell-icon {
     width: 0%;
     background: var(--primary-color);
     transition: width 0.3s cubic-bezier(0.1, 0.8, 0.2, 1);
-}
+}.more-btn { background: none; border: none; color: var(--primary-color, #007bff); cursor: pointer; padding: 0; margin-top: 4px; font-size: 0.9em; text-decoration: underline; font-weight: 500; }

@@ -2733,7 +2733,7 @@ if (typeof document !== 'undefined') {
                             <span class="toggle-icon">▼</span>
                         </button>
                         <div class="collapsible-content" id="local-content-${s.id}">
-                            ${renderCards(list, s.id)}
+                            ${renderCards(list, s.id, addresses)}
                         </div>
                     </div>
                 `;
@@ -2777,7 +2777,7 @@ if (typeof document !== 'undefined') {
                             <span class="toggle-icon">▼</span>
                         </button>
                         <div class="collapsible-content" id="other-content-${s.id}">
-                            ${renderCards(list, s.id)}
+                            ${renderCards(list, s.id, addresses)}
                         </div>
                     </div>
                 `;
@@ -2836,17 +2836,70 @@ if (typeof document !== 'undefined') {
         }
     };
 
-    function renderCards(alerts, sourceId) {
-        return alerts.map(item => `
-        <div class="card source-${item.source}" ${item.hash ? `data-hash="${item.hash}"` : ''}>
-            <div class="outage-time">
-                ${formatDate(item.startDate)} – ${formatDate(item.endDate)}
+    function renderCards(alerts, sourceId, addresses) {
+        return alerts.map(item => {
+            let messageHtml = '';
+            if (item.message) {
+                const maxLen = 420;
+                if (item.message.length > maxLen) {
+                    const visible = escapeHtml(item.message.substring(0, maxLen)) + '...';
+                    const full = escapeHtml(item.message);
+                    const btnLbl = typeof t !== 'undefined' ? t('btn_more') : 'więcej';
+                    messageHtml = `
+                    <div class="outage-message-container">
+                        <div class="outage-message ellipsized" data-full="${full}" data-short="${visible}">${visible}</div>
+                        <button class="more-btn" onclick="toggleMessage(this)">${btnLbl}</button>
+                    </div>`;
+                } else {
+                    messageHtml = `<div class="outage-message">${escapeHtml(item.message)}</div>`;
+                }
+            }
+
+            let locationHtml = '';
+            if (item.addressIndex !== undefined && item.addressIndex !== null && addresses && addresses[item.addressIndex]) {
+                const addr = addresses[item.addressIndex];
+                const lbl = typeof t !== 'undefined' ? t('lbl_concerns') : 'Dotyczy';
+                let savedAddressStr = '';
+                if (addr.streetName) {
+                    savedAddressStr = `${addr.streetName} ${addr.houseNo || ''}`.trim();
+                    if (addr.cityName) savedAddressStr += `, ${addr.cityName}`;
+                } else if (addr.cityName) {
+                    savedAddressStr = addr.cityName;
+                }
+                
+                if (savedAddressStr) {
+                    locationHtml = `<div class="outage-location">${escapeHtml(lbl)}: ${escapeHtml(savedAddressStr)}</div>`;
+                }
+            }
+            if (!locationHtml && item.location) {
+                locationHtml = `<div class="outage-location">${escapeHtml(item.location)}</div>`;
+            }
+
+            return `
+            <div class="card source-${item.source}" ${item.hash ? `data-hash="${item.hash}"` : ''}>
+                <div class="outage-time">
+                    ${formatDate(item.startDate)} – ${formatDate(item.endDate)}
+                </div>
+                ${locationHtml}
+                ${messageHtml}
             </div>
-            ${item.location ? `<div class="outage-location">${escapeHtml(item.location)}</div>` : ''}
-            ${item.message ? `<div class="outage-message">${escapeHtml(item.message)}</div>` : ''}
-        </div>
-    `).join('');
+            `;
+        }).join('');
     }
+
+    window.toggleMessage = function(btn) {
+        const msgDiv = btn.previousElementSibling;
+        const isEllipsized = msgDiv.classList.contains('ellipsized');
+        if (isEllipsized) {
+            msgDiv.innerHTML = msgDiv.getAttribute('data-full');
+            msgDiv.classList.remove('ellipsized');
+            btn.textContent = typeof t !== 'undefined' ? t('btn_less') : 'mniej';
+        } else {
+            msgDiv.innerHTML = msgDiv.getAttribute('data-short');
+            msgDiv.classList.add('ellipsized');
+            btn.textContent = typeof t !== 'undefined' ? t('btn_more') : 'więcej';
+        }
+    };
 
     function formatDate(dateString) {
         if (!dateString) return '';

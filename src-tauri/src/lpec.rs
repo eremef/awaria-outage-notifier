@@ -26,6 +26,7 @@ pub struct LpecProvider;
 
 fn check_local_matching(alert: &mut UnifiedAlert, settings: &Settings, combined_text: &str) {
     if !settings.filter_by_house_no {
+        alert.is_local = Some(true);
         return;
     }
     
@@ -35,16 +36,18 @@ fn check_local_matching(alert: &mut UnifiedAlert, settings: &Settings, combined_
     let mut active_addresses = Vec::new();
     for (idx, addr) in settings.addresses.iter().enumerate() {
         if addr.is_active && crate::api_logic::is_address_applicable_for_provider(&crate::api_logic::AlertSource::Lpec, addr) {
-            let street_name = if !addr.street_name_1.is_empty() {
+            let raw_street_name = if !addr.street_name_1.is_empty() {
                 &addr.street_name_1
             } else {
                 &addr.street_name
             };
             
+            let street_name = crate::utils::strip_street_prefixes(raw_street_name);
+            
             if !street_name.is_empty() {
                 let pattern = format!(r"(?i)\b{}\b", regex::escape(street_name));
                 if let Ok(re) = Regex::new(&pattern) {
-                    active_addresses.push((idx, street_name.clone(), re));
+                    active_addresses.push((idx, street_name.to_string(), re));
                 }
             }
         }
@@ -88,7 +91,53 @@ fn parse_date_with_godz(text: &str) -> Option<NaiveDateTime> {
 }
 
 // Extractor to locate start/end dates in text
+fn format_time(time: &str) -> String {
+    let t = time.replace(".", ":");
+    let parts: Vec<&str> = t.split(':').collect();
+    if parts.len() == 2 {
+        let h = format!("{:02}", parts[0].parse::<u32>().unwrap_or(0));
+        let m = format!("{:02}", parts[1].parse::<u32>().unwrap_or(0));
+        format!("{}:{}", h, m)
+    } else {
+        t
+    }
+}
+
 fn extract_dates(text: &str) -> (Option<NaiveDateTime>, Option<NaiveDateTime>) {
+    let lower_text = text.to_lowercase();
+    
+    // First, try the standard "w dniu DD.MM.YYYY od godz. HH:MM do godzin popołudniowych/wieczornych"
+    let re_descriptive = Regex::new(
+        r"dniu\s+(\d{1,2}\.\d{2}\.\d{4})\s*od\s*(?:godz\.\s*)?(\d{1,2}[:.]\d{2})\s*do\s*godzin\s*(popołudniowych|wieczornych)"
+    ).unwrap();
+    
+    if let Some(caps) = re_descriptive.captures(&lower_text) {
+        let date_str = &caps[1];
+        let start_time = format_time(&caps[2]);
+        let end_time = if &caps[3] == "popołudniowych" { "17:00" } else { "22:00" };
+        
+        let start = parse_date_with_godz(&format!("{} {}", date_str, start_time));
+        let end = parse_date_with_godz(&format!("{} {}", date_str, end_time));
+        
+        return (start, end);
+    }
+    
+    // Check for "w dniu DD.MM.YYYY od godz. HH:MM do HH:MM"
+    let re_time_range = Regex::new(
+        r"dniu\s+(\d{1,2}\.\d{2}\.\d{4})\s*od\s*(?:godz\.\s*)?(\d{1,2}[:.]\d{2})\s*do\s*(?:godz\.\s*)?(\d{1,2}[:.]\d{2})"
+    ).unwrap();
+    
+    if let Some(caps) = re_time_range.captures(&lower_text) {
+        let date_str = &caps[1];
+        let start_time = format_time(&caps[2]);
+        let end_time = format_time(&caps[3]);
+        
+        let start = parse_date_with_godz(&format!("{} {}", date_str, start_time));
+        let end = parse_date_with_godz(&format!("{} {}", date_str, end_time));
+        
+        return (start, end);
+    }
+
     // Look for date ranges separated by od/do or -
     let date_range_re = Regex::new(
         r"(?i)(?:od\s+)?(\d{1,2}\.\d{2}\.\d{4}(?:\s+godz\.\s*\d{1,2}[:.]\d{2})?|\d{4}-\d{2}-\d{2}(?:\s+godz\.\s*\d{1,2}[:.]\d{2})?)\s+(?:do\s+|-)?(\d{1,2}\.\d{2}\.\d{4}(?:\s+godz\.\s*\d{1,2}[:.]\d{2})?|\d{4}-\d{2}-\d{2}(?:\s+godz\.\s*\d{1,2}[:.]\d{2})?)"
@@ -172,6 +221,24 @@ impl AlertProvider for LpecProvider {
             if start_dt.is_none() {
                 if let Some(d) = &post.date {
                     start_dt = parse_date_with_godz(d);
+                }
+            }
+
+            // Filter out outdated outages
+            let now = chrono::Utc::now().naive_utc();
+            if let Some(end) = end_dt {
+                if end < now {
+                    continue;
+                }
+            } else if let Some(start) = start_dt {
+                if start + chrono::Duration::hours(24) < now {
+                    continue;
+                }
+            } else if let Some(d) = &post.date {
+                if let Some(dt) = parse_date_with_godz(d) {
+                    if dt + chrono::Duration::hours(24) < now {
+                        continue;
+                    }
                 }
             }
 

@@ -345,11 +345,12 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
 }
 
 pub fn format_notification_body(alert: &UnifiedAlert, settings: &Settings) -> String {
-    let mut body = alert.message.clone().unwrap_or_default()
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join(" ");
-    
+    let is_pl = match settings.language.as_deref() {
+        Some("pl") => true,
+        Some("en") => false,
+        _ => true,
+    };
+
     let mut time_info = Vec::new();
     if let Some(start) = &alert.startDate {
         if let Some(dt) = crate::utils::parse_date(start) {
@@ -365,22 +366,49 @@ pub fn format_notification_body(alert: &UnifiedAlert, settings: &Settings) -> St
             time_info.push(end.clone());
         }
     }
-    
-    if !time_info.is_empty() {
-        let times = time_info.join(" - ");
-        if !body.contains(&times) {
-            if !body.is_empty() {
-                body.push('\n');
+    let times = if time_info.is_empty() {
+        if is_pl { "Brak danych".to_string() } else { "No data".to_string() }
+    } else {
+        time_info.join(" - ")
+    };
+
+    if let Some(idx) = alert.address_index {
+        if let Some(addr) = settings.addresses.get(idx) {
+            let kiedy_lbl = if is_pl { "Kiedy" } else { "When" };
+            let gdzie_lbl = if is_pl { "Gdzie" } else { "Where" };
+            
+            let mut saved_addr_str = String::new();
+            if !addr.street_name.is_empty() {
+                saved_addr_str.push_str(&addr.street_name);
+                if !addr.house_no.is_empty() {
+                    saved_addr_str.push(' ');
+                    saved_addr_str.push_str(&addr.house_no);
+                }
+                if !addr.city_name.is_empty() {
+                    saved_addr_str.push_str(", ");
+                    saved_addr_str.push_str(&addr.city_name);
+                }
+            } else if !addr.city_name.is_empty() {
+                saved_addr_str.push_str(&addr.city_name);
             }
-            body.push_str(&times);
+
+            return format!("{}: {}\n{}: {}", kiedy_lbl, times, gdzie_lbl, saved_addr_str);
         }
     }
+
+    let mut body = alert.message.clone().unwrap_or_default()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ");
+    
+    if !time_info.is_empty() && !body.contains(&times) {
+        if !body.is_empty() {
+            body.push('\n');
+        }
+        body.push_str(&times);
+    }
+    
     if body.is_empty() {
-        let is_pl = match settings.language.as_deref() {
-            Some("pl") => true,
-            Some("en") => false,
-            _ => true,
-        };
         return if is_pl { "Nowe zdarzenie".to_string() } else { "New event".to_string() };
     }
     body

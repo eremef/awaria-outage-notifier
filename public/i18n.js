@@ -53,7 +53,10 @@ const translations = {
         "err_street_not_found": "❌ Street not found. Did you mean: ",
         "err_load_failed": "Failed to load alert data. Error: ",
         "lbl_your_location": "Your location",
+        "btn_more": "more",
+        "btn_less": "less",
         "lbl_other_outages": "Other outages",
+        "lbl_concerns": "Concerns",
         "msg_no_outages_local": "No local alerts found.",
         "lbl_planned_outage": "Planned Outage",
 
@@ -228,7 +231,10 @@ const translations = {
         "err_street_not_found": "❌ Nie znaleziono ulicy. Czy chodziło ci o: ",
         "err_load_failed": "Nie udało się pobrać danych o wyłączeniach i awariach. Błąd: ",
         "lbl_your_location": "Twoja lokalizacja",
+        "btn_more": "więcej",
+        "btn_less": "mniej",
         "lbl_other_outages": "Pozostałe wyłączenia",
+        "lbl_concerns": "Dotyczy",
         "msg_no_outages_local": "Brak alertów dla twojej lokalizacji.",
         "lbl_planned_outage": "Planowane wyłączenie",
 

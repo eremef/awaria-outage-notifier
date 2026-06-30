@@ -59,6 +59,23 @@ pub fn format_date(dt: chrono::DateTime<chrono::Utc>) -> String {
     dt.with_timezone(&Warsaw).format("%d-%m-%Y %H:%M").to_string()
 }
 
+pub fn strip_street_prefixes(s: &str) -> &str {
+    let prefixes = [
+        "ulica ", "ul. ", "ul.", "ul ", 
+        "plac ", "pl. ", "pl.", "pl ",
+        "aleja ", "al. ", "al.", "al ",
+        "osiedle ", "os. ", "os.", "os ",
+        "rondo ", "skwer ",
+    ];
+    let lower_s = s.to_lowercase();
+    for prefix in &prefixes {
+        if lower_s.starts_with(prefix) && s.len() > prefix.len() {
+            return s[prefix.len()..].trim();
+        }
+    }
+    s.trim()
+}
+
 pub async fn retry<T, E, F, Fut>(mut f: F, max_retries: usize) -> Result<T, E>
 
 where

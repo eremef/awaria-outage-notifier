@@ -494,21 +494,7 @@ fn normalize(s: &str) -> String {
         .collect()
 }
 
-fn strip_street_prefixes(s: &str) -> &str {
-    let prefixes = [
-        "ulica", "ul",
-        "plac", "pl",
-        "aleja", "al",
-        "osiedle", "os",
-        "rondo", "skwer",
-    ];
-    for prefix in &prefixes {
-        if s.starts_with(prefix) && s.len() > prefix.len() {
-            return &s[prefix.len()..];
-        }
-    }
-    s
-}
+
 
 fn get_core_street_name(street: &str) -> String {
     let words: Vec<&str> = street.split_whitespace().collect();
@@ -613,7 +599,7 @@ pub fn parse_psg_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAle
                         || norm_area.contains("calyobszarmiejscowosci")
                 };
 
-                let clean_addr_street = strip_street_prefixes(&addr_street);
+                let clean_addr_street = crate::utils::strip_street_prefixes(&addr_street);
                 let core_street = get_core_street_name(&addr.street_name_1);
 
                 let street_match = if addr_street.is_empty() || is_locality_wide {

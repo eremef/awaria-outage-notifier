@@ -20,23 +20,44 @@ fn parse_date(text: &str) -> Option<NaiveDateTime> {
 
 // Extractor to locate start/end dates in text
 fn extract_dates(text: &str) -> (Option<NaiveDateTime>, Option<NaiveDateTime>) {
-    let re_date = Regex::new(r"dniu\s+([\d\.]+)\s+r\.\s+od\s+godz\.\s+(\d{1,2}:\d{2})").unwrap();
-    let re_end = Regex::new(r"około\s+godz\.\s+(\d{1,2}:\d{2})").unwrap();
+    let lower_text = text.to_lowercase()
+        .replace("stycznia", "01")
+        .replace("lutego", "02")
+        .replace("marca", "03")
+        .replace("kwietnia", "04")
+        .replace("maja", "05")
+        .replace("czerwca", "06")
+        .replace("lipca", "07")
+        .replace("sierpnia", "08")
+        .replace("września", "09")
+        .replace("października", "10")
+        .replace("listopada", "11")
+        .replace("grudnia", "12");
+
+    let re_date = Regex::new(r"dniu\s+(\d{1,2})[\s\.]+(\d{1,2})[\s\.]+(\d{4})").unwrap();
+    let re_start_time = Regex::new(r"od\s+(?:godz\.\s*|godziny\s+)?(\d{1,2}:\d{2})").unwrap();
+    let re_end_time = Regex::new(r"około\s+(?:godz\.\s*|godziny\s+)?(\d{1,2}:\d{2})").unwrap();
 
     let mut start_date = None;
     let mut end_date = None;
 
-    if let Some(caps) = re_date.captures(text) {
-        let d_str = caps.get(1).map_or("", |m| m.as_str());
-        let t_str = caps.get(2).map_or("", |m| m.as_str());
-        let dt_str = format!("{} {}", d_str.replace(".", "-"), t_str);
-        if let Some(dt) = parse_date(&dt_str) {
+    if let Some(date_caps) = re_date.captures(&lower_text) {
+        let d = format!("{:02}", date_caps[1].parse::<u32>().unwrap_or(1));
+        let m = format!("{:02}", date_caps[2].parse::<u32>().unwrap_or(1));
+        let y = &date_caps[3];
+        let date_str = format!("{}-{}-{}", d, m, y);
+
+        let mut start_time = "00:00";
+        if let Some(start_caps) = re_start_time.captures(&lower_text) {
+            start_time = start_caps.get(1).map(|m| m.as_str()).unwrap_or("00:00");
+        }
+
+        if let Some(dt) = parse_date(&format!("{} {}", date_str, start_time)) {
             start_date = Some(dt);
             
-            if let Some(end_caps) = re_end.captures(text) {
-                let end_time = end_caps.get(1).map_or("", |m| m.as_str());
-                let end_dt_str = format!("{} {}", d_str.replace(".", "-"), end_time);
-                if let Some(e_dt) = parse_date(&end_dt_str) {
+            if let Some(end_caps) = re_end_time.captures(&lower_text) {
+                let end_time = end_caps.get(1).map(|m| m.as_str()).unwrap_or("23:59");
+                if let Some(e_dt) = parse_date(&format!("{} {}", date_str, end_time)) {
                     end_date = Some(e_dt);
                 }
             }
@@ -48,6 +69,7 @@ fn extract_dates(text: &str) -> (Option<NaiveDateTime>, Option<NaiveDateTime>) {
 
 fn check_local_matching(alert: &mut UnifiedAlert, settings: &Settings, combined_text: &str) {
     if !settings.filter_by_house_no {
+        alert.is_local = Some(true);
         return;
     }
     
@@ -57,16 +79,18 @@ fn check_local_matching(alert: &mut UnifiedAlert, settings: &Settings, combined_
     let mut active_addresses = Vec::new();
     for (idx, addr) in settings.addresses.iter().enumerate() {
         if addr.is_active && crate::api_logic::is_address_applicable_for_provider(&crate::api_logic::AlertSource::MpwikLublin, addr) {
-            let street_name = if !addr.street_name_1.is_empty() {
+            let raw_street_name = if !addr.street_name_1.is_empty() {
                 &addr.street_name_1
             } else {
                 &addr.street_name
             };
             
+            let street_name = crate::utils::strip_street_prefixes(raw_street_name);
+            
             if !street_name.is_empty() {
                 let pattern = format!(r"(?i)\b{}\b", regex::escape(street_name));
                 if let Ok(re) = Regex::new(&pattern) {
-                    active_addresses.push((idx, street_name.clone(), re));
+                    active_addresses.push((idx, street_name.to_string(), re));
                 }
             }
         }

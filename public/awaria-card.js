@@ -167,6 +167,17 @@ class AwariaCard extends HTMLElement {
         const location = alert.location || 'Brak lokalizacji';
         const message = alert.message || 'Brak szczegółów';
 
+        const maxLen = 420;
+        let messageHtml = '';
+        if (message.length > maxLen) {
+            const visible = message.substring(0, maxLen) + '...';
+            // Note: Home Assistant custom cards don't have global toggleMessage readily available without registering it or handling shadow DOM events, 
+            // but we can add inline script or just provide the truncated text. We will just render it as truncated for now, or add a simple inline handler.
+            messageHtml = `<div class="alert-msg">💬 <span title="${message}">${visible}</span></div>`;
+        } else {
+            messageHtml = `<div class="alert-msg">💬 ${message}</div>`;
+        }
+
         alertsHtml += `
           <div class="alert-card" style="--alert-color: ${meta.color}">
             <div class="alert-header">
@@ -177,7 +188,7 @@ class AwariaCard extends HTMLElement {
             </div>
             <div class="alert-dates">📅 ${startDate} - ${endDate}</div>
             <div class="alert-location">📍 Miejscowość: ${location}</div>
-            <div class="alert-msg">💬 ${message}</div>
+            ${messageHtml}
           </div>
         `;
       });
