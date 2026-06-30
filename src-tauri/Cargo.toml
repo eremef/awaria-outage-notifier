@@ -55,6 +55,7 @@ tauri-plugin-fs = "2.5.1"
 tauri-plugin-log = "2.8.0"
 tauri-plugin-notification = "2.3.3"
 tauri-plugin-opener = "2.5.4"
+time = "=0.3.51"
 tokio = { version = "1.52.0", features = ["full"] }
 tower-http = { version = "0.6.11", features = ["fs"] }
 urlencoding = "2.1.3"
