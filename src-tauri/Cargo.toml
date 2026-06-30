@@ -25,7 +25,7 @@ path = "src/bin/awaria_daemon.rs"
 
 
 [build-dependencies]
-tauri-build = { version = "2.5.6", features = [] }
+tauri-build = { version = "2.6.3", features = [] }
 
 [dependencies]
 serde_json = "1.0"
@@ -33,22 +33,22 @@ serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
 axum = "0.7"
 env_logger = "0.11"
-tauri = { version = "2.11.2", features = [] }
-tauri-plugin-log = "2.6.0"
+tauri = { version = "2.11.3", features = [] }
+tauri-plugin-log = "2.8.0"
 reqwest = { version = "0.13", default-features = false, features = ["json", "blocking", "rustls-no-provider", "cookies"] }
 chrono = "0.4.43"
 tokio = { version = "1.52.0", features = ["full"] }
 dirs = "5.0"
 regex = "1.10"
 rusqlite = { version = "0.31", features = ["bundled"] }
-tauri-plugin-fs = "2.4.5"
-tauri-plugin-dialog = "2.2.0"
+tauri-plugin-fs = "2.5.1"
+tauri-plugin-dialog = "2.7.1"
 quick-xml = { version = "0.39.2", features = ["serialize"] }
 futures = "0.3.32"
-tauri-plugin-notification = "2.2.1"
+tauri-plugin-notification = "2.3.3"
 sha2 = "0.10.8"
 chrono-tz = "0.10.4"
-tauri-plugin-opener = "2"
+tauri-plugin-opener = "2.5.4"
 async-trait = "0.1.89"
 rustls-platform-verifier = "0.7.0"
 jni = "0.22.4"
