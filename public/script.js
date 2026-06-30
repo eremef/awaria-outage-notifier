@@ -2733,7 +2733,7 @@ if (typeof document !== 'undefined') {
                             <span class="toggle-icon">▼</span>
                         </button>
                         <div class="collapsible-content" id="local-content-${s.id}">
-                            ${renderCards(list, s.id, addresses)}
+                            ${renderCards(list, s.id, addresses, settings)}
                         </div>
                     </div>
                 `;
@@ -2777,7 +2777,7 @@ if (typeof document !== 'undefined') {
                             <span class="toggle-icon">▼</span>
                         </button>
                         <div class="collapsible-content" id="other-content-${s.id}">
-                            ${renderCards(list, s.id, addresses)}
+                            ${renderCards(list, s.id, addresses, settings)}
                         </div>
                     </div>
                 `;
@@ -2836,7 +2836,7 @@ if (typeof document !== 'undefined') {
         }
     };
 
-    function renderCards(alerts, sourceId, addresses) {
+    function renderCards(alerts, sourceId, addresses, settings) {
         return alerts.map(item => {
             let messageHtml = '';
             if (item.message) {
@@ -2861,7 +2861,10 @@ if (typeof document !== 'undefined') {
                 const lbl = typeof t !== 'undefined' ? t('lbl_concerns') : 'Dotyczy';
                 let savedAddressStr = '';
                 if (addr.streetName) {
-                    savedAddressStr = `${addr.streetName} ${addr.houseNo || ''}`.trim();
+                    savedAddressStr = addr.streetName;
+                    if (settings && settings.filterByHouseNo && addr.houseNo) {
+                        savedAddressStr += ` ${addr.houseNo}`;
+                    }
                     if (addr.cityName) savedAddressStr += `, ${addr.cityName}`;
                 } else if (addr.cityName) {
                     savedAddressStr = addr.cityName;

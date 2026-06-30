@@ -380,7 +380,7 @@ pub fn format_notification_body(alert: &UnifiedAlert, settings: &Settings) -> St
             let mut saved_addr_str = String::new();
             if !addr.street_name.is_empty() {
                 saved_addr_str.push_str(&addr.street_name);
-                if !addr.house_no.is_empty() {
+                if settings.filter_by_house_no && !addr.house_no.is_empty() {
                     saved_addr_str.push(' ');
                     saved_addr_str.push_str(&addr.house_no);
                 }
