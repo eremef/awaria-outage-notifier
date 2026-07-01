@@ -920,6 +920,18 @@ if (typeof document !== 'undefined') {
                 }
             });
         }
+
+        const hideCuplinkCheck = document.getElementById('hide-cuplink-check');
+        if (hideCuplinkCheck) {
+            hideCuplinkCheck.addEventListener('change', async () => {
+                if (currentSettings) {
+                    currentSettings.hideCuplink = hideCuplinkCheck.checked;
+                    await autoSaveSettings();
+                    const cuplinkBtn = document.querySelector('.cuplink-btn');
+                    if (cuplinkBtn) cuplinkBtn.style.display = currentSettings.hideCuplink ? 'none' : '';
+                }
+            });
+        }
     }
 
     function triggerAddAddressFlow() {
@@ -1605,6 +1617,12 @@ if (typeof document !== 'undefined') {
                 if (document.getElementById('filter-by-house-no-check')) {
                     document.getElementById('filter-by-house-no-check').checked = !!settings.filterByHouseNo;
                 }
+
+                if (document.getElementById('hide-cuplink-check')) {
+                    document.getElementById('hide-cuplink-check').checked = !!settings.hideCuplink;
+                }
+                const cuplinkBtn = document.querySelector('.cuplink-btn');
+                if (cuplinkBtn) cuplinkBtn.style.display = settings.hideCuplink ? 'none' : '';
 
                 // Check permissions/optimization warnings on load with a slight delay
                 // to allow Tauri's internal WebView URL state to settle from about:blank
