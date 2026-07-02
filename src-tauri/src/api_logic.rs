@@ -1087,7 +1087,10 @@ mod tests {
             ..Default::default()
         };
 
-        let mut settings = Settings::default();
+        let mut settings = Settings {
+            filter_by_house_no: true,
+            ..Default::default()
+        };
         settings.addresses.push(AddressEntry {
             name: "Dom".to_string(),
             city_name: "Szczecin".to_string(),
