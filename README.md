@@ -34,6 +34,9 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **Veolia Warszawa**: Heat outages in Warsaw.
   - **Veolia Poznań**: Heat outages in Poznań.
   - **Veolia Łódź**: Heat outages in Łódź.
+  - **GPEC Gdańsk**: Heat outages in Gdańsk.
+  - **SEC Szczecin**: Heat outages in Szczecin.
+  - **LPEC Lublin**: Heat outages in Lublin.
 - **💧 Water**
   - **MPWiK Wrocław**: Water failures and maintenance work in Wrocław.
   - **MPWiK Warszawa**: Water failures and repairs in Warsaw.
@@ -44,6 +47,9 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **PWiK Kalisz**: Water maintenance and failures in Kalisz.
   - **PWiK Częstochowa**: Water maintenance and failures in Częstochowa.
   - **Wodociągi Płockie**: Water maintenance and failures in Płock.
+  - **Gdańskie Wodociągi**: Water maintenance and failures in Gdańsk.
+  - **PUK Rokietnica**: Water maintenance and failures in Rokietnica.
+  - **MPWiK Lublin**: Water maintenance and failures in Lublin.
 
 ## Android app
 

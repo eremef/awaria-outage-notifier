@@ -32,6 +32,9 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
   - **Veolia Warszawa**: Przerwy w dostawie ciepła w Warszawie.
   - **Veolia Poznań**: Przerwy w dostawie ciepła w Poznaniu.
   - **Veolia Łódź**: Przerwy w dostawie ciepła w Łodzi.
+  - **GPEC Gdańsk**: Przerwy w dostawie ciepła w Gdańsku.
+  - **SEC Szczecin**: Przerwy w dostawie ciepła w Szczecinie.
+  - **LPEC Lublin**: Przerwy w dostawie ciepła w Lublinie.
 - **💧 Woda**
   - **MPWiK Wrocław**: Awarie wodociągowe i prace konserwacyjne we Wrocławiu.
   - **MPWiK Warszawa**: Awarie i naprawy wodociągowe w Warszawie.
@@ -42,6 +45,9 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
   - **PWiK Kalisz**: Awarie i konserwacje wodociągowe w Kaliszu.
   - **PWiK Częstochowa**: Awarie i konserwacje wodociągowe w Częstochowie.
   - **Wodociągi Płockie**: Awarie i konserwacje wodociągowe w Płocku.
+  - **Gdańskie Wodociągi**: Awarie i konserwacje wodociągowe w Gdańsku.
+  - **PUK Rokietnica**: Awarie i konserwacje wodociągowe w Rokietnicy.
+  - **MPWiK Lublin**: Awarie i konserwacje wodociągowe w Lublinie.
 
 ## Aplikacja Android
 
