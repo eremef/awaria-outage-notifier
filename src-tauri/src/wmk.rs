@@ -1,5 +1,5 @@
 use reqwest::Client;
-use crate::api_logic::{AddressEntry, AlertSource, UnifiedAlert, AlertProvider, Settings, is_krakow};
+use crate::api_logic::{AddressEntry, AlertSource, UnifiedAlert, AlertProvider, Settings};
 use crate::utils::retry;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
@@ -177,7 +177,7 @@ impl AlertProvider for WmkProvider {
                     .iter()
                     .enumerate()
                     .filter(|(_, a)| {
-                        let active = a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::Wmk, a) && is_krakow(a);
+                        let active = a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::Wmk, a);
                         if active {
                             log::info!("WMK: Checking address: {}", a.name);
                         }
@@ -235,6 +235,7 @@ impl AlertProvider for WmkProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::api_logic::is_krakow;
 
     #[test]
     fn test_parse_wmk_dates() {

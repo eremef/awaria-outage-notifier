@@ -1,5 +1,5 @@
 use reqwest::Client;
-use crate::api_logic::{AddressEntry, AlertSource, UnifiedAlert, AlertProvider, Settings, is_warszawa};
+use crate::api_logic::{AddressEntry, AlertSource, UnifiedAlert, AlertProvider, Settings};
 use crate::utils::retry;
 use serde::{Deserialize, Serialize};
 use async_trait::async_trait;
@@ -134,7 +134,7 @@ impl AlertProvider for StoenProvider {
 }
 
 pub fn matches_address(outage: &StoenOutage, address: &AddressEntry) -> bool {
-    if !is_warszawa(address) {
+    if !crate::api_logic::is_address_applicable_for_provider(&AlertSource::Stoen, address) {
         return false;
     }
 

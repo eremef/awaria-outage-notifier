@@ -225,8 +225,31 @@ class WidgetUpdateWorker(
             pukRokietnicaProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        // Update SEC widgets
+        val secName = ComponentName(context, SecWidgetProvider::class.java)
+        val secIds = appWidgetManager.getAppWidgetIds(secName)
+        val secProvider = SecWidgetProvider()
+        for (id in secIds) {
+            secProvider.updateWidget(context, appWidgetManager, id)
+        }
 
+        // Update LPEC widgets
+        val lpecName = ComponentName(context, LpecWidgetProvider::class.java)
+        val lpecIds = appWidgetManager.getAppWidgetIds(lpecName)
+        val lpecProvider = LpecWidgetProvider()
+        for (id in lpecIds) {
+            lpecProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update MPWiK Lublin widgets
+        val mpwikLublinName = ComponentName(context, MpwikLublinWidgetProvider::class.java)
+        val mpwikLublinIds = appWidgetManager.getAppWidgetIds(mpwikLublinName)
+        val mpwikLublinProvider = MpwikLublinWidgetProvider()
+        for (id in mpwikLublinIds) {
+            mpwikLublinProvider.updateWidget(context, appWidgetManager, id)
+        }
 
         return androidx.work.ListenableWorker.Result.success()
     }
 }
+

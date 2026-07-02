@@ -1,5 +1,5 @@
 use reqwest::Client;
-use crate::api_logic::{AddressEntry, AlertSource, UnifiedAlert, AlertProvider, Settings, is_wroclaw};
+use crate::api_logic::{AddressEntry, AlertSource, UnifiedAlert, AlertProvider, Settings};
 use crate::utils::retry;
 use async_trait::async_trait;
 
@@ -155,7 +155,7 @@ impl AlertProvider for MpwikProvider {
                     .addresses
                     .iter()
                     .enumerate()
-                    .filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::MpwikWroclaw, a) && is_wroclaw(a))
+                    .filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::MpwikWroclaw, a))
                     .map(|(idx, a)| (idx, Arc::new(CompiledMpwikRegex::new(a))))
                     .collect();
 
