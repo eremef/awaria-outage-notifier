@@ -49,12 +49,22 @@ pub enum AlertSource {
     Gpec,
     #[serde(rename = "puk_rokietnica")]
     PukRokietnica,
+    Sec,
+    Lpec,
+    #[serde(rename = "mpwik_lublin")]
+    MpwikLublin,
+}
+
+pub enum ServiceLocation {
+    Nationwide,
+    Voivodeships(Vec<&'static str>),
+    Cities(Vec<fn(&AddressEntry) -> bool>),
 }
 
 impl AlertSource {
-    pub fn service_voivodeships(&self) -> Option<Vec<&'static str>> {
+    pub fn service_locations(&self) -> ServiceLocation {
         match self {
-            AlertSource::Tauron => Some(vec![
+            AlertSource::Tauron => ServiceLocation::Voivodeships(vec![
                 "DOLNOŚLĄSKIE",
                 "MAŁOPOLSKIE",
                 "OPOLSKIE",
@@ -62,7 +72,7 @@ impl AlertSource {
                 "ŚWIĘTOKRZYSKIE",
                 "PODKARPACKIE",
             ]),
-            AlertSource::Energa => Some(vec![
+            AlertSource::Energa => ServiceLocation::Voivodeships(vec![
                 "POMORSKIE",
                 "WARMIŃSKO-MAZURSKIE",
                 "KUJAWSKO-POMORSKIE",
@@ -71,13 +81,13 @@ impl AlertSource {
                 "WIELKOPOLSKIE",
                 "ŁÓDZKIE",
             ]),
-            AlertSource::Enea => Some(vec![
+            AlertSource::Enea => ServiceLocation::Voivodeships(vec![
                 "WIELKOPOLSKIE",
                 "LUBUSKIE",
                 "ZACHODNIOPOMORSKIE",
                 "KUJAWSKO-POMORSKIE",
             ]),
-            AlertSource::Pge => Some(vec![
+            AlertSource::Pge => ServiceLocation::Voivodeships(vec![
                 "PODLASKIE",
                 "LUBELSKIE",
                 "PODKARPACKIE",
@@ -87,35 +97,70 @@ impl AlertSource {
                 "MAŁOPOLSKIE",
                 "WIELKOPOLSKIE",
             ]),
-            AlertSource::Stoen => Some(vec!["MAZOWIECKIE"]),
-            AlertSource::MpwikWroclaw => Some(vec!["DOLNOŚLĄSKIE"]),
-            AlertSource::MpwikWarszawa => Some(vec!["MAZOWIECKIE"]),
-            AlertSource::Wmk => Some(vec!["MAŁOPOLSKIE"]),
-            AlertSource::Aquanet => Some(vec!["WIELKOPOLSKIE"]),
-            AlertSource::KatowickieWodociagi => Some(vec!["ŚLĄSKIE"]),
-            AlertSource::VeoliaWarszawa => Some(vec!["MAZOWIECKIE"]),
-            AlertSource::VeoliaPoznan => Some(vec!["WIELKOPOLSKIE"]),
-            AlertSource::VeoliaLodz => Some(vec!["ŁÓDZKIE"]),
-            AlertSource::ZwikLodz => Some(vec!["ŁÓDZKIE"]),
-            AlertSource::WodociagiPlockie => Some(vec!["MAZOWIECKIE"]),
-            AlertSource::PwikKalisz => Some(vec!["WIELKOPOLSKIE"]),
-            AlertSource::PwikCzestochowa => Some(vec!["ŚLĄSKIE"]),
-            AlertSource::GdanskieWodociagi => Some(vec!["POMORSKIE"]),
-            AlertSource::Gpec => Some(vec!["POMORSKIE"]),
-            AlertSource::PukRokietnica => Some(vec!["WIELKOPOLSKIE"]),
-            AlertSource::Fortum => Some(vec![
+            AlertSource::Fortum => ServiceLocation::Voivodeships(vec![
                 "DOLNOŚLĄSKIE",
                 "ŚLĄSKIE",
                 "MAZOWIECKIE",
                 "WIELKOPOLSKIE",
                 "ŁÓDZKIE",
             ]),
-            AlertSource::TauronHeat => Some(vec![
+            AlertSource::TauronHeat => ServiceLocation::Voivodeships(vec![
                 "ŚLĄSKIE",
                 "MAŁOPOLSKIE",
                 "DOLNOŚLĄSKIE",
             ]),
-            AlertSource::Psg => None, // Nationwide
+            AlertSource::KatowickieWodociagi => ServiceLocation::Cities(vec![is_katowice]),
+            AlertSource::WodociagiPlockie => ServiceLocation::Cities(vec![is_plock]),
+            AlertSource::PwikCzestochowa => ServiceLocation::Cities(vec![is_czestochowa]),
+            AlertSource::Psg => ServiceLocation::Nationwide,
+            
+            AlertSource::Stoen => ServiceLocation::Cities(vec![is_warszawa]),
+            AlertSource::MpwikWroclaw => ServiceLocation::Cities(vec![is_wroclaw]),
+            AlertSource::MpwikWarszawa => ServiceLocation::Cities(vec![is_warszawa]),
+            AlertSource::Wmk => ServiceLocation::Cities(vec![is_krakow]),
+            AlertSource::Aquanet => ServiceLocation::Cities(vec![is_poznan_area]),
+            AlertSource::VeoliaWarszawa => ServiceLocation::Cities(vec![is_warszawa]),
+            AlertSource::VeoliaPoznan => ServiceLocation::Cities(vec![is_poznan_area]),
+            AlertSource::VeoliaLodz => ServiceLocation::Cities(vec![is_lodz]),
+            AlertSource::ZwikLodz => ServiceLocation::Cities(vec![is_lodz]),
+            AlertSource::PwikKalisz => ServiceLocation::Cities(vec![is_kalisz]),
+            AlertSource::GdanskieWodociagi => ServiceLocation::Cities(vec![is_gdansk]),
+            AlertSource::Gpec => ServiceLocation::Cities(vec![is_gdansk]),
+            AlertSource::PukRokietnica => ServiceLocation::Cities(vec![is_rokietnica]),
+            AlertSource::Sec => ServiceLocation::Cities(vec![is_szczecin]),
+            AlertSource::Lpec => ServiceLocation::Cities(vec![is_lublin]),
+            AlertSource::MpwikLublin => ServiceLocation::Cities(vec![is_lublin]),
+        }
+    }
+
+    pub fn display_name(&self) -> &'static str {
+        match self {
+            AlertSource::Tauron => "Tauron",
+            AlertSource::MpwikWroclaw => "MPWiK Wrocław",
+            AlertSource::MpwikWarszawa => "MPWiK Warszawa",
+            AlertSource::Fortum => "Fortum",
+            AlertSource::Energa => "Energa",
+            AlertSource::Enea => "Enea",
+            AlertSource::Pge => "PGE",
+            AlertSource::Stoen => "Stoen",
+            AlertSource::Psg => "PSG",
+            AlertSource::Wmk => "WMK Kraków",
+            AlertSource::TauronHeat => "Tauron Ciepło",
+            AlertSource::Aquanet => "Aquanet",
+            AlertSource::KatowickieWodociagi => "Katowickie Wodociągi",
+            AlertSource::VeoliaWarszawa => "Veolia Warszawa",
+            AlertSource::VeoliaPoznan => "Veolia Poznań",
+            AlertSource::VeoliaLodz => "Veolia Łódź",
+            AlertSource::ZwikLodz => "ZWiK Łódź",
+            AlertSource::WodociagiPlockie => "Wodociągi Płockie",
+            AlertSource::PwikKalisz => "PWiK Kalisz",
+            AlertSource::PwikCzestochowa => "PWiK Częstochowa",
+            AlertSource::GdanskieWodociagi => "Gdańskie Wodociągi",
+            AlertSource::Gpec => "GPEC Gdańsk",
+            AlertSource::Sec => "SEC Szczecin",
+            AlertSource::Lpec => "LPEC Lublin",
+            AlertSource::PukRokietnica => "PUK Rokietnica",
+            AlertSource::MpwikLublin => "MPWiK Lublin",
         }
     }
 }
@@ -305,10 +350,10 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea | AlertSource::Pge | AlertSource::Stoen => {
             if is_pl { "wyłączenie prądu" } else { "power outage" }
         }
-        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::WodociagiPlockie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa | AlertSource::GdanskieWodociagi | AlertSource::PukRokietnica => {
+        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::WodociagiPlockie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa | AlertSource::GdanskieWodociagi | AlertSource::PukRokietnica | AlertSource::MpwikLublin => {
             if is_pl { "wyłączenie wody" } else { "water outage" }
         }
-        AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz | AlertSource::Gpec => {
+        AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz | AlertSource::Gpec | AlertSource::Sec | AlertSource::Lpec => {
             if is_pl { "wyłączenie ogrzewania" } else { "heat outage" }
         }
         AlertSource::Psg => {
@@ -320,22 +365,24 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         if is_pl { "Nadchodzące" } else { "Upcoming" }
     } else if is_pl { "Nowe" } else { "New" };
     
-    let title = format!("{} {}", prefix, label);
+    let outage_type = format!("{} {}", prefix, label);
+    let provider_name = alert.source.display_name();
     
     if let Some(idx) = alert.address_index {
         if let Some(addr) = settings.addresses.get(idx) {
-            return format!("{}: {}", addr.name, title);
+            return format!("{}: {} - {}", addr.name, outage_type, provider_name);
         }
     }
-    title
+    format!("{} - {}", outage_type, provider_name)
 }
 
 pub fn format_notification_body(alert: &UnifiedAlert, settings: &Settings) -> String {
-    let mut body = alert.message.clone().unwrap_or_default()
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join(" ");
-    
+    let is_pl = match settings.language.as_deref() {
+        Some("pl") => true,
+        Some("en") => false,
+        _ => true,
+    };
+
     let mut time_info = Vec::new();
     if let Some(start) = &alert.startDate {
         if let Some(dt) = crate::utils::parse_date(start) {
@@ -351,22 +398,49 @@ pub fn format_notification_body(alert: &UnifiedAlert, settings: &Settings) -> St
             time_info.push(end.clone());
         }
     }
-    
-    if !time_info.is_empty() {
-        let times = time_info.join(" - ");
-        if !body.contains(&times) {
-            if !body.is_empty() {
-                body.push('\n');
+    let times = if time_info.is_empty() {
+        if is_pl { "Brak danych".to_string() } else { "No data".to_string() }
+    } else {
+        time_info.join(" - ")
+    };
+
+    if let Some(idx) = alert.address_index {
+        if let Some(addr) = settings.addresses.get(idx) {
+            let kiedy_lbl = if is_pl { "Kiedy" } else { "When" };
+            let gdzie_lbl = if is_pl { "Gdzie" } else { "Where" };
+            
+            let mut saved_addr_str = String::new();
+            if !addr.street_name.is_empty() {
+                saved_addr_str.push_str(&addr.street_name);
+                if settings.filter_by_house_no && !addr.house_no.is_empty() {
+                    saved_addr_str.push(' ');
+                    saved_addr_str.push_str(&addr.house_no);
+                }
+                if !addr.city_name.is_empty() {
+                    saved_addr_str.push_str(", ");
+                    saved_addr_str.push_str(&addr.city_name);
+                }
+            } else if !addr.city_name.is_empty() {
+                saved_addr_str.push_str(&addr.city_name);
             }
-            body.push_str(&times);
+
+            return format!("{}: {}\n{}: {}", kiedy_lbl, times, gdzie_lbl, saved_addr_str);
         }
     }
+
+    let mut body = alert.message.clone().unwrap_or_default()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ");
+    
+    if !time_info.is_empty() && !body.contains(&times) {
+        if !body.is_empty() {
+            body.push('\n');
+        }
+        body.push_str(&times);
+    }
+    
     if body.is_empty() {
-        let is_pl = match settings.language.as_deref() {
-            Some("pl") => true,
-            Some("en") => false,
-            _ => true,
-        };
         return if is_pl { "Nowe zdarzenie".to_string() } else { "New event".to_string() };
     }
     body
@@ -398,6 +472,9 @@ impl std::fmt::Display for AlertSource {
             AlertSource::GdanskieWodociagi => "gdanskie_wodociagi",
             AlertSource::Gpec => "gpec",
             AlertSource::PukRokietnica => "puk_rokietnica",
+            AlertSource::Sec => "sec",
+            AlertSource::Lpec => "lpec",
+            AlertSource::MpwikLublin => "mpwik_lublin",
         };
         write!(f, "{}", s)
     }
@@ -417,43 +494,41 @@ pub trait AlertProvider: Send + Sync {
 }
 
 pub fn is_address_applicable_for_provider(source: &AlertSource, a: &AddressEntry) -> bool {
-    let voivodeships = match source.service_voivodeships() {
-        Some(v) => v,
-        None => return true, // Nationwide
-    };
-
-    if a.voivodeship.is_empty() {
-        // Fallback for missing voivodeship data
-        return true;
-    }
-    let v = a.voivodeship.trim().to_uppercase();
-    voivodeships.iter().any(|&sv| {
-        if sv == v { return true; }
-        let sv_norm = sv.replace("Ł", "L").replace("Ś", "S");
-        let v_norm = v.replace("Ł", "L").replace("Ś", "S");
-        if sv_norm == v_norm { return true; }
-        
-        // Handle `?` corruption (e.g. MA?OPOLSKIE)
-        if v.contains('?') && v.len() == sv.len() {
-            let mut match_with_wildcard = true;
-            for (c1, c2) in v.chars().zip(sv.chars()) {
-                if c1 != '?' && c1 != c2 {
-                    match_with_wildcard = false;
-                    break;
-                }
+    match source.service_locations() {
+        ServiceLocation::Nationwide => true,
+        ServiceLocation::Cities(city_checkers) => {
+            city_checkers.iter().any(|check| check(a))
+        },
+        ServiceLocation::Voivodeships(voivodeships) => {
+            if a.voivodeship.is_empty() {
+                // Fallback for missing voivodeship data
+                return true;
             }
-            if match_with_wildcard { return true; }
+            let v = a.voivodeship.trim().to_uppercase();
+            voivodeships.iter().any(|&sv| {
+                if sv == v { return true; }
+                let sv_norm = sv.replace("Ł", "L").replace("Ś", "S");
+                let v_norm = v.replace("Ł", "L").replace("Ś", "S");
+                if sv_norm == v_norm { return true; }
+                
+                // Handle `?` corruption (e.g. MA?OPOLSKIE)
+                if v.contains('?') && v.len() == sv.len() {
+                    let mut match_with_wildcard = true;
+                    for (c1, c2) in v.chars().zip(sv.chars()) {
+                        if c1 != '?' && c1 != c2 {
+                            match_with_wildcard = false;
+                            break;
+                        }
+                    }
+                    if match_with_wildcard { return true; }
+                }
+                false
+            })
         }
-        false
-    })
+    }
 }
 
 pub fn is_provider_applicable(source: AlertSource, settings: &Settings) -> bool {
-    let voivodeships = match source.service_voivodeships() {
-        Some(v) => v,
-        None => return true, // Nationwide
-    };
-
     let active_addresses: Vec<_> = settings.addresses.iter().filter(|a| a.is_active).collect();
     if active_addresses.is_empty() {
         // If there are no active addresses, we don't have a basis for pre-filtration.
@@ -464,57 +539,55 @@ pub fn is_provider_applicable(source: AlertSource, settings: &Settings) -> bool 
 
     let res = active_addresses.iter().any(|a| is_address_applicable_for_provider(&source, a));
     if matches!(source, AlertSource::Gpec) {
-        log::info!("is_provider_applicable for Gpec returned {}, voivodeships={:?}, active={:?}", res, voivodeships, active_addresses.iter().map(|a| a.voivodeship.clone()).collect::<Vec<_>>());
+        log::info!("is_provider_applicable for Gpec returned {}, active={:?}", res, active_addresses.iter().map(|a| a.voivodeship.clone()).collect::<Vec<_>>());
     }
     res
 }
 
-pub fn is_wroclaw(addr: &AddressEntry) -> bool {
-    let name = addr.city_name.trim().to_lowercase();
-    name.starts_with("wrocław") || name.starts_with("wroclaw") || addr.city_id == Some(986283)
+macro_rules! city_checker {
+    ($func_name:ident, $city_id:expr, $($name:expr),+) => {
+        #[allow(dead_code)]
+        pub fn $func_name(addr: &AddressEntry) -> bool {
+            let name = addr.city_name.trim().to_lowercase();
+            
+            $(
+                if name.starts_with($name) { return true; }
+            )+
+
+            if let Some(id) = $city_id {
+                if addr.city_id == Some(id) { return true; }
+            }
+
+            let name_norm = name.replace("ó", "o").replace("ż", "z").replace("ł", "l").replace("ś", "s").replace("ć", "c").replace("ą", "a").replace("ę", "e").replace("ń", "n").replace("ź", "z");
+
+            $(
+                if name_norm.starts_with($name) { return true; }
+            )+
+
+            false
+        }
+    };
 }
 
-pub fn is_warszawa(addr: &AddressEntry) -> bool {
-    let name = addr.city_name.trim().to_lowercase();
-    name.starts_with("warszawa") || name.starts_with("warsaw") || addr.city_id == Some(918123)
-}
+city_checker!(is_wroclaw, Some(986283_u64), "wrocław", "wroclaw");
+city_checker!(is_warszawa, Some(918123_u64), "warszawa", "warsaw");
+city_checker!(is_krakow, Some(950463_u64), "kraków", "krakow");
+city_checker!(is_lodz, Some(958153_u64), "łódź", "lodz");
+city_checker!(is_kalisz, Some(936579_u64), "kalisz");
+city_checker!(is_szczecin, Some(977976_u64), "szczecin");
+city_checker!(is_lublin, Some(959423_u64), "lublin");
+city_checker!(is_gdansk, Some(908123_u64), "gdańsk", "gdansk");
+city_checker!(is_katowice, None::<u64>, "katowice");
+city_checker!(is_plock, None::<u64>, "płock", "plock");
+city_checker!(is_czestochowa, None::<u64>, "częstochowa", "czestochowa");
+city_checker!(is_poznan_area, None::<u64>, "poznań", "poznan", "czerwonak", "dopiewo", "kleszczewo", "komorniki", "kórnik", "kornik", "luboń", "lubon", "mosina", "murowana goślina", "murowana goslina", "puszczykowo", "suchy las", "swarzędz", "swarzedz", "tarnowo podgórne", "tarnowo podgorne", "brodnica");
+city_checker!(is_rokietnica, None::<u64>, "rokietnica", "bytkowo", "cerekwica", "kiekrz", "krzyszkowo", "mrowino", "napachanie", "przybroda", "rostworowo", "rogierowko", "sobota", "starzyny", "zydowo", "dalekie");
 
-pub fn is_krakow(addr: &AddressEntry) -> bool {
-    let name = addr.city_name.trim().to_lowercase();
-    name.starts_with("kraków") || name.starts_with("krakow") || addr.city_id == Some(950463)
-}
 
-pub fn is_lodz(addr: &AddressEntry) -> bool {
-    let name = addr.city_name.trim().to_lowercase();
-    name.starts_with("łódź") || name.starts_with("lodz") || addr.city_id == Some(958153)
-}
 
-pub fn is_kalisz(addr: &AddressEntry) -> bool {
-    let name = addr.city_name.trim().to_lowercase();
-    name.starts_with("kalisz") || addr.city_id == Some(936579)
-}
 
-#[allow(dead_code)]
-pub fn is_gdansk(addr: &AddressEntry) -> bool {
-    let name = addr.city_name.trim().to_lowercase();
-    name.starts_with("gdańsk") || name.starts_with("gdansk") || addr.city_id == Some(908123)
-}
 
-pub fn is_rokietnica(addr: &AddressEntry) -> bool {
-    let name = addr.city_name.trim().to_lowercase();
-    let name_norm = name.replace("ó", "o")
-        .replace("ż", "z")
-        .replace("ł", "l")
-        .replace("ś", "s")
-        .replace("ć", "c")
-        .replace("ą", "a")
-        .replace("ę", "e")
-        .replace("ń", "n")
-        .replace("ź", "z");
-    matches!(name_norm.as_str(), 
-        "rokietnica" | "bytkowo" | "cerekwica" | "kiekrz" | "krzyszkowo" | "mrowino" | "napachanie" | "przybroda" | "rostworowo" | "rogierowko" | "sobota" | "starzyny" | "zydowo" | "dalekie"
-    ) || addr.commune.trim().to_lowercase().contains("rokietnica")
-}
+
 
 // ── Address & Settings ────────────────────────────────────
 
@@ -1000,6 +1073,41 @@ mod tests {
         // (mockall panics if unexpected calls are made — no .expect() calls needed)
         let engine = MonitorEngine::new(&mock_db, &mock_notifier, &settings);
         engine.process_alerts(alerts);
+    }
+
+    #[test]
+    fn test_unified_notification_formatting() {
+        let alert = UnifiedAlert {
+            source: AlertSource::Tauron,
+            startDate: Some("2024-05-20 10:00".to_string()),
+            endDate: Some("2024-05-20 15:00".to_string()),
+            message: Some("Brak prądu".to_string()),
+            address_index: Some(0),
+            is_local: Some(true),
+            ..Default::default()
+        };
+
+        let mut settings = Settings {
+            filter_by_house_no: true,
+            ..Default::default()
+        };
+        settings.addresses.push(AddressEntry {
+            name: "Dom".to_string(),
+            city_name: "Szczecin".to_string(),
+            street_name: "Stoisława".to_string(),
+            house_no: "5".to_string(),
+            is_active: true,
+            ..Default::default()
+        });
+
+        let title = format_notification_title(&alert, &settings, false);
+        assert_eq!(title, "Dom: Nowe wyłączenie prądu - Tauron");
+
+        let upcoming_title = format_notification_title(&alert, &settings, true);
+        assert_eq!(upcoming_title, "Dom: Nadchodzące wyłączenie prądu - Tauron");
+
+        let body = format_notification_body(&alert, &settings);
+        assert_eq!(body, "Kiedy: 20-05-2024 10:00 - 20-05-2024 15:00\nGdzie: Stoisława 5, Szczecin");
     }
 }
 

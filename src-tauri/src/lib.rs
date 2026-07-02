@@ -27,14 +27,15 @@ pub mod pwik_czestochowa;
 pub mod gdanskie_wodociagi;
 pub mod gpec;
 pub mod puk_rokietnica;
-
+pub mod sec;
+pub mod lpec;
+pub mod mpwik_lublin;
 
 use crate::network_state::NetworkState;
 use api_logic::{
     load_settings_from_path, save_settings_to_path,
     AddressEntry, Settings, UnifiedAlert,
     AlertProvider,
-    is_wroclaw, is_warszawa, is_krakow,
 };
 use tauri::command;
 use tauri::AppHandle;
@@ -543,6 +544,9 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(gdanskie_wodociagi::GdanskieWodociagiProvider),
         Box::new(gpec::GpecProvider),
         Box::new(puk_rokietnica::PukRokietnicaProvider),
+        Box::new(sec::SecProvider),
+        Box::new(lpec::LpecProvider),
+        Box::new(mpwik_lublin::MpwikLublinProvider),
     ]
 }
 
@@ -601,13 +605,13 @@ fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Setti
         if alert.is_local == Some(false) {
             if let Some(loc) = &alert.location {
                 if loc.contains("Wrocław") {
-                    return s.addresses.iter().any(|a| a.is_active && is_wroclaw(a));
+                    return s.addresses.iter().any(|a| a.is_active);
                 }
                 if loc.contains("Warszawa") {
-                    return s.addresses.iter().any(|a| a.is_active && is_warszawa(a));
+                    return s.addresses.iter().any(|a| a.is_active);
                 }
                 if loc.contains("Kraków") {
-                    return s.addresses.iter().any(|a| a.is_active && is_krakow(a));
+                    return s.addresses.iter().any(|a| a.is_active);
                 }
                 // For other cities (dynamic check based on active addresses)
                 for addr in s.addresses.iter().filter(|a| a.is_active) {
@@ -820,6 +824,9 @@ async fn fetch_all_alerts_internal(
             // Stability fallback: sort by source name
             a.source.to_string().cmp(&b.source.to_string())
         });
+
+        // --- APPLY ALERT FILTERING BEFORE PROCESSING NOTIFICATIONS ---
+        apply_alert_filtering(&mut all_alerts, &settings_orig);
 
         // --- PROCESS NEW ALERTS AND NOTIFY ---
         let db_adapter = RealDatabase(&db_state.conn);
@@ -1422,7 +1429,8 @@ pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchAndNotifyFromRust(
                 true
             });
 
-            let deduplicated = api_logic::deduplicate_alerts(all_alerts);
+            let mut deduplicated = api_logic::deduplicate_alerts(all_alerts);
+            apply_alert_filtering(&mut deduplicated, &Some(settings.clone()));
             log::info!("Background monitoring (Rust): processing {} deduplicated alerts.", deduplicated.len());
             engine.process_alerts(deduplicated);
             log::info!("Background monitoring (Rust): monitoring cycle complete.");

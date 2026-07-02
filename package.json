@@ -1,6 +1,6 @@
 {
   "name": "awaria",
-  "version": "1.0.65",
+  "version": "1.0.66-alpha.5",
   "description": "Outage notifier — Tauri desktop & Android app",
   "scripts": {
     "tauri": "tauri",
@@ -26,7 +26,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.11.3",
     "@playwright/test": "^1.60.0",
-    "@tauri-apps/cli": "^2.11.1",
+    "@tauri-apps/cli": "^2.11.4",
     "@vitest/coverage-v8": "^4.1.9",
     "better-sqlite3": "^11.9.1",
     "jsdom": "^29.0.0",

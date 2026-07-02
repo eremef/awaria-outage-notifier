@@ -201,7 +201,7 @@ impl AlertProvider for PwikKaliszProvider {
             .addresses
             .iter()
             .enumerate()
-            .filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::PwikKalisz, a) && crate::api_logic::is_kalisz(a))
+            .filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::PwikKalisz, a))
             .map(|(idx, a)| {
                 // Compile regex based on address. Note that for PWiK Kalisz, street could be just the name
                 (idx, a.street_name_1.clone(), Arc::new(CompiledMpwikRegex::new(a)))

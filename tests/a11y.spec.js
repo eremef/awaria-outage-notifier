@@ -115,7 +115,8 @@ test('should not have any automatically detectable accessibility issues', async 
 
     console.log('Checking for collapsed alert groups to expand...');
     let collapsedCount = 0;
-    while (true) {
+    let maxTries = 30; // Prevent infinite loop if UI keeps re-rendering
+    while (maxTries-- > 0) {
         // Query the first collapsed group button, wait a short bit in case of re-renders
         const btn = await page.$('.collapsible.collapsed .section-label.other');
         if (!btn) break;

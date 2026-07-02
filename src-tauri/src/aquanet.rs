@@ -34,32 +34,9 @@ fn get_aquanet_detail_url(slug: &str) -> String {
 }
 
 /// Poznań communes served by Aquanet
-const POZNAN_COMMUNES: &[&str] = &[
-    "poznań", "poznan",
-    "czerwonak",
-    "dopiewo",
-    "kleszczewo",
-    "komorniki",
-    "kórnik", "kornik",
-    "luboń", "lubon",
-    "mosina",
-    "murowana goślina", "murowana goslina",
-    "puszczykowo",
-    "rokietnica",
-    "suchy las",
-    "swarzędz", "swarzedz",
-    "tarnowo podgórne", "tarnowo podgorne",
-    "brodnica",
-];
 
-pub fn is_poznan_area(addr: &AddressEntry) -> bool {
-    let city = addr.city_name.trim().to_lowercase();
-    let commune = addr.commune.trim().to_lowercase();
 
-    POZNAN_COMMUNES.iter().any(|&c| {
-        city.starts_with(c) || commune.starts_with(c)
-    })
-}
+
 
 #[derive(Debug, Clone, Default)]
 pub struct AquanetItem {
@@ -529,7 +506,23 @@ pub async fn fetch_aquanet_alerts(client: &Client) -> Result<Vec<AquanetItem>, S
     Ok(items)
 }
 
-
+pub const POZNAN_COMMUNES: &[&str] = &[
+    "poznań", "poznan",
+    "czerwonak",
+    "dopiewo",
+    "kleszczewo",
+    "komorniki",
+    "kórnik", "kornik",
+    "luboń", "lubon",
+    "mosina",
+    "murowana goślina", "murowana goslina",
+    "puszczykowo",
+    "rokietnica",
+    "suchy las",
+    "swarzędz", "swarzedz",
+    "tarnowo podgórne", "tarnowo podgorne",
+    "brodnica",
+];
 
 pub fn clean_aquanet_description(desc: &str) -> String {
     let mut cleaned = desc.to_string();
@@ -743,7 +736,7 @@ impl AlertProvider for AquanetProvider {
                     .addresses
                     .iter()
                     .enumerate()
-                    .filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::Aquanet, a) && is_poznan_area(a))
+                    .filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::Aquanet, a))
                     .map(|(idx, a)| (idx, std::sync::Arc::new(CompiledAquanetRegex::new(a))))
                     .collect();
 
@@ -795,6 +788,7 @@ impl AlertProvider for AquanetProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::api_logic::is_poznan_area;
 
     #[test]
     fn test_parse_aquanet_date_dot_format() {

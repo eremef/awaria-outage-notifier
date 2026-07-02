@@ -40,12 +40,7 @@ Once the data source is identified, create an `implementation_plan.md` artifact.
      - Create the necessary city-specific helpers (e.g., `isCzestochowa(addr)` and `const hasAnyCzestochowa = addresses.some(isCzestochowa)`) and update the `otherLists` conditional blocks inside `renderAlerts()` to properly group outages for locations outside the user's primary addresses.
    - `public/i18n.js`: Add translation strings for the provider name and abbreviations.
    - `public/style.css` (or `index.css`):
-     - Add CSS variables for the provider's brand color to **all themes** defined in the file (e.g., `:root`, `[data-theme="dark"]`, `emerald`, `ocean`, `nord`, `dracula`, `sepia`, `latte`), ensuring it is readable and maintains good contrast against each theme's background color.
-     - **Crucial Component Rules:** Remember to add specific class rules for the provider's card so the brand color actually applies to the UI elements:
-       1. `.card.source-[new_provider] .outage-type { color: var(--[new_provider]-color); }`
-       2. `.card.source-[new_provider] { border-top: 4px solid var(--[new_provider]-color); }`
-       3. Also append `:not(.source-[new_provider])` to the default fallback border selector (`.card:not(...):not(.source-[new_provider]) { border-top: 4px solid #7c7c7c; }`).
-       4. `.collapsible.source-[new_provider] .section-label.other { color: var(--[new_provider]-color); }` (for the Settings UI).
+     - We resigned from provider-specific colors. There is no need to add new CSS color variables or specific `.card.source-[new_provider]` classes. The card will use the default styling or generic utility category classes.
    - Use the standard outage card layout:
      `{utility_icon} {provider_name}`
      `{start_date} - {end_date}`
@@ -54,13 +49,17 @@ Once the data source is identified, create an `implementation_plan.md` artifact.
 
 3. **Android Widgets (`src-tauri/gen/android/`)**:
    - **Plumbing**:
-     - `BaseWidgetProvider.kt`: Add the `sourceKey` to `getSourceName()` so it correctly translates the label.
+     - `BaseWidgetProvider.kt`: 
+       - Add the `sourceKey` to `getSourceName()` so it correctly translates the label.
+       - Add the new provider's `sourceKey` to the appropriate layout group (power, heat, gas, or water) in the `when (sourceKey)` statements for both `layoutId` and `layoutSmallId`. This is critical for dynamically inflating the correct widget layout.
      - `WidgetConfigActivity.kt`: Add the new `*WidgetProvider` class to the `getProviderForWidget` `when` statement so users can select an address for it.
-     - `AndroidManifest.xml`: Declare a new `<receiver>` for the new widget provider class, pointing to the shared info XML: `@xml/widget_single_info`.
-     - `strings.xml` (in both `values` and `values-en`): Define `@string/widget_label_provider` and `@string/provider_name`.
-     - `colors.xml` (both `values` and `values-night`): Define the provider's brand color to fit the proper theme.
+     - `AndroidManifest.xml`: Declare a new `<receiver>` for the new widget provider class, pointing to the shared info XML: `@xml/widget_single_info`. **CRITICAL**: Do NOT create a custom `[provider]_widget_info.xml` file in `res/xml/`. Always reuse `@xml/widget_single_info` for new providers.
+     - `strings.xml` (in both `values` and `values-en`): Define the widget and provider names using STRICTLY the following naming convention to match the rest of the application:
+       `<string name="provider_[id]">[Short Provider Name]</string>`
+       `<string name="widget_label_[id]">[Full Provider Name]</string>`
+       (e.g., `<string name="provider_sec">SEC</string>` and `<string name="widget_label_sec">SEC Szczecin</string>`). Do NOT use prefixes like `widget_name_` or `source_` for Android resources. Do NOT prefix the value with `Awaria - ` or add utility type suffixes like `(Woda)`. Just the provider name.
    - **Widget Classes & Layouts**:
-     - Create a dedicated provider widget Kotlin class (e.g., `NewProviderWidgetProvider.kt`) extending `BaseWidgetProvider`.
+     - Create a dedicated provider widget Kotlin class (e.g., `NewProviderWidgetProvider.kt`) extending `BaseWidgetProvider`. It must correctly override `refreshAction`, `primaryColorRes`, `iconResId`, `labelKey`, and `sourceKey`. Do NOT manually override `updateAppWidget` or manually inflate layouts—`BaseWidgetProvider` handles this using the shared layouts.
      - `AllWidgetProvider.kt` & `TriWidgetProvider.kt`: Add the new provider source string to their data aggregation lists (e.g., `waterSources`).
    - **Workers**:
      - `WidgetUpdateWorker.kt`: Add the new provider to the background worker refresh logic.

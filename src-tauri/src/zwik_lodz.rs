@@ -212,9 +212,6 @@ impl AlertProvider for ZwikLodzProvider {
                                 
                             for (idx, a) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::ZwikLodz, a)) {
                                 let mut is_match = false;
-                                if !a.is_active || !crate::api_logic::is_lodz(a) {
-                                    continue;
-                                }
                                 if check_street(&a.street_name_1, &combined_text) {
                                     is_match = true;
                                 }
@@ -375,9 +372,6 @@ mod tests {
                         
                         for (idx, a) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::ZwikLodz, a)) {
                             let mut is_match = false;
-                            if !a.is_active || !crate::api_logic::is_lodz(a) {
-                                continue;
-                            }
                             if check_street(&a.street_name_1, &combined_text) {
                                 is_match = true;
                             }
@@ -506,9 +500,6 @@ mod tests {
                         
                         for (idx, a) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::ZwikLodz, a)) {
                             let mut is_match = false;
-                            if !a.is_active || !crate::api_logic::is_lodz(a) {
-                                continue;
-                            }
                             if check_street(&a.street_name_1, &combined_text) {
                                 is_match = true;
                             }
