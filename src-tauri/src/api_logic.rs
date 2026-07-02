@@ -132,6 +132,37 @@ impl AlertSource {
             AlertSource::MpwikLublin => ServiceLocation::Cities(vec![is_lublin]),
         }
     }
+
+    pub fn display_name(&self) -> &'static str {
+        match self {
+            AlertSource::Tauron => "Tauron",
+            AlertSource::MpwikWroclaw => "MPWiK Wrocław",
+            AlertSource::MpwikWarszawa => "MPWiK Warszawa",
+            AlertSource::Fortum => "Fortum",
+            AlertSource::Energa => "Energa",
+            AlertSource::Enea => "Enea",
+            AlertSource::Pge => "PGE",
+            AlertSource::Stoen => "Stoen",
+            AlertSource::Psg => "PSG",
+            AlertSource::Wmk => "WMK Kraków",
+            AlertSource::TauronHeat => "Tauron Ciepło",
+            AlertSource::Aquanet => "Aquanet",
+            AlertSource::KatowickieWodociagi => "Katowickie Wodociągi",
+            AlertSource::VeoliaWarszawa => "Veolia Warszawa",
+            AlertSource::VeoliaPoznan => "Veolia Poznań",
+            AlertSource::VeoliaLodz => "Veolia Łódź",
+            AlertSource::ZwikLodz => "ZWiK Łódź",
+            AlertSource::WodociagiPlockie => "Wodociągi Płockie",
+            AlertSource::PwikKalisz => "PWiK Kalisz",
+            AlertSource::PwikCzestochowa => "PWiK Częstochowa",
+            AlertSource::GdanskieWodociagi => "Gdańskie Wodociągi",
+            AlertSource::Gpec => "GPEC Gdańsk",
+            AlertSource::Sec => "SEC Szczecin",
+            AlertSource::Lpec => "LPEC Lublin",
+            AlertSource::PukRokietnica => "PUK Rokietnica",
+            AlertSource::MpwikLublin => "MPWiK Lublin",
+        }
+    }
 }
 
 #[cfg_attr(test, automock)]
@@ -334,14 +365,15 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         if is_pl { "Nadchodzące" } else { "Upcoming" }
     } else if is_pl { "Nowe" } else { "New" };
     
-    let title = format!("{} {}", prefix, label);
+    let outage_type = format!("{} {}", prefix, label);
+    let provider_name = alert.source.display_name();
     
     if let Some(idx) = alert.address_index {
         if let Some(addr) = settings.addresses.get(idx) {
-            return format!("{}: {}", addr.name, title);
+            return format!("{}: {} - {}", addr.name, outage_type, provider_name);
         }
     }
-    title
+    format!("{} - {}", outage_type, provider_name)
 }
 
 pub fn format_notification_body(alert: &UnifiedAlert, settings: &Settings) -> String {
@@ -1041,6 +1073,38 @@ mod tests {
         // (mockall panics if unexpected calls are made — no .expect() calls needed)
         let engine = MonitorEngine::new(&mock_db, &mock_notifier, &settings);
         engine.process_alerts(alerts);
+    }
+
+    #[test]
+    fn test_unified_notification_formatting() {
+        let alert = UnifiedAlert {
+            source: AlertSource::Tauron,
+            startDate: Some("2024-05-20 10:00".to_string()),
+            endDate: Some("2024-05-20 15:00".to_string()),
+            message: Some("Brak prądu".to_string()),
+            address_index: Some(0),
+            is_local: Some(true),
+            ..Default::default()
+        };
+
+        let mut settings = Settings::default();
+        settings.addresses.push(AddressEntry {
+            name: "Dom".to_string(),
+            city_name: "Szczecin".to_string(),
+            street_name: "Stoisława".to_string(),
+            house_no: "5".to_string(),
+            is_active: true,
+            ..Default::default()
+        });
+
+        let title = format_notification_title(&alert, &settings, false);
+        assert_eq!(title, "Dom: Nowe wyłączenie prądu - Tauron");
+
+        let upcoming_title = format_notification_title(&alert, &settings, true);
+        assert_eq!(upcoming_title, "Dom: Nadchodzące wyłączenie prądu - Tauron");
+
+        let body = format_notification_body(&alert, &settings);
+        assert_eq!(body, "Kiedy: 20-05-2024 10:00 - 20-05-2024 15:00\nGdzie: Stoisława 5, Szczecin");
     }
 }
 

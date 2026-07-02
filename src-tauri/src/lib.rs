@@ -825,6 +825,9 @@ async fn fetch_all_alerts_internal(
             a.source.to_string().cmp(&b.source.to_string())
         });
 
+        // --- APPLY ALERT FILTERING BEFORE PROCESSING NOTIFICATIONS ---
+        apply_alert_filtering(&mut all_alerts, &settings_orig);
+
         // --- PROCESS NEW ALERTS AND NOTIFY ---
         let db_adapter = RealDatabase(&db_state.conn);
         let notifier = RealNotification(app);
@@ -1426,7 +1429,8 @@ pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchAndNotifyFromRust(
                 true
             });
 
-            let deduplicated = api_logic::deduplicate_alerts(all_alerts);
+            let mut deduplicated = api_logic::deduplicate_alerts(all_alerts);
+            apply_alert_filtering(&mut deduplicated, &Some(settings.clone()));
             log::info!("Background monitoring (Rust): processing {} deduplicated alerts.", deduplicated.len());
             engine.process_alerts(deduplicated);
             log::info!("Background monitoring (Rust): monitoring cycle complete.");

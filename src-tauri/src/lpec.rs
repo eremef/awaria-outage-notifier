@@ -25,11 +25,6 @@ struct WpPost {
 pub struct LpecProvider;
 
 fn check_local_matching(alert: &mut UnifiedAlert, settings: &Settings, combined_text: &str) {
-    if !settings.filter_by_house_no {
-        alert.is_local = Some(true);
-        return;
-    }
-    
     let mut is_local = false;
     let mut address_index = None;
     
