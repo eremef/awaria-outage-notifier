@@ -1,0 +1,44 @@
+<pl-PL>
+Co nowego w tej wersji:
+• Dodano obsługę nowych dostawców: SEC, LPEC oraz MPWiK Lublin.
+• Dodano opcję ukrycia przycisku wsparcia na ekranie głównym.
+• Ulepszono wygląd awarii oraz formatowanie powiadomień.
+• Usprawniono filtrowanie lokalizacji z uwzględnieniem numeru domu.
+• Zaktualizowano biblioteki dla lepszej wydajności.
+</pl-PL>
+
+<en-GB>
+What's new in this release:
+• Added support for new providers: SEC, LPEC, and MPWiK Lublin.
+• Added an option to hide the support button from the main screen.
+• Improved outage rendering and notification formatting.
+• Improved location filtering to respect the house number setting.
+• Updated underlying frameworks for better performance.
+</en-GB>
+
+<en-US>
+What's new in this release:
+• Added support for new providers: SEC, LPEC, and MPWiK Lublin.
+• Added an option to hide the support button from the main screen.
+• Improved outage rendering and notification formatting.
+• Improved location filtering to respect the house number setting.
+• Updated underlying frameworks for better performance.
+</en-US>
+
+<en-CA>
+What's new in this release:
+• Added support for new providers: SEC, LPEC, and MPWiK Lublin.
+• Added an option to hide the support button from the main screen.
+• Improved outage rendering and notification formatting.
+• Improved location filtering to respect the house number setting.
+• Updated underlying frameworks for better performance.
+</en-CA>
+
+<en-AU>
+What's new in this release:
+• Added support for new providers: SEC, LPEC, and MPWiK Lublin.
+• Added an option to hide the support button from the main screen.
+• Improved outage rendering and notification formatting.
+• Improved location filtering to respect the house number setting.
+• Updated underlying frameworks for better performance.
+</en-AU>

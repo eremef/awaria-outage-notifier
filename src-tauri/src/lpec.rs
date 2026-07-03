@@ -103,7 +103,7 @@ fn extract_dates(text: &str) -> (Option<NaiveDateTime>, Option<NaiveDateTime>) {
     
     // First, try the standard "w dniu DD.MM.YYYY od godz. HH:MM do godzin popołudniowych/wieczornych"
     let re_descriptive = Regex::new(
-        r"dniu\s+(\d{1,2}\.\d{2}\.\d{4})\s*od\s*(?:godz\.\s*)?(\d{1,2}[:.]\d{2})\s*do\s*godzin\s*(popołudniowych|wieczornych)"
+        r"(?:dniu\s+)?(\d{1,2}\.\d{2}\.\d{4})\s*od\s*(?:godz\.\s*)?(\d{1,2}[:.]\d{2})\s*do\s*godzin\s*(popołudniowych|wieczornych)"
     ).unwrap();
     
     if let Some(caps) = re_descriptive.captures(&lower_text) {
@@ -119,7 +119,7 @@ fn extract_dates(text: &str) -> (Option<NaiveDateTime>, Option<NaiveDateTime>) {
     
     // Check for "w dniu DD.MM.YYYY od godz. HH:MM do HH:MM"
     let re_time_range = Regex::new(
-        r"dniu\s+(\d{1,2}\.\d{2}\.\d{4})\s*od\s*(?:godz\.\s*)?(\d{1,2}[:.]\d{2})\s*do\s*(?:godz\.\s*)?(\d{1,2}[:.]\d{2})"
+        r"(?:dniu\s+)?(\d{1,2}\.\d{2}\.\d{4})\s*od\s*(?:godz\.\s*)?(\d{1,2}[:.]\d{2})\s*do\s*(?:godz\.\s*)?(\d{1,2}[:.]\d{2})"
     ).unwrap();
     
     if let Some(caps) = re_time_range.captures(&lower_text) {
@@ -267,5 +267,26 @@ impl AlertProvider for LpecProvider {
         }
 
         (alerts, errors)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_extract_dates_with_dniu() {
+        let text = "w dniu 07.07.2026 od godz. 6.30 do godzin popołudniowych nastąpi przerwa";
+        let (start, end) = extract_dates(text);
+        assert_eq!(start.unwrap().format("%Y-%m-%d %H:%M").to_string(), "2026-07-07 06:30");
+        assert_eq!(end.unwrap().format("%Y-%m-%d %H:%M").to_string(), "2026-07-07 17:00");
+    }
+
+    #[test]
+    fn test_extract_dates_without_dniu() {
+        let text = "Informujemy, że w związku z pracami na sieci ciepłowniczej 07.07.2026 od godz. 6.30 do godzin popołudniowych nastąpi przerwa w dostawie ciepłej wody do budynku przy ul. Urbanowicza 24 . Przepraszamy za utrudnienia.";
+        let (start, end) = extract_dates(text);
+        assert_eq!(start.unwrap().format("%Y-%m-%d %H:%M").to_string(), "2026-07-07 06:30");
+        assert_eq!(end.unwrap().format("%Y-%m-%d %H:%M").to_string(), "2026-07-07 17:00");
     }
 }
