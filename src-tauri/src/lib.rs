@@ -678,7 +678,7 @@ async fn fetch_all_alerts_internal(
     }
     let path = settings_path(app)?;
     let settings = load_settings_from_path(&path)?;
-    log::info!("fetch_all_alerts_internal: Loaded settings={:?}", settings);
+    log::debug!("fetch_all_alerts_internal: Loaded settings={:?}", settings);
     let settings_orig = settings.clone();
 
     let mut all_alerts: Vec<UnifiedAlert> = Vec::new();

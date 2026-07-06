@@ -40,7 +40,16 @@ fn check_local_matching(alert: &mut UnifiedAlert, settings: &Settings, combined_
             let street_name = crate::utils::strip_street_prefixes(raw_street_name);
             
             if !street_name.is_empty() {
-                let pattern = format!(r"(?i)\b{}\b", regex::escape(street_name));
+                let mut pattern_options = vec![format!(r"\b{}\b", regex::escape(street_name))];
+                
+                let parts: Vec<&str> = street_name.split_whitespace().collect();
+                if parts.len() > 1 {
+                    let first_char = parts[0].chars().next().unwrap();
+                    let rest = parts[1..].join(" ");
+                    pattern_options.push(format!(r"\b{}\.\s*{}\b", regex::escape(&first_char.to_string()), regex::escape(&rest).replace(r"\ ", r"\s+")));
+                }
+                
+                let pattern = format!("(?i)(?:{})", pattern_options.join("|"));
                 if let Ok(re) = Regex::new(&pattern) {
                     active_addresses.push((idx, street_name.to_string(), re));
                 }
@@ -288,5 +297,39 @@ mod tests {
         let (start, end) = extract_dates(text);
         assert_eq!(start.unwrap().format("%Y-%m-%d %H:%M").to_string(), "2026-07-07 06:30");
         assert_eq!(end.unwrap().format("%Y-%m-%d %H:%M").to_string(), "2026-07-07 17:00");
+    }
+
+    #[test]
+    fn test_local_matching_abbreviation() {
+        let text = "w dostawie ciepłej wody do budynków przy ul .: Z. Augusta 41,43, Królowej Jadwigi 14,16,27 . Przepraszamy za utrudnienia.";
+        let mut alert = crate::api_logic::UnifiedAlert {
+            source: crate::api_logic::AlertSource::Lpec,
+            startDate: None,
+            endDate: None,
+            message: None,
+            location: None,
+            address_index: None,
+            is_local: None,
+            hash: None,
+        };
+        let settings = crate::api_logic::Settings {
+            addresses: vec![crate::api_logic::AddressEntry {
+                name: "1".to_string(),
+                city_name: "Lublin".to_string(),
+                voivodeship: "".to_string(),
+                district: "".to_string(),
+                commune: "".to_string(),
+                street_name: "ul. Zygmunta Augusta".to_string(),
+                street_name_1: "".to_string(),
+                street_name_2: None,
+                house_no: "41".to_string(),
+                city_id: None,
+                street_id: None,
+                is_active: true,
+            }],
+            ..Default::default()
+        };
+        check_local_matching(&mut alert, &settings, &text.to_lowercase());
+        assert_eq!(alert.is_local, Some(true));
     }
 }
