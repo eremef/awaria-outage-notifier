@@ -34,10 +34,10 @@ Once the data source is identified, create an `implementation_plan.md` artifact.
 
 2. **Frontend (`public/`)**:
    - `public/script.js`:
-     - Add the provider to the `SOURCES` array (name, category, id, i18n keys). *(Note: The explicit backend matching array `matchesAddress()` and `enabledSources` in `renderAlerts()` are dynamically populated from `SOURCES`, so adding it to `SOURCES` covers these automatically!)*
+     - Add the provider to the `SOURCES` array (name, category, id, i18n keys). If it is a strictly local provider, also include a `region` key matching its coverage area (e.g., `region: 'czestochowa'`). *(Note: The explicit backend matching array `matchesAddress()` and `enabledSources` in `renderAlerts()` are dynamically populated from `SOURCES`, so adding it to `SOURCES` covers these automatically!)*
      - **Important**: In the `SOURCES` array, utilities must be grouped by category (e.g., Power, Gas, Heating, Water), and within each category, providers MUST be sorted in alphabetical order (by `id`) as it's also the order of display.
-     - Update `singleCityProviders` array inside `matchesAddress()` in `public/script.js` to include the new local-only provider ID and add a check to prevent cross-city street matches (e.g., `if (alert.source === 'new_provider' && !isNewCity(addr)) return false;`).
-     - Create the necessary city-specific helpers (e.g., `isCzestochowa(addr)` and `const hasAnyCzestochowa = addresses.some(isCzestochowa)`) and update the `otherLists` conditional blocks inside `renderAlerts()` to properly group outages for locations outside the user's primary addresses.
+     - If the provider operates in a brand new region not yet defined, create the necessary city-specific matcher function (e.g., `czestochowa: (addr) => { ... }`) inside the `REGION_MATCHERS` object at the top of the file.
+     - You do NOT need to manually route the provider inside `renderAlerts()` anymore, as it automatically groups outages based on the `region` attribute defined in `SOURCES`.
    - `public/i18n.js`: Add translation strings for the provider name and abbreviations.
    - `public/style.css` (or `index.css`):
      - We resigned from provider-specific colors. There is no need to add new CSS color variables or specific `.card.source-[new_provider]` classes. The card will use the default styling or generic utility category classes.
