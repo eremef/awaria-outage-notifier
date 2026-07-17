@@ -97,7 +97,8 @@ pub async fn fetch_veolia_details(client: &Client, permalink: &str) -> Result<Ve
         return Err(format!("Veolia details HTTP error: {}", res.status()));
     }
 
-    let html = res.text().await.map_err(|e| e.to_string())?;
+    let bytes = res.bytes().await.map_err(|e| e.to_string())?;
+    let html = String::from_utf8_lossy(&bytes);
     parse_veolia_details(&html)
 }
 
@@ -120,7 +121,19 @@ pub async fn fetch_veolia_alerts_for_street(
         return Err(format!("Veolia API HTTP error: {}", res.status()));
     }
 
-    let items: Vec<VeoliaItem> = res.json().await.map_err(|e| e.to_string())?;
+    let bytes = match res.bytes().await {
+        Ok(b) => b,
+        Err(e) => {
+            log::warn!("Veolia API decoding error (treating as empty): {}", e);
+            return Ok(Vec::new());
+        }
+    };
+    let text = String::from_utf8_lossy(&bytes);
+    if text.trim().is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let items: Vec<VeoliaItem> = serde_json::from_str(&text).map_err(|e| e.to_string())?;
     Ok(items)
 }
 
