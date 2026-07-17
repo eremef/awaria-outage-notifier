@@ -1,5 +1,5 @@
 name: Awaria Outage Monitor
-version: "1.0.69"
+version: "1.0.70"
 slug: awaria_outage_monitor
 stage: experimental
 description: Headless outage monitor for Polish utility providers (Tauron, PGE, Enea, Energa, MPWiK, Stoen, Veolia, etc.)
