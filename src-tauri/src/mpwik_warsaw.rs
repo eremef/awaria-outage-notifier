@@ -35,7 +35,7 @@ pub fn parse_mpwik_warszawa_html(html: &str, is_emergency: bool) -> Result<Vec<M
 
     let dist_selector = Selector::parse("div.dzielnica").map_err(|e| e.to_string())?;
     let h3_selector = Selector::parse("h3").map_err(|e| e.to_string())?;
-    let tr_selector = Selector::parse("table.awarie tr").map_err(|e| e.to_string())?;
+    let tr_selector = Selector::parse("table.awarie tr, table#awarie tr").map_err(|e| e.to_string())?;
     let td_selector = Selector::parse("td").map_err(|e| e.to_string())?;
     let details_div_selector = Selector::parse("div.zbior").map_err(|e| e.to_string())?;
 
@@ -73,13 +73,21 @@ pub fn parse_mpwik_warszawa_html(html: &str, is_emergency: bool) -> Result<Vec<M
                 continue;
             }
 
-            let start_str = tds[1].text().collect::<Vec<_>>().join(" ").trim().to_string();
+            let (start_td, end_td, details_td) = if is_emergency {
+                // Failures columns: 0: Adres, 1: Ulice (zbior), 2: Data i godz. wył., 3: Spodziewany termin, 4: Status
+                (&tds[2], &tds[3], &tds[1])
+            } else {
+                // Planned columns: 0: Adres, 1: od, 2: do, 3: Ulice (zbior)
+                (&tds[1], &tds[2], &tds[3])
+            };
+
+            let start_str = start_td.text().collect::<Vec<_>>().join(" ").trim().to_string();
             let start_date = parse_warszawa_date(&start_str);
 
-            let end_str = tds[2].text().collect::<Vec<_>>().join(" ").trim().to_string();
+            let end_str = end_td.text().collect::<Vec<_>>().join(" ").trim().to_string();
             let end_date = parse_warszawa_date(&end_str);
 
-            let details = tds[3].select(&details_div_selector).next().map(|div| {
+            let details = details_td.select(&details_div_selector).next().map(|div| {
                 div.text()
                     .map(|t| t.trim())
                     .filter(|t| !t.is_empty())
@@ -265,7 +273,7 @@ mod tests {
             <div class="dzielnica">
                 <h3 class="dzielnicaopen">Warszawa MOKOTÓW <i class="fa fa-arrow-down"></i></h3>
                 <div class="tablicaawarii">
-                <table class="awarie">
+                <table id="awarie">
                     <tr class="headrow">
                         <th class="a">Adres</th>
                         <th class="p">od</th>

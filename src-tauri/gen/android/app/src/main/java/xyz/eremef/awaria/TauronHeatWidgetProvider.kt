@@ -1,7 +1,5 @@
 package xyz.eremef.awaria
 
-import xyz.eremef.awaria.R
-
 class TauronHeatWidgetProvider : BaseWidgetProvider() {
     override val refreshAction: String = "xyz.eremef.awaria.ACTION_REFRESH_TAURON_HEAT"
     override val primaryColorRes: Int = R.color.utility_heat

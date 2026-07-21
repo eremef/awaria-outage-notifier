@@ -6,17 +6,15 @@ import android.os.Looper
 import android.util.Log
 import android.view.ViewGroup
 import android.webkit.CookieManager
-import android.webkit.WebResourceRequest
-import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import androidx.annotation.Keep
+import androidx.core.content.edit
 import android.webkit.WebViewClient
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import java.net.HttpURLConnection
-import java.net.URL
+import kotlin.time.Duration.Companion.milliseconds
 
 @Keep
 object GpecWebViewFetcher {
@@ -69,10 +67,10 @@ object GpecWebViewFetcher {
     }
 
     private fun saveHtmlCache(context: Context, html: String) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
-            .putString(KEY_HTML, html)
-            .putLong(KEY_HTML_TIME, System.currentTimeMillis())
-            .apply()
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit {
+            putString(KEY_HTML, html)
+            putLong(KEY_HTML_TIME, System.currentTimeMillis())
+        }
     }
 
     private suspend fun fetchViaWebView(context: Context): String? {
@@ -174,7 +172,7 @@ object GpecWebViewFetcher {
                 }
             }
 
-            return withTimeoutOrNull(TIMEOUT_MS) { deferred.await() }
+            return withTimeoutOrNull(TIMEOUT_MS.milliseconds) { deferred.await() }
         } finally {
             if (!deferred.isCompleted) {
                 deferred.cancel()
