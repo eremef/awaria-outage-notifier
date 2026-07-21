@@ -116,7 +116,7 @@ impl AlertSource {
             
             AlertSource::Stoen => ServiceLocation::Cities(vec![is_warszawa]),
             AlertSource::MpwikWroclaw => ServiceLocation::Cities(vec![is_wroclaw]),
-            AlertSource::MpwikWarszawa => ServiceLocation::Cities(vec![is_warszawa]),
+            AlertSource::MpwikWarszawa => ServiceLocation::Cities(vec![is_mpwik_warszawa_area]),
             AlertSource::Wmk => ServiceLocation::Cities(vec![is_krakow]),
             AlertSource::Aquanet => ServiceLocation::Cities(vec![is_poznan_area]),
             AlertSource::VeoliaWarszawa => ServiceLocation::Cities(vec![is_warszawa]),
@@ -571,6 +571,7 @@ macro_rules! city_checker {
 
 city_checker!(is_wroclaw, Some(986283_u64), "wrocław", "wroclaw");
 city_checker!(is_warszawa, Some(918123_u64), "warszawa", "warsaw");
+city_checker!(is_mpwik_warszawa_area, Some(918123_u64), "aleksandrow", "aleksandrów", "anusinek", "beniaminow", "beniaminów", "bialobrzegi", "białobrzegi", "boleslawowo", "bolesławowo", "borowa gora", "borowa góra", "cupel", "czarna struga", "dawidy", "dawidy bankowe", "debe", "debinki", "debkowizna", "derlacz", "dosin", "dębe", "dębinki", "dębkowizna", "falenty", "falenty duze", "falenty duże", "falenty nowe", "gasiorowo", "gora", "guty", "góra", "gąsiorowo", "izabelin", "izbica", "jachranka", "jadwisin", "janki", "janowek pierwszy", "janówek pierwszy", "jaworowa", "jozefow", "jozefow drugi", "józefów", "józefów drugi", "kaluszyn", "kania nowa", "kania polska", "karolino", "katy wegierskie", "kałuszyn", "kepa kikolska", "komornica", "komorow", "komorów", "kontrowers", "krubin", "kwietniowka", "kwietniówka", "kąty węgierskie", "kępa kikolska", "lacha", "lady", "lajski", "laszczki", "ludwinowo debskie", "ludwinowo dębskie", "ludwinowo zegrzynskie", "ludwinowo zegrzyńskie", "lysa gora", "marynino", "michalow-grabina", "michalow-reginow", "michalowice", "michalowice-wies", "michałowice", "michałowice-wieś", "michałów-grabina", "michałów-reginów", "nieporet", "nieporęt", "nowa wies", "nowa wieś", "nowe grocholice", "olszewnica", "olszewnica nowa", "olszewnica stara", "opacz mala", "opacz mała", "opacz-kolonia", "pecice", "pecice male", "piastow", "piastów", "poddebie", "poddębie", "podolszyn nowy", "poniatow", "poniatów", "pruszkow", "pruszków", "puchaly", "puchały", "pęcice", "pęcice małe", "raszyn", "reguly", "reguły", "rembelszczyzna", "rybaki", "rybie", "rynia", "sekocin nowy", "sekocin stary", "sekocin-las", "serock", "sikory", "skrzeszew", "skubianka", "skubianka-kolonia", "slomin", "sokolow", "sokołów", "stanislawow drugi", "stanislawow pierwszy", "stanislawowo", "stanisławowo", "stanisławów drugi", "stanisławów pierwszy", "stasi las", "suchy las", "swiecienica", "szadki", "sękocin nowy", "sękocin stary", "sękocin-las", "słomin", "topolina", "warsaw", "warszawa", "wieliszew", "wieliszew-kolonia", "wierzbica", "wola aleksandra", "wola kielpinska", "wola kiełpińska", "wola smolana", "wolka radzyminska", "wypedy", "wypędy", "wólka radzymińska", "zablocie", "zabłocie", "zagroby", "zalesie borowe", "zegrze", "zegrze poludniowe", "zegrze południowe", "zegrzynek", "łacha", "łady", "łajski", "łysa góra", "święcienica");
 city_checker!(is_krakow, Some(950463_u64), "kraków", "krakow");
 city_checker!(is_lodz, Some(958153_u64), "łódź", "lodz");
 city_checker!(is_kalisz, Some(936579_u64), "kalisz");
