@@ -18,7 +18,7 @@
   <string name="msg_no_address">No Address</string>
   <string name="msg_offline">No Network</string>
   <string name="msg_setup_needed">Setup needed</string>
-  <string name="msg_updating">Updating...</string>
+  <string name="msg_updating">Updating…</string>
   <string name="notif_channel_desc">Notifications about new and upcoming power, water, heat, and gas outages.</string>
   <string name="notif_channel_name">Outage Alerts</string>
   <string name="placeholder_dash">–</string>
