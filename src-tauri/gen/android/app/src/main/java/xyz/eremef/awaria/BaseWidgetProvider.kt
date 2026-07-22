@@ -6,11 +6,11 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.res.Configuration
 import android.os.Build
 import android.util.Log
 import android.util.SizeF
 import android.widget.RemoteViews
+import androidx.core.content.edit
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
@@ -24,6 +24,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.json.JSONObject
+import kotlin.time.Duration.Companion.milliseconds
 
 data class WidgetSettings(
         val name: String,
@@ -76,29 +77,21 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         const val WORK_NAME = "xyz.eremef.awaria.WIDGET_UPDATE_WORK"
         const val TAG = "AwariaWidget"
 
-        private const val LIGHT_PRIMARY = "#D9006C"
-        private const val LIGHT_LABEL = "#666666"
-        private const val LIGHT_UPDATED = "#999999"
-
-        private const val DARK_PRIMARY = "#FF4DA6"
-        private const val DARK_LABEL = "#A0A0A0"
-        private const val DARK_UPDATED = "#777777"
-
         private const val PREFS_NAME = "xyz.eremef.awaria.WidgetPrefs"
         private const val PREF_PREFIX_KEY = "address_"
         private const val PREF_COUNT_PREFIX = "count_"
         private const val PREF_UPDATED_PREFIX = "updated_"
 
         internal fun saveAddressId(context: Context, appWidgetId: Int, addressId: String) {
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
-            prefs.putString(PREF_PREFIX_KEY + appWidgetId, addressId)
-            prefs.commit()
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit {
+                putString(PREF_PREFIX_KEY + appWidgetId, addressId)
+            }
         }
 
         internal fun deleteAddressId(context: Context, appWidgetId: Int) {
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
-            prefs.remove(PREF_PREFIX_KEY + appWidgetId)
-            prefs.commit()
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit {
+                remove(PREF_PREFIX_KEY + appWidgetId)
+            }
         }
 
         internal fun getStoredAddressId(context: Context, appWidgetId: Int): String? {
@@ -116,10 +109,10 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         }
 
         internal fun saveWidgetData(context: Context, appWidgetId: Int, count: String, updatedAt: String) {
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
-            prefs.putString(PREF_COUNT_PREFIX + appWidgetId, count)
-            prefs.putString(PREF_UPDATED_PREFIX + appWidgetId, updatedAt)
-            prefs.commit()
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit {
+                putString(PREF_COUNT_PREFIX + appWidgetId, count)
+                putString(PREF_UPDATED_PREFIX + appWidgetId, updatedAt)
+            }
         }
 
         internal fun getWidgetData(context: Context, appWidgetId: Int): Pair<String, String>? {
@@ -133,12 +126,12 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         }
 
         internal fun saveTriWidgetData(context: Context, appWidgetId: Int, power: String, heat: String, water: String, updatedAt: String) {
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
-            prefs.putString("tri_power_$appWidgetId", power)
-            prefs.putString("tri_heat_$appWidgetId", heat)
-            prefs.putString("tri_water_$appWidgetId", water)
-            prefs.putString("tri_updated_$appWidgetId", updatedAt)
-            prefs.commit()
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit {
+                putString("tri_power_$appWidgetId", power)
+                putString("tri_heat_$appWidgetId", heat)
+                putString("tri_water_$appWidgetId", water)
+                putString("tri_updated_$appWidgetId", updatedAt)
+            }
         }
 
         internal fun getTriWidgetData(context: Context, appWidgetId: Int): List<String>? {
@@ -151,13 +144,13 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         }
 
         internal fun saveAllWidgetData(context: Context, appWidgetId: Int, power: String, heat: String, water: String, gas: String, updatedAt: String) {
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
-            prefs.putString("all_power_$appWidgetId", power)
-            prefs.putString("all_heat_$appWidgetId", heat)
-            prefs.putString("all_water_$appWidgetId", water)
-            prefs.putString("all_gas_$appWidgetId", gas)
-            prefs.putString("all_updated_$appWidgetId", updatedAt)
-            prefs.commit()
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit {
+                putString("all_power_$appWidgetId", power)
+                putString("all_heat_$appWidgetId", heat)
+                putString("all_water_$appWidgetId", water)
+                putString("all_gas_$appWidgetId", gas)
+                putString("all_updated_$appWidgetId", updatedAt)
+            }
         }
 
         internal fun getAllWidgetData(context: Context, appWidgetId: Int): List<String>? {
@@ -212,7 +205,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         val pendingResult = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                delay(300) // Wait for system configuration to settle
+                delay(300.milliseconds) // Wait for system configuration to settle
                 appWidgetIds
                         .map { appWidgetId ->
                             async { updateWidget(context, appWidgetManager, appWidgetId, true) }
@@ -236,14 +229,14 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         val pendingResult = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                delay(300) // Wait for system theme configuration to settle
-                withTimeoutOrNull(9000L) {
+                delay(300.milliseconds) // Wait for system theme configuration to settle
+                withTimeoutOrNull(9000L.milliseconds) {
                     appWidgetIds
                             .map { appWidgetId ->
                                 async { updateWidget(context, appWidgetManager, appWidgetId) }
                             }
                             .awaitAll()
-                } ?: Log.w(TAG, "Update timed out for $appWidgetIds")
+                } ?: Log.w(TAG, "Update timed out for ${appWidgetIds.contentToString()}")
             } catch (e: Exception) {
                 Log.e(TAG, "Update failed: ${e.message}")
             } finally {
@@ -368,17 +361,10 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             } else {
                 null
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
-
-    protected fun isDarkMode(context: Context): Boolean {
-        val nightMode = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
-        return nightMode == Configuration.UI_MODE_NIGHT_YES
-    }
-
-
 
     private fun getSourceName(context: Context, key: String): String {
         return when (key) {

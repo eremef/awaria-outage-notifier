@@ -11,7 +11,6 @@ import java.util.*
 import kotlinx.coroutines.*
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
-import android.content.res.Configuration
 
 class TriWidgetProvider : BaseWidgetProvider() {
     override val refreshAction: String = "xyz.eremef.awaria.ACTION_REFRESH_TRI"
@@ -239,13 +238,8 @@ class TriWidgetProvider : BaseWidgetProvider() {
             saveTriWidgetData(context, appWidgetId, powerCount, heatCount, waterCount, updatedAt)
         }
         val addressName =
-                if (selectedAddress != null) {
-                    if (selectedAddress.name.isNotEmpty()) selectedAddress.name
-                    else
-                            "${selectedAddress.cityName}, ${selectedAddress.streetName} ${selectedAddress.houseNo}"
-                } else {
-                    getTranslation(context, "no_address")
-                }
+          selectedAddress?.name?.ifEmpty { "${selectedAddress.cityName}, ${selectedAddress.streetName} ${selectedAddress.houseNo}" }
+              ?: getTranslation(context, "no_address")
 
         val views = RemoteViews(context.packageName, R.layout.widget_tri_outage)
 

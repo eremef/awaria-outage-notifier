@@ -12,7 +12,7 @@ class WidgetUpdateWorker(
     workerParams: WorkerParameters
 ) : CoroutineWorker(context, workerParams) {
 
-    override suspend fun doWork(): androidx.work.ListenableWorker.Result {
+    override suspend fun doWork(): Result {
         // CRITICAL: Initialize TLS verifier for Rust network requests.
         WidgetUtils.initVerifier(context)
         
@@ -249,7 +249,7 @@ class WidgetUpdateWorker(
             mpwikLublinProvider.updateWidget(context, appWidgetManager, id)
         }
 
-        return androidx.work.ListenableWorker.Result.success()
+        return Result.success()
     }
 }
 

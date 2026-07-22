@@ -2,21 +2,15 @@ package xyz.eremef.awaria
 
 import android.appwidget.AppWidgetManager
 import android.content.Intent
-import android.graphics.Color
-import android.os.Build
 import android.os.Bundle
 import android.view.View
-import android.view.WindowManager
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.ListView
 import android.widget.ProgressBar
 import androidx.activity.ComponentActivity
-import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
-import kotlinx.coroutines.*
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
+
 
 class WidgetConfigActivity : ComponentActivity() {
     private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
@@ -168,7 +162,7 @@ class WidgetConfigActivity : ComponentActivity() {
             val activeSettings = settingsList.filter { it.isActive }
             fullAddresses = activeSettings
             for (ws in activeSettings) {
-                val displayName = if (ws.name.isNotEmpty()) ws.name else "${ws.cityName}, ${ws.streetName} ${ws.houseNo}"
+                val displayName = ws.name.ifEmpty { "${ws.cityName}, ${ws.streetName} ${ws.houseNo}" }
                 names.add(displayName)
             }
         }

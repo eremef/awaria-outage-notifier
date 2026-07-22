@@ -83,7 +83,7 @@ fun findRustlsPlatformVerifierAndroidMavenRepo(): String {
 }
 
 android {
-    compileSdk = 35
+    compileSdk = 36
     namespace = "xyz.eremef.awaria"
 
     signingConfigs {
@@ -101,7 +101,7 @@ android {
         manifestPlaceholders["usesCleartextTraffic"] = "false"
         applicationId = "xyz.eremef.awaria"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
