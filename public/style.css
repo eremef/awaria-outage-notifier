@@ -48,6 +48,10 @@
     --subtle-bg: #f1f5f9;
     --label-border: #e2e8f0;
     --nav-bg: rgba(248, 250, 252, 0.85);
+    --water-icon: #3b82f6;
+    --heating-icon: #ef4444;
+    --gas-icon: #f59e0b;
+    --power-icon: #eab308;
 }
 
 .hidden {
@@ -227,6 +231,10 @@
     --message-border: #f5f5f5;
     --subtle-bg: #f5f5f5;
     --label-border: #e5e5e5;
+    --water-icon: #171717;
+    --heating-icon: #171717;
+    --gas-icon: #171717;
+    --power-icon: #171717;
 }
 
 [data-theme="monochrome-dark"] {
@@ -249,6 +257,10 @@
     --message-border: #262626;
     --subtle-bg: #262626;
     --label-border: #404040;
+    --water-icon: #fafafa;
+    --heating-icon: #fafafa;
+    --gas-icon: #fafafa;
+    --power-icon: #fafafa;
 }
 
 [data-theme="high-contrast"] {
@@ -1078,19 +1090,19 @@ h1 {
 }
 
 .water-icon {
-    color: #3b82f6;
+    color: var(--water-icon);
 }
 
 .heating-icon {
-    color: #ef4444;
+    color: var(--heating-icon);
 }
 
 .gas-icon {
-    color: #f59e0b;
+    color: var(--gas-icon);
 }
 
 .power-icon {
-    color: #eab308;
+    color: var(--power-icon);
 }
 
 .section-label::after {

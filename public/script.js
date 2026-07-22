@@ -257,6 +257,22 @@ if (typeof document !== 'undefined') {
         { id: 'zwik_lodz', label: 'ZWIK Łódź', category: 'water', defaultNotify: true, i18nLabel: 'source_zwik_lodz_name', i18nShort: 'source_zwik_lodz_short', region: 'lodz' },
     ];
 
+    const getSourceIcon = (s) => {
+        const catClass = s.category ? `${s.category}-icon` : 'power-icon';
+        const svgBase = `viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="utility-svg ${catClass}"`;
+        if (s.category === 'water') {
+            return `<svg ${svgBase}><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"></path></svg>`;
+        }
+        if (s.category === 'heating') {
+            return `<svg ${svgBase}><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path></svg>`;
+        }
+        if (s.category === 'gas') {
+            return `<svg ${svgBase}><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>`;
+        }
+        // Power
+        return `<svg ${svgBase}><polygon points="14 2 6 13 12 13 10 22 18 11 12 11 14 2"></polygon></svg>`;
+    };
+
     function renderSourcesUI() {
         const container = document.getElementById('sources-container');
         if (!container) return;
@@ -275,11 +291,14 @@ if (typeof document !== 'undefined') {
             const catSources = SOURCES.filter(s => s.category === catId);
             if (catSources.length === 0) continue;
 
+            const catIcon = getSourceIcon({ category: catId });
+
             html += `
             <div class="settings-field-group" id="group-${catId}">
                 <div class="settings-group-header">
                     <button class="settings-group-header-clickable" type="button" aria-expanded="false" aria-controls="sources-list-${catId}">
                         ${chevronSvg}
+                        ${catIcon}
                         <span class="settings-group-label" data-i18n="${catInfo.i18n}">${catInfo.label}</span>
                     </button>
                     <div class="master-checkbox-container">
@@ -2655,20 +2674,6 @@ if (typeof document !== 'undefined') {
         // Helper to get source text and emoji
         const getSourceLabelText = (s) => {
             return (typeof t !== 'undefined' ? t(s.i18nLabel) : null) || s.label;
-        };
-        const getSourceIcon = (s) => {
-            const svgBase = 'viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="utility-svg"';
-            if (s.category === 'water') {
-                return `<svg ${svgBase}><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"></path></svg>`;
-            }
-            if (s.category === 'heating') {
-                return `<svg ${svgBase}><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path></svg>`;
-            }
-            if (s.category === 'gas') {
-                return `<svg ${svgBase}><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>`;
-            }
-            // Power
-            return `<svg ${svgBase}><polygon points="14 2 6 13 12 13 10 22 18 11 12 11 14 2"></polygon></svg>`;
         };
 
         // Step 1: Render Local Alerts immediately
