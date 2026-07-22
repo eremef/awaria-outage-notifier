@@ -8,6 +8,7 @@ use std::sync::Arc;
 
 #[derive(Debug, Clone, Default)]
 pub struct MpwikWarszawaItem {
+    pub city: String,
     pub district: String,
     pub street: String,
     pub start_date: Option<String>,
@@ -34,20 +35,20 @@ pub fn parse_mpwik_warszawa_html(html: &str, is_emergency: bool) -> Result<Vec<M
 
     let dist_selector = Selector::parse("div.dzielnica").map_err(|e| e.to_string())?;
     let h3_selector = Selector::parse("h3").map_err(|e| e.to_string())?;
-    let tr_selector = Selector::parse("table.awarie tr").map_err(|e| e.to_string())?;
+    let tr_selector = Selector::parse("table.awarie tr, table#awarie tr").map_err(|e| e.to_string())?;
     let td_selector = Selector::parse("td").map_err(|e| e.to_string())?;
     let details_div_selector = Selector::parse("div.zbior").map_err(|e| e.to_string())?;
 
     for dist_div in document.select(&dist_selector) {
+        let mut city = String::from("Warszawa");
         let mut district = String::new();
         if let Some(h3) = dist_div.select(&h3_selector).next() {
-            district = h3.text().collect::<Vec<_>>().join(" ")
-                .replace("Warszawa", "")
-                .split_whitespace()
-                .collect::<Vec<_>>()
-                .join(" ")
-                .trim()
-                .to_uppercase();
+            let full_text = h3.text().collect::<Vec<_>>().join(" ");
+            let mut parts = full_text.split_whitespace();
+            if let Some(first) = parts.next() {
+                city = first.to_string();
+                district = parts.collect::<Vec<_>>().join(" ").trim().to_uppercase();
+            }
         }
 
         for tr in dist_div.select(&tr_selector) {
@@ -72,13 +73,21 @@ pub fn parse_mpwik_warszawa_html(html: &str, is_emergency: bool) -> Result<Vec<M
                 continue;
             }
 
-            let start_str = tds[1].text().collect::<Vec<_>>().join(" ").trim().to_string();
+            let (start_td, end_td, details_td) = if is_emergency {
+                // Failures columns: 0: Adres, 1: Ulice (zbior), 2: Data i godz. wył., 3: Spodziewany termin, 4: Status
+                (&tds[2], &tds[3], &tds[1])
+            } else {
+                // Planned columns: 0: Adres, 1: od, 2: do, 3: Ulice (zbior)
+                (&tds[1], &tds[2], &tds[3])
+            };
+
+            let start_str = start_td.text().collect::<Vec<_>>().join(" ").trim().to_string();
             let start_date = parse_warszawa_date(&start_str);
 
-            let end_str = tds[2].text().collect::<Vec<_>>().join(" ").trim().to_string();
+            let end_str = end_td.text().collect::<Vec<_>>().join(" ").trim().to_string();
             let end_date = parse_warszawa_date(&end_str);
 
-            let details = tds[3].select(&details_div_selector).next().map(|div| {
+            let details = details_td.select(&details_div_selector).next().map(|div| {
                 div.text()
                     .map(|t| t.trim())
                     .filter(|t| !t.is_empty())
@@ -87,6 +96,7 @@ pub fn parse_mpwik_warszawa_html(html: &str, is_emergency: bool) -> Result<Vec<M
             });
 
             items.push(MpwikWarszawaItem {
+                city: city.clone(),
                 district: district.clone(),
                 street: street_name,
                 start_date,
@@ -163,12 +173,25 @@ impl MpwikWarszawaItem {
         }
         let message = parts.join(" - ");
 
+        let location_str = if self.city.to_uppercase() == "WARSZAWA" {
+            format!("Miejscowość: Warszawa (Dzielnica: {})", self.district)
+        } else if self.district.is_empty() || self.city.to_uppercase() == self.district.to_uppercase() {
+            format!("Miejscowość: {}", self.city)
+        } else {
+            let mut c = self.district.chars();
+            let city_formatted = match c.next() {
+                None => String::new(),
+                Some(f) => f.to_uppercase().collect::<String>() + c.as_str().to_lowercase().as_str(),
+            };
+            format!("Miejscowość: {} (Gmina: {})", city_formatted, self.city)
+        };
+
         UnifiedAlert {
             source: AlertSource::MpwikWarszawa,
             startDate: self.start_date.clone(),
             endDate: self.end_date.clone(),
             message: Some(message),
-            location: Some(format!("Miejscowość: Warszawa (Dzielnica: {})", self.district)),
+            location: Some(location_str),
             address_index: None,
             is_local: None,
             hash: None,
@@ -250,7 +273,7 @@ mod tests {
             <div class="dzielnica">
                 <h3 class="dzielnicaopen">Warszawa MOKOTÓW <i class="fa fa-arrow-down"></i></h3>
                 <div class="tablicaawarii">
-                <table class="awarie">
+                <table id="awarie">
                     <tr class="headrow">
                         <th class="a">Adres</th>
                         <th class="p">od</th>
@@ -280,6 +303,7 @@ mod tests {
         let parsed = parse_mpwik_warszawa_html(html, false).unwrap();
         assert_eq!(parsed.len(), 1);
         let item = &parsed[0];
+        assert_eq!(item.city, "Warszawa");
         assert_eq!(item.district, "MOKOTÓW");
         assert_eq!(item.street, "Zawrat");
         assert_eq!(item.start_date, Some("2026-05-25T16:00:00".to_string()));
@@ -291,6 +315,7 @@ mod tests {
     #[test]
     fn test_mpwik_warszawa_to_unified() {
         let item = MpwikWarszawaItem {
+            city: "Warszawa".to_string(),
             district: "MOKOTÓW".to_string(),
             street: "Zawrat".to_string(),
             start_date: Some("2026-05-25T16:00:00".to_string()),
@@ -309,5 +334,32 @@ mod tests {
             unified.location,
             Some("Miejscowość: Warszawa (Dzielnica: MOKOTÓW)".to_string())
         );
+    }
+
+    #[test]
+    fn test_mpwik_warszawa_to_unified_other_city() {
+        let item = MpwikWarszawaItem {
+            city: "Pruszków".to_string(),
+            district: "PRUSZKÓW".to_string(),
+            street: "Akacjowa".to_string(),
+            start_date: Some("2026-05-25T16:00:00".to_string()),
+            end_date: Some("2026-05-26T00:00:00".to_string()),
+            details: None,
+            is_emergency: false,
+        };
+        let unified = item.to_unified();
+        assert_eq!(unified.location, Some("Miejscowość: Pruszków".to_string()));
+
+        let item2 = MpwikWarszawaItem {
+            city: "Raszyn".to_string(),
+            district: "JAWOROWA".to_string(),
+            street: "Długa".to_string(),
+            start_date: Some("2026-05-25T16:00:00".to_string()),
+            end_date: Some("2026-05-26T00:00:00".to_string()),
+            details: None,
+            is_emergency: false,
+        };
+        let unified2 = item2.to_unified();
+        assert_eq!(unified2.location, Some("Miejscowość: Jaworowa (Gmina: Raszyn)".to_string()));
     }
 }

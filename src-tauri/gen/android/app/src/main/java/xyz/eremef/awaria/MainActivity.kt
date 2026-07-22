@@ -1,12 +1,8 @@
 package xyz.eremef.awaria
 
-import android.graphics.Color
-import android.os.Build
 import android.os.Bundle
 import android.view.ViewGroup
-import android.view.WindowManager
 import android.webkit.WebView
-import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat

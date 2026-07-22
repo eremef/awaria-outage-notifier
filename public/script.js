@@ -144,6 +144,13 @@ if (typeof document !== 'undefined') {
             const city = (addr.cityName || '').trim().toLowerCase();
             return city.startsWith('warszawa') || city.startsWith('warsaw') || addr.cityId === 918123;
         },
+        mpwik_warszawa_area: (addr) => {
+            if (!addr) return false;
+            const city = (addr.cityName || '').trim().toLowerCase();
+            if (addr.cityId === 918123) return true;
+            const valid = ['aleksandrow', 'aleksandrów', 'anusinek', 'beniaminow', 'beniaminów', 'bialobrzegi', 'białobrzegi', 'boleslawowo', 'bolesławowo', 'borowa gora', 'borowa góra', 'cupel', 'czarna struga', 'dawidy', 'dawidy bankowe', 'debe', 'debinki', 'debkowizna', 'derlacz', 'dosin', 'dębe', 'dębinki', 'dębkowizna', 'falenty', 'falenty duze', 'falenty duże', 'falenty nowe', 'gasiorowo', 'gora', 'guty', 'góra', 'gąsiorowo', 'izabelin', 'izbica', 'jachranka', 'jadwisin', 'janki', 'janowek pierwszy', 'janówek pierwszy', 'jaworowa', 'jozefow', 'jozefow drugi', 'józefów', 'józefów drugi', 'kaluszyn', 'kania nowa', 'kania polska', 'karolino', 'katy wegierskie', 'kałuszyn', 'kepa kikolska', 'komornica', 'komorow', 'komorów', 'kontrowers', 'krubin', 'kwietniowka', 'kwietniówka', 'kąty węgierskie', 'kępa kikolska', 'lacha', 'lady', 'lajski', 'laszczki', 'ludwinowo debskie', 'ludwinowo dębskie', 'ludwinowo zegrzynskie', 'ludwinowo zegrzyńskie', 'lysa gora', 'marynino', 'michalow-grabina', 'michalow-reginow', 'michalowice', 'michalowice-wies', 'michałowice', 'michałowice-wieś', 'michałów-grabina', 'michałów-reginów', 'nieporet', 'nieporęt', 'nowa wies', 'nowa wieś', 'nowe grocholice', 'olszewnica', 'olszewnica nowa', 'olszewnica stara', 'opacz mala', 'opacz mała', 'opacz-kolonia', 'pecice', 'pecice male', 'piastow', 'piastów', 'poddebie', 'poddębie', 'podolszyn nowy', 'poniatow', 'poniatów', 'pruszkow', 'pruszków', 'puchaly', 'puchały', 'pęcice', 'pęcice małe', 'raszyn', 'reguly', 'reguły', 'rembelszczyzna', 'rybaki', 'rybie', 'rynia', 'sekocin nowy', 'sekocin stary', 'sekocin-las', 'serock', 'sikory', 'skrzeszew', 'skubianka', 'skubianka-kolonia', 'slomin', 'sokolow', 'sokołów', 'stanislawow drugi', 'stanislawow pierwszy', 'stanislawowo', 'stanisławowo', 'stanisławów drugi', 'stanisławów pierwszy', 'stasi las', 'suchy las', 'swiecienica', 'szadki', 'sękocin nowy', 'sękocin stary', 'sękocin-las', 'słomin', 'topolina', 'warsaw', 'warszawa', 'wieliszew', 'wieliszew-kolonia', 'wierzbica', 'wola aleksandra', 'wola kielpinska', 'wola kiełpińska', 'wola smolana', 'wolka radzyminska', 'wypedy', 'wypędy', 'wólka radzymińska', 'zablocie', 'zabłocie', 'zagroby', 'zalesie borowe', 'zegrze', 'zegrze poludniowe', 'zegrze południowe', 'zegrzynek', 'łacha', 'łady', 'łajski', 'łysa góra', 'święcienica'];
+            return valid.some(v => city.startsWith(v));
+        },
         wroclaw: (addr) => {
             if (!addr) return false;
             const city = (addr.cityName || '').trim().toLowerCase();
@@ -247,7 +254,7 @@ if (typeof document !== 'undefined') {
         { id: 'gdanskie_wodociagi', label: 'Gdańskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_gdanskie_wodociagi_name', i18nShort: 'source_gdanskie_wodociagi_short', region: 'gdansk' },
         { id: 'katowickie_wodociagi', label: 'Katowickie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_katowickie_wodociagi_name', i18nShort: 'source_katowickie_wodociagi_short', region: 'katowice' },
         { id: 'mpwik_lublin', label: 'MPWiK Lublin', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_lublin_name', i18nShort: 'source_mpwik_lublin_short', region: 'lublin' },
-        { id: 'mpwik_warszawa', label: 'MPWiK Warszawa', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_warszawa_name', i18nShort: 'source_mpwik_warszawa_short', region: 'warszawa' },
+        { id: 'mpwik_warszawa', label: 'MPWiK Warszawa', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_warszawa_name', i18nShort: 'source_mpwik_warszawa_short', region: 'mpwik_warszawa_area' },
         { id: 'mpwik_wroclaw', label: 'MPWiK Wrocław', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_wroclaw_name', i18nShort: 'source_mpwik_wroclaw_short', region: 'wroclaw' },
         { id: 'puk_rokietnica', label: 'PUK Rokietnica', category: 'water', defaultNotify: true, i18nLabel: 'source_puk_rokietnica_name', i18nShort: 'source_puk_rokietnica_short', region: 'rokietnica' },
         { id: 'pwik_czestochowa', label: 'PWiK Częstochowa', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_czestochowa_name', i18nShort: 'source_pwik_czestochowa_short', region: 'czestochowa' },
@@ -2352,7 +2359,7 @@ if (typeof document !== 'undefined') {
                 // For single-city providers, reject matching if the saved address is in a completely different city
                 const cityLower = cityName.toLowerCase();
                 if (alert.source === 'mpwik_wroclaw' && !cityLower.startsWith('wroc')) return false;
-                if (alert.source === 'mpwik_warszawa' && !cityLower.startsWith('warsz')) return false;
+                if (alert.source === 'mpwik_warszawa' && !REGIONS.mpwik_warszawa_area({ cityName: cityLower, cityId: 0 })) return false;
                 if (alert.source === 'wmk' && !cityLower.startsWith('krak')) return false;
                 if (alert.source === 'zwik_lodz' && !cityLower.startsWith('łódź') && !cityLower.startsWith('lodz')) return false;
                 if (alert.source === 'wodociagi_plockie' && !cityLower.startsWith('pło') && !cityLower.startsWith('plo')) return false;

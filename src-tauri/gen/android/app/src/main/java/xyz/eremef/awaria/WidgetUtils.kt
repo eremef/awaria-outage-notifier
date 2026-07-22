@@ -4,11 +4,10 @@ import android.util.Log
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.core.net.toUri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
-import java.net.HttpURLConnection
-import java.net.URL
 import java.util.regex.Pattern
 
 object WidgetUtils {
@@ -17,21 +16,15 @@ object WidgetUtils {
     @JvmStatic
     fun isNetworkAvailable(context: Context): Boolean {
         return try {
-            val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                val nw = cm.activeNetwork ?: return false
-                val actNw = cm.getNetworkCapabilities(nw) ?: return false
-                when {
-                    actNw.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) -> true
-                    actNw.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR) -> true
-                    actNw.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET) -> true
-                    else -> false
-                }
-            } else {
-                @Suppress("DEPRECATION")
-                val nwInfo = cm.activeNetworkInfo ?: return false
-                nwInfo.isConnected
-            }
+          val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+          val nw = cm.activeNetwork ?: return false
+          val actNw = cm.getNetworkCapabilities(nw) ?: return false
+          when {
+              actNw.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) -> true
+              actNw.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR) -> true
+              actNw.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET) -> true
+              else -> false
+          }
         } catch (e: Exception) {
             Log.w(TAG, "isNetworkAvailable failed, assuming online: ${e.message}")
             true // fail open — let the fetch attempt proceed
@@ -39,9 +32,10 @@ object WidgetUtils {
     }
 
     @JvmStatic
+    @Suppress("unused")
     fun readUri(context: Context, uriString: String): String {
         return try {
-            val uri = Uri.parse(uriString)
+            val uri = uriString.toUri()
             context.contentResolver.openInputStream(uri)?.use { input ->
                 input.bufferedReader().use { it.readText() }
             } ?: ""
@@ -52,6 +46,7 @@ object WidgetUtils {
     }
 
     @JvmStatic
+    @Suppress("unused")
     fun exportSettings(context: Context, filePath: String, fileName: String): String {
         try {
             val sourceFile = java.io.File(filePath)
@@ -83,14 +78,12 @@ object WidgetUtils {
                         input.copyTo(output)
                     }
                 }
-                
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    contentValues.clear()
-                    contentValues.put(android.provider.MediaStore.MediaColumns.IS_PENDING, 0)
-                    resolver.update(uri, contentValues, null, null)
-                }
-                
-                return "Saved to Downloads/Awaria/$fileName"
+
+              contentValues.clear()
+              contentValues.put(android.provider.MediaStore.MediaColumns.IS_PENDING, 0)
+              resolver.update(uri, contentValues, null, null)
+
+              return "Saved to Downloads/Awaria/$fileName"
             } else {
                 // Fallback to share sheet if MediaStore fails
                 shareFile(context, filePath, "application/json", "Export Settings")
@@ -208,91 +201,23 @@ object WidgetUtils {
         }
     }
 
-    fun matchesStreetOnly(
-        text: String,
-        streetName1: String,
-        streetName2: String?
-    ): Boolean {
-        if (text.isEmpty()) return false
-        if (streetName1.isEmpty()) return true
-
-        // For simple cases without a pre-compiled matcher
-        val escaped1 = Pattern.quote(streetName1)
-        if (Regex("(?ui)\\b$escaped1\\b").containsMatchIn(text)) return true
-        
-        streetName2?.takeIf { it != "null" }?.let { n2 ->
-            val compound = Pattern.quote("$n2 $streetName1")
-            if (Regex("(?ui)\\b$compound\\b").containsMatchIn(text)) return true
-        }
-        
-        return false
-    }
-
-    fun fetchJson(url: URL, maxRetries: Int = 3): String {
-        var lastException: Exception? = null
-        var delay = 1000L
-
-        for (attempt in 1..maxRetries) {
-            try {
-                return fetchJsonInternal(url)
-            } catch (e: Exception) {
-                lastException = e
-                Log.w(TAG, "Fetch attempt $attempt failed for $url: ${e.message}")
-                if (attempt < maxRetries) {
-                    Thread.sleep(delay)
-                    delay *= 2
-                }
-            }
-        }
-        throw lastException ?: Exception("Unknown fetch error")
-    }
-
-    private fun fetchJsonInternal(url: URL): String {
-        val conn = url.openConnection() as HttpURLConnection
-        conn.requestMethod = "GET"
-        conn.setRequestProperty("accept", "application/json")
-        conn.connectTimeout = 10000
-        conn.readTimeout = 10000
-
-        val responseCode = conn.responseCode
-        if (responseCode !in 200..299) {
-            conn.disconnect()
-            throw Exception("HTTP error: $responseCode at $url")
-        }
-
-        val response = conn.inputStream.bufferedReader().use { it.readText() }
-        conn.disconnect()
-        return response
-    }
-
-    fun isWroclaw(settings: WidgetSettings): Boolean {
-        val name = settings.cityName.lowercase()
-        return name == "wrocław" || name == "wroclaw" || settings.cityId == 969400L
-    }
-
-    fun isWarszawa(settings: WidgetSettings): Boolean {
-        val name = settings.cityName.lowercase()
-        return name == "warszawa" || name == "warsaw" || settings.cityId == 918123L
-    }
-
     @JvmStatic
     external fun fetchAndNotifyFromRust(context: Context, settingsJson: String)
 
     @JvmStatic
+    @Suppress("unused")
     fun showNotification(context: Context, title: String, body: String, hash: String) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
         
         // Create channel for Android 8.0+
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            val channel = android.app.NotificationChannel(
-                "outages",
-                "Outage Alerts",
-                android.app.NotificationManager.IMPORTANCE_DEFAULT
-            )
-            notificationManager.createNotificationChannel(channel)
-        }
+      val channel = android.app.NotificationChannel(
+          "outages",
+          "Outage Alerts",
+          android.app.NotificationManager.IMPORTANCE_DEFAULT
+      )
+      notificationManager.createNotificationChannel(channel)
 
-        val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+      val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
         val pendingIntent = android.app.PendingIntent.getActivity(
             context,
             hash.hashCode(),
@@ -313,7 +238,7 @@ object WidgetUtils {
     }
 
     @JvmStatic
-    fun scheduleBackgroundMonitoring(context: android.content.Context) {
+    fun scheduleBackgroundMonitoring(context: Context) {
         val workManager = androidx.work.WorkManager.getInstance(context)
         val request = androidx.work.PeriodicWorkRequestBuilder<BackgroundMonitorWorker>(1, java.util.concurrent.TimeUnit.HOURS)
             .setConstraints(
@@ -331,6 +256,7 @@ object WidgetUtils {
     }
 
     @JvmStatic
+    @Suppress("unused")
     fun isIgnoringBatteryOptimizations(context: Context): Boolean {
         // Check for "Restricted" background status on Android 9+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -339,27 +265,23 @@ object WidgetUtils {
                 return false
             }
         }
-        
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-            return pm.isIgnoringBatteryOptimizations(context.packageName)
-        }
-        return true
+
+      val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+      return pm.isIgnoringBatteryOptimizations(context.packageName)
     }
 
     @JvmStatic
+    @Suppress("unused")
     fun requestIgnoreBatteryOptimizations(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-            val packageName = context.packageName
-            
-            if (!pm.isIgnoringBatteryOptimizations(packageName)) {
-                android.util.Log.i("AwariaBgMonitor", "Requesting battery optimization exclusion (polite way)")
-                val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                context.startActivity(intent)
-            }
-        }
+      val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+      val packageName = context.packageName
+
+      if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+          Log.i("AwariaBgMonitor", "Requesting battery optimization exclusion (polite way)")
+          val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+          intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+          context.startActivity(intent)
+      }
     }
 
     fun serializeSettingsForRust(settingsList: List<WidgetSettings>, fullJson: org.json.JSONObject?): String {
@@ -375,7 +297,7 @@ object WidgetUtils {
             addr.put("commune", s.commune)
             addr.put("streetName", s.streetName)
             addr.put("streetName1", s.streetName1)
-            addr.put("streetName2", if (s.streetName2 == null) org.json.JSONObject.NULL else s.streetName2)
+            addr.put("streetName2", s.streetName2 ?: org.json.JSONObject.NULL)
             addr.put("houseNo", s.houseNo)
             addr.put("cityId", if (s.cityId == 0L) org.json.JSONObject.NULL else s.cityId)
             addr.put("streetId", if (s.streetId == 0L) org.json.JSONObject.NULL else s.streetId)

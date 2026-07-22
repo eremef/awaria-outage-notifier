@@ -3,7 +3,6 @@ package xyz.eremef.awaria
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import org.json.JSONObject
 import java.io.File
 
 class BackgroundMonitorWorker(

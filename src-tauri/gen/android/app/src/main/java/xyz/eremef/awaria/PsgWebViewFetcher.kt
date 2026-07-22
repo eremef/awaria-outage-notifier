@@ -11,6 +11,7 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import androidx.annotation.Keep
 import android.webkit.WebViewClient
+import androidx.core.content.edit
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -20,6 +21,7 @@ import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.regex.Pattern
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Fetches PSG gas outage data by loading the page in a WebView to bypass Cloudflare,
@@ -124,10 +126,10 @@ object PsgWebViewFetcher {
     }
 
     private fun saveHtmlCache(context: Context, html: String) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
-            .putString(KEY_HTML, html)
-            .putLong(KEY_HTML_TIME, System.currentTimeMillis())
-            .apply()
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit {
+            putString(KEY_HTML, html)
+            putLong(KEY_HTML_TIME, System.currentTimeMillis())
+        }
     }
 
     private fun executePost(cookies: String, body: String): String? {
@@ -394,7 +396,7 @@ object PsgWebViewFetcher {
                 }
             }
 
-            return withTimeoutOrNull(TIMEOUT_MS) { deferred.await() }
+            return withTimeoutOrNull(TIMEOUT_MS.milliseconds) { deferred.await() }
         } finally {
             if (!deferred.isCompleted) {
                 deferred.cancel()
@@ -414,10 +416,10 @@ object PsgWebViewFetcher {
         try {
             val cookies = CookieManager.getInstance().getCookie(PSG_URL)
             if (cookies != null) {
-                context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
-                    .putString(KEY_COOKIES, cookies)
-                    .putLong(KEY_COOKIES_TIME, System.currentTimeMillis())
-                    .apply()
+                context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit {
+                    putString(KEY_COOKIES, cookies)
+                    putLong(KEY_COOKIES_TIME, System.currentTimeMillis())
+                }
                 Log.i(TAG, "Cached cookies persistently")
             }
         } catch (e: Exception) {

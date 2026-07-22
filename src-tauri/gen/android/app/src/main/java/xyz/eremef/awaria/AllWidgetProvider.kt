@@ -11,7 +11,6 @@ import java.util.*
 import kotlinx.coroutines.*
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
-import android.content.res.Configuration
 
 class AllWidgetProvider : BaseWidgetProvider() {
     override val refreshAction: String = "xyz.eremef.awaria.ACTION_REFRESH_ALL"

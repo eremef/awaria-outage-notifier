@@ -4,6 +4,7 @@
   <string name="config_confirm">Confirm</string>
   <string name="config_primary_address">Follow primary address</string>
   <string name="config_select_address">Select address for widget</string>
+  <string name="date">00:00</string>
   <string name="icon_description">icon</string>
   <string name="label_gas">Gas</string>
   <string name="label_heat">Heat</string>
@@ -17,7 +18,7 @@
   <string name="msg_no_address">No Address</string>
   <string name="msg_offline">No Network</string>
   <string name="msg_setup_needed">Setup needed</string>
-  <string name="msg_updating">Updating...</string>
+  <string name="msg_updating">Updating…</string>
   <string name="notif_channel_desc">Notifications about new and upcoming power, water, heat, and gas outages.</string>
   <string name="notif_channel_name">Outage Alerts</string>
   <string name="placeholder_dash">–</string>
@@ -41,6 +42,7 @@
   <string name="provider_sec">SEC</string>
   <string name="provider_stoen">Stoen</string>
   <string name="provider_tauron">Tauron</string>
+  <string name="provider_tauron_heat">Tauron Ciepło</string>
   <string name="provider_veolia_lodz">Veolia LDZ</string>
   <string name="provider_veolia_poznan">Veolia POZ</string>
   <string name="provider_veolia_warszawa">Veolia WAW</string>
@@ -67,6 +69,7 @@
   <string name="widget_label_sec">SEC Szczecin</string>
   <string name="widget_label_stoen">Stoen</string>
   <string name="widget_label_tauron">Tauron</string>
+  <string name="widget_label_tauron_heat">Tauron Ciepło</string>
   <string name="widget_label_tri">Address: power, heat, water</string>
   <string name="widget_label_veolia">Veolia Warszawa</string>
   <string name="widget_label_veolia_lodz">Veolia Łódź</string>

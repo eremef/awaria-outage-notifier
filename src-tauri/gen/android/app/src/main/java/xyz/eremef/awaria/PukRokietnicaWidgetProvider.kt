@@ -1,7 +1,5 @@
 package xyz.eremef.awaria
 
-import android.content.Context
-
 class PukRokietnicaWidgetProvider : BaseWidgetProvider() {
     override val refreshAction: String = "xyz.eremef.awaria.ACTION_REFRESH_PUK_ROKIETNICA"
     override val primaryColorRes: Int = R.color.utility_water
