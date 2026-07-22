@@ -1,0 +1,35 @@
+<pl-PL>
+Co nowego w tej wersji:
+• Dodano ikony kategorii dostawców (prąd, woda, gaz, ciepło) w ustawieniach.
+• Dodano obsługę wyłączeń MPWiK Warszawa dla okolicznych miejscowości.
+• Poprawki wczytywania i dopasowywania awarii wodociągowych.
+• Usprawniono dopasowanie kolorów ikon do motywów aplikacji.
+</pl-PL>
+<en-GB>
+What's new in this release:
+• Added utility category icons (Power, Water, Gas, Heating) in Settings headers.
+• Added MPWiK Warszawa outage support for surrounding communes and cities.
+• Improved water outage parsing and location matching.
+• Enhanced icon color adaptation across all app themes.
+</en-GB>
+<en-US>
+What's new in this release:
+• Added utility category icons (Power, Water, Gas, Heating) in Settings headers.
+• Added MPWiK Warszawa outage support for surrounding communes and cities.
+• Improved water outage parsing and location matching.
+• Enhanced icon color adaptation across all app themes.
+</en-US>
+<en-CA>
+What's new in this release:
+• Added utility category icons (Power, Water, Gas, Heating) in Settings headers.
+• Added MPWiK Warszawa outage support for surrounding communes and cities.
+• Improved water outage parsing and location matching.
+• Enhanced icon color adaptation across all app themes.
+</en-CA>
+<en-AU>
+What's new in this release:
+• Added utility category icons (Power, Water, Gas, Heating) in Settings headers.
+• Added MPWiK Warszawa outage support for surrounding communes and cities.
+• Improved water outage parsing and location matching.
+• Enhanced icon color adaptation across all app themes.
+</en-AU>
