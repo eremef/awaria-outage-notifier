@@ -28,3 +28,4 @@ entities.json
 
 commit_msg.txt
 test-results/
+src-tauri/gen/android/current_build_log.txt
