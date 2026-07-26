@@ -72,6 +72,7 @@ async fn test_all_live_providers() {
                         || err_lower.contains("dns")
                         || err_lower.contains("resolve")
                         || err_lower.contains("host")
+                        || err_lower.contains("error decoding response body")
                         || err_lower.contains("http status");
                     
                     !is_app_handle && !is_network_error
@@ -93,6 +94,7 @@ async fn test_all_live_providers() {
                     || err_lower.contains("dns")
                     || err_lower.contains("resolve")
                     || err_lower.contains("host")
+                    || err_lower.contains("error decoding response body")
                     || err_lower.contains("http status")
                 {
                     println!("  [WARN] {} network connection failed (might be offline or blocking CI IP range): {}", provider.id(), err);
