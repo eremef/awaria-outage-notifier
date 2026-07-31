@@ -485,6 +485,53 @@ async fn do_webview_fetch(app: &tauri::AppHandle) -> Result<String, String> {
             (function() {
                 console.log('GPEC-FETCH: Script injected');
 
+                // Block heavy third-party map SDKs & tracking scripts at document-start
+                const blockedDomains = [
+                    'google.com/maps',
+                    'maps.googleapis.com',
+                    'cookiebot.com',
+                    'googletagmanager.com',
+                    'facebook.net',
+                    'clarity.ms',
+                    'google-analytics.com'
+                ];
+
+                try {
+                    const originalSrc = Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, 'src');
+                    if (originalSrc && originalSrc.set) {
+                        Object.defineProperty(HTMLScriptElement.prototype, 'src', {
+                            set: function(val) {
+                                if (typeof val === 'string' && blockedDomains.some(d => val.includes(d))) {
+                                    console.log('GPEC-FETCH: Blocked heavy script src:', val);
+                                    return;
+                                }
+                                originalSrc.set.call(this, val);
+                            },
+                            get: function() {
+                                return originalSrc.get.call(this);
+                            }
+                        });
+                    }
+
+                    const origCreateElement = document.createElement;
+                    document.createElement = function(tagName, options) {
+                        const el = origCreateElement.call(document, tagName, options);
+                        if (tagName && String(tagName).toLowerCase() === 'script') {
+                            const origSetAttribute = el.setAttribute;
+                            el.setAttribute = function(name, value) {
+                                if (name === 'src' && typeof value === 'string' && blockedDomains.some(d => value.includes(d))) {
+                                    console.log('GPEC-FETCH: Blocked script setAttribute:', value);
+                                    return;
+                                }
+                                return origSetAttribute.call(this, name, value);
+                            };
+                        }
+                        return el;
+                    };
+                } catch(e) {
+                    console.error('GPEC-FETCH: Error installing script blocker', e);
+                }
+
                 function emitData() {
                     console.log('GPEC-FETCH: Final emission');
                     try {
