@@ -2,20 +2,15 @@
     position: sticky;
     top: 0;
     z-index: 1200;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    background-color: var(--background-color);
     border-radius: 0.3rem;
     margin-left: -0.5rem;
     margin-right: -0.5rem;
     padding-left: 0.5rem;
     padding-right: 0.5rem;
     padding-top: var(--safe-area-inset-top);
+    padding-bottom: 0.25rem;
     transition: background-color 0.3s ease;
-    /* Hardware acceleration to fix scroll jitter */
-    transform: translateZ(0);
-    will-change: transform;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
 }
 
 #address-form {
