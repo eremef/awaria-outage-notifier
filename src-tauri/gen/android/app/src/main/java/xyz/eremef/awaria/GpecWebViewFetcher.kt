@@ -20,7 +20,7 @@ import kotlin.time.Duration.Companion.milliseconds
 object GpecWebViewFetcher {
     private const val TAG = "GpecWebViewFetcher"
     private const val GPEC_URL = "https://grupagpec.pl/przerwy-w-dostawie/"
-    private const val TIMEOUT_MS = 60000L // 60 seconds
+    private const val TIMEOUT_MS = 90000L // 90 seconds
 
     private const val PREFS_NAME = "xyz.eremef.awaria.GpecCache"
     private const val KEY_HTML = "cached_html"
@@ -76,6 +76,7 @@ object GpecWebViewFetcher {
     private suspend fun fetchViaWebView(context: Context): String? {
         val deferred = CompletableDeferred<String?>()
         var webView: WebView? = null
+        val mainHandler = Handler(Looper.getMainLooper())
 
         try {
             withContext(Dispatchers.Main) {
@@ -93,9 +94,35 @@ object GpecWebViewFetcher {
                     CookieManager.getInstance().setAcceptCookie(true)
 
                     wv.webViewClient = object : WebViewClient() {
-                        override fun onPageFinished(view: WebView, url: String) {
-                            Log.d(TAG, "GPEC-FETCH: Page finished loading: $url")
-                            
+                        private var isPollingStarted = false
+
+                        override fun shouldInterceptRequest(
+                            view: WebView?,
+                            request: android.webkit.WebResourceRequest?
+                        ): android.webkit.WebResourceResponse? {
+                            val url = request?.url?.toString() ?: ""
+                            // Block heavy external map SDKs and analytics trackers that delay page loads
+                            if (url.contains("google.com/maps") ||
+                                url.contains("maps.googleapis.com") ||
+                                url.contains("cookiebot.com") ||
+                                url.contains("googletagmanager.com") ||
+                                url.contains("facebook.net") ||
+                                url.contains("clarity.ms") ||
+                                url.contains("google-analytics.com")
+                            ) {
+                                return android.webkit.WebResourceResponse(
+                                    "text/plain",
+                                    "UTF-8",
+                                    java.io.ByteArrayInputStream(ByteArray(0))
+                                )
+                            }
+                            return super.shouldInterceptRequest(view, request)
+                        }
+
+                        private fun startPolling(view: WebView) {
+                            if (isPollingStarted || deferred.isCompleted) return
+                            isPollingStarted = true
+
                             var pollAttempts = 0
                             val maxPollAttempts = 90
 
@@ -108,7 +135,7 @@ object GpecWebViewFetcher {
                                     return
                                 }
 
-                                 view.evaluateJavascript(
+                                view.evaluateJavascript(
                                     """
                                     (function() {
                                         const allowBtn = document.getElementById('CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll');
@@ -149,7 +176,7 @@ object GpecWebViewFetcher {
                                     if (deferred.isCompleted) return@evaluateJavascript
                                     val res = if (result != null && result != "null") unescapeJsString(result) else "waiting"
                                     if (res == "waiting") {
-                                        Handler(Looper.getMainLooper()).postDelayed({ pollState() }, 1000)
+                                        mainHandler.postDelayed({ pollState() }, 1000)
                                     } else {
                                         if (res.isNotEmpty()) {
                                             Log.d(TAG, "GPEC-FETCH: Done! Length: ${res.length}")
@@ -160,8 +187,18 @@ object GpecWebViewFetcher {
                                     }
                                 }
                             }
-                            
+
                             pollState()
+                        }
+
+                        override fun onPageStarted(view: WebView, url: String, favicon: android.graphics.Bitmap?) {
+                            super.onPageStarted(view, url, favicon)
+                            startPolling(view)
+                        }
+
+                        override fun onPageFinished(view: WebView, url: String) {
+                            super.onPageFinished(view, url)
+                            startPolling(view)
                         }
                     }
 
@@ -179,6 +216,7 @@ object GpecWebViewFetcher {
             }
             withContext(Dispatchers.Main) {
                 try {
+                    mainHandler.removeCallbacksAndMessages(null)
                     webView?.stopLoading()
                     webView?.destroy()
                 } catch (e: Exception) {
