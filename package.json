@@ -24,15 +24,15 @@
     "logcat": "powershell -Command \"$AppPid = adb shell pidof -s xyz.eremef.awaria; if ($AppPid) { adb logcat -v color --pid=$AppPid } else { Write-Host 'App is not running!' -ForegroundColor Red }\""
   },
   "devDependencies": {
-    "@axe-core/playwright": "^4.12.1",
-    "@playwright/test": "^1.61.1",
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.63.0",
     "@tauri-apps/cli": "^2.11.4",
-    "@vitest/coverage-v8": "^4.1.10",
-    "better-sqlite3": "^11.9.1",
-    "jsdom": "^29.0.0",
-    "vitest": "^4.1.10"
+    "@vitest/coverage-v8": "^5.0.1",
+    "better-sqlite3": "^13.0.3",
+    "jsdom": "^30.0.1",
+    "vitest": "^5.0.1"
   },
   "dependencies": {
-    "@tauri-apps/plugin-opener": "^2.5.4"
+    "@tauri-apps/plugin-opener": "^2.5.5"
   }
 }

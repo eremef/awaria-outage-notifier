@@ -318,7 +318,7 @@ pub async fn fetch_aquanet_detail(client: &Client, slug: &str) -> Option<Aquanet
                 }).collect();
 
                 // Pair them up by index
-                for (lbl, v) in labels.into_iter().zip(values.into_iter()) {
+                for (lbl, v) in labels.into_iter().zip(values) {
                     if lbl.contains("rodzaj") || lbl.contains("typ") {
                         parsed_title = Some(v);
                     } else if lbl.contains("obszar") || lbl.contains("lokalizac") || lbl.contains("miejsce") {
