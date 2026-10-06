@@ -210,7 +210,11 @@ impl UnifiedAlert {
         if let Some(start) = &self.startDate {
             hasher.update(start);
         }
-        format!("{:x}", hasher.finalize())
+        let digest = hasher.finalize();
+        digest
+            .iter()
+            .map(|byte| format!("{:02x}", byte))
+            .collect()
     }
 }
 
