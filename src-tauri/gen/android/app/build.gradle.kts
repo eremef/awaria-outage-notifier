@@ -163,7 +163,7 @@ dependencies {
     implementation("com.google.android.material:material:1.13.0")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("rustls:rustls-platform-verifier:0.1.1")
+    implementation("rustls:rustls-platform-verifier")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.11.1")
     androidTestImplementation("androidx.test.ext:junit:1.1.4")
