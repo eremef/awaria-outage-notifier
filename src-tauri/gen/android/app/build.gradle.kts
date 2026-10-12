@@ -1,5 +1,4 @@
 import java.util.Properties
-import groovy.json.JsonSlurper
 
 plugins {
     id("com.android.application")
@@ -21,66 +20,11 @@ val keystoreProperties = Properties().apply {
     }
 }
 
-fun findRustlsPlatformVerifierAndroidMavenRepo(): String {
-    // 1. Try running cargo metadata with various cargo command paths
-    val cargoPaths = listOf(
-        "cargo",
-        File(System.getProperty("user.home"), ".cargo/bin/cargo").absolutePath,
-        File(System.getProperty("user.home"), ".cargo/bin/cargo.exe").absolutePath
-    )
-    for (cargo in cargoPaths) {
-        try {
-            val process = ProcessBuilder(cargo, "metadata", "--format-version", "1")
-                .directory(projectDir.parentFile.parentFile.parentFile)
-                .start()
-            val output = process.inputStream.bufferedReader().readText()
-            val exitCode = process.waitFor()
-            if (exitCode == 0) {
-                val json = JsonSlurper().parseText(output) as Map<String, Any>
-                val packages = json["packages"] as List<Map<String, Any>>
-                val pkg = packages.find { it["name"] == "rustls-platform-verifier-android" }
-                if (pkg != null) {
-                    val manifestPath = pkg["manifest_path"] as String
-                    val mavenPath = File(File(manifestPath).parentFile, "maven").absolutePath
-                    if (File(mavenPath).exists()) {
-                        return mavenPath
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            // Try next cargo path
-        }
-    }
-
-    // 2. Direct File System Fallback: scan ~/.cargo/registry/src/ for the cached crate
-    try {
-        val cargoRegistrySrc = File(System.getProperty("user.home"), ".cargo/registry/src")
-        if (cargoRegistrySrc.exists()) {
-            val registryDirs = cargoRegistrySrc.listFiles()
-            if (registryDirs != null) {
-                for (registryDir in registryDirs) {
-                    if (registryDir.isDirectory) {
-                        val pkgDirs = registryDir.listFiles { f -> 
-                            f.isDirectory && f.name.startsWith("rustls-platform-verifier-android-") 
-                        }
-                        if (pkgDirs != null && pkgDirs.isNotEmpty()) {
-                            // Pick the first match or sort if needed
-                            val mavenPath = File(pkgDirs[0], "maven").absolutePath
-                            if (File(mavenPath).exists()) {
-                                return mavenPath
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    } catch (e: Exception) {
-        println("Warning: File system fallback for cargo registry failed: ${e.message}")
-    }
-
-    println("Warning: Could not find rustls-platform-verifier-android Maven repo")
-    return ""
-}
+val rustlsPlatformVerifierVersion = rootProject.file("../../Cargo.lock").readLines()
+    .windowed(2)
+    .firstOrNull { it[0] == "name = \"rustls-platform-verifier-android\"" && it[1].startsWith("version = \"") }
+    ?.get(1)?.substringAfter('"')?.substringBefore('"')
+    ?: error("rustls-platform-verifier-android version not found in Cargo.lock")
 
 android {
     compileSdk = 36
@@ -147,11 +91,8 @@ rust {
 repositories {
     google()
     mavenCentral()
-    val localMavenRepo = findRustlsPlatformVerifierAndroidMavenRepo()
-    if (localMavenRepo.isNotEmpty()) {
-        maven {
-            url = uri(localMavenRepo)
-        }
+    maven {
+        url = uri("https://github.com/rustls/rustls-platform-verifier/raw/maven-archive/android-release-support/maven/")
     }
 }
 
@@ -163,7 +104,7 @@ dependencies {
     implementation("com.google.android.material:material:1.13.0")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("rustls:rustls-platform-verifier")
+    implementation("org.rustls:rustls-platform-verifier:$rustlsPlatformVerifierVersion")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.11.1")
     androidTestImplementation("androidx.test.ext:junit:1.1.4")
