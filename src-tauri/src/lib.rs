@@ -17,6 +17,7 @@ mod psg;
 mod wmk;
 mod tauron_heat;
 mod katowickie_wodociagi;
+pub mod kpec_bydgoszcz;
 mod veolia_warszawa;
 mod veolia_poznan;
 pub mod veolia_lodz;
@@ -543,6 +544,7 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(pwik_czestochowa::PwikCzestochowaProvider),
         Box::new(gdanskie_wodociagi::GdanskieWodociagiProvider),
         Box::new(gpec::GpecProvider),
+        Box::new(kpec_bydgoszcz::KpecBydgoszczProvider),
         Box::new(puk_rokietnica::PukRokietnicaProvider),
         Box::new(sec::SecProvider),
         Box::new(lpec::LpecProvider),

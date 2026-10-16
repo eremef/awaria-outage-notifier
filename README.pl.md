@@ -33,6 +33,7 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
   - **Veolia Poznań**: Przerwy w dostawie ciepła w Poznaniu.
   - **Veolia Łódź**: Przerwy w dostawie ciepła w Łodzi.
   - **GPEC Gdańsk**: Przerwy w dostawie ciepła w Gdańsku.
+  - **KPEC Bydgoszcz**: Przerwy w dostawie ciepła w Bydgoszczy.
   - **SEC Szczecin**: Przerwy w dostawie ciepła w Szczecinie.
   - **LPEC Lublin**: Przerwy w dostawie ciepła w Lublinie.
 - **💧 Woda**

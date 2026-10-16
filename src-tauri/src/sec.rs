@@ -2,14 +2,24 @@ use reqwest::Client;
 use crate::api_logic::{AlertSource, UnifiedAlert, AlertProvider, Settings};
 use async_trait::async_trait;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
-use scraper::{Html, Selector};
+use scraper::{ElementRef, Html, Selector};
 use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
 use regex::Regex;
+use std::sync::OnceLock;
 
 pub const SEC_URL: &str = "https://sec.com.pl/przerwy-w-dostawie-ciepla/";
 
 pub struct SecProvider;
+
+fn html_to_plain_text(element: ElementRef<'_>) -> String {
+    static BREAK_RE: OnceLock<Regex> = OnceLock::new();
+    let text = element.text().collect::<Vec<_>>().join(" ");
+    let text = BREAK_RE
+        .get_or_init(|| Regex::new(r"(?i)(?:<br\s*/?>|&lt;br\s*/?&gt;)").unwrap())
+        .replace_all(&text, " ");
+    text.split_whitespace().collect::<Vec<_>>().join(" ")
+}
 
 fn check_local_matching(alert: &mut UnifiedAlert, settings: &Settings, combined_text: &str) {
     let mut is_local = false;
@@ -137,7 +147,7 @@ impl AlertProvider for SecProvider {
             }
 
             for row in malfunction.select(&row_selector) {
-                let area_text = row.select(&area_selector).next().map(|el| el.inner_html().trim().to_string()).unwrap_or_default();
+                let area_text = row.select(&area_selector).next().map(html_to_plain_text).unwrap_or_default();
                 let date_text = row.select(&date_selector).next().map(|el| el.text().collect::<Vec<_>>().join(" ").trim().to_string()).unwrap_or_default();
                 
                 let (start_dt, end_dt) = extract_dates(&date_text);

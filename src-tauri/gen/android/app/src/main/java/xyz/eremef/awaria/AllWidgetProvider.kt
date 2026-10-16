@@ -163,7 +163,7 @@ class AllWidgetProvider : BaseWidgetProvider() {
                                         .sum()
                             }
                             val h = async {
-                                val heatSources = listOf("fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec")
+                                val heatSources = listOf("fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz")
                                         .filter { allEnabledByDefault || it in enabledSources }
                                 heatSources
                                         .map { source ->
@@ -342,7 +342,7 @@ class AllWidgetProvider : BaseWidgetProvider() {
                             it in enabledSources
                         }
         val heatEnabled =
-                allEnabledByDefault || listOf("fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec").any { it in enabledSources }
+                allEnabledByDefault || listOf("fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz").any { it in enabledSources }
         val waterEnabled =
                 allEnabledByDefault || listOf("mpwik_wroclaw", "mpwik_warszawa", "wmk", "aquanet", "katowickie_wodociagi", "zwik_lodz", "pwik_kalisz", "pwik_czestochowa", "wodociagi_plockie", "gdanskie_wodociagi", "puk_rokietnica").any { it in enabledSources }
         val gasEnabled = allEnabledByDefault || listOf("psg").any { it in enabledSources }

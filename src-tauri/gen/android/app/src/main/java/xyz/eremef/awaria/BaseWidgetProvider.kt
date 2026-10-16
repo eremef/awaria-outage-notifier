@@ -390,6 +390,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             "pwik_czestochowa" -> context.getString(R.string.provider_pwik_czestochowa)
             "gdanskie_wodociagi" -> context.getString(R.string.provider_gdanskie_wodociagi)
             "gpec" -> context.getString(R.string.provider_gpec)
+            "kpec_bydgoszcz" -> context.getString(R.string.provider_kpec_bydgoszcz)
             "puk_rokietnica" -> context.getString(R.string.provider_puk_rokietnica)
             "sec" -> context.getString(R.string.provider_sec)
             "lpec" -> context.getString(R.string.provider_lpec)
@@ -509,14 +510,14 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
         val layoutId = when (sourceKey) {
             "tauron", "stoen", "enea", "energa", "pge" -> R.layout.widget_outage_power
-            "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "sec", "lpec" -> R.layout.widget_outage_heat
+            "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz", "sec", "lpec" -> R.layout.widget_outage_heat
             "psg" -> R.layout.widget_outage_gas
             else -> R.layout.widget_outage_water
         }
         
         val layoutSmallId = when (sourceKey) {
             "tauron", "stoen", "enea", "energa", "pge" -> R.layout.widget_outage_power_small
-            "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "sec", "lpec" -> R.layout.widget_outage_heat_small
+            "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz", "sec", "lpec" -> R.layout.widget_outage_heat_small
             "psg" -> R.layout.widget_outage_gas_small
             else -> R.layout.widget_outage_water_small
         }
@@ -620,7 +621,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         if (!isSmall) {
             val iconDesc = when (sourceKey) {
                 "tauron", "stoen", "enea", "energa", "pge" -> getTranslation(context, "power")
-                "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "sec", "lpec" -> getTranslation(context, "heat")
+                "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz", "sec", "lpec" -> getTranslation(context, "heat")
                 "mpwik_wroclaw", "mpwik_warszawa", "wmk", "aquanet", "katowickie_wodociagi", "zwik_lodz", "pwik_kalisz", "wodociagi_plockie", "pwik_czestochowa", "gdanskie_wodociagi", "puk_rokietnica", "mpwik_lublin" -> getTranslation(context, "water")
                 "psg" -> getTranslation(context, "gas")
                 else -> getSourceName(context, sourceKey)

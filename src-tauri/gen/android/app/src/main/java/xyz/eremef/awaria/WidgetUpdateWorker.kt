@@ -217,6 +217,14 @@ class WidgetUpdateWorker(
             gpecProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        // Update KPEC Bydgoszcz widgets
+        val kpecBydgoszczName = ComponentName(context, KpecBydgoszczWidgetProvider::class.java)
+        val kpecBydgoszczIds = appWidgetManager.getAppWidgetIds(kpecBydgoszczName)
+        val kpecBydgoszczProvider = KpecBydgoszczWidgetProvider()
+        for (id in kpecBydgoszczIds) {
+            kpecBydgoszczProvider.updateWidget(context, appWidgetManager, id)
+        }
+
         // Update PUK Rokietnica widgets
         val pukRokietnicaName = ComponentName(context, PukRokietnicaWidgetProvider::class.java)
         val pukRokietnicaIds = appWidgetManager.getAppWidgetIds(pukRokietnicaName)

@@ -33,6 +33,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **Veolia Poznań**: Heat outages in Poznań.
   - **Veolia Łódź**: Heat outages in Łódź.
   - **GPEC Gdańsk**: Heat outages in Gdańsk.
+  - **KPEC Bydgoszcz**: Heat outages in Bydgoszcz.
   - **SEC Szczecin**: Heat outages in Szczecin.
   - **LPEC Lublin**: Heat outages in Lublin.
 - **💧 Water**

@@ -208,6 +208,11 @@ if (typeof document !== 'undefined') {
             const city = (addr.cityName || '').trim().toLowerCase();
             return city.startsWith('katowice') || addr.cityId === 937474;
         },
+        bydgoszcz: (addr) => {
+            if (!addr) return false;
+            const city = (addr.cityName || '').trim().toLowerCase();
+            return city.startsWith('bydgoszcz') || addr.cityId === 928363;
+        },
         szczecin: (addr) => {
             if (!addr) return false;
             const city = (addr.cityName || '').trim().toLowerCase();
@@ -243,8 +248,9 @@ if (typeof document !== 'undefined') {
         // Heating
         { id: 'fortum', label: 'Fortum', category: 'heating', defaultNotify: true, i18nLabel: 'source_fortum_name', i18nShort: 'source_fortum_short' },
         { id: 'gpec', label: 'GPEC Gdańsk', category: 'heating', defaultNotify: true, i18nLabel: 'source_gpec_name', i18nShort: 'source_gpec_short', region: 'gdansk' },
-        { id: 'sec', label: 'SEC', category: 'heating', defaultNotify: true, i18nLabel: 'source_sec_name', i18nShort: 'source_sec_short', region: 'szczecin' },
+        { id: 'kpec_bydgoszcz', label: 'KPEC Bydgoszcz', category: 'heating', defaultNotify: true, i18nLabel: 'source_kpec_bydgoszcz_name', i18nShort: 'source_kpec_bydgoszcz_short', region: 'bydgoszcz' },
         { id: 'lpec', label: 'LPEC', category: 'heating', defaultNotify: true, i18nLabel: 'source_lpec_name', i18nShort: 'source_lpec_short', region: 'lublin' },
+        { id: 'sec', label: 'SEC', category: 'heating', defaultNotify: true, i18nLabel: 'source_sec_name', i18nShort: 'source_sec_short', region: 'szczecin' },
         { id: 'tauron_heat', label: 'Tauron Ciepło', category: 'heating', defaultNotify: true, i18nLabel: 'source_tauron_heat_name', i18nShort: 'source_tauron_heat_short' },
         { id: 'veolia_lodz', label: 'Veolia Łódź', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_lodz_name', i18nShort: 'source_veolia_lodz_short', region: 'lodz' },
         { id: 'veolia_poznan', label: 'Veolia Poznań', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_poznan_name', i18nShort: 'source_veolia_poznan_short', region: 'poznan' },
@@ -2372,7 +2378,7 @@ if (typeof document !== 'undefined') {
             const singleCityProviders = [
                 'mpwik_wroclaw', 'mpwik_warszawa', 'katowickie_wodociagi',
                 'veolia_warszawa', 'veolia_poznan', 'veolia_lodz', 'zwik_lodz',
-                'wodociagi_plockie', 'pwik_kalisz', 'pwik_czestochowa', 'gdanskie_wodociagi', 'gpec', 'puk_rokietnica', 'sec', 'lpec', 'mpwik_lublin'
+                'wodociagi_plockie', 'pwik_kalisz', 'pwik_czestochowa', 'gdanskie_wodociagi', 'gpec', 'kpec_bydgoszcz', 'puk_rokietnica', 'sec', 'lpec', 'mpwik_lublin'
             ];
             if (singleCityProviders.includes(alert.source)) {
                 // For single-city providers, reject matching if the saved address is in a completely different city
@@ -2384,6 +2390,7 @@ if (typeof document !== 'undefined') {
                 if (alert.source === 'wodociagi_plockie' && !cityLower.startsWith('pło') && !cityLower.startsWith('plo')) return false;
                 if (alert.source === 'pwik_kalisz' && !cityLower.startsWith('kalisz')) return false;
                 if (alert.source === 'katowickie_wodociagi' && !cityLower.startsWith('katow')) return false;
+                if (alert.source === 'kpec_bydgoszcz' && !cityLower.startsWith('bydgoszcz')) return false;
                 if (alert.source === 'puk_rokietnica' && !isRokietnica(addr)) return false;
                 if (alert.source === 'sec' && !(cityLower.startsWith('szczecin') || addr.cityId === 977976)) return false;
                 if (alert.source === 'lpec' && !(cityLower.startsWith('lublin') || addr.cityId === 959423)) return false;

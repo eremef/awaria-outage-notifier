@@ -144,6 +144,7 @@ class WidgetConfigActivity : ComponentActivity() {
             className.contains("PwikCzestochowaWidgetProvider") -> PwikCzestochowaWidgetProvider()
             className.contains("GdanskieWodociagiWidgetProvider") -> GdanskieWodociagiWidgetProvider()
             className.contains("GpecWidgetProvider") -> GpecWidgetProvider()
+            className.contains("KpecBydgoszczWidgetProvider") -> KpecBydgoszczWidgetProvider()
             className.contains("PukRokietnicaWidgetProvider") -> PukRokietnicaWidgetProvider()
             className.contains("SecWidgetProvider") -> SecWidgetProvider()
             className.contains("LpecWidgetProvider") -> LpecWidgetProvider()
