@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use app_lib::get_providers;
 use app_lib::api_logic::{AddressEntry, Settings, UnifiedAlert};
 use app_lib::network_state::NetworkState;
-use rumqttc::{AsyncClient, MqttOptions, QoS};
+use rumqttc::{AsyncClient, Broker, MqttOptions, PublishOptions};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -216,11 +216,11 @@ async fn setup_mqtt(settings: &Settings) -> Option<AsyncClient> {
     let port: u16 = std::env::var("MQTT_PORT").unwrap_or_else(|_| "1883".to_string()).parse().unwrap_or(1883);
 
     log::info!("Connecting to MQTT Broker at {}:{}", mqtt_host, port);
-    let mut mqttoptions = MqttOptions::new("awaria_daemon", mqtt_host, port);
+    let mut mqttoptions = MqttOptions::new("awaria_daemon", Broker::tcp(mqtt_host, port));
     mqttoptions.set_credentials(user, pass);
-    mqttoptions.set_keep_alive(Duration::from_secs(5));
+    mqttoptions.set_keep_alive(5);
 
-    let (client, mut connection) = AsyncClient::new(mqttoptions, 10);
+    let (client, mut connection) = AsyncClient::builder(mqttoptions).capacity(10).build();
 
     tokio::spawn(async move {
         loop {
@@ -242,7 +242,13 @@ async fn setup_mqtt(settings: &Settings) -> Option<AsyncClient> {
                 "unique_id": format!("awaria_{}", provider.id()),
                 "icon": "mdi:power-plug-off",
             });
-            let _ = client.publish(topic, QoS::AtLeastOnce, true, serde_json::to_vec(&payload).unwrap()).await;
+            let _ = client
+                .publish(
+                    topic,
+                    serde_json::to_vec(&payload).unwrap(),
+                    PublishOptions::at_least_once().retained(),
+                )
+                .await;
         }
     }
 
@@ -260,8 +266,17 @@ async fn publish_mqtt_state(client: &AsyncClient, settings: &Settings, alerts: &
         let state_topic = format!("homeassistant/sensor/awaria_{}/state", provider.id());
         let attrs_topic = format!("homeassistant/sensor/awaria_{}/attributes", provider.id());
 
-        let _ = client.publish(state_topic, QoS::AtLeastOnce, true, local_count.to_string()).await;
-        let _ = client.publish(attrs_topic, QoS::AtLeastOnce, true, serde_json::to_vec(&serde_json::json!({"alerts": provider_alerts})).unwrap()).await;
+        let publish_options = PublishOptions::at_least_once().retained();
+        let _ = client
+            .publish(state_topic, local_count.to_string(), publish_options)
+            .await;
+        let _ = client
+            .publish(
+                attrs_topic,
+                serde_json::to_vec(&serde_json::json!({"alerts": provider_alerts})).unwrap(),
+                publish_options,
+            )
+            .await;
     }
 }
 

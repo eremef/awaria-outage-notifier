@@ -3,10 +3,10 @@ name = "Awaria"
 version = "1.0.74"
 description = "Awaria"
 authors = ["eremef.xyz"]
-license = ""
+license = "MIT"
 repository = "https://github.com/eremef/awaria-outage-notifier"
-edition = "2021"
-rust-version = "1.77.2"
+edition = "2024"
+rust-version = "1.89"
 default-run = "Awaria"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -41,7 +41,7 @@ log = "0.4.34"
 quick-xml = { version = "0.42.0", features = ["serialize"] }
 regex = "1.13.1"
 reqwest = { version = "0.13", default-features = false, features = ["json", "blocking", "rustls-no-provider", "cookies"] }
-rumqttc = "0.25.1"
+rumqttc = { package = "rumqttc-v4-next", version = "0.34.0", default-features = false, features = ["use-rustls-ring"] }
 rusqlite = { version = "0.39.0", features = ["bundled"] }
 rustls = { version = "0.23.45", default-features = false, features = ["ring", "std"] }
 rustls-platform-verifier = "0.7.1"
@@ -49,12 +49,12 @@ scraper = "0.27.0"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
 sha2 = "0.11.0"
-tauri = { version = "2.12.1", features = [] }
-tauri-plugin-dialog = "2.8.1"
-tauri-plugin-fs = "2.6.0"
-tauri-plugin-log = "2.10.0"
-tauri-plugin-notification = "2.5.1"
-tauri-plugin-opener = "2.7.0"
+tauri = { version = "2.12.4", features = [] }
+tauri-plugin-dialog = "2.8.3"
+tauri-plugin-fs = "2.7.1"
+tauri-plugin-log = "2.10.1"
+tauri-plugin-notification = "2.7.0"
+tauri-plugin-opener = "2.7.2"
 time = "0.3.55"
 tokio = { version = "1.53.2", features = ["full"] }
 tower-http = { version = "0.7.1", features = ["fs"] }

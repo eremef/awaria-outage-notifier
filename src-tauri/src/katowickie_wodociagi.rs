@@ -125,7 +125,7 @@ fn parse_notice_schedule(
         .unwrap_or_else(|| Utc::now().date_naive());
 
     let parse_time = |value: &str| {
-        let (hour, minute) = value.split_once(|ch| ch == '.' || ch == ':')?;
+        let (hour, minute) = value.split_once(['.', ':'])?;
         let hour = hour.parse::<u32>().ok()?;
         let minute = minute.parse::<u32>().ok()?;
         (hour < 24 && minute < 60).then_some((hour, minute))

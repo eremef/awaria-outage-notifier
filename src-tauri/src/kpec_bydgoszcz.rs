@@ -37,7 +37,7 @@ fn end_time_regex() -> &'static Regex {
 }
 
 fn parse_polish_time(value: &str) -> Option<(u32, u32)> {
-    let (hour, minute) = value.split_once(|ch| ch == ':' || ch == '.')?;
+    let (hour, minute) = value.split_once([':', '.'])?;
     let hour = hour.parse::<u32>().ok()?;
     let minute = minute.parse::<u32>().ok()?;
     (hour < 24 && minute < 60).then_some((hour, minute))
@@ -91,8 +91,7 @@ fn normalize_polish(text: &str) -> String {
         .replace('ń', "n")
         .replace('ó', "o")
         .replace('ś', "s")
-        .replace('ź', "z")
-        .replace('ż', "z")
+        .replace(['ź', 'ż'], "z")
 }
 
 fn street_matches_address(text: &str, address: &crate::api_logic::AddressEntry) -> bool {
