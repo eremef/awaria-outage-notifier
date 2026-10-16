@@ -76,8 +76,17 @@ pub fn strip_street_prefixes(s: &str) -> &str {
     s.trim()
 }
 
-pub async fn retry<T, E, F, Fut>(mut f: F, max_retries: usize) -> Result<T, E>
+pub async fn retry<T, E, F, Fut>(f: F, max_retries: usize) -> Result<T, E>
 
+where
+    F: FnMut() -> Fut,
+    Fut: std::future::Future<Output = Result<T, E>>,
+    E: std::fmt::Display,
+{
+    retry_with_delay(f, max_retries, std::time::Duration::from_millis(200)).await
+}
+
+pub async fn retry_with_delay<T, E, F, Fut>(mut f: F, max_retries: usize, delay: std::time::Duration) -> Result<T, E>
 where
     F: FnMut() -> Fut,
     Fut: std::future::Future<Output = Result<T, E>>,
@@ -91,8 +100,7 @@ where
                 log::warn!("Attempt {}/{} failed: {}", attempt + 1, max_retries, e);
                 last_error = Some(e);
                 if attempt < max_retries - 1 {
-                    let delay = 200 * (attempt + 1) as u64;
-                    tokio::time::sleep(std::time::Duration::from_millis(delay)).await;
+                    tokio::time::sleep(delay * (attempt + 1) as u32).await;
                 }
             }
         }

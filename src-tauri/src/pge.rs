@@ -1,6 +1,6 @@
 use reqwest::Client;
 use crate::api_logic::{AddressEntry, AlertSource, UnifiedAlert, AlertProvider, Settings};
-use crate::utils::retry;
+use crate::utils::retry_with_delay;
 
 use chrono::{Duration, Utc};
 use chrono_tz::Europe::Warsaw;
@@ -49,13 +49,27 @@ fn get_pge_url() -> String {
 }
 
 pub async fn fetch_pge_outages(client: &Client) -> Result<Vec<PgeOutage>, String> {
+    fetch_pge_outages_with_retry(client, &get_pge_url()).await
+}
+
+async fn fetch_pge_outages_with_retry(client: &Client, base_url: &str) -> Result<Vec<PgeOutage>, String> {
+    // PGE intermittently returns a plain-text 404 from the same working endpoint.
+    // Space attempts out, but still report persistent failures to the caller.
+    retry_with_delay(
+        || fetch_pge_outages_once(client, base_url),
+        5,
+        std::time::Duration::from_secs(1),
+    ).await
+}
+
+async fn fetch_pge_outages_once(client: &Client, base_url: &str) -> Result<Vec<PgeOutage>, String> {
     let now = Utc::now().with_timezone(&Warsaw);
     let start_at_to = (now + Duration::days(30)).format("%Y-%m-%d %H:%M:%S").to_string();
     let stop_at_from = now.format("%Y-%m-%d %H:%M:%S").to_string();
 
     let url = format!(
         "{}?startAtTo={}&stopAtFrom={}",
-        get_pge_url(),
+        base_url,
         start_at_to.replace(' ', "+").replace(':', "%3A"),
         stop_at_from.replace(' ', "+").replace(':', "%3A")
     );
@@ -65,6 +79,9 @@ pub async fn fetch_pge_outages(client: &Client) -> Result<Vec<PgeOutage>, String
     let res = client
         .get(&url)
         .header("accept", "application/json")
+        // Let each retry reach a fresh upstream connection instead of reusing
+        // a connection that may be pinned to a failing PGE backend.
+        .header("connection", "close")
         .send()
         .await
         .map_err(|e| e.to_string())?;
@@ -185,7 +202,7 @@ impl AlertProvider for PgeProvider {
         settings: &Settings,
         _app_handle: Option<&tauri::AppHandle>,
     ) -> (Vec<UnifiedAlert>, Vec<String>) {
-        match retry(|| fetch_pge_outages(client), 3).await {
+        match fetch_pge_outages(client).await {
             Ok(outages) => {
                 let mut alerts = Vec::new();
                 
@@ -412,16 +429,58 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_fetch_pge_recovers_after_404() {
+        let mut server = mockito::Server::new_async().await;
+        let unavailable = server.mock("GET", "/api/power-outage")
+            .match_query(mockito::Matcher::Any)
+            .match_header("connection", "close")
+            .with_status(404)
+            .with_body("404 page not found\n")
+            .expect(3)
+            .create_async().await;
+        let available = server.mock("GET", "/api/power-outage")
+            .match_query(mockito::Matcher::Any)
+            .match_header("connection", "close")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"[{"id":1,"startAt":"2026-10-16 10:00:00","stopAt":"2026-10-16 14:00:00","addresses":[]}]"#)
+            .expect(1)
+            .create_async().await;
+
+        let outages = fetch_pge_outages_with_retry(
+            &Client::new(), &format!("{}/api/power-outage", server.url()),
+        ).await.expect("should recover after a transient 404");
+
+        assert_eq!(outages.len(), 1);
+        assert_eq!(outages[0].id, 1);
+        unavailable.assert_async().await;
+        available.assert_async().await;
+    }
+
+    #[tokio::test]
+    async fn test_fetch_pge_reports_persistent_404() {
+        let mut server = mockito::Server::new_async().await;
+        let unavailable = server.mock("GET", "/api/power-outage")
+            .match_query(mockito::Matcher::Any)
+            .match_header("connection", "close")
+            .with_status(404)
+            .expect(5)
+            .create_async().await;
+
+        let error = fetch_pge_outages_with_retry(
+            &Client::new(), &format!("{}/api/power-outage", server.url()),
+        ).await.unwrap_err();
+
+        assert_eq!(error, "PGE HTTP error: 404 Not Found");
+        unavailable.assert_async().await;
+    }
+
+    #[tokio::test]
+    #[ignore = "requires the live PGE API"]
     async fn test_fetch_pge_real() {
         use crate::network_state::NetworkState;
         let client = NetworkState::build_client().unwrap();
-        match fetch_pge_outages(&client).await {
-            Ok(outages) => {
-                println!("Fetched {} PGE outages", outages.len());
-            }
-            Err(e) => {
-                println!("Skipping PGE integration test (API failed): {}", e);
-            }
-        }
+        let outages = fetch_pge_outages(&client).await.expect("PGE live API failed after retries");
+        println!("Fetched {} PGE outages", outages.len());
     }
 }
