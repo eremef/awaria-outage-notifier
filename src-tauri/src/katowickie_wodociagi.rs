@@ -2,7 +2,7 @@ use reqwest::Client;
 use crate::api_logic::{AddressEntry, AlertSource, UnifiedAlert, AlertProvider, Settings};
 use async_trait::async_trait;
 use regex::Regex;
-use chrono::{Duration, Utc};
+use chrono::{Duration, NaiveDate, Utc};
 
 pub const WODOCIAGI_KATOWICE_URL: &str = "https://wodociagi.katowice.pl/rss_woda";
 
@@ -114,6 +114,59 @@ impl CompiledWodociagiRegex {
 
 pub struct KatowickieWodociagiProvider;
 
+fn parse_notice_schedule(
+    text: &str,
+    termin_re: &Regex,
+    time_re: &Regex,
+) -> (Option<String>, Option<String>) {
+    let date = termin_re
+        .captures(text)
+        .and_then(|caps| NaiveDate::parse_from_str(&caps[1], "%Y-%m-%d").ok())
+        .unwrap_or_else(|| Utc::now().date_naive());
+
+    let parse_time = |value: &str| {
+        let (hour, minute) = value.split_once(|ch| ch == '.' || ch == ':')?;
+        let hour = hour.parse::<u32>().ok()?;
+        let minute = minute.parse::<u32>().ok()?;
+        (hour < 24 && minute < 60).then_some((hour, minute))
+    };
+
+    if let Some(caps) = time_re.captures(text) {
+        if let (Some((start_hour, start_minute)), Some((end_hour, end_minute))) =
+            (parse_time(&caps[1]), parse_time(&caps[2]))
+        {
+            let start = date.and_hms_opt(start_hour, start_minute, 0).unwrap();
+            let mut end = date.and_hms_opt(end_hour, end_minute, 0).unwrap();
+            if end <= start {
+                end += Duration::hours(24);
+            }
+            return (
+                Some(start.format("%Y-%m-%dT%H:%M:%S").to_string()),
+                Some(end.format("%Y-%m-%dT%H:%M:%S").to_string()),
+            );
+        }
+    }
+
+    let start = date.and_hms_opt(0, 0, 0).unwrap();
+    let end = start + Duration::hours(24);
+    (
+        Some(start.format("%Y-%m-%dT%H:%M:%S").to_string()),
+        Some(end.format("%Y-%m-%dT%H:%M:%S").to_string()),
+    )
+}
+
+fn get_notice_text(item: &WodociagiKatowiceItem) -> String {
+    let title = item.title.trim();
+    let raw_description = item.raw_description.trim();
+    if title.is_empty() {
+        raw_description.to_string()
+    } else if raw_description.is_empty() || title.contains(raw_description) {
+        title.to_string()
+    } else {
+        format!("{} {}", title, raw_description)
+    }
+}
+
 #[async_trait]
 impl AlertProvider for KatowickieWodociagiProvider {
     fn id(&self) -> String {
@@ -175,9 +228,13 @@ impl AlertProvider for KatowickieWodociagiProvider {
 
                 let mut alerts = Vec::new();
                 let termin_re = Regex::new(r"Termin:\s*(\d{4}-\d{2}-\d{2})").unwrap();
+                let time_re = Regex::new(
+                    r"(?i)Orientacyjny\s+czas\s+wystąpienia\s+zakłóceń:\s*(?:godz\.?\s*)?(\d{1,2}[.:]\d{2})\s*[-–—]\s*(\d{1,2}[.:]\d{2})",
+                ).unwrap();
 
                 for item in items {
-                    let combined_text = format!("{} {}", item.title, item.description);
+                    let notice_text = get_notice_text(&item);
+                    let combined_text = format!("{} {}", notice_text, item.description);
 
                     let mut local_match_idx = None;
                     for (idx, compiled) in &active_addresses {
@@ -187,26 +244,15 @@ impl AlertProvider for KatowickieWodociagiProvider {
                         }
                     }
 
-                    // Try parsing the date from raw_description: "Termin: 2026-05-20"
-                    let start_date = if let Some(caps) = termin_re.captures(&item.raw_description) {
-                        Some(format!("{}T00:00:00", &caps[1]))
-                    } else {
-                        // Fallback to today at midnight if date is unknown
-                        Some(Utc::now().format("%Y-%m-%dT00:00:00").to_string())
-                    };
-
-                    let end_date = start_date.as_ref().and_then(|s| {
-                        crate::utils::parse_date(s).map(|dt| {
-                            let end = dt + Duration::hours(24);
-                            end.format("%Y-%m-%dT%H:%M:00").to_string()
-                        })
-                    });
+                    let schedule_text = format!("{} {}", notice_text, item.raw_description);
+                    let (start_date, end_date) =
+                        parse_notice_schedule(&schedule_text, &termin_re, &time_re);
 
                     let mut alert = UnifiedAlert {
                         source: AlertSource::KatowickieWodociagi,
                         startDate: start_date,
                         endDate: end_date,
-                        message: Some(item.title.clone()),
+                        message: Some(notice_text),
                         location: Some(item.description.clone()),
                         address_index: None,
                         is_local: Some(false),
