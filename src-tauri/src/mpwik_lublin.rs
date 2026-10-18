@@ -184,24 +184,20 @@ impl AlertProvider for MpwikLublinProvider {
             let mut streets = Vec::new();
             let mut incident_type = "Awaria wody".to_string();
             
-            if let Some(map_el) = item.select(&map_selector).next() {
-                if let Some(data_pins) = map_el.value().attr("data-pins") {
-                    if let Ok(pins_val) = serde_json::from_str::<Value>(data_pins) {
-                        if let Some(pins_arr) = pins_val.as_array() {
+            if let Some(map_el) = item.select(&map_selector).next()
+                && let Some(data_pins) = map_el.value().attr("data-pins")
+                    && let Ok(pins_val) = serde_json::from_str::<Value>(data_pins)
+                        && let Some(pins_arr) = pins_val.as_array() {
                             for pin in pins_arr {
                                 if let Some(street_name) = pin.get("marker_title").and_then(|v| v.as_str()) {
                                     streets.push(street_name.to_string());
                                 }
-                                if let Some(content) = pin.get("marker_content").and_then(|v| v.as_str()) {
-                                    if !content.trim().is_empty() {
+                                if let Some(content) = pin.get("marker_content").and_then(|v| v.as_str())
+                                    && !content.trim().is_empty() {
                                         incident_type = content.trim().to_string();
                                     }
-                                }
                             }
                         }
-                    }
-                }
-            }
 
             let (start_dt, end_dt) = extract_dates(&description);
             let final_description = description.split_whitespace().collect::<Vec<_>>().join(" ");

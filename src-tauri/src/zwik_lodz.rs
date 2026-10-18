@@ -10,19 +10,17 @@ use regex::Regex;
 
 fn parse_zwik_li_date(li_text: &str) -> (Option<NaiveDateTime>, Option<NaiveDateTime>) {
     let re = Regex::new(r"w dniu (\d{1,2})\.(\d{1,2})\.?(?:(20\d{2})r?\.?)?.*?g(?:odz)?\.\s*(\d{1,2})(?::(\d{2}))?-(\d{1,2})(?::(\d{2}))?").unwrap();
-    if let Some(caps) = re.captures(li_text) {
-        if let (Ok(d), Ok(m), Ok(h_start), Ok(h_end)) = (caps[1].parse::<u32>(), caps[2].parse::<u32>(), caps[4].parse::<u32>(), caps[6].parse::<u32>()) {
+    if let Some(caps) = re.captures(li_text)
+        && let (Ok(d), Ok(m), Ok(h_start), Ok(h_end)) = (caps[1].parse::<u32>(), caps[2].parse::<u32>(), caps[4].parse::<u32>(), caps[6].parse::<u32>()) {
             let year = caps.get(3).map_or(Local::now().year(), |m| m.as_str().parse::<i32>().unwrap_or(Local::now().year()));
             let m_start = caps.get(5).map_or(0, |m| m.as_str().parse::<u32>().unwrap_or(0));
             let m_end = caps.get(7).map_or(0, |m| m.as_str().parse::<u32>().unwrap_or(0));
 
-            if let Some(date) = NaiveDate::from_ymd_opt(year, m, d) {
-                if let (Some(t_start), Some(t_end)) = (NaiveTime::from_hms_opt(h_start, m_start, 0), NaiveTime::from_hms_opt(h_end, m_end, 0)) {
+            if let Some(date) = NaiveDate::from_ymd_opt(year, m, d)
+                && let (Some(t_start), Some(t_end)) = (NaiveTime::from_hms_opt(h_start, m_start, 0), NaiveTime::from_hms_opt(h_end, m_end, 0)) {
                     return (Some(NaiveDateTime::new(date, t_start)), Some(NaiveDateTime::new(date, t_end)));
                 }
-            }
         }
-    }
     (None, None)
 }
 
@@ -46,23 +44,19 @@ fn parse_zwik_date(date_str: &str) -> Option<NaiveDateTime> {
 
     let words: Vec<&str> = cleaned.split_whitespace().collect();
     for i in 0..words.len() {
-        if let Ok(day) = words[i].parse::<u32>() {
-            if i + 2 < words.len() {
-                if let Ok(month) = words[i+1].parse::<u32>() {
+        if let Ok(day) = words[i].parse::<u32>()
+            && i + 2 < words.len()
+                && let Ok(month) = words[i+1].parse::<u32>() {
                     let time_parts: Vec<&str> = words[i+2].split('.').collect();
-                    if time_parts.len() == 2 {
-                        if let (Ok(hour), Ok(minute)) = (time_parts[0].parse::<u32>(), time_parts[1].parse::<u32>()) {
+                    if time_parts.len() == 2
+                        && let (Ok(hour), Ok(minute)) = (time_parts[0].parse::<u32>(), time_parts[1].parse::<u32>()) {
                             let year = Local::now().year();
-                            if let Some(date) = NaiveDate::from_ymd_opt(year, month, day) {
-                                if let Some(time) = NaiveTime::from_hms_opt(hour, minute, 0) {
+                            if let Some(date) = NaiveDate::from_ymd_opt(year, month, day)
+                                && let Some(time) = NaiveTime::from_hms_opt(hour, minute, 0) {
                                     return Some(NaiveDateTime::new(date, time));
                                 }
-                            }
                         }
-                    }
                 }
-            }
-        }
     }
     None
 }
@@ -167,11 +161,10 @@ impl AlertProvider for ZwikLodzProvider {
                     
                     if tag_name == "p" || tag_name.starts_with("h") {
                         let text_lower = text.to_lowercase();
-                        if start_date.is_none() {
-                            if let Some(dt) = parse_zwik_date(&text) {
+                        if start_date.is_none()
+                            && let Some(dt) = parse_zwik_date(&text) {
                                 start_date = Some(dt);
                             }
-                        }
                         
                         if text_lower.contains("informacje o awariach") || text_lower.contains("awariach wodociągowych") {
                             current_section = 1;
@@ -215,11 +208,10 @@ impl AlertProvider for ZwikLodzProvider {
                                 if check_street(&a.street_name_1, &combined_text) {
                                     is_match = true;
                                 }
-                                if let Some(s2) = &a.street_name_2 {
-                                    if check_street(s2, &combined_text) {
+                                if let Some(s2) = &a.street_name_2
+                                    && check_street(s2, &combined_text) {
                                         is_match = true;
                                     }
-                                }
                                     
                                 if is_match {
                                     alert.is_local = Some(true);
@@ -299,7 +291,7 @@ mod tests {
             </ul>
         "#;
 
-        let document = Html::parse_document(&html);
+        let document = Html::parse_document(html);
         let selector = Selector::parse("p, h1, h2, h3, h4, h5, h6, ul, ol").unwrap();
         let li_selector = Selector::parse("li").unwrap();
         
@@ -330,23 +322,21 @@ mod tests {
             
             if tag_name == "p" || tag_name.starts_with("h") {
                 let text_lower = text.to_lowercase();
-                if start_date.is_none() {
-                    if let Some(dt) = parse_zwik_date(&text) {
+                if start_date.is_none()
+                    && let Some(dt) = parse_zwik_date(&text) {
                         start_date = Some(dt);
                     }
-                }
                 
                 if text_lower.contains("informacje o awariach") || text_lower.contains("awariach wodociągowych") {
                     current_section = 1;
                 } else if text_lower.contains("planowanych pracach") {
                     current_section = 2;
-                } else if !text_lower.is_empty() && text_lower != " " && !text_lower.contains("&nbsp;") && text_lower != " " {
-                    if parse_zwik_date(&text).is_none() {
+                } else if !text_lower.is_empty() && text_lower != " " && !text_lower.contains("&nbsp;") && text_lower != " "
+                    && parse_zwik_date(&text).is_none() {
                         current_section = 0;
                     }
-                }
-            } else if tag_name == "ul" || tag_name == "ol" {
-                if current_section == 1 || current_section == 2 {
+            } else if (tag_name == "ul" || tag_name == "ol")
+                && (current_section == 1 || current_section == 2) {
                     for li in element.select(&li_selector) {
                         let li_text = li.text().collect::<Vec<_>>().concat().trim().to_string();
                         let li_text = li_text.replace("&nbsp;", " ").replace('\u{a0}', " ");
@@ -362,7 +352,7 @@ mod tests {
                             startDate: start_date.map(|d| d.format("%Y-%m-%dT%H:%M:%S").to_string()),
                             endDate: start_date.map(|d| (d + Duration::hours(24)).format("%Y-%m-%dT%H:%M:%S").to_string()),
                             message: Some(message),
-                            location: Some(format!("Miejscowość: Łódź")),
+                            location: Some("Miejscowość: Łódź".to_string()),
                             address_index: None,
                             is_local: Some(false),
                             hash: None,
@@ -375,11 +365,10 @@ mod tests {
                             if check_street(&a.street_name_1, &combined_text) {
                                 is_match = true;
                             }
-                            if let Some(s2) = &a.street_name_2 {
-                                if check_street(s2, &combined_text) {
+                            if let Some(s2) = &a.street_name_2
+                                && check_street(s2, &combined_text) {
                                     is_match = true;
                                 }
-                            }
                             
                             if is_match {
                                 alert.is_local = Some(true);
@@ -401,7 +390,6 @@ mod tests {
                         alerts.push(alert);
                     }
                 }
-            }
         }
 
         assert_eq!(alerts.len(), 1); // Only 1 alert (the failure) should be parsed, the planned one is "bez wyłączeń", the other is skipped
@@ -421,7 +409,7 @@ mod tests {
             </ul>
         "#;
 
-        let document = Html::parse_document(&html);
+        let document = Html::parse_document(html);
         let selector = Selector::parse("p, h1, h2, h3, h4, h5, h6, ul, ol").unwrap();
         let li_selector = Selector::parse("li").unwrap();
         
@@ -452,23 +440,21 @@ mod tests {
             
             if tag_name == "p" || tag_name.starts_with("h") {
                 let text_lower = text.to_lowercase();
-                if start_date.is_none() {
-                    if let Some(dt) = parse_zwik_date(&text) {
+                if start_date.is_none()
+                    && let Some(dt) = parse_zwik_date(&text) {
                         start_date = Some(dt);
                     }
-                }
                 
                 if text_lower.contains("informacje o awariach") || text_lower.contains("awariach wodociągowych") {
                     current_section = 1;
                 } else if text_lower.contains("planowanych pracach") {
                     current_section = 2;
-                } else if !text_lower.is_empty() && text_lower != " " && !text_lower.contains("&nbsp;") && text_lower != " " {
-                    if parse_zwik_date(&text).is_none() {
+                } else if !text_lower.is_empty() && text_lower != " " && !text_lower.contains("&nbsp;") && text_lower != " "
+                    && parse_zwik_date(&text).is_none() {
                         current_section = 0;
                     }
-                }
-            } else if tag_name == "ul" || tag_name == "ol" {
-                if current_section == 1 || current_section == 2 {
+            } else if (tag_name == "ul" || tag_name == "ol")
+                && (current_section == 1 || current_section == 2) {
                     for li in element.select(&li_selector) {
                         let li_text = li.text().collect::<Vec<_>>().concat().trim().to_string();
                         let li_text = li_text.replace("&nbsp;", " ").replace('\u{a0}', " ");
@@ -490,7 +476,7 @@ mod tests {
                             startDate: li_start.map(|d| d.format("%Y-%m-%dT%H:%M:%S").to_string()),
                             endDate: li_end.map(|d| d.format("%Y-%m-%dT%H:%M:%S").to_string()),
                             message: Some(message),
-                            location: Some(format!("Miejscowość: Łódź")),
+                            location: Some("Miejscowość: Łódź".to_string()),
                             address_index: None,
                             is_local: Some(false),
                             hash: None,
@@ -514,7 +500,6 @@ mod tests {
                         alerts.push(alert);
                     }
                 }
-            }
         }
 
         assert_eq!(alerts.len(), 1, "Should have parsed one alert despite broken HTML header text");

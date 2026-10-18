@@ -122,15 +122,14 @@ pub fn parse_aquanet_list_html(html: &str) -> Result<Vec<AquanetItem>, String> {
             // Find link to detail page
             if let Some(ls) = &link_sel {
                 for a in card.select(ls) {
-                    if let Some(href) = a.value().attr("href") {
-                        if href.contains("/awaria/") {
+                    if let Some(href) = a.value().attr("href")
+                        && href.contains("/awaria/") {
                             // Extract slug from /awaria/{slug}/
                             if let Some(caps) = slug_re.captures(href) {
                                 slug = caps.get(1).unwrap().as_str().to_string();
                             }
                             break;
                         }
-                    }
                 }
             }
 
@@ -139,11 +138,10 @@ pub fn parse_aquanet_list_html(html: &str) -> Result<Vec<AquanetItem>, String> {
             }
 
             // Title
-            if let Some(ts) = &title_sel {
-                if let Some(t) = card.select(ts).next() {
+            if let Some(ts) = &title_sel
+                && let Some(t) = card.select(ts).next() {
                     title = t.text().collect::<Vec<_>>().join(" ").split_whitespace().collect::<Vec<_>>().join(" ");
                 }
-            }
             if title.is_empty() {
                 title = card.text().collect::<Vec<_>>().join(" ").split_whitespace().collect::<Vec<_>>().join(" ").chars().take(120).collect();
             }
@@ -153,11 +151,10 @@ pub fn parse_aquanet_list_html(html: &str) -> Result<Vec<AquanetItem>, String> {
             let (start_date, end_date) = parse_aquanet_date_range(&card_text);
 
             // Location
-            if let Some(ls) = &location_sel {
-                if let Some(l) = card.select(ls).next() {
+            if let Some(ls) = &location_sel
+                && let Some(l) = card.select(ls).next() {
                     location = Some(l.text().collect::<Vec<_>>().join(" ").split_whitespace().collect::<Vec<_>>().join(" "));
                 }
-            }
 
             let is_emergency = title.to_lowercase().contains("awaria") || 
                                title.to_lowercase().contains("emergency");
@@ -248,21 +245,18 @@ fn is_date_like(text: &str) -> bool {
     if lower.contains("od ") || lower.contains("do ") || lower.contains("godz.") || lower.contains("rok ") {
         return true;
     }
-    if let Ok(re) = Regex::new(r"\d{1,2}[.\-]\d{1,2}[.\-]\d{4}") {
-        if re.is_match(text) {
+    if let Ok(re) = Regex::new(r"\d{1,2}[.\-]\d{1,2}[.\-]\d{4}")
+        && re.is_match(text) {
             return true;
         }
-    }
-    if let Ok(re) = Regex::new(r"\b\d{1,2}:\d{2}\b") {
-        if re.is_match(text) {
+    if let Ok(re) = Regex::new(r"\b\d{1,2}:\d{2}\b")
+        && re.is_match(text) {
             return true;
         }
-    }
-    if let Ok(re) = Regex::new(r"\d{1,2}\s+[a-ząćęłńóśźż]+\s+\d{4}") {
-        if re.is_match(&lower) {
+    if let Ok(re) = Regex::new(r"\d{1,2}\s+[a-ząćęłńóśźż]+\s+\d{4}")
+        && re.is_match(&lower) {
             return true;
         }
-    }
     false
 }
 
@@ -304,8 +298,8 @@ pub async fn fetch_aquanet_detail(client: &Client, slug: &str) -> Option<Aquanet
     let mut parsed_location = None;
     let mut parsed_dates = None;
 
-    if let Ok(box_sel) = Selector::parse(".accident-map-box, .accident-content") {
-        if let Some(box_el) = document.select(&box_sel).next() {
+    if let Ok(box_sel) = Selector::parse(".accident-map-box, .accident-content")
+        && let Some(box_el) = document.select(&box_sel).next() {
             let label_sel = Selector::parse(".accident-map-box__content-label, .accident-map-box__label, .label, .accident-content__label").ok();
             let val_sel = Selector::parse(".accident-map-box__content-value, .accident-map-box__content_value, .value, .accident-content__value").ok();
 
@@ -332,7 +326,6 @@ pub async fn fetch_aquanet_detail(client: &Client, slug: &str) -> Option<Aquanet
                 }
             }
         }
-    }
 
     // Try to get location from detail page
     let location = parsed_location.or_else(|| {
@@ -360,8 +353,8 @@ pub async fn fetch_aquanet_detail(client: &Client, slug: &str) -> Option<Aquanet
 
     // Try to get specific title (incident type) from detail page
     let mut title = parsed_title.clone();
-    if title.is_none() {
-        if let Ok(title_sel) = Selector::parse(".accident-map-box__content-value, .accident-map-box__content_value, .accident-detail__title, .accident-content__title, .item-accident__title") {
+    if title.is_none()
+        && let Ok(title_sel) = Selector::parse(".accident-map-box__content-value, .accident-map-box__content_value, .accident-detail__title, .accident-content__title, .item-accident__title") {
             for el in document.select(&title_sel) {
                 let txt = el.text().collect::<Vec<_>>().join(" ").split_whitespace().collect::<Vec<_>>().join(" ");
                 if !txt.is_empty() && !is_date_like(&txt) {
@@ -370,17 +363,14 @@ pub async fn fetch_aquanet_detail(client: &Client, slug: &str) -> Option<Aquanet
                 }
             }
         }
-    }
-    if title.is_none() {
-        if let Ok(h1_sel) = Selector::parse("h1:not(.accident-header__title)") {
-            if let Some(el) = document.select(&h1_sel).next() {
+    if title.is_none()
+        && let Ok(h1_sel) = Selector::parse("h1:not(.accident-header__title)")
+            && let Some(el) = document.select(&h1_sel).next() {
                 let txt = el.text().collect::<Vec<_>>().join(" ").split_whitespace().collect::<Vec<_>>().join(" ");
                 if !txt.is_empty() && !is_date_like(&txt) {
                     title = Some(txt);
                 }
             }
-        }
-    }
 
     // Extract city from .accident-header__title or .accident-header__commune
     let city_sel = Selector::parse(".accident-header__title, .accident-header__commune").ok();
@@ -467,11 +457,10 @@ pub async fn fetch_aquanet_alerts(client: &Client) -> Result<Vec<AquanetItem>, S
                 if let Some(desc) = detail.description {
                     item.description = Some(desc);
                 }
-                if let Some(l) = detail.location {
-                    if item.location.is_none() {
+                if let Some(l) = detail.location
+                    && item.location.is_none() {
                         item.location = Some(l);
                     }
-                }
                 if let Some((start, end)) = detail.dates {
                     if item.start_date.is_none() && start.is_some() {
                         item.start_date = start;
@@ -480,13 +469,12 @@ pub async fn fetch_aquanet_alerts(client: &Client) -> Result<Vec<AquanetItem>, S
                         item.end_date = end;
                     }
                 }
-                if let Some(t) = detail.title {
-                    if !t.is_empty() && (item.title.is_empty() || item.title == "Awaria wodociągowa") {
+                if let Some(t) = detail.title
+                    && !t.is_empty() && (item.title.is_empty() || item.title == "Awaria wodociągowa") {
                         item.title = t;
                         item.is_emergency = item.title.to_lowercase().contains("awaria") || 
                                              item.title.to_lowercase().contains("emergency");
                     }
-                }
                 if let Some(c) = detail.city {
                     item.city = Some(c);
                 }
@@ -597,11 +585,10 @@ impl AquanetItem {
             .unwrap_or_default();
 
         let mut parts = Vec::new();
-        if let Some(inc_type) = &self.incident_type {
-            if !inc_type.is_empty() {
+        if let Some(inc_type) = &self.incident_type
+            && !inc_type.is_empty() {
                 parts.push(inc_type.clone());
             }
-        }
 
         let title_to_use = if self.title.is_empty() {
             if self.is_emergency {
@@ -627,15 +614,14 @@ impl AquanetItem {
 
         let mut base_message = parts.join(" - ");
 
-        if let Some(imp) = &self.impediments {
-            if !imp.is_empty() {
+        if let Some(imp) = &self.impediments
+            && !imp.is_empty() {
                 let trimmed = base_message.trim();
                 if !trimmed.to_lowercase().contains(&imp.to_lowercase()) {
                     let separator = if trimmed.ends_with('.') { " " } else { ". " };
                     base_message = format!("{}{}{}", trimmed, separator, imp);
                 }
             }
-        }
 
         let message = base_message;
         let location = Some(format!("Miejscowość: {}", city));
@@ -674,11 +660,10 @@ impl CompiledAquanetRegex {
             candidates.push(n1.to_string());
 
             // Also last word for surname-based street names
-            if let Some(last) = n1.split_whitespace().last() {
-                if last.len() > 3 {
+            if let Some(last) = n1.split_whitespace().last()
+                && last.len() > 3 {
                     candidates.push(last.to_string());
                 }
-            }
 
             for cand in &candidates {
                 let mut c_clean = cand.to_string();
@@ -1092,14 +1077,14 @@ mod tests {
         assert_eq!(description, Some("W związku z pracami inwestycyjnymi na sieci wodociągowej nastąpi przerwa w dostawie wody.".to_string()));
 
         let imp_sel = Selector::parse(".accident-content__row--impediments, .accident-content__row").unwrap();
-        let impediments = document.select(&imp_sel).filter(|el| {
+        let impediments = document.select(&imp_sel).find(|el| {
             let class_attr = el.value().attr("class").unwrap_or("");
             if class_attr.contains("accident-content__row--impediments") {
                 return true;
             }
             let text = el.text().collect::<Vec<_>>().join(" ").to_lowercase();
             text.contains("utrudnienia")
-        }).next().map(|el| {
+        }).map(|el| {
             el.text().collect::<Vec<_>>().join(" ").split_whitespace().collect::<Vec<_>>().join(" ")
         });
         assert_eq!(impediments, Some("Utrudnienia: Brak wody".to_string()));

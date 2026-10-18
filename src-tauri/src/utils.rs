@@ -108,6 +108,170 @@ where
     Err(last_error.unwrap())
 }
 
+pub fn clean_text(s: &str) -> String {
+    s.to_lowercase()
+        .chars()
+        .map(|c| match c {
+            'ą' => 'a',
+            'ć' => 'c',
+            'ę' => 'e',
+            'ł' => 'l',
+            'ń' => 'n',
+            'ó' => 'o',
+            'ś' => 's',
+            'ź' | 'ż' => 'z',
+            _ => c,
+        })
+        .collect()
+}
+
+pub fn isolate_street_segment(spec: &str, street: &str) -> String {
+    let clean_spec = clean_text(spec);
+    let clean_street = clean_text(street);
+    
+    // Find the street name index
+    if let Some(idx) = clean_spec.find(&clean_street) {
+        let sub = &spec[idx + clean_street.len()..];
+        let sub_clean = &clean_spec[idx + clean_street.len()..];
+        
+        let prefixes = [
+            "ul.", "ul ", "al.", "al ", "pl.", "pl ", 
+            "ulica", "aleja", "plac", "os.", "osiedle", 
+            "rondo", "skwer"
+        ];
+        
+        let mut min_idx = sub.len();
+        for p in prefixes {
+            if let Some(p_idx) = sub_clean.find(p)
+                && p_idx < min_idx {
+                    min_idx = p_idx;
+                }
+        }
+        
+        sub[..min_idx].to_string()
+    } else {
+        // Fallback to significant words
+        let words: Vec<&str> = clean_street.split_whitespace().collect();
+        let sig_words: Vec<&str> = words.into_iter()
+            .filter(|w| w.chars().count() > 3 && !w.chars().all(|c| c.is_numeric()))
+            .collect();
+        
+        for w in sig_words {
+            if let Some(idx) = clean_spec.find(w) {
+                let sub = &spec[idx + w.len()..];
+                let sub_clean = &clean_spec[idx + w.len()..];
+                
+                let prefixes = [
+                    "ul.", "ul ", "al.", "al ", "pl.", "pl ", 
+                    "ulica", "aleja", "plac", "os.", "osiedle", 
+                    "rondo", "skwer"
+                ];
+                
+                let mut min_idx = sub.len();
+                for p in prefixes {
+                    if let Some(p_idx) = sub_clean.find(p)
+                        && p_idx < min_idx {
+                            min_idx = p_idx;
+                        }
+                }
+                return sub[..min_idx].to_string();
+            }
+        }
+        
+        spec.to_string()
+    }
+}
+
+pub fn parse_numeric_prefixes(s: &str) -> Vec<u32> {
+    static RE: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
+    let re = RE.get_or_init(|| regex::Regex::new(r"\d+").unwrap());
+    re.find_iter(s)
+        .filter_map(|m| m.as_str().parse::<u32>().ok())
+        .collect()
+}
+
+pub fn strip_time_patterns(s: &str) -> String {
+    // 1. Remove patterns like HH:MM and HH.MM (e.g. 8:00, 18.00)
+    static TIME_RE: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
+    let time_re = TIME_RE.get_or_init(|| regex::Regex::new(r"\d{1,2}[:.]\d{2}").unwrap());
+    let s = time_re.replace_all(s, "");
+
+    // 2. Remove hour ranges like "godz. 8-18", "w godz. od 8 do 18", "godz 8 do 18"
+    static HOUR_RANGE_RE: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
+    let hour_range_re = HOUR_RANGE_RE.get_or_init(|| {
+        regex::Regex::new(r"(?i)godz\p{L}*\.?\s*(?:od\s*)?\d{1,2}\s*(?:-|do)\s*\d{1,2}").unwrap()
+    });
+    let s = hour_range_re.replace_all(&s, "");
+
+    s.into_owned()
+}
+
+pub fn match_house_number(user_house_no: &str, spec: &str, street_name: Option<&str>) -> bool {
+    let spec_stripped = strip_time_patterns(spec);
+    let isolated_spec = if let Some(street) = street_name {
+        isolate_street_segment(&spec_stripped, street)
+    } else {
+        spec_stripped
+    };
+
+    let user_nums = parse_numeric_prefixes(user_house_no);
+    if user_nums.is_empty() {
+        return true;
+    }
+
+    let spec_lower = isolated_spec.to_lowercase();
+    let spec_nums = parse_numeric_prefixes(&spec_lower);
+    if spec_nums.is_empty() {
+        return true;
+    }
+
+    let is_odd = spec_lower.contains("nieparzyste") || spec_lower.contains("nieparz");
+    let is_even = (spec_lower.contains("parzyste") || spec_lower.contains("parz")) && !is_odd;
+
+    let check_parity = |n: u32| {
+        if is_odd {
+            !n.is_multiple_of(2)
+        } else if is_even {
+            n.is_multiple_of(2)
+        } else {
+            true
+        }
+    };
+
+    static RANGE_RE: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
+    let range_re = RANGE_RE.get_or_init(|| regex::Regex::new(r"(\d+)\s*(?:-|do)\s*(\d+)").unwrap());
+
+    for &u_num in &user_nums {
+        if !check_parity(u_num) {
+            continue;
+        }
+
+        // Check if u_num matches any ranges in the spec
+        let mut matched_in_range = false;
+        for caps in range_re.captures_iter(&spec_lower) {
+            if let (Some(s_match), Some(e_match)) = (caps.get(1), caps.get(2))
+                && let (Ok(start), Ok(end)) = (s_match.as_str().parse::<u32>(), e_match.as_str().parse::<u32>()) {
+                    let min = std::cmp::min(start, end);
+                    let max = std::cmp::max(start, end);
+                    if u_num >= min && u_num <= max {
+                        matched_in_range = true;
+                        break;
+                    }
+                }
+        }
+        if matched_in_range {
+            return true;
+        }
+
+        // Check standalone lists
+        if spec_nums.contains(&u_num) {
+            return true;
+        }
+    }
+
+    false
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -118,7 +282,7 @@ mod tests {
     async fn test_retry_success_first_time() {
         let counter = Arc::new(AtomicUsize::new(0));
         let counter_clone = counter.clone();
-        
+
         let result = retry(|| {
             counter_clone.fetch_add(1, Ordering::SeqCst);
             async { Ok::<u32, &str>(42) }
@@ -132,7 +296,7 @@ mod tests {
     async fn test_retry_success_after_failure() {
         let counter = Arc::new(AtomicUsize::new(0));
         let counter_clone = counter.clone();
-        
+
         let result = retry(|| {
             let val = counter_clone.fetch_add(1, Ordering::SeqCst);
             async move {
@@ -152,7 +316,7 @@ mod tests {
     async fn test_retry_eventual_failure() {
         let counter = Arc::new(AtomicUsize::new(0));
         let counter_clone = counter.clone();
-        
+
         let result = retry(|| {
             counter_clone.fetch_add(1, Ordering::SeqCst);
             async { Err::<u32, &str>("constant fail") }
@@ -233,172 +397,5 @@ mod tests {
         assert!(match_house_number("200", stoen_msg, Some("Radzymińska")));
         assert!(!match_house_number("201", stoen_msg, Some("Radzymińska")));
     }
-}
-
-pub fn clean_text(s: &str) -> String {
-    s.to_lowercase()
-        .chars()
-        .map(|c| match c {
-            'ą' => 'a',
-            'ć' => 'c',
-            'ę' => 'e',
-            'ł' => 'l',
-            'ń' => 'n',
-            'ó' => 'o',
-            'ś' => 's',
-            'ź' | 'ż' => 'z',
-            _ => c,
-        })
-        .collect()
-}
-
-pub fn isolate_street_segment(spec: &str, street: &str) -> String {
-    let clean_spec = clean_text(spec);
-    let clean_street = clean_text(street);
-    
-    // Find the street name index
-    if let Some(idx) = clean_spec.find(&clean_street) {
-        let sub = &spec[idx + clean_street.len()..];
-        let sub_clean = &clean_spec[idx + clean_street.len()..];
-        
-        let prefixes = [
-            "ul.", "ul ", "al.", "al ", "pl.", "pl ", 
-            "ulica", "aleja", "plac", "os.", "osiedle", 
-            "rondo", "skwer"
-        ];
-        
-        let mut min_idx = sub.len();
-        for p in prefixes {
-            if let Some(p_idx) = sub_clean.find(p) {
-                if p_idx < min_idx {
-                    min_idx = p_idx;
-                }
-            }
-        }
-        
-        sub[..min_idx].to_string()
-    } else {
-        // Fallback to significant words
-        let words: Vec<&str> = clean_street.split_whitespace().collect();
-        let sig_words: Vec<&str> = words.into_iter()
-            .filter(|w| w.chars().count() > 3 && !w.chars().all(|c| c.is_numeric()))
-            .collect();
-        
-        for w in sig_words {
-            if let Some(idx) = clean_spec.find(w) {
-                let sub = &spec[idx + w.len()..];
-                let sub_clean = &clean_spec[idx + w.len()..];
-                
-                let prefixes = [
-                    "ul.", "ul ", "al.", "al ", "pl.", "pl ", 
-                    "ulica", "aleja", "plac", "os.", "osiedle", 
-                    "rondo", "skwer"
-                ];
-                
-                let mut min_idx = sub.len();
-                for p in prefixes {
-                    if let Some(p_idx) = sub_clean.find(p) {
-                        if p_idx < min_idx {
-                            min_idx = p_idx;
-                        }
-                    }
-                }
-                return sub[..min_idx].to_string();
-            }
-        }
-        
-        spec.to_string()
-    }
-}
-
-pub fn parse_numeric_prefixes(s: &str) -> Vec<u32> {
-    static RE: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
-    let re = RE.get_or_init(|| regex::Regex::new(r"\d+").unwrap());
-    re.find_iter(s)
-        .filter_map(|m| m.as_str().parse::<u32>().ok())
-        .collect()
-}
-
-pub fn strip_time_patterns(s: &str) -> String {
-    // 1. Remove patterns like HH:MM and HH.MM (e.g. 8:00, 18.00)
-    static TIME_RE: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
-    let time_re = TIME_RE.get_or_init(|| regex::Regex::new(r"\d{1,2}[:.]\d{2}").unwrap());
-    let s = time_re.replace_all(s, "");
-
-    // 2. Remove hour ranges like "godz. 8-18", "w godz. od 8 do 18", "godz 8 do 18"
-    static HOUR_RANGE_RE: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
-    let hour_range_re = HOUR_RANGE_RE.get_or_init(|| {
-        regex::Regex::new(r"(?i)godz\p{L}*\.?\s*(?:od\s*)?\d{1,2}\s*(?:-|do)\s*\d{1,2}").unwrap()
-    });
-    let s = hour_range_re.replace_all(&s, "");
-
-    s.into_owned()
-}
-
-pub fn match_house_number(user_house_no: &str, spec: &str, street_name: Option<&str>) -> bool {
-    let spec_stripped = strip_time_patterns(spec);
-    let isolated_spec = if let Some(street) = street_name {
-        isolate_street_segment(&spec_stripped, street)
-    } else {
-        spec_stripped
-    };
-
-    let user_nums = parse_numeric_prefixes(user_house_no);
-    if user_nums.is_empty() {
-        return true;
-    }
-
-    let spec_lower = isolated_spec.to_lowercase();
-    let spec_nums = parse_numeric_prefixes(&spec_lower);
-    if spec_nums.is_empty() {
-        return true;
-    }
-
-    let is_odd = spec_lower.contains("nieparzyste") || spec_lower.contains("nieparz");
-    let is_even = (spec_lower.contains("parzyste") || spec_lower.contains("parz")) && !is_odd;
-
-    let check_parity = |n: u32| {
-        if is_odd {
-            n % 2 != 0
-        } else if is_even {
-            n % 2 == 0
-        } else {
-            true
-        }
-    };
-
-    static RANGE_RE: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
-    let range_re = RANGE_RE.get_or_init(|| regex::Regex::new(r"(\d+)\s*(?:-|do)\s*(\d+)").unwrap());
-
-    for &u_num in &user_nums {
-        if !check_parity(u_num) {
-            continue;
-        }
-
-        // Check if u_num matches any ranges in the spec
-        let mut matched_in_range = false;
-        for caps in range_re.captures_iter(&spec_lower) {
-            if let (Some(s_match), Some(e_match)) = (caps.get(1), caps.get(2)) {
-                if let (Ok(start), Ok(end)) = (s_match.as_str().parse::<u32>(), e_match.as_str().parse::<u32>()) {
-                    let min = std::cmp::min(start, end);
-                    let max = std::cmp::max(start, end);
-                    if u_num >= min && u_num <= max {
-                        matched_in_range = true;
-                        break;
-                    }
-                }
-            }
-        }
-        if matched_in_range {
-            return true;
-        }
-
-        // Check standalone lists
-        if spec_nums.contains(&u_num) {
-            return true;
-        }
-    }
-
-    false
 }
 

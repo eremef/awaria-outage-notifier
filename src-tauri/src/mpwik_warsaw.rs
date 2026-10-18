@@ -166,11 +166,10 @@ impl MpwikWarszawaItem {
         };
         parts.push(type_prefix.to_string());
         parts.push(format!("ul. {}", self.street));
-        if let Some(dets) = &self.details {
-            if !dets.is_empty() {
+        if let Some(dets) = &self.details
+            && !dets.is_empty() {
                 parts.push(format!("posesje: {}", dets));
             }
-        }
         let message = parts.join(" - ");
 
         let location_str = if self.city.to_uppercase() == "WARSZAWA" {
@@ -309,7 +308,7 @@ mod tests {
         assert_eq!(item.start_date, Some("2026-05-25T16:00:00".to_string()));
         assert_eq!(item.end_date, Some("2026-05-26T00:00:00".to_string()));
         assert_eq!(item.details, Some("Zawrat 18, Zawrat 22".to_string()));
-        assert_eq!(item.is_emergency, false);
+        assert!(!item.is_emergency);
     }
 
     #[test]

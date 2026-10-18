@@ -26,11 +26,10 @@ impl CacheState {
 
     pub fn get(&self) -> Option<Vec<UnifiedAlert>> {
         let lock = self.cache.lock().unwrap();
-        if let Some(c) = lock.as_ref() {
-            if c.timestamp.elapsed() < CACHE_DURATION {
+        if let Some(c) = lock.as_ref()
+            && c.timestamp.elapsed() < CACHE_DURATION {
                 return Some(c.alerts.clone());
             }
-        }
         None
     }
 
@@ -57,11 +56,10 @@ impl CacheState {
     /// Returns cached alerts for a specific source if still within TTL.
     pub fn get_source(&self, source_id: &str) -> Option<Vec<UnifiedAlert>> {
         let lock = self.source_cache.lock().unwrap();
-        if let Some(c) = lock.get(source_id) {
-            if c.timestamp.elapsed() < CACHE_DURATION {
+        if let Some(c) = lock.get(source_id)
+            && c.timestamp.elapsed() < CACHE_DURATION {
                 return Some(c.alerts.clone());
             }
-        }
         None
     }
 

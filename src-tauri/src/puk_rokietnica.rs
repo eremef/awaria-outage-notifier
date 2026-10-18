@@ -22,13 +22,11 @@ pub fn parse_puk_rokietnica_date(date_str: &str, time_str: &str) -> Option<Strin
     } else {
         // Ensure 2-digit hour, e.g. "9:00" -> "09:00"
         let parts: Vec<&str> = time_str.split(':').collect();
-        if parts.len() == 2 {
-            if let Ok(hour) = parts[0].parse::<u32>() {
-                if let Ok(minute) = parts[1].parse::<u32>() {
+        if parts.len() == 2
+            && let Ok(hour) = parts[0].parse::<u32>()
+                && let Ok(minute) = parts[1].parse::<u32>() {
                     time_str = format!("{:02}:{:02}", hour, minute);
                 }
-            }
-        }
     }
 
     let full_str = format!("{} {}", date_str, time_str);

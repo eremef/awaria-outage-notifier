@@ -14,21 +14,18 @@ fn extract_date_and_times(text: &str) -> (Option<NaiveDateTime>, Option<NaiveDat
 
     let mut base_date = Local::now().naive_local().date();
 
-    if let Some(caps) = date_re.captures(text) {
-        if let (Ok(d), Ok(m), Ok(y)) = (caps[1].parse::<u32>(), caps[2].parse::<u32>(), caps[3].parse::<i32>()) {
-            if let Some(date) = NaiveDate::from_ymd_opt(y, m, d) {
+    if let Some(caps) = date_re.captures(text)
+        && let (Ok(d), Ok(m), Ok(y)) = (caps[1].parse::<u32>(), caps[2].parse::<u32>(), caps[3].parse::<i32>())
+            && let Some(date) = NaiveDate::from_ymd_opt(y, m, d) {
                 base_date = date;
             }
-        }
-    }
 
     let mut times = Vec::new();
     for caps in time_re.captures_iter(text) {
-        if let (Ok(h), Ok(m)) = (caps[1].parse::<u32>(), caps[2].parse::<u32>()) {
-            if let Some(time) = NaiveTime::from_hms_opt(h, m, 0) {
+        if let (Ok(h), Ok(m)) = (caps[1].parse::<u32>(), caps[2].parse::<u32>())
+            && let Some(time) = NaiveTime::from_hms_opt(h, m, 0) {
                 times.push(time);
             }
-        }
     }
 
     let start_time = times.first().copied().unwrap_or_else(|| NaiveTime::from_hms_opt(0, 0, 0).unwrap());
@@ -138,15 +135,14 @@ impl AlertProvider for PwikCzestochowaProvider {
                             }
                             
                             // 2. Try to extract from common phrases like "miejscowości Łobodno" or "mieszkańców Łobodno"
-                            if city == "Częstochowa" {
-                                if let Some(caps) = city_extraction_re.captures(&content) {
+                            if city == "Częstochowa"
+                                && let Some(caps) = city_extraction_re.captures(&content) {
                                     let extracted = caps.get(1).unwrap().as_str().to_string();
                                     // Make sure we don't accidentally match "Częstochowa" or street names
                                     if !extracted.to_lowercase().starts_with("ul") && extracted != "Częstochowie" {
                                         city = extracted;
                                     }
                                 }
-                            }
 
                             let (start_dt, end_dt) = extract_date_and_times(&content);
 
@@ -211,11 +207,10 @@ impl AlertProvider for PwikCzestochowaProvider {
                                     if check_street(&a.street_name_1) {
                                         is_match = true;
                                     }
-                                    if let Some(s2) = &a.street_name_2 {
-                                        if check_street(s2) {
+                                    if let Some(s2) = &a.street_name_2
+                                        && check_street(s2) {
                                             is_match = true;
                                         }
-                                    }
                                     // If no street is configured but the city matches, mark it as local.
                                     if a.street_name_1.is_empty() && a.street_name_2.as_deref().unwrap_or("").is_empty() && a_city == city.to_lowercase() {
                                         is_match = true;
@@ -290,7 +285,7 @@ mod tests {
             </div>
         "#;
 
-        let document = Html::parse_document(&html);
+        let document = Html::parse_document(html);
         let middle_selector = Selector::parse("div.middle").unwrap();
         let h3_selector = Selector::parse("h3").unwrap();
         let p_selector = Selector::parse("div.content_text p").unwrap();
@@ -407,11 +402,10 @@ mod tests {
                             if check_street(&a.street_name_1) {
                                 is_match = true;
                             }
-                            if let Some(s2) = &a.street_name_2 {
-                                if check_street(s2) {
+                            if let Some(s2) = &a.street_name_2
+                                && check_street(s2) {
                                     is_match = true;
                                 }
-                            }
                             if a.street_name_1.is_empty() && a.street_name_2.as_deref().unwrap_or("").is_empty() && a_city == city.to_lowercase() {
                                 is_match = true;
                             }

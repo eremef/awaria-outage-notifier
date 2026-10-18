@@ -60,12 +60,11 @@ impl CompiledMpwikRegex {
 
         if has_street {
             let mut candidates = Vec::new();
-            if let Some(n2) = &address.street_name_2 {
-                if !n2.is_empty() && n2 != "null" {
+            if let Some(n2) = &address.street_name_2
+                && !n2.is_empty() && n2 != "null" {
                     let compound = format!("{} {}", n2.trim(), address.street_name_1.trim());
                     candidates.push(compound);
                 }
-            }
             candidates.push(address.street_name_1.trim().to_string());
 
             for word in candidates {

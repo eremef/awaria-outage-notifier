@@ -363,9 +363,9 @@ mod tests {
     #[test]
     fn parses_multiple_cards_and_multi_street_notice() {
         let html = format!(
-            "{}{}",
+            "{}{}</main>",
             ARCHIVED_NOTICE.replace("</main>", ""),
-            format!("{}</main>", ARCHIVED_MULTI_STREET_NOTICE)
+            ARCHIVED_MULTI_STREET_NOTICE
         );
         let alerts = parse_kpec_html(&html, &settings(false));
         assert_eq!(alerts.len(), 2);

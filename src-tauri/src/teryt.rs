@@ -38,13 +38,11 @@ fn db_path(app: &AppHandle) -> Result<std::path::PathBuf, String> {
     // Try using Tauri 2 path resolver (works for bundled resources)
     use tauri::path::BaseDirectory;
     use tauri_plugin_fs::FsExt;
-    if let Ok(resource_path) = app.path().resolve("teryt", BaseDirectory::Resource) {
-        if let Ok(bytes) = app.fs().read(&resource_path) {
-            if std::fs::write(&db, bytes).is_ok() {
+    if let Ok(resource_path) = app.path().resolve("teryt", BaseDirectory::Resource)
+        && let Ok(bytes) = app.fs().read(&resource_path)
+            && std::fs::write(&db, bytes).is_ok() {
                 return Ok(db);
             }
-        }
-    }
 
     // Fallback: dev mode relative to Cargo.toml
     let dev_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))

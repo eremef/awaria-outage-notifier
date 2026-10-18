@@ -110,26 +110,22 @@ async fn main() {
             street_id: None,
         };
 
-        if teryt_path.exists() {
-            if let Ok(cities) = app_lib::teryt::lookup_cities_by_path(&teryt_path, &ha_addr.city_name) {
-                if let Some(city) = cities.into_iter().find(|c| c.city.to_lowercase() == ha_addr.city_name.to_lowercase()) {
+        if teryt_path.exists()
+            && let Ok(cities) = app_lib::teryt::lookup_cities_by_path(&teryt_path, &ha_addr.city_name)
+                && let Some(city) = cities.into_iter().find(|c| c.city.to_lowercase() == ha_addr.city_name.to_lowercase()) {
                     entry.voivodeship = city.voivodeship;
                     entry.district = city.district;
                     entry.commune = city.commune;
                     entry.city_id = Some(city.city_id);
 
-                    if !ha_addr.street_name.is_empty() {
-                        if let Ok(streets) = app_lib::teryt::lookup_streets_by_path(&teryt_path, city.city_id, &ha_addr.street_name) {
-                            if let Some(street) = streets.into_iter().find(|s| s.street_name_1.to_lowercase() == ha_addr.street_name.to_lowercase() || s.full_street_name.to_lowercase().contains(&ha_addr.street_name.to_lowercase())) {
+                    if !ha_addr.street_name.is_empty()
+                        && let Ok(streets) = app_lib::teryt::lookup_streets_by_path(&teryt_path, city.city_id, &ha_addr.street_name)
+                            && let Some(street) = streets.into_iter().find(|s| s.street_name_1.to_lowercase() == ha_addr.street_name.to_lowercase() || s.full_street_name.to_lowercase().contains(&ha_addr.street_name.to_lowercase())) {
                                 entry.street_id = Some(street.street_id);
                                 entry.street_name_1 = street.street_name_1.clone();
                                 entry.street_name_2 = street.street_name_2.clone();
                             }
-                        }
-                    }
                 }
-            }
-        }
         resolved_addresses.push(entry);
     }
 
@@ -494,14 +490,13 @@ async fn fetch_alerts(settings: &Settings) -> Result<Vec<UnifiedAlert>, String> 
 
     // Apply is_local and address filters
     deduplicated.retain(|alert| {
-        if let Some(idx) = alert.address_index {
-            if idx < settings.addresses.len() {
+        if let Some(idx) = alert.address_index
+            && idx < settings.addresses.len() {
                 return settings.addresses[idx].is_active;
             }
-        }
 
-        if alert.is_local == Some(false) {
-            if let Some(loc) = &alert.location {
+        if alert.is_local == Some(false)
+            && let Some(loc) = &alert.location {
                 if loc.contains("Wrocław") {
                     return settings.addresses.iter().any(|a| a.is_active && app_lib::api_logic::is_wroclaw(a));
                 }
@@ -518,7 +513,6 @@ async fn fetch_alerts(settings: &Settings) -> Result<Vec<UnifiedAlert>, String> 
                 }
                 return false;
             }
-        }
         true
     });
 

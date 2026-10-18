@@ -154,7 +154,7 @@ fn dates_in_text(text: &str) -> Vec<NaiveDate> {
             .filter_map(|caps| {
                 let words: Vec<_> = caps[0].split_whitespace().collect();
                 let day = words.first()?.parse::<u32>().ok()?;
-                let month = month_number(*words.get(1)?)?;
+                let month = month_number(words.get(1)?)?;
                 let year = words.get(2)?.parse::<i32>().ok()?;
                 NaiveDate::from_ymd_opt(year, month, day)
             }),
@@ -381,9 +381,7 @@ fn parse_item(item: RssItem, settings: &Settings) -> Vec<UnifiedAlert> {
         .into_iter()
         .filter_map(|segment| {
             let (start_date, end_date) = parse_schedule(&segment.display_text);
-            if start_date.is_none() {
-                return None;
-            }
+            start_date.as_ref()?;
             let address_index = matching_address_index(&segment.match_text, settings);
             Some(UnifiedAlert {
                 source: AlertSource::MpecRzeszow,

@@ -199,8 +199,8 @@ impl AlertProvider for FortumProvider {
                                         matched_any = true;
                                     }
                                 }
-                                if !matched_any {
-                                    if let Some((idx, addr)) = addrs.first() {
+                                if !matched_any
+                                    && let Some((idx, addr)) = addrs.first() {
                                         let mut alert = a.clone();
                                         alert.address_index = Some(*idx);
                                         alert.is_local = Some(false);
@@ -211,7 +211,6 @@ impl AlertProvider for FortumProvider {
                                         });
                                         fortum_alerts.push(alert);
                                     }
-                                }
                             }
                         }
                         Err(e) => fortum_errors.push(format!("Fortum ({}): {}", city_name, e)),
@@ -246,12 +245,11 @@ pub fn matches_street_only(
 
     // Build priority list: compound name first (if nazwa_2 exists), then street_name_1
     let mut candidates: Vec<String> = Vec::new();
-    if let Some(n2) = street_name_2 {
-        if !n2.is_empty() && n2 != "null" {
+    if let Some(n2) = street_name_2
+        && !n2.is_empty() && n2 != "null" {
             let compound = format!("{} {}", n2.trim(), street_name_1.trim());
             candidates.push(compound);
         }
-    }
     candidates.push(street_name_1.trim().to_string());
 
     candidates.iter().any(|c| word_match(message, c))

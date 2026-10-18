@@ -17,11 +17,10 @@ fn parse_plock_date(text: &str) -> (Option<NaiveDateTime>, Option<NaiveDateTime>
     let mut base_date = Local::now().naive_local().date();
 
     if let Some(caps) = date_re.captures(text) {
-        if let (Ok(d), Ok(m), Ok(y)) = (caps[1].parse::<u32>(), caps[2].parse::<u32>(), caps[3].parse::<i32>()) {
-            if let Some(date) = NaiveDate::from_ymd_opt(y, m, d) {
+        if let (Ok(d), Ok(m), Ok(y)) = (caps[1].parse::<u32>(), caps[2].parse::<u32>(), caps[3].parse::<i32>())
+            && let Some(date) = NaiveDate::from_ymd_opt(y, m, d) {
                 base_date = date;
             }
-        }
     } else {
         return (None, None); // No date found
     }
@@ -29,9 +28,9 @@ fn parse_plock_date(text: &str) -> (Option<NaiveDateTime>, Option<NaiveDateTime>
     let mut start_time = NaiveTime::from_hms_opt(8, 0, 0).unwrap();
     let mut end_time = NaiveTime::from_hms_opt(16, 0, 0).unwrap();
 
-    if let Some(caps) = time_re.captures(text) {
-        if let (Ok(h), Ok(m)) = (caps[1].parse::<u32>(), caps[2].parse::<u32>()) {
-            if let Some(t) = NaiveTime::from_hms_opt(h, m, 0) {
+    if let Some(caps) = time_re.captures(text)
+        && let (Ok(h), Ok(m)) = (caps[1].parse::<u32>(), caps[2].parse::<u32>())
+            && let Some(t) = NaiveTime::from_hms_opt(h, m, 0) {
                 start_time = t;
                 // If it mentions "do godzin popołudniowych", assume end of day.
                 if text.to_lowercase().contains("popołudniowych") {
@@ -40,8 +39,6 @@ fn parse_plock_date(text: &str) -> (Option<NaiveDateTime>, Option<NaiveDateTime>
                     end_time = t + Duration::hours(8); 
                 }
             }
-        }
-    }
 
     let start_dt = NaiveDateTime::new(base_date, start_time);
     let mut end_dt = NaiveDateTime::new(base_date, end_time);
@@ -203,11 +200,10 @@ impl AlertProvider for WodociagiPlockieProvider {
                                     if check_street(&a.street_name_1) {
                                         is_match = true;
                                     }
-                                    if let Some(s2) = &a.street_name_2 {
-                                        if check_street(s2) {
+                                    if let Some(s2) = &a.street_name_2
+                                        && check_street(s2) {
                                             is_match = true;
                                         }
-                                    }
                                     if a.street_name_1.is_empty() && a.street_name_2.as_deref().unwrap_or("").is_empty() && a_city == city.to_lowercase() {
                                         is_match = true;
                                     }

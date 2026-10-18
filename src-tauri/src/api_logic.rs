@@ -293,14 +293,12 @@ impl<'a> MonitorEngine<'a> {
 
             // Skip alerts that have already expired — this prevents historical outages from
             // triggering notifications when a provider is newly enabled.
-            if let Some(end_str) = &alert.endDate {
-                if let Some(end_dt) = crate::utils::parse_date(end_str) {
-                    if end_dt < chrono::Utc::now() {
+            if let Some(end_str) = &alert.endDate
+                && let Some(end_dt) = crate::utils::parse_date(end_str)
+                    && end_dt < chrono::Utc::now() {
                         log::debug!("Alert {} skipped: already expired (end={})", hash, end_str);
                         continue;
                     }
-                }
-            }
 
             let notified_enabled = self.settings.notification_preferences.get(&source_key).copied().unwrap_or(false);
 
@@ -308,9 +306,9 @@ impl<'a> MonitorEngine<'a> {
                 let mut already_notified_as_upcoming = false;
 
                 // --- UPCOMING NOTIFICATION ---
-                if self.settings.upcoming_notification_enabled {
-                    if let Some(start_str) = &alert.startDate {
-                        if let Some(start_dt) = crate::utils::parse_date(start_str) {
+                if self.settings.upcoming_notification_enabled
+                    && let Some(start_str) = &alert.startDate
+                        && let Some(start_dt) = crate::utils::parse_date(start_str) {
                             let now_utc = chrono::Utc::now();
                             let diff_hours = (start_dt - now_utc).num_hours();
                             
@@ -332,8 +330,6 @@ impl<'a> MonitorEngine<'a> {
                                 log::debug!("Upcoming alert {} skipped: diff_hours={} not in window", hash, diff_hours);
                             }
                         }
-                    }
-                }
 
                 // --- NEW ALERT NOTIFICATION ---
                 match self.db.is_alert_seen(&source_key, &hash) {
@@ -392,11 +388,10 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
     let outage_type = format!("{} {}", prefix, label);
     let provider_name = alert.source.display_name();
     
-    if let Some(idx) = alert.address_index {
-        if let Some(addr) = settings.addresses.get(idx) {
+    if let Some(idx) = alert.address_index
+        && let Some(addr) = settings.addresses.get(idx) {
             return format!("{}: {} - {}", addr.name, outage_type, provider_name);
         }
-    }
     format!("{} - {}", outage_type, provider_name)
 }
 
@@ -428,8 +423,8 @@ pub fn format_notification_body(alert: &UnifiedAlert, settings: &Settings) -> St
         time_info.join(" - ")
     };
 
-    if let Some(idx) = alert.address_index {
-        if let Some(addr) = settings.addresses.get(idx) {
+    if let Some(idx) = alert.address_index
+        && let Some(addr) = settings.addresses.get(idx) {
             let kiedy_lbl = if is_pl { "Kiedy" } else { "When" };
             let gdzie_lbl = if is_pl { "Gdzie" } else { "Where" };
             
@@ -450,7 +445,6 @@ pub fn format_notification_body(alert: &UnifiedAlert, settings: &Settings) -> St
 
             return format!("{}: {}\n{}: {}", kiedy_lbl, times, gdzie_lbl, saved_addr_str);
         }
-    }
 
     let mut body = alert.message.clone().unwrap_or_default()
         .split_whitespace()

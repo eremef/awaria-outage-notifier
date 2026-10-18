@@ -129,12 +129,11 @@ impl EneaItem {
     pub fn to_unified(&self) -> UnifiedAlert {
         let (mut start_date, mut end_date) = (None, None);
         
-        if let Some(t) = &self.title {
-            if let Some(caps) = date_regex().captures(t) {
+        if let Some(t) = &self.title
+            && let Some(caps) = date_regex().captures(t) {
                 start_date = caps.get(1).map(|m| format!("{}:00", m.as_str().replace(' ', "T")));
                 end_date = caps.get(2).map(|m| format!("{}:00", m.as_str().replace(' ', "T")));
             }
-        }
 
         //let desc = format!("Rejon: {}\n{}", self.region, self.description.clone().unwrap_or_default().trim());
 
@@ -164,12 +163,11 @@ impl CompiledEneaRegex {
         let mut street_candidates = Vec::new();
         if !street_name_1.is_empty() {
             let mut candidates = Vec::new();
-            if let Some(n2) = street_name_2 {
-                if !n2.is_empty() && n2 != "null" {
+            if let Some(n2) = street_name_2
+                && !n2.is_empty() && n2 != "null" {
                     let compound = format!("{} {}", n2.trim(), street_name_1.trim());
                     candidates.push(compound);
                 }
-            }
             candidates.push(street_name_1.trim().to_string());
 
             for word in candidates {

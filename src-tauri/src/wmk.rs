@@ -88,11 +88,10 @@ impl CompiledWmkRegex {
             // 3. Last word (often the surname which is used alone in reports)
             let mut last_words = Vec::new();
             for cand in &raw_candidates {
-                if let Some(last) = cand.split_whitespace().last() {
-                    if last.len() > 2 { // Avoid short things like "II"
+                if let Some(last) = cand.split_whitespace().last()
+                    && last.len() > 2 { // Avoid short things like "II"
                         last_words.push(last.to_string());
                     }
-                }
             }
             raw_candidates.extend(last_words);
 

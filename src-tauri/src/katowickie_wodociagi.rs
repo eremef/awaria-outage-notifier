@@ -75,8 +75,8 @@ impl CompiledWodociagiRegex {
             }
             regex_patterns.push(regex::escape(n1));
 
-            if let Some(last) = n1.split_whitespace().last() {
-                if last.chars().count() > 3 {
+            if let Some(last) = n1.split_whitespace().last()
+                && last.chars().count() > 3 {
                     regex_patterns.push(regex::escape(last));
                     
                     // Simple stemming for Polish adjectival streets
@@ -88,7 +88,6 @@ impl CompiledWodociagiRegex {
                         regex_patterns.push(format!(r"{}\p{{L}}*", regex::escape(stem)));
                     }
                 }
-            }
 
             for p in &regex_patterns {
                 let pat = format!(r"(?i){}", p);
@@ -131,8 +130,8 @@ fn parse_notice_schedule(
         (hour < 24 && minute < 60).then_some((hour, minute))
     };
 
-    if let Some(caps) = time_re.captures(text) {
-        if let (Some((start_hour, start_minute)), Some((end_hour, end_minute))) =
+    if let Some(caps) = time_re.captures(text)
+        && let (Some((start_hour, start_minute)), Some((end_hour, end_minute))) =
             (parse_time(&caps[1]), parse_time(&caps[2]))
         {
             let start = date.and_hms_opt(start_hour, start_minute, 0).unwrap();
@@ -145,7 +144,6 @@ fn parse_notice_schedule(
                 Some(end.format("%Y-%m-%dT%H:%M:%S").to_string()),
             );
         }
-    }
 
     let start = date.and_hms_opt(0, 0, 0).unwrap();
     let end = start + Duration::hours(24);
@@ -187,15 +185,14 @@ impl AlertProvider for KatowickieWodociagiProvider {
         match fetch_rss(client).await {
             Ok(mut items) => {
                 for item in &mut items {
-                    if !item.link.is_empty() {
-                        if let Ok(res) = client
+                    if !item.link.is_empty()
+                        && let Ok(res) = client
                             .get(&item.link)
                             .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
                             .send()
                             .await
-                        {
-                            if res.status().is_success() {
-                                if let Ok(html) = res.text().await {
+                            && res.status().is_success()
+                                && let Ok(html) = res.text().await {
                                     let document = scraper::Html::parse_document(&html);
                                     let selector = scraper::Selector::parse(".aktualnosc-tresc").unwrap();
                                     if let Some(element) = document.select(&selector).next() {
@@ -206,9 +203,6 @@ impl AlertProvider for KatowickieWodociagiProvider {
                                         }
                                     }
                                 }
-                            }
-                        }
-                    }
                 }
 
                 let active_addresses: Vec<(usize, std::sync::Arc<CompiledWodociagiRegex>)> = settings

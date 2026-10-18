@@ -183,11 +183,10 @@ async fn fetch_tauron_heat_outages_at(
 
     if streets.is_empty() {
         let base_name = if !address.street_name_1.is_empty() { &address.street_name_1 } else { &street_query };
-        if let Some(last_word) = base_name.split_whitespace().last() {
-            if last_word != base_name {
+        if let Some(last_word) = base_name.split_whitespace().last()
+            && last_word != base_name {
                 streets = lookup_street_at(client, base_url, last_word, &city.gaid).await.unwrap_or_default();
             }
-        }
     }
 
     if streets.is_empty() {
@@ -255,8 +254,8 @@ impl AlertProvider for TauronHeatProvider {
                 match retry(|| fetch_tauron_heat_outages(&client_c, &addr), 3).await {
                     Ok(response) => {
                         let mut alerts = Vec::new();
-                        if response.outages.present {
-                            if let Some(info_list) = response.outages.outage_info {
+                        if response.outages.present
+                            && let Some(info_list) = response.outages.outage_info {
                                 for item in info_list.info {
                                     alerts.push(UnifiedAlert {
                                         source: AlertSource::TauronHeat,
@@ -270,7 +269,6 @@ impl AlertProvider for TauronHeatProvider {
                                     });
                                 }
                             }
-                        }
                         (alerts, Vec::<String>::new())
                     }
                     Err(e) => (Vec::new(), vec![format!("TauronHeat[{}]: {}", idx, e)]),

@@ -248,12 +248,11 @@ async fn fetch_tauron_outages_at(
     // Fallback 4: Try just the last word (often the surname)
     if streets.is_empty() {
         let base_name = if !address.street_name_1.is_empty() { &address.street_name_1 } else { &street_query };
-        if let Some(last_word) = base_name.split_whitespace().last() {
-            if last_word != base_name {
+        if let Some(last_word) = base_name.split_whitespace().last()
+            && last_word != base_name {
                 log::info!("Tauron: trying last word fallback '{}'", last_word);
                 streets = lookup_street_at(client, base_url, last_word, city.GAID).await.unwrap_or_default();
             }
-        }
     }
 
     if streets.is_empty() {
@@ -349,12 +348,11 @@ impl CompiledTauronRegex {
         
         if has_street {
             let mut candidates = Vec::new();
-            if let Some(n2) = street_name_2 {
-                if !n2.is_empty() && n2 != "null" {
+            if let Some(n2) = street_name_2
+                && !n2.is_empty() && n2 != "null" {
                     let compound = format!("{} {}", n2.trim(), street_name_1.trim());
                     candidates.push(compound);
                 }
-            }
             candidates.push(street_name_1.trim().to_string());
 
             for word in candidates {

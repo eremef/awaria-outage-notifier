@@ -222,11 +222,10 @@ impl AlertProvider for LpecProvider {
 
             let (mut start_dt, end_dt) = extract_dates(&clean_text);
             
-            if start_dt.is_none() {
-                if let Some(d) = &post.date {
+            if start_dt.is_none()
+                && let Some(d) = &post.date {
                     start_dt = parse_date_with_godz(d);
                 }
-            }
 
             // Filter out outdated outages
             let now = chrono::Utc::now().naive_utc();
@@ -238,13 +237,11 @@ impl AlertProvider for LpecProvider {
                 if start + chrono::Duration::hours(24) < now {
                     continue;
                 }
-            } else if let Some(d) = &post.date {
-                if let Some(dt) = parse_date_with_godz(d) {
-                    if dt + chrono::Duration::hours(24) < now {
+            } else if let Some(d) = &post.date
+                && let Some(dt) = parse_date_with_godz(d)
+                    && dt + chrono::Duration::hours(24) < now {
                         continue;
                     }
-                }
-            }
 
             let message = format!("{} - {}", incident_type, clean_text);
             

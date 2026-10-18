@@ -88,12 +88,11 @@ impl CompiledEnergaRegex {
         let mut street_candidates = Vec::new();
         if !street_name_1.is_empty() {
             let mut candidates = Vec::new();
-            if let Some(n2) = street_name_2 {
-                if !n2.is_empty() && n2 != "null" {
+            if let Some(n2) = street_name_2
+                && !n2.is_empty() && n2 != "null" {
                     let compound = format!("{} {}", n2.trim(), street_name_1.trim());
                     candidates.push(compound);
                 }
-            }
             candidates.push(street_name_1.trim().to_string());
 
             for word in candidates {
@@ -119,11 +118,10 @@ impl CompiledEnergaRegex {
             return false;
         }
 
-        if let Some(areas) = &outage.areas {
-            if !areas.iter().any(|a| self.commune.is_match(a)) {
+        if let Some(areas) = &outage.areas
+            && !areas.iter().any(|a| self.commune.is_match(a)) {
                 return false;
             }
-        }
 
         if self.street_candidates.is_empty() {
             return true;
@@ -158,12 +156,11 @@ pub async fn extract_energa_api_url(client: &Client) -> Result<String, String> {
     let re = Regex::new(r#"data-shutdowns="([^"]+)""#)
         .map_err(|e| format!("Regex compilation failed: {}", e))?;
 
-    if let Some(caps) = re.captures(&html) {
-        if let Some(suffix) = caps.get(1) {
+    if let Some(caps) = re.captures(&html)
+        && let Some(suffix) = caps.get(1) {
             let url = format!("{}{}", get_energa_base_url(), suffix.as_str());
             return Ok(url);
         }
-    }
 
     Err("Could not extract data-shutdowns URL suffix from Energa page HTML".to_string())
 }

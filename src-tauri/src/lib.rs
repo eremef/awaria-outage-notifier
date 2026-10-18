@@ -141,11 +141,10 @@ async fn teryt_lookup_street(
 
 fn clear_all_caches(app: &AppHandle, cache_state: &cache::CacheState) {
     cache_state.clear();
-    if let Some(db_state) = app.try_state::<DbState>() {
-        if let Ok(conn) = db_state.conn.lock() {
+    if let Some(db_state) = app.try_state::<DbState>()
+        && let Ok(conn) = db_state.conn.lock() {
             let _ = state_db::set_kv(&conn, "alerts_cache", "");
         }
-    }
 }
 
 // ── Settings persistence ──────────────────────────────────
@@ -568,9 +567,9 @@ fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Setti
 
     if s.filter_by_house_no {
         for alert in alerts.iter_mut() {
-            if alert.is_local == Some(true) {
-                if let Some(idx) = alert.address_index {
-                    if idx < s.addresses.len() {
+            if alert.is_local == Some(true)
+                && let Some(idx) = alert.address_index
+                    && idx < s.addresses.len() {
                         let addr = &s.addresses[idx];
                         let is_street_wide_only = matches!(
                             alert.source,
@@ -599,21 +598,18 @@ fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Setti
                             }
                         }
                     }
-                }
-            }
         }
     }
 
     alerts.retain(|alert| {
-        if let Some(idx) = alert.address_index {
-            if idx < s.addresses.len() {
+        if let Some(idx) = alert.address_index
+            && idx < s.addresses.len() {
                 return s.addresses[idx].is_active;
             }
-        }
         
         // For general city alerts
-        if alert.is_local == Some(false) {
-            if let Some(loc) = &alert.location {
+        if alert.is_local == Some(false)
+            && let Some(loc) = &alert.location {
                 if loc.contains("Wrocław") {
                     return s.addresses.iter().any(|a| a.is_active);
                 }
@@ -631,7 +627,6 @@ fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Setti
                 }
                 return false; // Skip if no active address in this city
             }
-        }
 
         true
     });
@@ -648,15 +643,14 @@ async fn fetch_all_alerts_internal(
     // 1. If cached_only is true, load instantly from the persistent database cache
     if cached_only.unwrap_or(false) {
         let conn = db_state.conn.lock().unwrap();
-        if let Ok(Some(json_str)) = state_db::get_kv(&conn, "alerts_cache") {
-            if let Ok(mut cached_alerts) = serde_json::from_str::<Vec<UnifiedAlert>>(&json_str) {
+        if let Ok(Some(json_str)) = state_db::get_kv(&conn, "alerts_cache")
+            && let Ok(mut cached_alerts) = serde_json::from_str::<Vec<UnifiedAlert>>(&json_str) {
                 log::info!("Serving fetch_all_alerts: persistent SQLite cache hits ({} items)", cached_alerts.len());
                 let path = settings_path(app)?;
                 let settings = load_settings_from_path(&path)?;
                 apply_alert_filtering(&mut cached_alerts, &settings);
                 return Ok(api_logic::AlertsResponse { alerts: cached_alerts, is_stale: true, is_offline: false });
             }
-        }
         return Ok(api_logic::AlertsResponse { alerts: Vec::new(), is_stale: true, is_offline: false });
     }
 
@@ -726,11 +720,10 @@ async fn fetch_all_alerts_internal(
             log::warn!("Active internet check failed. Device appears to be offline.");
             let mut recovered_alerts = Vec::new();
             let conn = db_state.conn.lock().unwrap();
-            if let Ok(Some(json_str)) = state_db::get_kv(&conn, "alerts_cache") {
-                if let Ok(cached_alerts) = serde_json::from_str::<Vec<UnifiedAlert>>(&json_str) {
+            if let Ok(Some(json_str)) = state_db::get_kv(&conn, "alerts_cache")
+                && let Ok(cached_alerts) = serde_json::from_str::<Vec<UnifiedAlert>>(&json_str) {
                     recovered_alerts = cached_alerts;
                 }
-            }
             
             apply_alert_filtering(&mut recovered_alerts, &settings_orig);
             if !recovered_alerts.is_empty() {
@@ -803,8 +796,8 @@ async fn fetch_all_alerts_internal(
         if !failed_sources.is_empty() {
             log::info!("Attempting to recover alerts for {} failed providers from persistent cache", failed_sources.len());
             let conn = db_state.conn.lock().unwrap();
-            if let Ok(Some(json_str)) = state_db::get_kv(&conn, "alerts_cache") {
-                if let Ok(cached_alerts) = serde_json::from_str::<Vec<UnifiedAlert>>(&json_str) {
+            if let Ok(Some(json_str)) = state_db::get_kv(&conn, "alerts_cache")
+                && let Ok(cached_alerts) = serde_json::from_str::<Vec<UnifiedAlert>>(&json_str) {
                     let mut recovered = 0;
                     for old_alert in cached_alerts {
                         if failed_sources.contains(&old_alert.source) {
@@ -814,7 +807,6 @@ async fn fetch_all_alerts_internal(
                     }
                     log::info!("Recovered {} alerts from persistent cache", recovered);
                 }
-            }
         }
 
         // --- DEDUPLICATE BY HASH (Smart Merging) ---

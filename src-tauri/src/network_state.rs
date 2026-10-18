@@ -197,11 +197,10 @@ impl NetworkState {
         let cache_mutex = LAST_CHECK.get_or_init(|| tokio::sync::Mutex::new(None));
 
         let mut guard = cache_mutex.lock().await;
-        if let Some((time, result)) = *guard {
-            if time.elapsed() < Duration::from_secs(5) {
+        if let Some((time, result)) = *guard
+            && time.elapsed() < Duration::from_secs(5) {
                 return result;
             }
-        }
 
         let urls = [
             "https://clients3.google.com/generate_204",

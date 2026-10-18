@@ -27,8 +27,8 @@ pub fn extract_article_links(html: &str) -> Vec<String> {
     let mut links = Vec::new();
     
     for element in document.select(&selector) {
-        if let Some(href) = element.value().attr("href") {
-            if href.contains("/ArticleID/") {
+        if let Some(href) = element.value().attr("href")
+            && href.contains("/ArticleID/") {
                 // Ensure absolute URL
                 let mut full_href = href.to_string();
                 if href.starts_with("/") {
@@ -41,7 +41,6 @@ pub fn extract_article_links(html: &str) -> Vec<String> {
                     links.push(full_href);
                 }
             }
-        }
     }
     links
 }
@@ -92,11 +91,10 @@ fn parse_article_html(url: &str, html: &str) -> Result<PwikKaliszArticle, String
     
     // First try og:description which often contains the clean summary
     let og_desc_selector = Selector::parse("meta[property=\"og:description\"]").unwrap();
-    if let Some(og_desc) = document.select(&og_desc_selector).next() {
-        if let Some(content) = og_desc.value().attr("content") {
+    if let Some(og_desc) = document.select(&og_desc_selector).next()
+        && let Some(content) = og_desc.value().attr("content") {
             full_text = content.to_string();
         }
-    }
     
     if full_text.is_empty() {
         let content_selector = Selector::parse(".eds_articleContent").unwrap();

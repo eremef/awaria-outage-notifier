@@ -110,12 +110,11 @@ impl AlertProvider for GpecProvider {
             return (Vec::new(), Vec::new());
         }
 
-        if let Some(app) = _app_handle {
-            if let Ok(Some(cached_html)) = get_cached_html(app).await {
+        if let Some(app) = _app_handle
+            && let Ok(Some(cached_html)) = get_cached_html(app).await {
                 log::info!("GPEC: Using cached HTML (1h TTL)");
                 return (parse_gpec_html(&cached_html, settings), Vec::new());
             }
-        }
 
         let mut errors = Vec::new();
         let mut alerts = Vec::new();
@@ -251,12 +250,11 @@ pub fn parse_gpec_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAl
         }
 
         // If end_dt is at 00:00:00, the user requested we make it 23:59:59 so it doesn't look like it ends at midnight
-        if let Some(mut ed) = end_dt {
-            if ed.time() == chrono::NaiveTime::from_hms_opt(0, 0, 0).unwrap() {
+        if let Some(mut ed) = end_dt
+            && ed.time() == chrono::NaiveTime::from_hms_opt(0, 0, 0).unwrap() {
                 ed = chrono::NaiveDateTime::new(ed.date(), chrono::NaiveTime::from_hms_opt(23, 59, 59).unwrap());
                 end_dt = Some(ed);
             }
-        }
 
         log::info!("[GPEC] Parsed dates: start={:?}, end={:?}", start_dt, end_dt);
 
@@ -373,11 +371,10 @@ fn check_local_matching(alert: &mut UnifiedAlert, settings: &Settings, city: &st
             if check_street(&a.street_name_1) {
                 is_match = true;
             }
-            if let Some(s2) = &a.street_name_2 {
-                if check_street(s2) {
+            if let Some(s2) = &a.street_name_2
+                && check_street(s2) {
                     is_match = true;
                 }
-            }
             if a.street_name_1.is_empty() && a.street_name_2.as_deref().unwrap_or("").is_empty() && a_city == city.to_lowercase() {
                 is_match = true;
             }
@@ -621,21 +618,18 @@ async fn do_webview_fetch(app: &tauri::AppHandle) -> Result<String, String> {
             .on_navigation(move |url| {
                 let url_str = url.as_str();
                 if url_str.starts_with("http://localhost/gpec_data_ready") {
-                    if let Some(query) = url.query() {
-                        if query.starts_with("data=") {
+                    if let Some(query) = url.query()
+                        && query.starts_with("data=") {
                             let encoded = query.trim_start_matches("data=");
                             if let Ok(decoded) = urlencoding::decode(encoded) {
                                 log::info!("GPEC-FETCH: on_navigation successfully extracted HTML");
-                                if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&decoded) {
-                                    if let Some(html) = parsed.get("html").and_then(|v| v.as_str()) {
-                                        if let Some(tx) = tx_clone.lock().unwrap().take() {
+                                if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&decoded)
+                                    && let Some(html) = parsed.get("html").and_then(|v| v.as_str())
+                                        && let Some(tx) = tx_clone.lock().unwrap().take() {
                                             let _ = tx.send(html.to_string());
                                         }
-                                    }
-                                }
                             }
                         }
-                    }
                     return false; // Block navigation
                 }
                 true // Allow other navigations

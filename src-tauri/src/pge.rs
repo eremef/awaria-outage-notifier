@@ -136,11 +136,10 @@ pub fn matches_prepared_address(
 
     for addr in &outage.addresses {
         if let Some(teryt) = &addr.teryt {
-            if let Some(v) = &teryt.voivodeshipName {
-                if v.to_uppercase() != prep.voivodeship_upper {
+            if let Some(v) = &teryt.voivodeshipName
+                && v.to_uppercase() != prep.voivodeship_upper {
                     continue;
                 }
-            }
             if let Some(c) = &teryt.countyName {
                 let c_lower = c.to_lowercase();
                 if !c_lower.contains(&prep.district_lower) && !prep.district_lower.contains(&c_lower) {

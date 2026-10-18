@@ -311,11 +311,10 @@ fn check_local_matching(alert: &mut UnifiedAlert, settings: &Settings, city: &st
             if check_street(&a.street_name_1) {
                 is_match = true;
             }
-            if let Some(s2) = &a.street_name_2 {
-                if check_street(s2) {
+            if let Some(s2) = &a.street_name_2
+                && check_street(s2) {
                     is_match = true;
                 }
-            }
             if a.street_name_1.is_empty() && a.street_name_2.as_deref().unwrap_or("").is_empty() && a_city == city.to_lowercase() {
                 is_match = true;
             }
