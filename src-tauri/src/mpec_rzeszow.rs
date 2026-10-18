@@ -583,7 +583,7 @@ mod tests {
             cegielniana.startDate.as_deref(),
             Some("2026-10-08T15:00:00")
         );
-        assert_eq!(cegielniana.endDate, None);
+        assert_eq!(cegielniana.endDate.as_deref(), Some("2026-10-08T23:59:00"));
         assert!(
             cegielniana
                 .message
