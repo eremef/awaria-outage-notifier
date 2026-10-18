@@ -489,6 +489,22 @@
         </receiver>
 
         <receiver
+            android:name=".MpecRzeszowWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_mpec_rzeszow">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_MPEC_RZESZOW" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_single_info" />
+        </receiver>
+
+        <receiver
             android:name=".MpwikLublinWidgetProvider"
             android:exported="true"
             android:label="@string/widget_label_mpwik_lublin">
@@ -498,6 +514,38 @@
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
                 <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
                 <action android:name="xyz.eremef.awaria.ACTION_REFRESH_MPWIK_LUBLIN" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_single_info" />
+        </receiver>
+
+        <receiver
+            android:name=".MpwikRzeszowWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_mpwik_rzeszow">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_MPWIK_RZESZOW" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_single_info" />
+        </receiver>
+
+        <receiver
+            android:name=".WmRadomWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_wm_radom">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_WM_RADOM" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"

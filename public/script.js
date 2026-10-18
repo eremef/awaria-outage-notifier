@@ -241,6 +241,41 @@ if (typeof document !== 'undefined') {
             if (!addr) return false;
             const city = (addr.cityName || '').trim().toLowerCase();
             return city.startsWith('lublin') || addr.cityId === 959423;
+        },
+        rzeszow: (addr) => {
+            if (!addr) return false;
+            const city = (addr.cityName || '').trim().toLowerCase();
+            return city.startsWith('rzeszów') || city.startsWith('rzeszow') || addr.cityId === 974133;
+        },
+        mpwik_rzeszow_area: (addr) => {
+            if (!addr) return false;
+            const city = (addr.cityName || '').trim().toLowerCase();
+            const cityIds = [974133, 644750, 652688, 1043193, 975078];
+            if (addr.cityId != null) return cityIds.includes(addr.cityId);
+            const voivodeship = (addr.voivodeship || '').trim().toLowerCase();
+            return (!voivodeship || voivodeship.startsWith('podkarpackie')) &&
+                ['rzeszów', 'rzeszow', 'boguchwała', 'boguchwala', 'krasne', 'tyczyn'].some(name => city.startsWith(name));
+        },
+        wm_radom_area: (addr) => {
+            if (!addr) return false;
+            if (addr.cityId === 972750 || addr.cityId === 642253) return true;
+
+            const normalize = (value) => (value || '').trim().toLowerCase()
+                .replace(/ą/g, 'a').replace(/ć/g, 'c').replace(/ę/g, 'e')
+                .replace(/ł/g, 'l').replace(/ń/g, 'n').replace(/ó/g, 'o')
+                .replace(/ś/g, 's').replace(/ź/g, 'z').replace(/ż/g, 'z');
+            const city = normalize(addr.cityName);
+            const commune = normalize(addr.commune);
+            const voivodeship = normalize(addr.voivodeship);
+            if (voivodeship && !voivodeship.startsWith('mazowieckie')) return false;
+
+            const serviceAreas = [
+                'radom', 'wolanow', 'jastrzebia', 'zakrzew', 'jedlnia-letnisko',
+                'jedlnia letnisko', 'skaryszew', 'jedlinsk', 'kowala'
+            ];
+            return serviceAreas.some(area => city.startsWith(area) || commune.startsWith(area)) ||
+                (city.startsWith('cerekiew') &&
+                    (commune.startsWith('zakrzew') || voivodeship.startsWith('mazowieckie')));
         }
     };
 
@@ -259,6 +294,7 @@ if (typeof document !== 'undefined') {
         { id: 'gpec', label: 'GPEC Gdańsk', category: 'heating', defaultNotify: true, i18nLabel: 'source_gpec_name', i18nShort: 'source_gpec_short', region: 'gdansk' },
         { id: 'kpec_bydgoszcz', label: 'KPEC Bydgoszcz', category: 'heating', defaultNotify: true, i18nLabel: 'source_kpec_bydgoszcz_name', i18nShort: 'source_kpec_bydgoszcz_short', region: 'bydgoszcz' },
         { id: 'lpec', label: 'LPEC', category: 'heating', defaultNotify: true, i18nLabel: 'source_lpec_name', i18nShort: 'source_lpec_short', region: 'lublin' },
+        { id: 'mpec_rzeszow', label: 'MPEC Rzeszów', category: 'heating', defaultNotify: true, i18nLabel: 'source_mpec_rzeszow_name', i18nShort: 'source_mpec_rzeszow_short', region: 'rzeszow' },
         { id: 'sec', label: 'SEC', category: 'heating', defaultNotify: true, i18nLabel: 'source_sec_name', i18nShort: 'source_sec_short', region: 'szczecin' },
         { id: 'tauron_heat', label: 'Tauron Ciepło', category: 'heating', defaultNotify: true, i18nLabel: 'source_tauron_heat_name', i18nShort: 'source_tauron_heat_short' },
         { id: 'veolia_lodz', label: 'Veolia Łódź', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_lodz_name', i18nShort: 'source_veolia_lodz_short', region: 'lodz' },
@@ -269,11 +305,13 @@ if (typeof document !== 'undefined') {
         { id: 'gdanskie_wodociagi', label: 'Gdańskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_gdanskie_wodociagi_name', i18nShort: 'source_gdanskie_wodociagi_short', region: 'gdansk' },
         { id: 'katowickie_wodociagi', label: 'Katowickie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_katowickie_wodociagi_name', i18nShort: 'source_katowickie_wodociagi_short', region: 'katowice' },
         { id: 'mpwik_lublin', label: 'MPWiK Lublin', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_lublin_name', i18nShort: 'source_mpwik_lublin_short', region: 'lublin' },
+        { id: 'mpwik_rzeszow', label: 'MPWiK Rzeszów', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_rzeszow_name', i18nShort: 'source_mpwik_rzeszow_short', region: 'mpwik_rzeszow_area' },
         { id: 'mpwik_warszawa', label: 'MPWiK Warszawa', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_warszawa_name', i18nShort: 'source_mpwik_warszawa_short', region: 'mpwik_warszawa_area' },
         { id: 'mpwik_wroclaw', label: 'MPWiK Wrocław', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_wroclaw_name', i18nShort: 'source_mpwik_wroclaw_short', region: 'wroclaw' },
         { id: 'puk_rokietnica', label: 'PUK Rokietnica', category: 'water', defaultNotify: true, i18nLabel: 'source_puk_rokietnica_name', i18nShort: 'source_puk_rokietnica_short', region: 'rokietnica' },
         { id: 'pwik_czestochowa', label: 'PWiK Częstochowa', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_czestochowa_name', i18nShort: 'source_pwik_czestochowa_short', region: 'czestochowa' },
         { id: 'pwik_kalisz', label: 'PWiK Kalisz', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_kalisz_name', i18nShort: 'source_pwik_kalisz_short', region: 'kalisz' },
+        { id: 'wm_radom', label: 'WM Radom', category: 'water', defaultNotify: true, i18nLabel: 'source_wm_radom_name', i18nShort: 'source_wm_radom_short', region: 'wm_radom_area' },
         { id: 'wmk', label: 'WMK', category: 'water', defaultNotify: true, i18nLabel: 'source_wmk_name', i18nShort: 'source_wmk_short', region: 'krakow' },
         { id: 'wodociagi_plockie', label: 'Wodociągi Płockie', category: 'water', defaultNotify: true, i18nLabel: 'source_wodociagi_plockie_name', i18nShort: 'source_wodociagi_plockie_short', region: 'plock' },
         { id: 'zwik_lodz', label: 'ZWIK Łódź', category: 'water', defaultNotify: true, i18nLabel: 'source_zwik_lodz_name', i18nShort: 'source_zwik_lodz_short', region: 'lodz' },
@@ -2387,7 +2425,7 @@ if (typeof document !== 'undefined') {
             const singleCityProviders = [
                 'mpwik_wroclaw', 'mpwik_warszawa', 'katowickie_wodociagi',
                 'veolia_warszawa', 'veolia_poznan', 'veolia_lodz', 'zwik_lodz',
-                'wodociagi_plockie', 'pwik_kalisz', 'pwik_czestochowa', 'gdanskie_wodociagi', 'gpec', 'kpec_bydgoszcz', 'enea_cieplo', 'puk_rokietnica', 'sec', 'lpec', 'mpwik_lublin'
+                'wodociagi_plockie', 'pwik_kalisz', 'pwik_czestochowa', 'gdanskie_wodociagi', 'gpec', 'kpec_bydgoszcz', 'enea_cieplo', 'puk_rokietnica', 'sec', 'lpec', 'mpwik_lublin', 'mpwik_rzeszow', 'mpec_rzeszow', 'wm_radom'
             ];
             if (singleCityProviders.includes(alert.source)) {
                 // For single-city providers, reject matching if the saved address is in a completely different city
@@ -2407,6 +2445,29 @@ if (typeof document !== 'undefined') {
                 if (alert.source === 'puk_rokietnica' && !isRokietnica(addr)) return false;
                 if (alert.source === 'sec' && !(cityLower.startsWith('szczecin') || addr.cityId === 977976)) return false;
                 if (alert.source === 'lpec' && !(cityLower.startsWith('lublin') || addr.cityId === 959423)) return false;
+                if (alert.source === 'mpwik_rzeszow') {
+                    const rzeszowAreaIds = [974133, 644750, 652688, 1043193, 975078];
+                    const isRzeszowArea = addr.cityId != null
+                        ? rzeszowAreaIds.includes(addr.cityId)
+                        : ['rzeszów', 'rzeszow', 'boguchwała', 'boguchwala', 'krasne', 'tyczyn'].some(name => cityLower.startsWith(name)) &&
+                            (!addr.voivodeship || addr.voivodeship.toLowerCase().startsWith('podkarpackie'));
+                    if (!isRzeszowArea) return false;
+                }
+                if (alert.source === 'wm_radom') {
+                    if (!REGION_MATCHERS.wm_radom_area(addr)) return false;
+                    const normalizeLocation = (value) => (value || '').toLowerCase()
+                        .replace(/ą/g, 'a').replace(/ć/g, 'c').replace(/ę/g, 'e')
+                        .replace(/ł/g, 'l').replace(/ń/g, 'n').replace(/ó/g, 'o')
+                        .replace(/ś/g, 's').replace(/ź/g, 'z').replace(/ż/g, 'z');
+                    const location = normalizeLocation(alert.location).replace(/^miejscowosc:\s*/, '').trim();
+                    const normalizedCity = normalizeLocation(cityName);
+                    if (location === 'radom' && !(normalizedCity.startsWith('radom') || addr.cityId === 972750)) return false;
+                    if (location === 'cerekiew' && !(normalizedCity.startsWith('cerekiew') || addr.cityId === 642253)) return false;
+                    if (location && location !== 'radom' && location !== 'cerekiew' &&
+                        !normalizedCity.startsWith(location) && !normalizeLocation(addr.commune).startsWith(location)) return false;
+                }
+                if (alert.source === 'mpec_rzeszow' &&
+                    !(cityLower.startsWith('rzeszów') || cityLower.startsWith('rzeszow') || addr.cityId === 974133)) return false;
                 if ((alert.source === 'gdanskie_wodociagi' || alert.source === 'gpec') &&
                     !cityLower.startsWith('gdań') &&
                     !cityLower.startsWith('gdan') &&
@@ -2877,11 +2938,14 @@ if (typeof document !== 'undefined') {
             if (!locationHtml && item.location) {
                 locationHtml = `<div class="outage-location">${escapeHtml(item.location)}</div>`;
             }
+            const dateRange = [formatDate(item.startDate), formatDate(item.endDate)]
+                .filter(Boolean)
+                .join(' – ');
 
             return `
             <div class="card source-${item.source}" ${item.hash ? `data-hash="${item.hash}"` : ''}>
                 <div class="outage-time">
-                    ${formatDate(item.startDate)} – ${formatDate(item.endDate)}
+                    ${dateRange}
                 </div>
                 ${locationHtml}
                 ${messageHtml}
@@ -2909,6 +2973,20 @@ if (typeof document !== 'undefined') {
         const localeStr = typeof getLocaleString !== 'undefined' ? getLocaleString() : 'pl-PL';
         const cacheKey = `${dateString}_${localeStr}`;
         if (dateCache[cacheKey]) return dateCache[cacheKey];
+
+        const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateString);
+        if (dateOnly) {
+            const localDate = new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]));
+            if (isNaN(localDate.getTime())) return dateString;
+            const formatted = localDate.toLocaleDateString(localeStr, {
+                weekday: 'short',
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            });
+            dateCache[cacheKey] = formatted;
+            return formatted;
+        }
 
         const date = new Date(dateString);
         if (isNaN(date.getTime())) {

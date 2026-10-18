@@ -379,6 +379,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             "mpwik_warszawa" -> context.getString(R.string.provider_mpwik_warszawa)
             "psg" -> context.getString(R.string.provider_psg)
             "wmk" -> context.getString(R.string.provider_wmk)
+            "wm_radom" -> context.getString(R.string.provider_wm_radom)
             "aquanet" -> context.getString(R.string.provider_aquanet)
             "katowickie_wodociagi" -> context.getString(R.string.provider_katowickie_wodociagi)
             "veolia_warszawa" -> context.getString(R.string.provider_veolia_warszawa)
@@ -395,7 +396,9 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             "puk_rokietnica" -> context.getString(R.string.provider_puk_rokietnica)
             "sec" -> context.getString(R.string.provider_sec)
             "lpec" -> context.getString(R.string.provider_lpec)
+            "mpec_rzeszow" -> context.getString(R.string.provider_mpec_rzeszow)
             "mpwik_lublin" -> context.getString(R.string.provider_mpwik_lublin)
+            "mpwik_rzeszow" -> context.getString(R.string.provider_mpwik_rzeszow)
             else ->
                     key.replaceFirstChar {
                         if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
@@ -622,8 +625,8 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         if (!isSmall) {
             val iconDesc = when (sourceKey) {
                 "tauron", "stoen", "enea", "energa", "pge" -> getTranslation(context, "power")
-                "enea_cieplo", "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz", "sec", "lpec" -> getTranslation(context, "heat")
-                "mpwik_wroclaw", "mpwik_warszawa", "wmk", "aquanet", "katowickie_wodociagi", "zwik_lodz", "pwik_kalisz", "wodociagi_plockie", "pwik_czestochowa", "gdanskie_wodociagi", "puk_rokietnica", "mpwik_lublin" -> getTranslation(context, "water")
+                "enea_cieplo", "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz", "sec", "lpec", "mpec_rzeszow" -> getTranslation(context, "heat")
+                "mpwik_wroclaw", "mpwik_warszawa", "wmk", "wm_radom", "aquanet", "katowickie_wodociagi", "zwik_lodz", "pwik_kalisz", "wodociagi_plockie", "pwik_czestochowa", "gdanskie_wodociagi", "puk_rokietnica", "mpwik_lublin", "mpwik_rzeszow" -> getTranslation(context, "water")
                 "psg" -> getTranslation(context, "gas")
                 else -> getSourceName(context, sourceKey)
             }

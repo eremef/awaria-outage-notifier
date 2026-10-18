@@ -32,6 +32,9 @@ pub mod puk_rokietnica;
 pub mod sec;
 pub mod lpec;
 pub mod mpwik_lublin;
+pub mod mpwik_rzeszow;
+pub mod mpec_rzeszow;
+pub mod wm_radom;
 
 use crate::network_state::NetworkState;
 use api_logic::{
@@ -551,6 +554,9 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(sec::SecProvider),
         Box::new(lpec::LpecProvider),
         Box::new(mpwik_lublin::MpwikLublinProvider),
+        Box::new(mpwik_rzeszow::MpwikRzeszowProvider),
+        Box::new(mpec_rzeszow::MpecRzeszowProvider),
+        Box::new(wm_radom::WmRadomProvider),
     ]
 }
 

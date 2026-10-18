@@ -257,12 +257,36 @@ class WidgetUpdateWorker(
             lpecProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        // Update MPEC Rzeszów widgets
+        val mpecRzeszowName = ComponentName(context, MpecRzeszowWidgetProvider::class.java)
+        val mpecRzeszowIds = appWidgetManager.getAppWidgetIds(mpecRzeszowName)
+        val mpecRzeszowProvider = MpecRzeszowWidgetProvider()
+        for (id in mpecRzeszowIds) {
+            mpecRzeszowProvider.updateWidget(context, appWidgetManager, id)
+        }
+
         // Update MPWiK Lublin widgets
         val mpwikLublinName = ComponentName(context, MpwikLublinWidgetProvider::class.java)
         val mpwikLublinIds = appWidgetManager.getAppWidgetIds(mpwikLublinName)
         val mpwikLublinProvider = MpwikLublinWidgetProvider()
         for (id in mpwikLublinIds) {
             mpwikLublinProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update MPWiK Rzeszów widgets
+        val mpwikRzeszowName = ComponentName(context, MpwikRzeszowWidgetProvider::class.java)
+        val mpwikRzeszowIds = appWidgetManager.getAppWidgetIds(mpwikRzeszowName)
+        val mpwikRzeszowProvider = MpwikRzeszowWidgetProvider()
+        for (id in mpwikRzeszowIds) {
+            mpwikRzeszowProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update WM Radom widgets
+        val wmRadomName = ComponentName(context, WmRadomWidgetProvider::class.java)
+        val wmRadomIds = appWidgetManager.getAppWidgetIds(wmRadomName)
+        val wmRadomProvider = WmRadomWidgetProvider()
+        for (id in wmRadomIds) {
+            wmRadomProvider.updateWidget(context, appWidgetManager, id)
         }
 
         return Result.success()

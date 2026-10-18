@@ -93,6 +93,44 @@ describe('Frontend Logic', () => {
             expect(matchesStreetName(alert, mockAddr)).toBe(false);
         });
 
+        it('matches MPWiK Rzeszów only within its service area', () => {
+            const rzeszow = { cityName: 'Rzeszów', cityId: 974133, voivodeship: 'Podkarpackie', streetName1: 'Nowosądecka' };
+            const lublin = { cityName: 'Lublin', cityId: 959423, voivodeship: 'Lubelskie', streetName1: 'Nowosądecka' };
+            const alert = { message: 'Awaria przy ul. Nowosądeckiej', source: 'mpwik_rzeszow' };
+            expect(matchesStreetName(alert, rzeszow)).toBe(true);
+            expect(matchesStreetName(alert, lublin)).toBe(false);
+        });
+
+        it('matches MPEC Rzeszów only for Rzeszów addresses', () => {
+            const rzeszow = { cityName: 'Rzeszów', cityId: 974133, streetName1: 'Architektów' };
+            const lublin = { cityName: 'Lublin', cityId: 959423, streetName1: 'Architektów' };
+            const alert = { message: 'Przerwa w dostawie ciepła przy ul. Architektów 3', source: 'mpec_rzeszow' };
+            expect(matchesStreetName(alert, rzeszow)).toBe(true);
+            expect(matchesStreetName(alert, lublin)).toBe(false);
+        });
+
+        it('matches WM Radom streets only in the provider area and notice locality', () => {
+            const radom = { cityName: 'Radom', cityId: 972750, commune: 'Radom', streetName1: 'Działkowa' };
+            const cerekiew = { cityName: 'Cerekiew', commune: 'Zakrzew', streetName1: 'Złota' };
+            const lublin = { cityName: 'Lublin', cityId: 959423, commune: 'Lublin', streetName1: 'Działkowa' };
+
+            expect(matchesStreetName({
+                message: 'Awaria wodociągowa na ul. Działkowej',
+                location: 'Miejscowość: Radom',
+                source: 'wm_radom'
+            }, radom)).toBe(true);
+            expect(matchesStreetName({
+                message: 'Przerwa w dostawie wody na ul. Złotej',
+                location: 'Miejscowość: Cerekiew',
+                source: 'wm_radom'
+            }, cerekiew)).toBe(true);
+            expect(matchesStreetName({
+                message: 'Awaria wodociągowa na ul. Działkowej',
+                location: 'Miejscowość: Radom',
+                source: 'wm_radom'
+            }, lublin)).toBe(false);
+        });
+
         it('matches Polish street declensions (e.g. Jędrowizna / Jędrowizny)', () => {
             const addr1 = { cityName: 'Łódź', streetName1: 'Jędrowizna', streetName2: 'ul.' };
             const alert1 = { message: 'Jędrowizny 26 - wyłączenie wodociągu', source: 'zwik_lodz' };
@@ -157,6 +195,12 @@ describe('Frontend Logic', () => {
             const formatted = formatDate(dateStr);
             expect(formatted).toMatch(/12/);
             expect(formatted).toMatch(/10:30/);
+        });
+
+        it('formats a date-only value without inventing a time', () => {
+            const formatted = formatDate('2026-10-06');
+            expect(formatted).toMatch(/2026/);
+            expect(formatted).not.toMatch(/\d{2}:\d{2}/);
         });
 
         it('returns empty string for null input', () => {

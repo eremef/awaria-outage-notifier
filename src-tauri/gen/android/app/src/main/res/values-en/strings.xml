@@ -33,7 +33,9 @@
   <string name="provider_kpec_bydgoszcz">KPEC BDG</string>
   <string name="provider_katowickie_wodociagi">KW KTW</string>
   <string name="provider_lpec">LPEC</string>
+  <string name="provider_mpec_rzeszow">MPEC Rzeszów</string>
   <string name="provider_mpwik_lublin">MPWiK LBL</string>
+  <string name="provider_mpwik_rzeszow">MPWiK RZE</string>
   <string name="provider_mpwik_warszawa">MPWiK WAW</string>
   <string name="provider_mpwik_wroclaw">MPWiK WRO</string>
   <string name="provider_pge">PGE</string>
@@ -49,6 +51,7 @@
   <string name="provider_veolia_poznan">Veolia POZ</string>
   <string name="provider_veolia_warszawa">Veolia WAW</string>
   <string name="provider_wmk">WMK</string>
+  <string name="provider_wm_radom">WM RAD</string>
   <string name="provider_wodociagi_plockie">WP Płock</string>
   <string name="provider_zwik_lodz">ZWIK Łódź</string>
   <string name="widget_label_all">Address: all utilities</string>
@@ -62,8 +65,10 @@
   <string name="widget_label_kpec_bydgoszcz">KPEC Bydgoszcz</string>
   <string name="widget_label_katowickiewodociagi">Katowickie Wodociągi</string>
   <string name="widget_label_lpec">LPEC Lublin</string>
+  <string name="widget_label_mpec_rzeszow">MPEC Rzeszów</string>
   <string name="widget_label_mpwik">MPWiK Wrocław</string>
   <string name="widget_label_mpwik_lublin">MPWiK Lublin</string>
+  <string name="widget_label_mpwik_rzeszow">MPWiK Rzeszów</string>
   <string name="widget_label_mpwik_warszawa">MPWiK Warszawa</string>
   <string name="widget_label_pge">PGE</string>
   <string name="widget_label_psg">PSG</string>
@@ -79,6 +84,7 @@
   <string name="widget_label_veolia_lodz">Veolia Łódź</string>
   <string name="widget_label_veolia_poznan">Veolia Poznań</string>
   <string name="widget_label_wmk">Wodociągi Miasta Krakowa</string>
+  <string name="widget_label_wm_radom">WM Radom</string>
   <string name="widget_label_wodociagi_plockie">Wodociągi Płockie</string>
   <string name="widget_label_zwik_lodz">ZWiK Łódź</string>
 </resources>
