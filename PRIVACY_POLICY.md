@@ -1,6 +1,6 @@
 # Privacy Policy for Awaria
 
-## Last Updated: April 2, 2026
+## Last Updated: October 18, 2026
 
 This Privacy Policy describes how **Awaria** ("we", "our", or "the App") handles information.
 
@@ -14,7 +14,7 @@ This Privacy Policy describes how **Awaria** ("we", "our", or "the App") handles
 
 ## 2. Third-Party Services
 
-The App fetches data from various utility providers (Tauron, Energa, Enea, PGE, Stoen, Fortum, MPWiK). When fetching this data, your device makes direct requests to their public APIs. These providers may see your IP address as part of the standard HTTP request, but no other identifying information is sent.
+The App fetches data from various utility providers (Tauron, Energa, Enea, ENEA Ciepło, PGE, Stoen, Fortum, MPWiK). When fetching this data, your device makes direct requests to their public websites or APIs. These providers may see your IP address as part of the standard HTTP request, but no other identifying information is sent.
 
 ## 3. Data Storage
 

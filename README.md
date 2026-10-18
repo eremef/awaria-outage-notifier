@@ -27,6 +27,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **Stoen**: Planned power outages (Warsaw area).
 - **🔥 Gas - PSG**: Planned and current gas outages.
 - **🌡️ Heat**
+  - **ENEA Ciepło Białystok**: Heat outages in Białystok.
   - **Fortum**: Planned and current heat/hot water outages.
   - **Tauron Ciepło**: Heat outages (Southern Poland).
   - **Veolia Warszawa**: Heat outages in Warsaw.

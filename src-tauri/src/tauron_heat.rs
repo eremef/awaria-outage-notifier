@@ -8,17 +8,6 @@ use serde::{Deserialize, Serialize};
 
 pub const BASE_URL: &str = "https://cieplo.tauron.pl";
 
-fn get_base_url() -> String {
-    #[cfg(test)]
-    {
-        std::env::var("TAURON_HEAT_BASE_URL").unwrap_or_else(|_| BASE_URL.to_string())
-    }
-    #[cfg(not(test))]
-    {
-        BASE_URL.to_string()
-    }
-}
-
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct HeatGeoItem {
     #[serde(rename = "Name")]
@@ -62,15 +51,16 @@ pub struct OutageResponse {
     pub outages: OutagesData,
 }
 
-pub async fn lookup_city(
+async fn lookup_city_at(
     client: &Client,
+    base_url: &str,
     city_name: &str,
     voivodeship: &str,
 ) -> Result<Vec<HeatGeoItem>, String> {
     let call_id = Utc::now().timestamp_millis() % 10000;
     let url = format!(
         "{}/iapi/city/GetCities?partName={}&callid={}",
-        get_base_url(), urlencoding::encode(city_name), call_id
+        base_url, urlencoding::encode(city_name), call_id
     );
 
     log::info!("Tauron Heat API: GET {}", url);
@@ -107,15 +97,16 @@ pub async fn lookup_city(
     Ok(filtered)
 }
 
-pub async fn lookup_street(
+async fn lookup_street_at(
     client: &Client,
+    base_url: &str,
     street_name: &str,
     city_gaid: &str,
 ) -> Result<Vec<HeatGeoItem>, String> {
     let call_id = Utc::now().timestamp_millis() % 10000;
     let url = format!(
         "{}/iapi/street/GetStreets?partName={}&ownerGaid={}&callid={}",
-        get_base_url(), urlencoding::encode(street_name), city_gaid, call_id
+        base_url, urlencoding::encode(street_name), city_gaid, call_id
     );
 
     log::info!("Tauron Heat API: GET {}", url);
@@ -140,13 +131,21 @@ pub async fn fetch_tauron_heat_outages(
     client: &Client,
     address: &AddressEntry,
 ) -> Result<OutageResponse, String> {
+    fetch_tauron_heat_outages_at(client, address, BASE_URL).await
+}
+
+async fn fetch_tauron_heat_outages_at(
+    client: &Client,
+    address: &AddressEntry,
+    base_url: &str,
+) -> Result<OutageResponse, String> {
     log::info!(
         "Tauron Heat: fetching for city='{}', street='{}'",
         address.city_name,
         address.street_name_1
     );
 
-    let cities = lookup_city(client, &address.city_name, &address.voivodeship).await?;
+    let cities = lookup_city_at(client, base_url, &address.city_name, &address.voivodeship).await?;
     let city = cities
         .into_iter()
         .next()
@@ -160,12 +159,12 @@ pub async fn fetch_tauron_heat_outages(
     let mut streets = if street_query.is_empty() {
         Vec::new()
     } else {
-        lookup_street(client, &street_query, &city.gaid).await?
+        lookup_street_at(client, base_url, &street_query, &city.gaid).await?
     };
 
     // Fallbacks similar to Tauron Power
     if streets.is_empty() && !address.street_name_1.is_empty() && street_query != address.street_name_1 {
-        streets = lookup_street(client, &address.street_name_1, &city.gaid).await.unwrap_or_default();
+        streets = lookup_street_at(client, base_url, &address.street_name_1, &city.gaid).await.unwrap_or_default();
     }
 
     if streets.is_empty() {
@@ -175,7 +174,7 @@ pub async fn fetch_tauron_heat_outages(
             if base_name.to_lowercase().starts_with(&p.to_lowercase()) {
                 let clean_name = base_name[p.len()..].trim().to_string();
                 if !clean_name.is_empty() {
-                    streets = lookup_street(client, &clean_name, &city.gaid).await.unwrap_or_default();
+                    streets = lookup_street_at(client, base_url, &clean_name, &city.gaid).await.unwrap_or_default();
                 }
                 if !streets.is_empty() { break; }
             }
@@ -186,7 +185,7 @@ pub async fn fetch_tauron_heat_outages(
         let base_name = if !address.street_name_1.is_empty() { &address.street_name_1 } else { &street_query };
         if let Some(last_word) = base_name.split_whitespace().last() {
             if last_word != base_name {
-                streets = lookup_street(client, last_word, &city.gaid).await.unwrap_or_default();
+                streets = lookup_street_at(client, base_url, last_word, &city.gaid).await.unwrap_or_default();
             }
         }
     }
@@ -202,7 +201,7 @@ pub async fn fetch_tauron_heat_outages(
 
     let url = format!(
         "{}/iapi/warmoutage/getoutages?ulica={}",
-        get_base_url(), street.gaid
+        base_url, street.gaid
     );
 
     log::info!("Tauron Heat API (outages): GET {}", url);
@@ -300,15 +299,11 @@ impl AlertProvider for TauronHeatProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Mutex;
-    static TEST_MUTEX: Mutex<()> = Mutex::new(());
 
     #[tokio::test]
     async fn test_fetch_tauron_heat_mocked() {
-        let _guard = TEST_MUTEX.lock().unwrap();
         let mut server = mockito::Server::new_async().await;
         let url = server.url();
-        std::env::set_var("TAURON_HEAT_BASE_URL", url.clone());
 
         // Mock city lookup
         let _m1 = server.mock("GET", mockito::Matcher::Regex(r"^/iapi/city/GetCities.*".to_string()))
@@ -340,21 +335,18 @@ mod tests {
             ..Default::default()
         };
 
-        let result = fetch_tauron_heat_outages(&client, &addr).await;
+        let result = fetch_tauron_heat_outages_at(&client, &addr, &url).await;
         assert!(result.is_ok());
         let response = result.unwrap();
         assert!(response.outages.present);
         assert_eq!(response.outages.outage_info.unwrap().info[0].reply, "Brak ciepła");
 
-        std::env::remove_var("TAURON_HEAT_BASE_URL");
     }
 
     #[tokio::test]
     async fn test_fetch_tauron_heat_no_outages() {
-        let _guard = TEST_MUTEX.lock().unwrap();
         let mut server = mockito::Server::new_async().await;
         let url = server.url();
-        std::env::set_var("TAURON_HEAT_BASE_URL", url.clone());
 
         let _m1 = server.mock("GET", mockito::Matcher::Regex(r"^/iapi/city/GetCities.*".to_string()))
             .with_status(200)
@@ -379,11 +371,10 @@ mod tests {
             ..Default::default()
         };
 
-        let result = fetch_tauron_heat_outages(&client, &addr).await;
+        let result = fetch_tauron_heat_outages_at(&client, &addr, &url).await;
         assert!(result.is_ok());
         let response = result.unwrap();
         assert!(!response.outages.present);
 
-        std::env::remove_var("TAURON_HEAT_BASE_URL");
     }
 }

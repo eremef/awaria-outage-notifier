@@ -213,6 +213,14 @@ if (typeof document !== 'undefined') {
             const city = (addr.cityName || '').trim().toLowerCase();
             return city.startsWith('bydgoszcz') || addr.cityId === 928363;
         },
+        bialystok: (addr) => {
+            if (!addr) return false;
+            const city = (addr.cityName || '').trim().toLowerCase();
+            if (addr.cityId != null) return addr.cityId === 922410;
+            const voivodeship = (addr.voivodeship || '').trim().toLowerCase();
+            return (city.startsWith('białystok') || city.startsWith('bialystok')) &&
+                (!voivodeship || voivodeship.startsWith('podlaskie'));
+        },
         szczecin: (addr) => {
             if (!addr) return false;
             const city = (addr.cityName || '').trim().toLowerCase();
@@ -246,6 +254,7 @@ if (typeof document !== 'undefined') {
         // Gas
         { id: 'psg', label: 'PSG', category: 'gas', defaultNotify: true, i18nLabel: 'source_psg_name', i18nShort: 'source_psg_short' },
         // Heating
+        { id: 'enea_cieplo', label: 'ENEA Ciepło', category: 'heating', defaultNotify: true, i18nLabel: 'source_enea_cieplo_name', i18nShort: 'source_enea_cieplo_short', region: 'bialystok' },
         { id: 'fortum', label: 'Fortum', category: 'heating', defaultNotify: true, i18nLabel: 'source_fortum_name', i18nShort: 'source_fortum_short' },
         { id: 'gpec', label: 'GPEC Gdańsk', category: 'heating', defaultNotify: true, i18nLabel: 'source_gpec_name', i18nShort: 'source_gpec_short', region: 'gdansk' },
         { id: 'kpec_bydgoszcz', label: 'KPEC Bydgoszcz', category: 'heating', defaultNotify: true, i18nLabel: 'source_kpec_bydgoszcz_name', i18nShort: 'source_kpec_bydgoszcz_short', region: 'bydgoszcz' },
@@ -2378,7 +2387,7 @@ if (typeof document !== 'undefined') {
             const singleCityProviders = [
                 'mpwik_wroclaw', 'mpwik_warszawa', 'katowickie_wodociagi',
                 'veolia_warszawa', 'veolia_poznan', 'veolia_lodz', 'zwik_lodz',
-                'wodociagi_plockie', 'pwik_kalisz', 'pwik_czestochowa', 'gdanskie_wodociagi', 'gpec', 'kpec_bydgoszcz', 'puk_rokietnica', 'sec', 'lpec', 'mpwik_lublin'
+                'wodociagi_plockie', 'pwik_kalisz', 'pwik_czestochowa', 'gdanskie_wodociagi', 'gpec', 'kpec_bydgoszcz', 'enea_cieplo', 'puk_rokietnica', 'sec', 'lpec', 'mpwik_lublin'
             ];
             if (singleCityProviders.includes(alert.source)) {
                 // For single-city providers, reject matching if the saved address is in a completely different city
@@ -2391,6 +2400,10 @@ if (typeof document !== 'undefined') {
                 if (alert.source === 'pwik_kalisz' && !cityLower.startsWith('kalisz')) return false;
                 if (alert.source === 'katowickie_wodociagi' && !cityLower.startsWith('katow')) return false;
                 if (alert.source === 'kpec_bydgoszcz' && !cityLower.startsWith('bydgoszcz')) return false;
+                if (alert.source === 'enea_cieplo' &&
+                    !(addr.cityId === 922410 ||
+                        ((cityLower.startsWith('białystok') || cityLower.startsWith('bialystok')) &&
+                            (!addr.voivodeship || addr.voivodeship.toLowerCase().startsWith('podlaskie'))))) return false;
                 if (alert.source === 'puk_rokietnica' && !isRokietnica(addr)) return false;
                 if (alert.source === 'sec' && !(cityLower.startsWith('szczecin') || addr.cityId === 977976)) return false;
                 if (alert.source === 'lpec' && !(cityLower.startsWith('lublin') || addr.cityId === 959423)) return false;

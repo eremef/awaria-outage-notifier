@@ -27,6 +27,7 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
   - **Stoen**: Planowane wyłączenia prądu (Warszawa i okolice).
 - **🔥 Gaz - PSG**: Planowane i bieżące wyłączenia gazu.
 - **🌡️ Ciepło**
+  - **ENEA Ciepło Białystok**: Przerwy w dostawie ciepła w Białymstoku.
   - **Fortum**: Planowane i bieżące wyłączenia ogrzewania oraz ciepłej wody.
   - **Tauron Ciepło**: Przerwy w dostawie ciepła (Południowa Polska).
   - **Veolia Warszawa**: Przerwy w dostawie ciepła w Warszawie.

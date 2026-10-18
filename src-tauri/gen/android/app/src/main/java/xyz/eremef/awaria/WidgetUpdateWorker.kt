@@ -225,6 +225,14 @@ class WidgetUpdateWorker(
             kpecBydgoszczProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        // Update ENEA Ciepło widgets
+        val eneaCieploName = ComponentName(context, EneaCieploWidgetProvider::class.java)
+        val eneaCieploIds = appWidgetManager.getAppWidgetIds(eneaCieploName)
+        val eneaCieploProvider = EneaCieploWidgetProvider()
+        for (id in eneaCieploIds) {
+            eneaCieploProvider.updateWidget(context, appWidgetManager, id)
+        }
+
         // Update PUK Rokietnica widgets
         val pukRokietnicaName = ComponentName(context, PukRokietnicaWidgetProvider::class.java)
         val pukRokietnicaIds = appWidgetManager.getAppWidgetIds(pukRokietnicaName)

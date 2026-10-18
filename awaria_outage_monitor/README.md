@@ -30,7 +30,7 @@ For each address you want to monitor, add an entry with:
 
 ### Enabled Sources
 
-Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `mpwik_warszawa`).
+Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `mpwik_warszawa`, `enea_cieplo`).
 
 ## Usage
 

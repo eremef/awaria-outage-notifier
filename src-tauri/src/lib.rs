@@ -1,6 +1,7 @@
 pub mod api_logic;
 mod aquanet;
 mod enea;
+mod enea_cieplo;
 mod energa;
 mod fortum;
 mod mpwik;
@@ -528,6 +529,7 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(fortum::FortumProvider),
         Box::new(energa::EnergaProvider),
         Box::new(enea::EneaProvider),
+        Box::new(enea_cieplo::EneaCieploProvider),
         Box::new(pge::PgeProvider),
         Box::new(stoen::StoenProvider),
         Box::new(psg::PsgProvider),

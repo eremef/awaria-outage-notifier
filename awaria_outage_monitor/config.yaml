@@ -2,7 +2,7 @@ name: Awaria Outage Monitor
 version: "1.0.74"
 slug: awaria_outage_monitor
 stage: experimental
-description: Headless outage monitor for Polish utility providers (Tauron, PGE, Enea, Energa, MPWiK, Stoen, Veolia, etc.)
+description: Headless outage monitor for Polish utility providers (Tauron, PGE, Enea, ENEA Ciepło, Energa, MPWiK, Stoen, Veolia, etc.)
 url: https://github.com/eremef/awaria-outage-notifier
 image: "ghcr.io/eremef/awaria-outage-monitor"
 arch:
@@ -41,7 +41,7 @@ schema:
       houseNo: str
       isActive: bool?
   enabled_sources:
-    - list(tauron|mpwik_wroclaw|mpwik_warszawa|fortum|energa|enea|pge|stoen|wmk|tauron_heat|aquanet|katowickie_wodociagi|veolia_warszawa|veolia_poznan|veolia_lodz|zwik_lodz|wodociagi_plockie|pwik_czestochowa|gdanskie_wodociagi)
+    - list(tauron|mpwik_wroclaw|mpwik_warszawa|fortum|energa|enea|enea_cieplo|pge|stoen|wmk|tauron_heat|aquanet|katowickie_wodociagi|veolia_warszawa|veolia_poznan|veolia_lodz|zwik_lodz|wodociagi_plockie|pwik_czestochowa|gdanskie_wodociagi)
   port: port
   show_other_outages: bool
   check_interval_minutes: int

@@ -49,6 +49,8 @@ pub enum AlertSource {
     Gpec,
     #[serde(rename = "kpec_bydgoszcz")]
     KpecBydgoszcz,
+    #[serde(rename = "enea_cieplo")]
+    EneaCieplo,
     #[serde(rename = "puk_rokietnica")]
     PukRokietnica,
     Sec,
@@ -129,6 +131,7 @@ impl AlertSource {
             AlertSource::GdanskieWodociagi => ServiceLocation::Cities(vec![is_gdansk]),
             AlertSource::Gpec => ServiceLocation::Cities(vec![is_gdansk]),
             AlertSource::KpecBydgoszcz => ServiceLocation::Cities(vec![is_bydgoszcz]),
+            AlertSource::EneaCieplo => ServiceLocation::Cities(vec![is_bialystok]),
             AlertSource::PukRokietnica => ServiceLocation::Cities(vec![is_rokietnica]),
             AlertSource::Sec => ServiceLocation::Cities(vec![is_szczecin]),
             AlertSource::Lpec => ServiceLocation::Cities(vec![is_lublin]),
@@ -161,6 +164,7 @@ impl AlertSource {
             AlertSource::GdanskieWodociagi => "Gdańskie Wodociągi",
             AlertSource::Gpec => "GPEC Gdańsk",
             AlertSource::KpecBydgoszcz => "KPEC Bydgoszcz",
+            AlertSource::EneaCieplo => "ENEA Ciepło Białystok",
             AlertSource::Sec => "SEC Szczecin",
             AlertSource::Lpec => "LPEC Lublin",
             AlertSource::PukRokietnica => "PUK Rokietnica",
@@ -361,7 +365,7 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::WodociagiPlockie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa | AlertSource::GdanskieWodociagi | AlertSource::PukRokietnica | AlertSource::MpwikLublin => {
             if is_pl { "wyłączenie wody" } else { "water outage" }
         }
-        AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz | AlertSource::Gpec | AlertSource::KpecBydgoszcz | AlertSource::Sec | AlertSource::Lpec => {
+        AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz | AlertSource::Gpec | AlertSource::KpecBydgoszcz | AlertSource::EneaCieplo | AlertSource::Sec | AlertSource::Lpec => {
             if is_pl { "wyłączenie ogrzewania" } else { "heat outage" }
         }
         AlertSource::Psg => {
@@ -480,6 +484,7 @@ impl std::fmt::Display for AlertSource {
             AlertSource::GdanskieWodociagi => "gdanskie_wodociagi",
             AlertSource::Gpec => "gpec",
             AlertSource::KpecBydgoszcz => "kpec_bydgoszcz",
+            AlertSource::EneaCieplo => "enea_cieplo",
             AlertSource::PukRokietnica => "puk_rokietnica",
             AlertSource::Sec => "sec",
             AlertSource::Lpec => "lpec",
@@ -588,6 +593,17 @@ city_checker!(is_szczecin, Some(977976_u64), "szczecin");
 city_checker!(is_lublin, Some(959423_u64), "lublin");
 city_checker!(is_gdansk, Some(908123_u64), "gdańsk", "gdansk");
 city_checker!(is_bydgoszcz, Some(928363_u64), "bydgoszcz");
+#[allow(dead_code)]
+fn is_bialystok(addr: &AddressEntry) -> bool {
+    if let Some(city_id) = addr.city_id {
+        return city_id == 922410;
+    }
+
+    let city = addr.city_name.trim().to_lowercase();
+    let is_bialystok = city.starts_with("białystok") || city.starts_with("bialystok");
+    let voivodeship = addr.voivodeship.trim().to_lowercase();
+    is_bialystok && (voivodeship.is_empty() || voivodeship.starts_with("podlaskie"))
+}
 city_checker!(is_katowice, None::<u64>, "katowice");
 city_checker!(is_plock, None::<u64>, "płock", "plock");
 city_checker!(is_czestochowa, None::<u64>, "częstochowa", "czestochowa");
@@ -1085,6 +1101,35 @@ mod tests {
             &torun_settings
         ));
         assert_eq!(AlertSource::KpecBydgoszcz.to_string(), "kpec_bydgoszcz");
+    }
+
+    #[test]
+    fn test_enea_cieplo_bialystok_scope() {
+        let bialystok_address = AddressEntry {
+            city_name: "Białystok".to_string(),
+            voivodeship: "Podlaskie".to_string(),
+            city_id: Some(922410),
+            is_active: true,
+            ..Default::default()
+        };
+        let other_bialystok_address = AddressEntry {
+            city_name: "Białystok".to_string(),
+            voivodeship: "Lubelskie".to_string(),
+            city_id: Some(886759),
+            is_active: true,
+            ..Default::default()
+        };
+
+        assert!(is_address_applicable_for_provider(
+            &AlertSource::EneaCieplo,
+            &bialystok_address
+        ));
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::EneaCieplo,
+            &other_bialystok_address
+        ));
+        assert_eq!(AlertSource::EneaCieplo.to_string(), "enea_cieplo");
+        assert_eq!(AlertSource::EneaCieplo.display_name(), "ENEA Ciepło Białystok");
     }
 
     #[test]

@@ -25,6 +25,7 @@
   <string name="placeholder_time">--:--</string>
   <string name="provider_aquanet">Aquanet</string>
   <string name="provider_enea">Enea</string>
+  <string name="provider_enea_cieplo">ENEA Ciepło</string>
   <string name="provider_energa">Energa</string>
   <string name="provider_fortum">Fortum</string>
   <string name="provider_gdanskie_wodociagi">GW GDA</string>
@@ -53,6 +54,7 @@
   <string name="widget_label_all">Address: all utilities</string>
   <string name="widget_label_aquanet">Aquanet</string>
   <string name="widget_label_enea">Enea</string>
+  <string name="widget_label_enea_cieplo">ENEA Ciepło</string>
   <string name="widget_label_energa">Energa</string>
   <string name="widget_label_fortum">Fortum</string>
   <string name="widget_label_gdanskie_wodociagi">Gdańskie Wodociągi</string>
