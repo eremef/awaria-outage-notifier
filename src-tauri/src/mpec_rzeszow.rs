@@ -210,7 +210,7 @@ fn parse_schedule(text: &str) -> (Option<String>, Option<String>) {
             .unwrap_or_else(|| NaiveTime::from_hms_opt(0, 0, 0).unwrap()),
     );
 
-    let end = times.get(1).copied().and_then(|end_time| {
+    let explicit_end = times.get(1).copied().and_then(|end_time| {
         let mut end_date = dates.get(1).copied().unwrap_or(start_date);
         if end_time.next_day {
             end_date += Duration::days(1);
@@ -221,7 +221,11 @@ fn parse_schedule(text: &str) -> (Option<String>, Option<String>) {
         }
         (end > start).then_some(end)
     });
-
+    let end = explicit_end.or_else(|| {
+        start_date
+            .and_hms_opt(23, 59, 0)
+            .filter(|end_of_day| *end_of_day >= start)
+    });
     (Some(format_datetime(start)), end.map(format_datetime))
 }
 
