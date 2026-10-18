@@ -1144,7 +1144,7 @@ fn ensure_verifier_initialized(env: &mut Env, context: &JObject) {
 
 #[cfg(target_os = "android")]
 #[allow(non_snake_case, deprecated)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchCountFromRust(
     mut native_env: EnvUnowned,
     _class: JClass,
@@ -1273,7 +1273,7 @@ impl NotificationProvider for JniNotification {
 
 #[cfg(target_os = "android")]
 #[allow(non_snake_case, deprecated)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchAndNotifyFromRust(
     mut native_env: EnvUnowned,
     _class: JClass,
@@ -1443,7 +1443,7 @@ pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_fetchAndNotifyFromRust(
 
 #[cfg(target_os = "android")]
 #[allow(non_snake_case)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Java_xyz_eremef_awaria_WidgetUtils_initVerifier(
     mut native_env: EnvUnowned,
     _class: JClass,
