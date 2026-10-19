@@ -26,6 +26,7 @@
   <string name="provider_aquanet">Aquanet</string>
   <string name="provider_enea">Enea</string>
   <string name="provider_enea_cieplo">ENEA Ciepło</string>
+  <string name="provider_energa_cieplo_kaliskie">Energa Ciepło Kalisz</string>
   <string name="provider_energa">Energa</string>
   <string name="provider_fortum">Fortum</string>
   <string name="provider_gdanskie_wodociagi">GW GDA</string>
@@ -36,6 +37,7 @@
   <string name="provider_mpec_rzeszow">MPEC Rzeszów</string>
   <string name="provider_mpwik_lublin">MPWiK Lublin</string>
   <string name="provider_mpwik_rzeszow">MPWiK Rzeszów</string>
+  <string name="provider_mpwik_bydgoszcz">MPWiK BDG</string>
   <string name="provider_mpwik_warszawa">MPWiK WAW</string>
   <string name="provider_mpwik_wroclaw">MPWiK WRO</string>
   <string name="provider_pge">PGE</string>
@@ -58,6 +60,7 @@
   <string name="widget_label_aquanet">Aquanet</string>
   <string name="widget_label_enea">Enea</string>
   <string name="widget_label_enea_cieplo">ENEA Ciepło</string>
+  <string name="widget_label_energa_cieplo_kaliskie">Energa Ciepło Kaliskie</string>
   <string name="widget_label_energa">Energa</string>
   <string name="widget_label_fortum">Fortum</string>
   <string name="widget_label_gdanskie_wodociagi">Gdańskie Wodociągi</string>
@@ -69,6 +72,7 @@
   <string name="widget_label_mpwik">MPWiK Wrocław</string>
   <string name="widget_label_mpwik_lublin">MPWiK Lublin</string>
   <string name="widget_label_mpwik_rzeszow">MPWiK Rzeszów</string>
+  <string name="widget_label_mpwik_bydgoszcz">MPWiK Bydgoszcz</string>
   <string name="widget_label_mpwik_warszawa">MPWiK Warszawa</string>
   <string name="widget_label_pge">PGE</string>
   <string name="widget_label_psg">PSG</string>

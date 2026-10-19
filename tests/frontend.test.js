@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect } from 'vitest';
 const { filterAlerts, formatDate, matchesStreetName } = require('../public/script.js');
+require('../public/awaria-card.js');
 describe('Frontend Logic', () => {
     describe('filtering logic', () => {
         const mockAlerts = [
@@ -101,12 +102,38 @@ describe('Frontend Logic', () => {
             expect(matchesStreetName(alert, lublin)).toBe(false);
         });
 
+        it('matches MPWiK Bydgoszcz only for Bydgoszcz addresses', () => {
+            const bydgoszcz = { cityName: 'Bydgoszcz', cityId: 928363, streetName1: 'Focha' };
+            const torun = { cityName: 'Toruń', cityId: 929448, streetName1: 'Focha' };
+            const alert = {
+                message: 'Planowane wyłączenie wody: Focha 4',
+                location: 'Miejscowość: Bydgoszcz',
+                source: 'mpwik_bydgoszcz'
+            };
+
+            expect(matchesStreetName(alert, bydgoszcz)).toBe(true);
+            expect(matchesStreetName(alert, torun)).toBe(false);
+        });
+
         it('matches MPEC Rzeszów only for Rzeszów addresses', () => {
             const rzeszow = { cityName: 'Rzeszów', cityId: 974133, streetName1: 'Architektów' };
             const lublin = { cityName: 'Lublin', cityId: 959423, streetName1: 'Architektów' };
             const alert = { message: 'Przerwa w dostawie ciepła przy ul. Architektów 3', source: 'mpec_rzeszow' };
             expect(matchesStreetName(alert, rzeszow)).toBe(true);
             expect(matchesStreetName(alert, lublin)).toBe(false);
+        });
+
+        it('matches Energa Ciepło Kaliskie only for Kalisz addresses', () => {
+            const kalisz = { cityName: 'Kalisz', cityId: 936579, streetName1: 'Legionów' };
+            const torun = { cityName: 'Toruń', cityId: 929448, streetName1: 'Legionów' };
+            const alert = {
+                message: 'Awaria ogrzewania przy ul. Legionów 40A',
+                location: 'Miejscowość: Kalisz',
+                source: 'energa_cieplo_kaliskie'
+            };
+
+            expect(matchesStreetName(alert, kalisz)).toBe(true);
+            expect(matchesStreetName(alert, torun)).toBe(false);
         });
 
         it('matches WM Radom streets only in the provider area and notice locality', () => {
@@ -139,6 +166,21 @@ describe('Frontend Logic', () => {
             const addr2 = { cityName: 'Łódź', streetName1: 'Milionowa', streetName2: 'ul.' };
             const alert2 = { message: 'Milionowa (Przędzalniana - do pos. 25/27) - wyłączenie', source: 'zwik_lodz' };
             expect(matchesStreetName(alert2, addr2)).toBe(true);
+        });
+    });
+
+    describe('Home Assistant card provider styling', () => {
+        it('uses the shared water styling for MPWiK Bydgoszcz', () => {
+            const AwariaCard = customElements.get('awaria-card');
+            const card = new AwariaCard();
+            const provider = card.getProviderMeta('mpwik_bydgoszcz');
+
+            expect(provider.icon).toBe('💧');
+            expect(provider.color).toBe('#2196f3');
+
+            const heatProvider = card.getProviderMeta('energa_cieplo_kaliskie');
+            expect(heatProvider.name).toBe('Energa Ciepło Kaliskie');
+            expect(heatProvider.icon).toBe('🔥');
         });
     });
 

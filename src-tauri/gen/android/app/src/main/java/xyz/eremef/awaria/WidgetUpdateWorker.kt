@@ -233,6 +233,14 @@ class WidgetUpdateWorker(
             eneaCieploProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        // Update Energa Ciepło Kaliskie widgets
+        val energaCieploKaliskieName = ComponentName(context, EnergaCieploKaliskieWidgetProvider::class.java)
+        val energaCieploKaliskieIds = appWidgetManager.getAppWidgetIds(energaCieploKaliskieName)
+        val energaCieploKaliskieProvider = EnergaCieploKaliskieWidgetProvider()
+        for (id in energaCieploKaliskieIds) {
+            energaCieploKaliskieProvider.updateWidget(context, appWidgetManager, id)
+        }
+
         // Update PUK Rokietnica widgets
         val pukRokietnicaName = ComponentName(context, PukRokietnicaWidgetProvider::class.java)
         val pukRokietnicaIds = appWidgetManager.getAppWidgetIds(pukRokietnicaName)
@@ -279,6 +287,14 @@ class WidgetUpdateWorker(
         val mpwikRzeszowProvider = MpwikRzeszowWidgetProvider()
         for (id in mpwikRzeszowIds) {
             mpwikRzeszowProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update MPWiK Bydgoszcz widgets
+        val mpwikBydgoszczName = ComponentName(context, MpwikBydgoszczWidgetProvider::class.java)
+        val mpwikBydgoszczIds = appWidgetManager.getAppWidgetIds(mpwikBydgoszczName)
+        val mpwikBydgoszczProvider = MpwikBydgoszczWidgetProvider()
+        for (id in mpwikBydgoszczIds) {
+            mpwikBydgoszczProvider.updateWidget(context, appWidgetManager, id)
         }
 
         // Update WM Radom widgets

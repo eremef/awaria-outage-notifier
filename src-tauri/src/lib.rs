@@ -2,6 +2,7 @@ pub mod api_logic;
 mod aquanet;
 mod enea;
 mod enea_cieplo;
+mod energa_cieplo_kaliskie;
 mod energa;
 mod fortum;
 mod mpwik;
@@ -33,6 +34,7 @@ pub mod sec;
 pub mod lpec;
 pub mod mpwik_lublin;
 pub mod mpwik_rzeszow;
+pub mod mpwik_bydgoszcz;
 pub mod mpec_rzeszow;
 pub mod wm_radom;
 
@@ -532,6 +534,7 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(energa::EnergaProvider),
         Box::new(enea::EneaProvider),
         Box::new(enea_cieplo::EneaCieploProvider),
+        Box::new(energa_cieplo_kaliskie::EnergaCieploKaliskieProvider),
         Box::new(pge::PgeProvider),
         Box::new(stoen::StoenProvider),
         Box::new(psg::PsgProvider),
@@ -554,6 +557,7 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(lpec::LpecProvider),
         Box::new(mpwik_lublin::MpwikLublinProvider),
         Box::new(mpwik_rzeszow::MpwikRzeszowProvider),
+        Box::new(mpwik_bydgoszcz::MpwikBydgoszczProvider),
         Box::new(mpec_rzeszow::MpecRzeszowProvider),
         Box::new(wm_radom::WmRadomProvider),
     ]

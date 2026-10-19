@@ -16,10 +16,11 @@ class AwariaCard extends HTMLElement {
     if (s.includes('tauron_heat')) return { name: 'Tauron Ciepło', icon: '🔥', color: '#ff5722' };
     if (s.includes('tauron')) return { name: 'Tauron', icon: '⚡', color: '#ff9800' };
     if (s.includes('pge')) return { name: 'PGE', icon: '⚡', color: '#ffb74d' };
+    if (s.includes('energa_cieplo_kaliskie')) return { name: 'Energa Ciepło Kaliskie', icon: '🔥', color: '#f44336' };
     if (s.includes('energa')) return { name: 'Energa', icon: '⚡', color: '#ffa726' };
     if (s.includes('enea')) return { name: 'Enea', icon: '⚡', color: '#fb8c00' };
     if (s.includes('stoen')) return { name: 'Stoen', icon: '⚡', color: '#f57c00' };
-    if (s.includes('mpwik_wroclaw') || s.includes('mpwik_warszawa') || s.includes('aquanet') || s.includes('wodociagi') || s.includes('pwik') || s.includes('zwik') || s.includes('wmk')) {
+    if (s.includes('mpwik_wroclaw') || s.includes('mpwik_warszawa') || s.includes('mpwik_bydgoszcz') || s.includes('aquanet') || s.includes('wodociagi') || s.includes('pwik') || s.includes('zwik') || s.includes('wmk')) {
       return { name: source.toUpperCase().replace('_', ' '), icon: '💧', color: '#2196f3' };
     }
     if (s.includes('veolia') || s.includes('fortum') || s.includes('gpec')) {

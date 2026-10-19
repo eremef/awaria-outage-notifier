@@ -30,7 +30,7 @@ Dla każdego adresu, który chcesz monitorować, dodaj wpis zawierający:
 
 ### Aktywne źródła (Enabled Sources)
 
-Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `mpwik_warszawa`).
+Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `mpwik_bydgoszcz`, `mpwik_warszawa`, `energa_cieplo_kaliskie`).
 
 ## Użytkowanie
 

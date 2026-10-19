@@ -1,6 +1,7 @@
 package xyz.eremef.awaria
 
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -10,6 +11,15 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE)
 class WidgetUtilsTest {
+
+    @Test
+    fun testMpwikBydgoszczWidgetUsesWaterSourceAndRefreshAction() {
+        val provider = MpwikBydgoszczWidgetProvider()
+
+        assertEquals("mpwik_bydgoszcz", provider.sourceKey)
+        assertEquals("xyz.eremef.awaria.ACTION_REFRESH_MPWIK_BYDGOSZCZ", provider.refreshAction)
+        assertEquals(R.drawable.ic_water, provider.iconResId)
+    }
 
     private fun createSettings(
         cityName: String = "",

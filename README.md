@@ -28,6 +28,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
 - **🔥 Gas - PSG**: Planned and current gas outages.
 - **🌡️ Heat**
   - **ENEA Ciepło Białystok**: Heat outages in Białystok.
+  - **Energa Ciepło Kaliskie**: Heat outages in Kalisz.
   - **Fortum**: Planned and current heat/hot water outages.
   - **Tauron Ciepło**: Heat outages (Southern Poland).
   - **Veolia Warszawa**: Heat outages in Warsaw.
@@ -40,6 +41,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **MPEC Rzeszów**: Heating and domestic hot-water supply interruptions in Rzeszów.
 - **💧 Water**
   - **MPWiK Wrocław**: Water failures and maintenance work in Wrocław.
+  - **MPWiK Bydgoszcz**: Planned water shutoffs and network failures in Bydgoszcz.
   - **MPWiK Warszawa**: Water failures and repairs in Warsaw.
   - **WMK**: Water maintenance and failures in Kraków.
   - **WM Radom**: Water interruptions and failures in Radom and WM Radom's surrounding service municipalities.

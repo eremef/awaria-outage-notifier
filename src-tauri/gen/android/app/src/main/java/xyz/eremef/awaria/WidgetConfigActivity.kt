@@ -146,11 +146,13 @@ class WidgetConfigActivity : ComponentActivity() {
             className.contains("GpecWidgetProvider") -> GpecWidgetProvider()
             className.contains("KpecBydgoszczWidgetProvider") -> KpecBydgoszczWidgetProvider()
             className.contains("EneaCieploWidgetProvider") -> EneaCieploWidgetProvider()
+            className.contains("EnergaCieploKaliskieWidgetProvider") -> EnergaCieploKaliskieWidgetProvider()
             className.contains("PukRokietnicaWidgetProvider") -> PukRokietnicaWidgetProvider()
             className.contains("SecWidgetProvider") -> SecWidgetProvider()
             className.contains("LpecWidgetProvider") -> LpecWidgetProvider()
             className.contains("MpecRzeszowWidgetProvider") -> MpecRzeszowWidgetProvider()
             className.contains("MpwikRzeszowWidgetProvider") -> MpwikRzeszowWidgetProvider()
+            className.contains("MpwikBydgoszczWidgetProvider") -> MpwikBydgoszczWidgetProvider()
             className.contains("WmRadomWidgetProvider") -> WmRadomWidgetProvider()
             else -> TriWidgetProvider()
         }

@@ -290,6 +290,7 @@ if (typeof document !== 'undefined') {
         { id: 'psg', label: 'PSG', category: 'gas', defaultNotify: true, i18nLabel: 'source_psg_name', i18nShort: 'source_psg_short' },
         // Heating
         { id: 'enea_cieplo', label: 'ENEA Ciepło', category: 'heating', defaultNotify: true, i18nLabel: 'source_enea_cieplo_name', i18nShort: 'source_enea_cieplo_short', region: 'bialystok' },
+        { id: 'energa_cieplo_kaliskie', label: 'Energa Ciepło Kaliskie', category: 'heating', defaultNotify: true, i18nLabel: 'source_energa_cieplo_kaliskie_name', i18nShort: 'source_energa_cieplo_kaliskie_short', region: 'kalisz' },
         { id: 'fortum', label: 'Fortum', category: 'heating', defaultNotify: true, i18nLabel: 'source_fortum_name', i18nShort: 'source_fortum_short' },
         { id: 'gpec', label: 'GPEC Gdańsk', category: 'heating', defaultNotify: true, i18nLabel: 'source_gpec_name', i18nShort: 'source_gpec_short', region: 'gdansk' },
         { id: 'kpec_bydgoszcz', label: 'KPEC Bydgoszcz', category: 'heating', defaultNotify: true, i18nLabel: 'source_kpec_bydgoszcz_name', i18nShort: 'source_kpec_bydgoszcz_short', region: 'bydgoszcz' },
@@ -304,6 +305,7 @@ if (typeof document !== 'undefined') {
         { id: 'aquanet', label: 'Aquanet', category: 'water', defaultNotify: true, i18nLabel: 'source_aquanet_name', i18nShort: 'source_aquanet_short', region: 'poznan' },
         { id: 'gdanskie_wodociagi', label: 'Gdańskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_gdanskie_wodociagi_name', i18nShort: 'source_gdanskie_wodociagi_short', region: 'gdansk' },
         { id: 'katowickie_wodociagi', label: 'Katowickie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_katowickie_wodociagi_name', i18nShort: 'source_katowickie_wodociagi_short', region: 'katowice' },
+        { id: 'mpwik_bydgoszcz', label: 'MPWiK Bydgoszcz', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_bydgoszcz_name', i18nShort: 'source_mpwik_bydgoszcz_short', region: 'bydgoszcz' },
         { id: 'mpwik_lublin', label: 'MPWiK Lublin', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_lublin_name', i18nShort: 'source_mpwik_lublin_short', region: 'lublin' },
         { id: 'mpwik_rzeszow', label: 'MPWiK Rzeszów', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_rzeszow_name', i18nShort: 'source_mpwik_rzeszow_short', region: 'mpwik_rzeszow_area' },
         { id: 'mpwik_warszawa', label: 'MPWiK Warszawa', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_warszawa_name', i18nShort: 'source_mpwik_warszawa_short', region: 'mpwik_warszawa_area' },
@@ -2425,7 +2427,7 @@ if (typeof document !== 'undefined') {
             const singleCityProviders = [
                 'mpwik_wroclaw', 'mpwik_warszawa', 'katowickie_wodociagi',
                 'veolia_warszawa', 'veolia_poznan', 'veolia_lodz', 'zwik_lodz',
-                'wodociagi_plockie', 'pwik_kalisz', 'pwik_czestochowa', 'gdanskie_wodociagi', 'gpec', 'kpec_bydgoszcz', 'enea_cieplo', 'puk_rokietnica', 'sec', 'lpec', 'mpwik_lublin', 'mpwik_rzeszow', 'mpec_rzeszow', 'wm_radom'
+                'wodociagi_plockie', 'pwik_kalisz', 'pwik_czestochowa', 'gdanskie_wodociagi', 'gpec', 'kpec_bydgoszcz', 'mpwik_bydgoszcz', 'enea_cieplo', 'energa_cieplo_kaliskie', 'puk_rokietnica', 'sec', 'lpec', 'mpwik_lublin', 'mpwik_rzeszow', 'mpec_rzeszow', 'wm_radom'
             ];
             if (singleCityProviders.includes(alert.source)) {
                 // For single-city providers, reject matching if the saved address is in a completely different city
@@ -2438,10 +2440,13 @@ if (typeof document !== 'undefined') {
                 if (alert.source === 'pwik_kalisz' && !cityLower.startsWith('kalisz')) return false;
                 if (alert.source === 'katowickie_wodociagi' && !cityLower.startsWith('katow')) return false;
                 if (alert.source === 'kpec_bydgoszcz' && !cityLower.startsWith('bydgoszcz')) return false;
+                if (alert.source === 'mpwik_bydgoszcz' && !(cityLower.startsWith('bydgoszcz') || addr.cityId === 928363)) return false;
                 if (alert.source === 'enea_cieplo' &&
                     !(addr.cityId === 922410 ||
                         ((cityLower.startsWith('białystok') || cityLower.startsWith('bialystok')) &&
                             (!addr.voivodeship || addr.voivodeship.toLowerCase().startsWith('podlaskie'))))) return false;
+                if (alert.source === 'energa_cieplo_kaliskie' &&
+                    !(cityLower.startsWith('kalisz') || addr.cityId === 936579)) return false;
                 if (alert.source === 'puk_rokietnica' && !isRokietnica(addr)) return false;
                 if (alert.source === 'sec' && !(cityLower.startsWith('szczecin') || addr.cityId === 977976)) return false;
                 if (alert.source === 'lpec' && !(cityLower.startsWith('lublin') || addr.cityId === 959423)) return false;

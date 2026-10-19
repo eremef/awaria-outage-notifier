@@ -53,6 +53,8 @@ pub enum AlertSource {
     KpecBydgoszcz,
     #[serde(rename = "enea_cieplo")]
     EneaCieplo,
+    #[serde(rename = "energa_cieplo_kaliskie")]
+    EnergaCieploKaliskie,
     #[serde(rename = "puk_rokietnica")]
     PukRokietnica,
     Sec,
@@ -61,6 +63,8 @@ pub enum AlertSource {
     MpwikLublin,
     #[serde(rename = "mpwik_rzeszow")]
     MpwikRzeszow,
+    #[serde(rename = "mpwik_bydgoszcz")]
+    MpwikBydgoszcz,
     #[serde(rename = "mpec_rzeszow")]
     MpecRzeszow,
 }
@@ -138,7 +142,9 @@ impl AlertSource {
             AlertSource::GdanskieWodociagi => ServiceLocation::Cities(vec![is_gdansk]),
             AlertSource::Gpec => ServiceLocation::Cities(vec![is_gdansk]),
             AlertSource::KpecBydgoszcz => ServiceLocation::Cities(vec![is_bydgoszcz]),
+            AlertSource::MpwikBydgoszcz => ServiceLocation::Cities(vec![is_bydgoszcz]),
             AlertSource::EneaCieplo => ServiceLocation::Cities(vec![is_bialystok]),
+            AlertSource::EnergaCieploKaliskie => ServiceLocation::Cities(vec![is_kalisz]),
             AlertSource::PukRokietnica => ServiceLocation::Cities(vec![is_rokietnica]),
             AlertSource::Sec => ServiceLocation::Cities(vec![is_szczecin]),
             AlertSource::Lpec => ServiceLocation::Cities(vec![is_lublin]),
@@ -175,11 +181,13 @@ impl AlertSource {
             AlertSource::Gpec => "GPEC Gdańsk",
             AlertSource::KpecBydgoszcz => "KPEC Bydgoszcz",
             AlertSource::EneaCieplo => "ENEA Ciepło Białystok",
+            AlertSource::EnergaCieploKaliskie => "Energa Ciepło Kaliskie",
             AlertSource::Sec => "SEC Szczecin",
             AlertSource::Lpec => "LPEC Lublin",
             AlertSource::PukRokietnica => "PUK Rokietnica",
             AlertSource::MpwikLublin => "MPWiK Lublin",
             AlertSource::MpwikRzeszow => "MPWiK Rzeszów",
+            AlertSource::MpwikBydgoszcz => "MPWiK Bydgoszcz",
             AlertSource::MpecRzeszow => "MPEC Rzeszów",
         }
     }
@@ -370,10 +378,10 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea | AlertSource::Pge | AlertSource::Stoen => {
             if is_pl { "wyłączenie prądu" } else { "power outage" }
         }
-        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::WmRadom | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::WodociagiPlockie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa | AlertSource::GdanskieWodociagi | AlertSource::PukRokietnica | AlertSource::MpwikLublin | AlertSource::MpwikRzeszow => {
+        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::WmRadom | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::WodociagiPlockie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa | AlertSource::GdanskieWodociagi | AlertSource::PukRokietnica | AlertSource::MpwikLublin | AlertSource::MpwikRzeszow | AlertSource::MpwikBydgoszcz => {
             if is_pl { "wyłączenie wody" } else { "water outage" }
         }
-        AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz | AlertSource::Gpec | AlertSource::KpecBydgoszcz | AlertSource::EneaCieplo | AlertSource::Sec | AlertSource::Lpec | AlertSource::MpecRzeszow => {
+        AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz | AlertSource::Gpec | AlertSource::KpecBydgoszcz | AlertSource::EneaCieplo | AlertSource::EnergaCieploKaliskie | AlertSource::Sec | AlertSource::Lpec | AlertSource::MpecRzeszow => {
             if is_pl { "wyłączenie ogrzewania" } else { "heat outage" }
         }
         AlertSource::Psg => {
@@ -492,11 +500,13 @@ impl std::fmt::Display for AlertSource {
             AlertSource::Gpec => "gpec",
             AlertSource::KpecBydgoszcz => "kpec_bydgoszcz",
             AlertSource::EneaCieplo => "enea_cieplo",
+            AlertSource::EnergaCieploKaliskie => "energa_cieplo_kaliskie",
             AlertSource::PukRokietnica => "puk_rokietnica",
             AlertSource::Sec => "sec",
             AlertSource::Lpec => "lpec",
             AlertSource::MpwikLublin => "mpwik_lublin",
             AlertSource::MpwikRzeszow => "mpwik_rzeszow",
+            AlertSource::MpwikBydgoszcz => "mpwik_bydgoszcz",
             AlertSource::MpecRzeszow => "mpec_rzeszow",
         };
         write!(f, "{}", s)
@@ -1182,6 +1192,33 @@ mod tests {
     }
 
     #[test]
+    fn test_mpwik_bydgoszcz_scope() {
+        let bydgoszcz_address = AddressEntry {
+            city_name: "Bydgoszcz".to_string(),
+            city_id: Some(928363),
+            is_active: true,
+            ..Default::default()
+        };
+        let torun_address = AddressEntry {
+            city_name: "Toruń".to_string(),
+            city_id: Some(929448),
+            is_active: true,
+            ..Default::default()
+        };
+
+        assert!(is_address_applicable_for_provider(
+            &AlertSource::MpwikBydgoszcz,
+            &bydgoszcz_address
+        ));
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::MpwikBydgoszcz,
+            &torun_address
+        ));
+        assert_eq!(AlertSource::MpwikBydgoszcz.to_string(), "mpwik_bydgoszcz");
+        assert_eq!(AlertSource::MpwikBydgoszcz.display_name(), "MPWiK Bydgoszcz");
+    }
+
+    #[test]
     fn test_enea_cieplo_bialystok_scope() {
         let bialystok_address = AddressEntry {
             city_name: "Białystok".to_string(),
@@ -1208,6 +1245,41 @@ mod tests {
         ));
         assert_eq!(AlertSource::EneaCieplo.to_string(), "enea_cieplo");
         assert_eq!(AlertSource::EneaCieplo.display_name(), "ENEA Ciepło Białystok");
+    }
+
+    #[test]
+    fn test_energa_cieplo_kaliskie_scope() {
+        let kalisz_address = AddressEntry {
+            city_name: "Kalisz".to_string(),
+            voivodeship: "Wielkopolskie".to_string(),
+            city_id: Some(936579),
+            is_active: true,
+            ..Default::default()
+        };
+        let torun_address = AddressEntry {
+            city_name: "Toruń".to_string(),
+            voivodeship: "Kujawsko-Pomorskie".to_string(),
+            city_id: Some(929448),
+            is_active: true,
+            ..Default::default()
+        };
+
+        assert!(is_address_applicable_for_provider(
+            &AlertSource::EnergaCieploKaliskie,
+            &kalisz_address
+        ));
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::EnergaCieploKaliskie,
+            &torun_address
+        ));
+        assert_eq!(
+            AlertSource::EnergaCieploKaliskie.to_string(),
+            "energa_cieplo_kaliskie"
+        );
+        assert_eq!(
+            AlertSource::EnergaCieploKaliskie.display_name(),
+            "Energa Ciepło Kaliskie"
+        );
     }
 
     #[test]

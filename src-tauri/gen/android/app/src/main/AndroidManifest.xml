@@ -439,6 +439,22 @@
                 android:resource="@xml/widget_single_info" />
         </receiver>
 
+        <receiver
+            android:name=".EnergaCieploKaliskieWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_energa_cieplo_kaliskie">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_ENERGA_CIEPLO_KALISKIE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_single_info" />
+        </receiver>
+
 
         <receiver
             android:name=".PukRokietnicaWidgetProvider"
@@ -530,6 +546,22 @@
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
                 <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
                 <action android:name="xyz.eremef.awaria.ACTION_REFRESH_MPWIK_RZESZOW" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_single_info" />
+        </receiver>
+
+        <receiver
+            android:name=".MpwikBydgoszczWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_mpwik_bydgoszcz">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_MPWIK_BYDGOSZCZ" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"

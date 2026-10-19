@@ -28,6 +28,7 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
 - **🔥 Gaz - PSG**: Planowane i bieżące wyłączenia gazu.
 - **🌡️ Ciepło**
   - **ENEA Ciepło Białystok**: Przerwy w dostawie ciepła w Białymstoku.
+  - **Energa Ciepło Kaliskie**: Przerwy w dostawie ciepła w Kaliszu.
   - **Fortum**: Planowane i bieżące wyłączenia ogrzewania oraz ciepłej wody.
   - **Tauron Ciepło**: Przerwy w dostawie ciepła (Południowa Polska).
   - **Veolia Warszawa**: Przerwy w dostawie ciepła w Warszawie.
@@ -40,6 +41,7 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
   - **MPEC Rzeszów**: Przerwy w dostawie ciepła i ciepłej wody użytkowej w Rzeszowie.
 - **💧 Woda**
   - **MPWiK Wrocław**: Awarie wodociągowe i prace konserwacyjne we Wrocławiu.
+  - **MPWiK Bydgoszcz**: Planowane wyłączenia wody i awarie sieci wodociągowej w Bydgoszczy.
   - **MPWiK Warszawa**: Awarie i naprawy wodociągowe w Warszawie.
   - **WMK**: Awarie i konserwacje wodociągowe w Krakowie.
   - **WM Radom**: Awarie i planowane przerwy w dostawie wody w Radomiu i obsługiwanych okolicznych gminach.

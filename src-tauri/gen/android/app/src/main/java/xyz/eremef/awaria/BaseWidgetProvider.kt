@@ -393,12 +393,14 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             "gpec" -> context.getString(R.string.provider_gpec)
             "kpec_bydgoszcz" -> context.getString(R.string.provider_kpec_bydgoszcz)
             "enea_cieplo" -> context.getString(R.string.provider_enea_cieplo)
+            "energa_cieplo_kaliskie" -> context.getString(R.string.provider_energa_cieplo_kaliskie)
             "puk_rokietnica" -> context.getString(R.string.provider_puk_rokietnica)
             "sec" -> context.getString(R.string.provider_sec)
             "lpec" -> context.getString(R.string.provider_lpec)
             "mpec_rzeszow" -> context.getString(R.string.provider_mpec_rzeszow)
             "mpwik_lublin" -> context.getString(R.string.provider_mpwik_lublin)
             "mpwik_rzeszow" -> context.getString(R.string.provider_mpwik_rzeszow)
+            "mpwik_bydgoszcz" -> context.getString(R.string.provider_mpwik_bydgoszcz)
             else ->
                     key.replaceFirstChar {
                         if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
@@ -514,14 +516,14 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
         val layoutId = when (sourceKey) {
             "tauron", "stoen", "enea", "energa", "pge" -> R.layout.widget_outage_power
-            "enea_cieplo", "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz", "sec", "lpec" -> R.layout.widget_outage_heat
+            "enea_cieplo", "energa_cieplo_kaliskie", "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz", "sec", "lpec" -> R.layout.widget_outage_heat
             "psg" -> R.layout.widget_outage_gas
             else -> R.layout.widget_outage_water
         }
         
         val layoutSmallId = when (sourceKey) {
             "tauron", "stoen", "enea", "energa", "pge" -> R.layout.widget_outage_power_small
-            "enea_cieplo", "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz", "sec", "lpec" -> R.layout.widget_outage_heat_small
+            "enea_cieplo", "energa_cieplo_kaliskie", "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz", "sec", "lpec" -> R.layout.widget_outage_heat_small
             "psg" -> R.layout.widget_outage_gas_small
             else -> R.layout.widget_outage_water_small
         }
@@ -625,8 +627,8 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         if (!isSmall) {
             val iconDesc = when (sourceKey) {
                 "tauron", "stoen", "enea", "energa", "pge" -> getTranslation(context, "power")
-                "enea_cieplo", "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz", "sec", "lpec", "mpec_rzeszow" -> getTranslation(context, "heat")
-                "mpwik_wroclaw", "mpwik_warszawa", "wmk", "wm_radom", "aquanet", "katowickie_wodociagi", "zwik_lodz", "pwik_kalisz", "wodociagi_plockie", "pwik_czestochowa", "gdanskie_wodociagi", "puk_rokietnica", "mpwik_lublin", "mpwik_rzeszow" -> getTranslation(context, "water")
+                "enea_cieplo", "energa_cieplo_kaliskie", "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz", "sec", "lpec", "mpec_rzeszow" -> getTranslation(context, "heat")
+                "mpwik_wroclaw", "mpwik_warszawa", "wmk", "wm_radom", "aquanet", "katowickie_wodociagi", "zwik_lodz", "pwik_kalisz", "wodociagi_plockie", "pwik_czestochowa", "gdanskie_wodociagi", "puk_rokietnica", "mpwik_lublin", "mpwik_rzeszow", "mpwik_bydgoszcz" -> getTranslation(context, "water")
                 "psg" -> getTranslation(context, "gas")
                 else -> getSourceName(context, sourceKey)
             }

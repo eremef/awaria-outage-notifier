@@ -336,8 +336,10 @@ async fn get_calendar_handler(Extension(alerts): Extension<SharedAlerts>) -> imp
             | app_lib::api_logic::AlertSource::Gpec
             | app_lib::api_logic::AlertSource::KpecBydgoszcz
             | app_lib::api_logic::AlertSource::EneaCieplo
+            | app_lib::api_logic::AlertSource::EnergaCieploKaliskie
             | app_lib::api_logic::AlertSource::MpecRzeszow => "Awaria ogrzewania",
             app_lib::api_logic::AlertSource::Psg => "Awaria gazu",
+            app_lib::api_logic::AlertSource::MpwikBydgoszcz => "Awaria wody",
             _ => "Awaria wody",
         };
 
