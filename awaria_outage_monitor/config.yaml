@@ -1,5 +1,5 @@
 name: Awaria Outage Monitor
-version: "1.0.75-beta"
+version: "1.0.75-beta.1"
 slug: awaria_outage_monitor
 stage: experimental
 description: Headless outage monitor for Polish utility providers (Tauron, PGE, PGE Toruń heat, MPEC Kielce, Enea, ENEA Ciepło, Energa Ciepło Kaliskie, Energa, MPWiK, Stoen, Veolia, etc.)
