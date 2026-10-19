@@ -8,6 +8,7 @@ mod fortum;
 mod mpwik;
 mod mpwik_warsaw;
 mod pge;
+mod pge_torun_heat;
 pub mod network_state;
 mod state_db;
 mod stoen;
@@ -25,6 +26,7 @@ mod veolia_poznan;
 pub mod veolia_lodz;
 pub mod zwik_lodz;
 pub mod wodociagi_plockie;
+pub mod wodociagi_kieleckie;
 pub mod pwik_kalisz;
 pub mod pwik_czestochowa;
 pub mod gdanskie_wodociagi;
@@ -34,8 +36,9 @@ pub mod sec;
 pub mod lpec;
 pub mod mpwik_lublin;
 pub mod mpwik_rzeszow;
-pub mod mpwik_bydgoszcz;
+pub mod mwik_bydgoszcz;
 pub mod mpec_rzeszow;
+pub mod mpec_kielce;
 pub mod wm_radom;
 
 use crate::network_state::NetworkState;
@@ -536,6 +539,7 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(enea_cieplo::EneaCieploProvider),
         Box::new(energa_cieplo_kaliskie::EnergaCieploKaliskieProvider),
         Box::new(pge::PgeProvider),
+        Box::new(pge_torun_heat::PgeTorunHeatProvider),
         Box::new(stoen::StoenProvider),
         Box::new(psg::PsgProvider),
         Box::new(wmk::WmkProvider),
@@ -547,6 +551,7 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(veolia_lodz::VeoliaLodzProvider),
         Box::new(zwik_lodz::ZwikLodzProvider),
         Box::new(wodociagi_plockie::WodociagiPlockieProvider),
+        Box::new(wodociagi_kieleckie::WodociagiKieleckieProvider),
         Box::new(pwik_kalisz::PwikKaliszProvider),
         Box::new(pwik_czestochowa::PwikCzestochowaProvider),
         Box::new(gdanskie_wodociagi::GdanskieWodociagiProvider),
@@ -557,8 +562,9 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(lpec::LpecProvider),
         Box::new(mpwik_lublin::MpwikLublinProvider),
         Box::new(mpwik_rzeszow::MpwikRzeszowProvider),
-        Box::new(mpwik_bydgoszcz::MpwikBydgoszczProvider),
+        Box::new(mwik_bydgoszcz::MwikBydgoszczProvider),
         Box::new(mpec_rzeszow::MpecRzeszowProvider),
+        Box::new(mpec_kielce::MpecKielceProvider),
         Box::new(wm_radom::WmRadomProvider),
     ]
 }

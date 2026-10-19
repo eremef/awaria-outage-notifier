@@ -166,6 +166,22 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_single_info" />
         </receiver>
+
+        <receiver
+            android:name=".PgeTorunHeatWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_pge_torun_heat">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_PGE_TORUN_HEAT" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_single_info" />
+        </receiver>
         
         <receiver
             android:name=".StoenWidgetProvider"
@@ -360,6 +376,22 @@
         </receiver>
 
         <receiver
+            android:name=".WodociagiKieleckieWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_wodociagi_kieleckie">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_WODOCIAGI_KIELECKIE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_single_info" />
+        </receiver>
+
+        <receiver
             android:name=".PwikCzestochowaWidgetProvider"
             android:exported="true"
             android:label="@string/widget_label_pwik_czestochowa">
@@ -521,6 +553,22 @@
         </receiver>
 
         <receiver
+            android:name=".MpecKielceWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_mpec_kielce">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_MPEC_KIELCE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_single_info" />
+        </receiver>
+
+        <receiver
             android:name=".MpwikLublinWidgetProvider"
             android:exported="true"
             android:label="@string/widget_label_mpwik_lublin">
@@ -553,15 +601,15 @@
         </receiver>
 
         <receiver
-            android:name=".MpwikBydgoszczWidgetProvider"
+            android:name=".MwikBydgoszczWidgetProvider"
             android:exported="true"
-            android:label="@string/widget_label_mpwik_bydgoszcz">
+            android:label="@string/widget_label_mwik_bydgoszcz">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
                 <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
-                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_MPWIK_BYDGOSZCZ" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_MWIK_BYDGOSZCZ" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"

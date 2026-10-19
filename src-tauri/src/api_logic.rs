@@ -21,6 +21,8 @@ pub enum AlertSource {
     Energa,
     Enea,
     Pge,
+    #[serde(rename = "pge_torun_heat")]
+    PgeTorunHeat,
     Stoen,
     Psg,
     Wmk,
@@ -41,6 +43,8 @@ pub enum AlertSource {
     ZwikLodz,
     #[serde(rename = "wodociagi_plockie")]
     WodociagiPlockie,
+    #[serde(rename = "wodociagi_kieleckie")]
+    WodociagiKieleckie,
     #[serde(rename = "pwik_kalisz")]
     PwikKalisz,
     #[serde(rename = "pwik_czestochowa")]
@@ -63,10 +67,12 @@ pub enum AlertSource {
     MpwikLublin,
     #[serde(rename = "mpwik_rzeszow")]
     MpwikRzeszow,
-    #[serde(rename = "mpwik_bydgoszcz")]
-    MpwikBydgoszcz,
+    #[serde(rename = "mwik_bydgoszcz")]
+    MwikBydgoszcz,
     #[serde(rename = "mpec_rzeszow")]
     MpecRzeszow,
+    #[serde(rename = "mpec_kielce")]
+    MpecKielce,
 }
 
 pub enum ServiceLocation {
@@ -111,6 +117,7 @@ impl AlertSource {
                 "MAŁOPOLSKIE",
                 "WIELKOPOLSKIE",
             ]),
+            AlertSource::PgeTorunHeat => ServiceLocation::Cities(vec![is_torun]),
             AlertSource::Fortum => ServiceLocation::Voivodeships(vec![
                 "DOLNOŚLĄSKIE",
                 "ŚLĄSKIE",
@@ -126,6 +133,9 @@ impl AlertSource {
             AlertSource::KatowickieWodociagi => ServiceLocation::Cities(vec![is_katowice]),
             AlertSource::WmRadom => ServiceLocation::Cities(vec![is_wm_radom_area]),
             AlertSource::WodociagiPlockie => ServiceLocation::Cities(vec![is_plock]),
+            AlertSource::WodociagiKieleckie => {
+                ServiceLocation::Cities(vec![is_wodociagi_kieleckie_area])
+            }
             AlertSource::PwikCzestochowa => ServiceLocation::Cities(vec![is_czestochowa]),
             AlertSource::Psg => ServiceLocation::Nationwide,
             
@@ -142,7 +152,7 @@ impl AlertSource {
             AlertSource::GdanskieWodociagi => ServiceLocation::Cities(vec![is_gdansk]),
             AlertSource::Gpec => ServiceLocation::Cities(vec![is_gdansk]),
             AlertSource::KpecBydgoszcz => ServiceLocation::Cities(vec![is_bydgoszcz]),
-            AlertSource::MpwikBydgoszcz => ServiceLocation::Cities(vec![is_bydgoszcz]),
+            AlertSource::MwikBydgoszcz => ServiceLocation::Cities(vec![is_bydgoszcz]),
             AlertSource::EneaCieplo => ServiceLocation::Cities(vec![is_bialystok]),
             AlertSource::EnergaCieploKaliskie => ServiceLocation::Cities(vec![is_kalisz]),
             AlertSource::PukRokietnica => ServiceLocation::Cities(vec![is_rokietnica]),
@@ -151,6 +161,7 @@ impl AlertSource {
             AlertSource::MpwikLublin => ServiceLocation::Cities(vec![is_lublin]),
             AlertSource::MpwikRzeszow => ServiceLocation::Cities(vec![is_mpwik_rzeszow_area]),
             AlertSource::MpecRzeszow => ServiceLocation::Cities(vec![is_rzeszow]),
+            AlertSource::MpecKielce => ServiceLocation::Cities(vec![is_kielce]),
         }
     }
 
@@ -163,6 +174,7 @@ impl AlertSource {
             AlertSource::Energa => "Energa",
             AlertSource::Enea => "Enea",
             AlertSource::Pge => "PGE",
+            AlertSource::PgeTorunHeat => "PGE Toruń",
             AlertSource::Stoen => "Stoen",
             AlertSource::Psg => "PSG",
             AlertSource::Wmk => "WMK Kraków",
@@ -175,6 +187,7 @@ impl AlertSource {
             AlertSource::VeoliaLodz => "Veolia Łódź",
             AlertSource::ZwikLodz => "ZWiK Łódź",
             AlertSource::WodociagiPlockie => "Wodociągi Płockie",
+            AlertSource::WodociagiKieleckie => "Wodociągi Kieleckie",
             AlertSource::PwikKalisz => "PWiK Kalisz",
             AlertSource::PwikCzestochowa => "PWiK Częstochowa",
             AlertSource::GdanskieWodociagi => "Gdańskie Wodociągi",
@@ -187,8 +200,9 @@ impl AlertSource {
             AlertSource::PukRokietnica => "PUK Rokietnica",
             AlertSource::MpwikLublin => "MPWiK Lublin",
             AlertSource::MpwikRzeszow => "MPWiK Rzeszów",
-            AlertSource::MpwikBydgoszcz => "MPWiK Bydgoszcz",
+            AlertSource::MwikBydgoszcz => "MWiK Bydgoszcz",
             AlertSource::MpecRzeszow => "MPEC Rzeszów",
+            AlertSource::MpecKielce => "MPEC Kielce",
         }
     }
 }
@@ -378,10 +392,10 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea | AlertSource::Pge | AlertSource::Stoen => {
             if is_pl { "wyłączenie prądu" } else { "power outage" }
         }
-        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::WmRadom | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::WodociagiPlockie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa | AlertSource::GdanskieWodociagi | AlertSource::PukRokietnica | AlertSource::MpwikLublin | AlertSource::MpwikRzeszow | AlertSource::MpwikBydgoszcz => {
+        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::WmRadom | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::WodociagiPlockie | AlertSource::WodociagiKieleckie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa | AlertSource::GdanskieWodociagi | AlertSource::PukRokietnica | AlertSource::MpwikLublin | AlertSource::MpwikRzeszow | AlertSource::MwikBydgoszcz => {
             if is_pl { "wyłączenie wody" } else { "water outage" }
         }
-        AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz | AlertSource::Gpec | AlertSource::KpecBydgoszcz | AlertSource::EneaCieplo | AlertSource::EnergaCieploKaliskie | AlertSource::Sec | AlertSource::Lpec | AlertSource::MpecRzeszow => {
+        AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz | AlertSource::Gpec | AlertSource::KpecBydgoszcz | AlertSource::EneaCieplo | AlertSource::EnergaCieploKaliskie | AlertSource::Sec | AlertSource::Lpec | AlertSource::MpecRzeszow | AlertSource::MpecKielce | AlertSource::PgeTorunHeat => {
             if is_pl { "wyłączenie ogrzewania" } else { "heat outage" }
         }
         AlertSource::Psg => {
@@ -482,6 +496,7 @@ impl std::fmt::Display for AlertSource {
             AlertSource::Energa => "energa",
             AlertSource::Enea => "enea",
             AlertSource::Pge => "pge",
+            AlertSource::PgeTorunHeat => "pge_torun_heat",
             AlertSource::Stoen => "stoen",
             AlertSource::Psg => "psg",
             AlertSource::Wmk => "wmk",
@@ -494,6 +509,7 @@ impl std::fmt::Display for AlertSource {
             AlertSource::VeoliaLodz => "veolia_lodz",
             AlertSource::ZwikLodz => "zwik_lodz",
             AlertSource::WodociagiPlockie => "wodociagi_plockie",
+            AlertSource::WodociagiKieleckie => "wodociagi_kieleckie",
             AlertSource::PwikKalisz => "pwik_kalisz",
             AlertSource::PwikCzestochowa => "pwik_czestochowa",
             AlertSource::GdanskieWodociagi => "gdanskie_wodociagi",
@@ -506,8 +522,9 @@ impl std::fmt::Display for AlertSource {
             AlertSource::Lpec => "lpec",
             AlertSource::MpwikLublin => "mpwik_lublin",
             AlertSource::MpwikRzeszow => "mpwik_rzeszow",
-            AlertSource::MpwikBydgoszcz => "mpwik_bydgoszcz",
+            AlertSource::MwikBydgoszcz => "mwik_bydgoszcz",
             AlertSource::MpecRzeszow => "mpec_rzeszow",
+            AlertSource::MpecKielce => "mpec_kielce",
         };
         write!(f, "{}", s)
     }
@@ -610,6 +627,7 @@ city_checker!(is_lodz, Some(958153_u64), "łódź", "lodz");
 city_checker!(is_kalisz, Some(936579_u64), "kalisz");
 city_checker!(is_szczecin, Some(977976_u64), "szczecin");
 city_checker!(is_lublin, Some(959423_u64), "lublin");
+city_checker!(is_kielce, Some(945930_u64), "kielce");
 fn is_wm_radom_area(addr: &AddressEntry) -> bool {
     if addr.city_id == Some(972750) || addr.city_id == Some(642253) {
         return true;
@@ -654,6 +672,7 @@ fn is_wm_radom_area(addr: &AddressEntry) -> bool {
 }
 
 city_checker!(is_rzeszow, Some(974133_u64), "rzeszów", "rzeszow");
+city_checker!(is_torun, Some(929448_u64), "toruń", "torun");
 fn is_mpwik_rzeszow_area(addr: &AddressEntry) -> bool {
     if let Some(city_id) = addr.city_id {
         return matches!(city_id, 974133 | 644750 | 652688 | 1043193 | 975078);
@@ -681,6 +700,39 @@ fn is_mpwik_rzeszow_area(addr: &AddressEntry) -> bool {
 }
 city_checker!(is_gdansk, Some(908123_u64), "gdańsk", "gdansk");
 city_checker!(is_bydgoszcz, Some(928363_u64), "bydgoszcz");
+
+fn is_wodociagi_kieleckie_area(addr: &AddressEntry) -> bool {
+    let normalize = |value: &str| {
+        value
+            .trim()
+            .to_lowercase()
+            .replace('ą', "a")
+            .replace('ć', "c")
+            .replace('ę', "e")
+            .replace('ł', "l")
+            .replace('ń', "n")
+            .replace('ó', "o")
+            .replace('ś', "s")
+            .replace(['ź', 'ż'], "z")
+            .replace('-', " ")
+    };
+    let city = normalize(&addr.city_name);
+    let commune = normalize(&addr.commune);
+    let voivodeship = normalize(&addr.voivodeship);
+    if !voivodeship.is_empty() && !voivodeship.starts_with("swietokrzyskie") {
+        return false;
+    }
+
+    addr.city_id == Some(945930)
+        || city.starts_with("kielce")
+        || city.starts_with("cedzyna")
+        || city.starts_with("maslow")
+        || city.starts_with("zagnansk")
+        || ["maslow", "nowiny", "sitkowka nowiny", "zagnansk", "gorno"]
+            .iter()
+            .any(|name| commune.starts_with(name))
+}
+
 #[allow(dead_code)]
 fn is_bialystok(addr: &AddressEntry) -> bool {
     if let Some(city_id) = addr.city_id {
@@ -1192,7 +1244,7 @@ mod tests {
     }
 
     #[test]
-    fn test_mpwik_bydgoszcz_scope() {
+    fn test_mwik_bydgoszcz_scope() {
         let bydgoszcz_address = AddressEntry {
             city_name: "Bydgoszcz".to_string(),
             city_id: Some(928363),
@@ -1207,15 +1259,80 @@ mod tests {
         };
 
         assert!(is_address_applicable_for_provider(
-            &AlertSource::MpwikBydgoszcz,
+            &AlertSource::MwikBydgoszcz,
             &bydgoszcz_address
         ));
         assert!(!is_address_applicable_for_provider(
-            &AlertSource::MpwikBydgoszcz,
+            &AlertSource::MwikBydgoszcz,
             &torun_address
         ));
-        assert_eq!(AlertSource::MpwikBydgoszcz.to_string(), "mpwik_bydgoszcz");
-        assert_eq!(AlertSource::MpwikBydgoszcz.display_name(), "MPWiK Bydgoszcz");
+        assert_eq!(AlertSource::MwikBydgoszcz.to_string(), "mwik_bydgoszcz");
+        assert_eq!(AlertSource::MwikBydgoszcz.display_name(), "MWiK Bydgoszcz");
+    }
+
+    #[test]
+    fn test_wodociagi_kieleckie_scope() {
+        let kielce = AddressEntry {
+            city_name: "Kielce".to_string(),
+            voivodeship: "Świętokrzyskie".to_string(),
+            city_id: Some(945930),
+            is_active: true,
+            ..Default::default()
+        };
+        let maslow = AddressEntry {
+            city_name: "Masłów Pierwszy".to_string(),
+            commune: "Masłów".to_string(),
+            voivodeship: "Świętokrzyskie".to_string(),
+            is_active: true,
+            ..Default::default()
+        };
+        let nowiny = AddressEntry {
+            city_name: "Nowiny".to_string(),
+            commune: "Nowiny".to_string(),
+            voivodeship: "Świętokrzyskie".to_string(),
+            is_active: true,
+            ..Default::default()
+        };
+        let zagnansk = AddressEntry {
+            city_name: "Zagnańsk".to_string(),
+            commune: "Zagnańsk".to_string(),
+            voivodeship: "Świętokrzyskie".to_string(),
+            is_active: true,
+            ..Default::default()
+        };
+        let cedzyna = AddressEntry {
+            city_name: "Cedzyna".to_string(),
+            commune: "Górno".to_string(),
+            voivodeship: "Świętokrzyskie".to_string(),
+            is_active: true,
+            ..Default::default()
+        };
+        let lublin = AddressEntry {
+            city_name: "Lublin".to_string(),
+            commune: "Lublin".to_string(),
+            voivodeship: "Lubelskie".to_string(),
+            is_active: true,
+            ..Default::default()
+        };
+
+        for address in [&kielce, &maslow, &nowiny, &zagnansk, &cedzyna] {
+            assert!(is_address_applicable_for_provider(
+                &AlertSource::WodociagiKieleckie,
+                address
+            ));
+        }
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::WodociagiKieleckie,
+            &lublin
+        ));
+        assert_eq!(
+            AlertSource::WodociagiKieleckie.to_string(),
+            "wodociagi_kieleckie"
+        );
+        assert_eq!(
+            AlertSource::WodociagiKieleckie.display_name(),
+            "Wodociągi Kieleckie"
+        );
     }
 
     #[test]
@@ -1283,13 +1400,82 @@ mod tests {
     }
 
     #[test]
+    fn test_pge_torun_heat_scope() {
+        let torun_address = AddressEntry {
+            city_name: "Toruń".to_string(),
+            voivodeship: "Kujawsko-Pomorskie".to_string(),
+            city_id: Some(929448),
+            is_active: true,
+            ..Default::default()
+        };
+        let bydgoszcz_address = AddressEntry {
+            city_name: "Bydgoszcz".to_string(),
+            voivodeship: "Kujawsko-Pomorskie".to_string(),
+            city_id: Some(928363),
+            is_active: true,
+            ..Default::default()
+        };
+
+        assert!(is_address_applicable_for_provider(
+            &AlertSource::PgeTorunHeat,
+            &torun_address
+        ));
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::PgeTorunHeat,
+            &bydgoszcz_address
+        ));
+        assert_eq!(AlertSource::PgeTorunHeat.to_string(), "pge_torun_heat");
+        assert_eq!(AlertSource::PgeTorunHeat.display_name(), "PGE Toruń");
+    }
+
+    #[test]
+    fn test_mpec_kielce_scope() {
+        let kielce_by_id = AddressEntry {
+            city_name: "Kielce".to_string(),
+            voivodeship: "Świętokrzyskie".to_string(),
+            city_id: Some(945930),
+            is_active: true,
+            ..Default::default()
+        };
+        let kielce_by_name = AddressEntry {
+            city_name: "Kielce".to_string(),
+            voivodeship: "".to_string(),
+            city_id: None,
+            is_active: true,
+            ..Default::default()
+        };
+        let lublin = AddressEntry {
+            city_name: "Lublin".to_string(),
+            voivodeship: "Lubelskie".to_string(),
+            city_id: Some(959423),
+            is_active: true,
+            ..Default::default()
+        };
+
+        assert!(is_address_applicable_for_provider(
+            &AlertSource::MpecKielce,
+            &kielce_by_id
+        ));
+        assert!(is_address_applicable_for_provider(
+            &AlertSource::MpecKielce,
+            &kielce_by_name
+        ));
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::MpecKielce,
+            &lublin
+        ));
+        assert_eq!(AlertSource::MpecKielce.to_string(), "mpec_kielce");
+        assert_eq!(AlertSource::MpecKielce.display_name(), "MPEC Kielce");
+    }
+
+    #[test]
     fn test_monitor_engine_skip_expired() {
         let mock_db = MockDatabaseInterface::new();
         let mock_notifier = MockNotificationProvider::new();
 
         let settings = Settings {
-            notification_preferences: [("tauron".to_string(), true)].into(),
-            enabled_sources: Some(vec!["tauron".to_string()]),
+            notification_preferences: [("pge_torun_heat".to_string(), true)].into(),
+            enabled_sources: Some(vec!["pge_torun_heat".to_string()]),
             ..Default::default()
         };
 
@@ -1300,7 +1486,7 @@ mod tests {
 
         let alerts = vec![
             UnifiedAlert {
-                source: AlertSource::Tauron,
+                source: AlertSource::PgeTorunHeat,
                 endDate: Some(past_end),
                 message: Some("Stara awaria".to_string()),
                 is_local: Some(true),

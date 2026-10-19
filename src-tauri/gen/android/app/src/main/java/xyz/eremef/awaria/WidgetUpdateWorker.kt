@@ -79,6 +79,14 @@ class WidgetUpdateWorker(
             pgeProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        // Update PGE Toruń heat widgets
+        val pgeTorunHeatName = ComponentName(context, PgeTorunHeatWidgetProvider::class.java)
+        val pgeTorunHeatIds = appWidgetManager.getAppWidgetIds(pgeTorunHeatName)
+        val pgeTorunHeatProvider = PgeTorunHeatWidgetProvider()
+        for (id in pgeTorunHeatIds) {
+            pgeTorunHeatProvider.updateWidget(context, appWidgetManager, id)
+        }
+
         // Update Stoen widgets
         val stoenName = ComponentName(context, StoenWidgetProvider::class.java)
         val stoenIds = appWidgetManager.getAppWidgetIds(stoenName)
@@ -273,6 +281,14 @@ class WidgetUpdateWorker(
             mpecRzeszowProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        // Update MPEC Kielce widgets
+        val mpecKielceName = ComponentName(context, MpecKielceWidgetProvider::class.java)
+        val mpecKielceIds = appWidgetManager.getAppWidgetIds(mpecKielceName)
+        val mpecKielceProvider = MpecKielceWidgetProvider()
+        for (id in mpecKielceIds) {
+            mpecKielceProvider.updateWidget(context, appWidgetManager, id)
+        }
+
         // Update MPWiK Lublin widgets
         val mpwikLublinName = ComponentName(context, MpwikLublinWidgetProvider::class.java)
         val mpwikLublinIds = appWidgetManager.getAppWidgetIds(mpwikLublinName)
@@ -289,12 +305,20 @@ class WidgetUpdateWorker(
             mpwikRzeszowProvider.updateWidget(context, appWidgetManager, id)
         }
 
-        // Update MPWiK Bydgoszcz widgets
-        val mpwikBydgoszczName = ComponentName(context, MpwikBydgoszczWidgetProvider::class.java)
-        val mpwikBydgoszczIds = appWidgetManager.getAppWidgetIds(mpwikBydgoszczName)
-        val mpwikBydgoszczProvider = MpwikBydgoszczWidgetProvider()
-        for (id in mpwikBydgoszczIds) {
-            mpwikBydgoszczProvider.updateWidget(context, appWidgetManager, id)
+        // Update MWiK Bydgoszcz widgets
+        val mwikBydgoszczName = ComponentName(context, MwikBydgoszczWidgetProvider::class.java)
+        val mwikBydgoszczIds = appWidgetManager.getAppWidgetIds(mwikBydgoszczName)
+        val mwikBydgoszczProvider = MwikBydgoszczWidgetProvider()
+        for (id in mwikBydgoszczIds) {
+            mwikBydgoszczProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update Wodociągi Kieleckie widgets
+        val wodociagiKieleckieName = ComponentName(context, WodociagiKieleckieWidgetProvider::class.java)
+        val wodociagiKieleckieIds = appWidgetManager.getAppWidgetIds(wodociagiKieleckieName)
+        val wodociagiKieleckieProvider = WodociagiKieleckieWidgetProvider()
+        for (id in wodociagiKieleckieIds) {
+            wodociagiKieleckieProvider.updateWidget(context, appWidgetManager, id)
         }
 
         // Update WM Radom widgets

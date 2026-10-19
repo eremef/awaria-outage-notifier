@@ -38,10 +38,12 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **KPEC Bydgoszcz**: Heat outages in Bydgoszcz.
   - **SEC Szczecin**: Heat outages in Szczecin.
   - **LPEC Lublin**: Heat outages in Lublin.
+  - **MPEC Kielce**: District-heating and hot-water interruptions in Kielce.
   - **MPEC Rzeszów**: Heating and domestic hot-water supply interruptions in Rzeszów.
+  - **PGE Toruń**: Planned domestic hot-water interruptions in Toruń.
 - **💧 Water**
   - **MPWiK Wrocław**: Water failures and maintenance work in Wrocław.
-  - **MPWiK Bydgoszcz**: Planned water shutoffs and network failures in Bydgoszcz.
+  - **MWiK Bydgoszcz**: Planned water shutoffs and network failures in Bydgoszcz.
   - **MPWiK Warszawa**: Water failures and repairs in Warsaw.
   - **WMK**: Water maintenance and failures in Kraków.
   - **WM Radom**: Water interruptions and failures in Radom and WM Radom's surrounding service municipalities.
@@ -55,6 +57,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **PUK Rokietnica**: Water maintenance and failures in Rokietnica.
   - **MPWiK Lublin**: Water maintenance and failures in Lublin.
   - **MPWiK Rzeszów**: Water interruptions and failures in Rzeszów and the covered nearby localities.
+  - **Wodociągi Kieleckie**: Water interruptions and failures in Kielce, its service municipalities, and reposted local notices.
 
 ## Android app
 

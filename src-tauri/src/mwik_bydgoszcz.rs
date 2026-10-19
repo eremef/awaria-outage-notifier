@@ -7,9 +7,9 @@ use scraper::{ElementRef, Html, Selector};
 use serde::Deserialize;
 use std::sync::OnceLock;
 
-pub const MPWIK_BYDGOSZCZ_PAGE_URL: &str = "https://mwik.bydgoszcz.pl/wp-json/wp/v2/pages/8760";
+pub const MWIK_BYDGOSZCZ_PAGE_URL: &str = "https://mwik.bydgoszcz.pl/wp-json/wp/v2/pages/8760";
 
-pub struct MpwikBydgoszczProvider;
+pub struct MwikBydgoszczProvider;
 
 #[derive(Debug, Deserialize)]
 struct WordPressPage {
@@ -160,15 +160,15 @@ fn parse_notice_table(
         }
 
         let Some(date) = NaiveDate::parse_from_str(date_text, "%d.%m.%Y").ok() else {
-            log::warn!("MPWiK Bydgoszcz skipped row with invalid date: {date_text}");
+            log::warn!("MWiK Bydgoszcz skipped row with invalid date: {date_text}");
             continue;
         };
         let Some((start_time, end_time)) = parse_time_range(time_text) else {
-            log::warn!("MPWiK Bydgoszcz skipped row with invalid time range: {time_text}");
+            log::warn!("MWiK Bydgoszcz skipped row with invalid time range: {time_text}");
             continue;
         };
         if street_text.is_empty() {
-            log::warn!("MPWiK Bydgoszcz skipped row without a street");
+            log::warn!("MWiK Bydgoszcz skipped row without a street");
             continue;
         }
 
@@ -180,7 +180,7 @@ fn parse_notice_table(
             .map(|(index, _)| *index);
 
         alerts.push(UnifiedAlert {
-            source: AlertSource::MpwikBydgoszcz,
+            source: AlertSource::MwikBydgoszcz,
             startDate: Some(format_datetime(start)),
             endDate: Some(format_datetime(end)),
             message: Some(format!("{}: {}", kind.label(), street_text)),
@@ -209,11 +209,11 @@ fn parse_rendered_content(html: &str, settings: &Settings) -> Result<Vec<Unified
         .collect();
     let tables: Vec<_> = document.select(&section_table_selector).collect();
     if sections.is_empty() {
-        return Err("MPWiK Bydgoszcz page contains no outage sections".to_string());
+        return Err("MWiK Bydgoszcz page contains no outage sections".to_string());
     }
     if sections.len() != tables.len() {
         return Err(format!(
-            "MPWiK Bydgoszcz page section/table count mismatch: {} sections, {} tables",
+            "MWiK Bydgoszcz page section/table count mismatch: {} sections, {} tables",
             sections.len(),
             tables.len()
         ));
@@ -226,7 +226,7 @@ fn parse_rendered_content(html: &str, settings: &Settings) -> Result<Vec<Unified
         .filter(|(_, address)| {
             address.is_active
                 && crate::api_logic::is_address_applicable_for_provider(
-                    &AlertSource::MpwikBydgoszcz,
+                    &AlertSource::MwikBydgoszcz,
                     address,
                 )
         })
@@ -244,18 +244,18 @@ pub fn parse_wordpress_page_json(
     settings: &Settings,
 ) -> Result<Vec<UnifiedAlert>, String> {
     let page: WordPressPage = serde_json::from_str(json)
-        .map_err(|error| format!("MPWiK Bydgoszcz JSON parse error: {error}"))?;
+        .map_err(|error| format!("MWiK Bydgoszcz JSON parse error: {error}"))?;
     parse_rendered_content(&page.content.rendered, settings)
 }
 
 #[async_trait]
-impl AlertProvider for MpwikBydgoszczProvider {
+impl AlertProvider for MwikBydgoszczProvider {
     fn id(&self) -> String {
-        "mpwik_bydgoszcz".to_string()
+        "mwik_bydgoszcz".to_string()
     }
 
     fn source(&self) -> AlertSource {
-        AlertSource::MpwikBydgoszcz
+        AlertSource::MwikBydgoszcz
     }
 
     async fn fetch(
@@ -270,7 +270,7 @@ impl AlertProvider for MpwikBydgoszczProvider {
         }
 
         let response = match client
-            .get(MPWIK_BYDGOSZCZ_PAGE_URL)
+            .get(MWIK_BYDGOSZCZ_PAGE_URL)
             .header(reqwest::header::ACCEPT, "application/json")
             .send()
             .await
@@ -279,14 +279,14 @@ impl AlertProvider for MpwikBydgoszczProvider {
             Err(error) => {
                 return (
                     Vec::new(),
-                    vec![format!("MPWiK Bydgoszcz request error: {error}")],
+                    vec![format!("MWiK Bydgoszcz request error: {error}")],
                 );
             }
         };
         if !response.status().is_success() {
             return (
                 Vec::new(),
-                vec![format!("MPWiK Bydgoszcz HTTP error: {}", response.status())],
+                vec![format!("MWiK Bydgoszcz HTTP error: {}", response.status())],
             );
         }
 
@@ -295,7 +295,7 @@ impl AlertProvider for MpwikBydgoszczProvider {
             Err(error) => {
                 return (
                     Vec::new(),
-                    vec![format!("MPWiK Bydgoszcz response read error: {error}")],
+                    vec![format!("MWiK Bydgoszcz response read error: {error}")],
                 );
             }
         };
@@ -364,7 +364,7 @@ mod tests {
         .unwrap();
 
         assert_eq!(alerts.len(), 3);
-        assert_eq!(alerts[0].source, AlertSource::MpwikBydgoszcz);
+        assert_eq!(alerts[0].source, AlertSource::MwikBydgoszcz);
         assert_eq!(alerts[0].startDate.as_deref(), Some("2026-10-19T07:00:00"));
         assert_eq!(alerts[0].endDate.as_deref(), Some("2026-10-19T15:00:00"));
         assert_eq!(alerts[0].is_local, Some(true));
@@ -470,17 +470,17 @@ mod tests {
     fn bydgoszcz_scope_is_applied_when_matching_addresses() {
         let torun = settings("Toruń", "Focha", "1", false);
         assert!(!crate::api_logic::is_address_applicable_for_provider(
-            &AlertSource::MpwikBydgoszcz,
+            &AlertSource::MwikBydgoszcz,
             &torun.addresses[0]
         ));
         assert!(crate::api_logic::is_address_applicable_for_provider(
-            &AlertSource::MpwikBydgoszcz,
+            &AlertSource::MwikBydgoszcz,
             &settings("Bydgoszcz", "Focha", "1", false).addresses[0]
         ));
     }
 
     #[tokio::test]
-    #[ignore = "requires a live request to the MPWiK Bydgoszcz endpoint"]
+    #[ignore = "requires a live request to the MWiK Bydgoszcz endpoint"]
     async fn live_page_uses_awaria_network_client() {
         let client = crate::network_state::NetworkState::build_client()
             .expect("Failed to build HTTP client");
@@ -488,20 +488,20 @@ mod tests {
             .expect("Failed to build HTTP/1.1 client");
         let settings = settings("Bydgoszcz", "Focha", "4", false);
 
-        let (alerts, errors) = MpwikBydgoszczProvider
+        let (alerts, errors) = MwikBydgoszczProvider
             .fetch(&client, &client_http1, &settings, None)
             .await;
 
         assert!(
             errors.is_empty(),
-            "MPWiK Bydgoszcz live fetch failed: {errors:?}"
+            "MWiK Bydgoszcz live fetch failed: {errors:?}"
         );
         assert!(alerts.iter().all(|alert| {
-            alert.source == AlertSource::MpwikBydgoszcz
+            alert.source == AlertSource::MwikBydgoszcz
                 && alert.location.as_deref() == Some("Miejscowość: Bydgoszcz")
         }));
         println!(
-            "MPWiK Bydgoszcz returned {} parsed alerts: {alerts:#?}",
+            "MWiK Bydgoszcz returned {} parsed alerts: {alerts:#?}",
             alerts.len()
         );
     }

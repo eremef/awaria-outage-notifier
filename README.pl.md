@@ -38,10 +38,12 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
   - **KPEC Bydgoszcz**: Przerwy w dostawie ciepła w Bydgoszczy.
   - **SEC Szczecin**: Przerwy w dostawie ciepła w Szczecinie.
   - **LPEC Lublin**: Przerwy w dostawie ciepła w Lublinie.
+  - **MPEC Kielce**: Przerwy w dostawie ciepła i ciepłej wody w Kielcach.
   - **MPEC Rzeszów**: Przerwy w dostawie ciepła i ciepłej wody użytkowej w Rzeszowie.
+  - **PGE Toruń**: Planowane przerwy w dostawie ciepłej wody w Toruniu.
 - **💧 Woda**
   - **MPWiK Wrocław**: Awarie wodociągowe i prace konserwacyjne we Wrocławiu.
-  - **MPWiK Bydgoszcz**: Planowane wyłączenia wody i awarie sieci wodociągowej w Bydgoszczy.
+  - **MWiK Bydgoszcz**: Planowane wyłączenia wody i awarie sieci wodociągowej w Bydgoszczy.
   - **MPWiK Warszawa**: Awarie i naprawy wodociągowe w Warszawie.
   - **WMK**: Awarie i konserwacje wodociągowe w Krakowie.
   - **WM Radom**: Awarie i planowane przerwy w dostawie wody w Radomiu i obsługiwanych okolicznych gminach.
@@ -55,6 +57,7 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
   - **PUK Rokietnica**: Awarie i konserwacje wodociągowe w Rokietnicy.
   - **MPWiK Lublin**: Awarie i konserwacje wodociągowe w Lublinie.
   - **MPWiK Rzeszów**: Przerwy w dostawie wody i awarie w Rzeszowie oraz obsługiwanych okolicznych miejscowościach.
+  - **Wodociągi Kieleckie**: Przerwy w dostawie wody i awarie w Kielcach, obsługiwanych gminach oraz publikowanych lokalnych komunikatach.
 
 ## Aplikacja Android
 
@@ -279,4 +282,3 @@ Ponieważ konfiguracją tego dodatku zarządza Home Assistant, menu "Ustawienia"
 [MIT](LICENSE)
 
 ## [Licencje bibliotek zewnętrznych](THIRD-PARTY-LICENSES.md)
-

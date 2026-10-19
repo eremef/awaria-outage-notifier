@@ -335,11 +335,14 @@ async fn get_calendar_handler(Extension(alerts): Extension<SharedAlerts>) -> imp
             | app_lib::api_logic::AlertSource::VeoliaLodz 
             | app_lib::api_logic::AlertSource::Gpec
             | app_lib::api_logic::AlertSource::KpecBydgoszcz
+            | app_lib::api_logic::AlertSource::PgeTorunHeat
             | app_lib::api_logic::AlertSource::EneaCieplo
             | app_lib::api_logic::AlertSource::EnergaCieploKaliskie
-            | app_lib::api_logic::AlertSource::MpecRzeszow => "Awaria ogrzewania",
+            | app_lib::api_logic::AlertSource::MpecRzeszow
+            | app_lib::api_logic::AlertSource::MpecKielce => "Awaria ogrzewania",
             app_lib::api_logic::AlertSource::Psg => "Awaria gazu",
-            app_lib::api_logic::AlertSource::MpwikBydgoszcz => "Awaria wody",
+            app_lib::api_logic::AlertSource::MwikBydgoszcz
+            | app_lib::api_logic::AlertSource::WodociagiKieleckie => "Awaria wody",
             _ => "Awaria wody",
         };
 

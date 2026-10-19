@@ -34,13 +34,15 @@
   <string name="provider_kpec_bydgoszcz">KPEC BDG</string>
   <string name="provider_katowickie_wodociagi">KW KTW</string>
   <string name="provider_lpec">LPEC</string>
+  <string name="provider_mpec_kielce">MPEC Kielce</string>
   <string name="provider_mpec_rzeszow">MPEC Rzeszów</string>
   <string name="provider_mpwik_lublin">MPWiK LBL</string>
   <string name="provider_mpwik_rzeszow">MPWiK RZE</string>
-  <string name="provider_mpwik_bydgoszcz">MPWiK BDG</string>
+  <string name="provider_mwik_bydgoszcz">MWiK BDG</string>
   <string name="provider_mpwik_warszawa">MPWiK WAW</string>
   <string name="provider_mpwik_wroclaw">MPWiK WRO</string>
   <string name="provider_pge">PGE</string>
+  <string name="provider_pge_torun_heat">PGE Toruń</string>
   <string name="provider_psg">PSG</string>
   <string name="provider_puk_rokietnica">PUK Rokietnica</string>
   <string name="provider_pwik_czestochowa">PWiK CZW</string>
@@ -55,6 +57,7 @@
   <string name="provider_wmk">WMK</string>
   <string name="provider_wm_radom">WM RAD</string>
   <string name="provider_wodociagi_plockie">WP Płock</string>
+  <string name="provider_wodociagi_kieleckie">WK Kielce</string>
   <string name="provider_zwik_lodz">ZWIK Łódź</string>
   <string name="widget_label_all">Address: all utilities</string>
   <string name="widget_label_aquanet">Aquanet</string>
@@ -68,13 +71,15 @@
   <string name="widget_label_kpec_bydgoszcz">KPEC Bydgoszcz</string>
   <string name="widget_label_katowickiewodociagi">Katowickie Wodociągi</string>
   <string name="widget_label_lpec">LPEC Lublin</string>
+  <string name="widget_label_mpec_kielce">MPEC Kielce</string>
   <string name="widget_label_mpec_rzeszow">MPEC Rzeszów</string>
   <string name="widget_label_mpwik">MPWiK Wrocław</string>
   <string name="widget_label_mpwik_lublin">MPWiK Lublin</string>
   <string name="widget_label_mpwik_rzeszow">MPWiK Rzeszów</string>
-  <string name="widget_label_mpwik_bydgoszcz">MPWiK Bydgoszcz</string>
+  <string name="widget_label_mwik_bydgoszcz">MWiK Bydgoszcz</string>
   <string name="widget_label_mpwik_warszawa">MPWiK Warszawa</string>
   <string name="widget_label_pge">PGE</string>
+  <string name="widget_label_pge_torun_heat">PGE Toruń</string>
   <string name="widget_label_psg">PSG</string>
   <string name="widget_label_puk_rokietnica">PUK Rokietnica</string>
   <string name="widget_label_pwik_czestochowa">PWiK Częstochowa</string>
@@ -90,5 +95,6 @@
   <string name="widget_label_wmk">Wodociągi Miasta Krakowa</string>
   <string name="widget_label_wm_radom">WM Radom</string>
   <string name="widget_label_wodociagi_plockie">Wodociągi Płockie</string>
+  <string name="widget_label_wodociagi_kieleckie">Wodociągi Kieleckie</string>
   <string name="widget_label_zwik_lodz">ZWiK Łódź</string>
 </resources>

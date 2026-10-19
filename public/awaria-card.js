@@ -15,12 +15,16 @@ class AwariaCard extends HTMLElement {
     const s = (source || '').toLowerCase();
     if (s.includes('tauron_heat')) return { name: 'Tauron Ciepło', icon: '🔥', color: '#ff5722' };
     if (s.includes('tauron')) return { name: 'Tauron', icon: '⚡', color: '#ff9800' };
+    if (s.includes('pge_torun_heat')) return { name: 'PGE Toruń', icon: '🔥', color: '#f44336' };
+    if (s.includes('mpec_kielce')) return { name: 'MPEC Kielce', icon: '🔥', color: '#f44336' };
     if (s.includes('pge')) return { name: 'PGE', icon: '⚡', color: '#ffb74d' };
     if (s.includes('energa_cieplo_kaliskie')) return { name: 'Energa Ciepło Kaliskie', icon: '🔥', color: '#f44336' };
     if (s.includes('energa')) return { name: 'Energa', icon: '⚡', color: '#ffa726' };
     if (s.includes('enea')) return { name: 'Enea', icon: '⚡', color: '#fb8c00' };
     if (s.includes('stoen')) return { name: 'Stoen', icon: '⚡', color: '#f57c00' };
-    if (s.includes('mpwik_wroclaw') || s.includes('mpwik_warszawa') || s.includes('mpwik_bydgoszcz') || s.includes('aquanet') || s.includes('wodociagi') || s.includes('pwik') || s.includes('zwik') || s.includes('wmk')) {
+    if (s.includes('mwik_bydgoszcz')) return { name: 'MWiK Bydgoszcz', icon: '💧', color: '#2196f3' };
+    if (s === 'wodociagi_kieleckie') return { name: 'Wodociągi Kieleckie', icon: '💧', color: '#2196f3' };
+    if (s.includes('mpwik_wroclaw') || s.includes('mpwik_warszawa') || s.includes('mwik_bydgoszcz') || s.includes('aquanet') || s.includes('wodociagi') || s.includes('pwik') || s.includes('zwik') || s.includes('wmk')) {
       return { name: source.toUpperCase().replace('_', ' '), icon: '💧', color: '#2196f3' };
     }
     if (s.includes('veolia') || s.includes('fortum') || s.includes('gpec')) {
@@ -171,12 +175,12 @@ class AwariaCard extends HTMLElement {
         const maxLen = 420;
         let messageHtml = '';
         if (message.length > maxLen) {
-            const visible = message.substring(0, maxLen) + '...';
-            // Note: Home Assistant custom cards don't have global toggleMessage readily available without registering it or handling shadow DOM events, 
-            // but we can add inline script or just provide the truncated text. We will just render it as truncated for now, or add a simple inline handler.
-            messageHtml = `<div class="alert-msg">💬 <span title="${message}">${visible}</span></div>`;
+          const visible = message.substring(0, maxLen) + '...';
+          // Note: Home Assistant custom cards don't have global toggleMessage readily available without registering it or handling shadow DOM events,
+          // but we can add inline script or just provide the truncated text. We will just render it as truncated for now, or add a simple inline handler.
+          messageHtml = `<div class="alert-msg">💬 <span title="${message}">${visible}</span></div>`;
         } else {
-            messageHtml = `<div class="alert-msg">💬 ${message}</div>`;
+          messageHtml = `<div class="alert-msg">💬 ${message}</div>`;
         }
 
         alertsHtml += `

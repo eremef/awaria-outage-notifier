@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect } from 'vitest';
-const { filterAlerts, formatDate, matchesStreetName } = require('../public/script.js');
+const { filterAlerts, formatDate, matchesStreetName, getSources } = require('../public/script.js');
 require('../public/awaria-card.js');
 describe('Frontend Logic', () => {
     describe('filtering logic', () => {
@@ -36,9 +36,9 @@ describe('Frontend Logic', () => {
         });
 
         it('matches prefixes in messages', () => {
-             const filtered = filterAlerts(mockAlerts, 'Marszałkowska');
-             expect(filtered).toHaveLength(1);
-             expect(filtered[0].message).toContain('Marszałkowska');
+            const filtered = filterAlerts(mockAlerts, 'Marszałkowska');
+            expect(filtered).toHaveLength(1);
+            expect(filtered[0].message).toContain('Marszałkowska');
         });
 
         it('does not match when text does not match', () => {
@@ -85,8 +85,8 @@ describe('Frontend Logic', () => {
         });
 
         it('matches abbreviated prefix', () => {
-             const alert = { message: 'al. Henryka Probusa', source: 'mpwik_wroclaw' };
-             expect(matchesStreetName(alert, mockAddr)).toBe(true);
+            const alert = { message: 'al. Henryka Probusa', source: 'mpwik_wroclaw' };
+            expect(matchesStreetName(alert, mockAddr)).toBe(true);
         });
 
         it('does not match wrong street', () => {
@@ -102,17 +102,46 @@ describe('Frontend Logic', () => {
             expect(matchesStreetName(alert, lublin)).toBe(false);
         });
 
-        it('matches MPWiK Bydgoszcz only for Bydgoszcz addresses', () => {
+        it('matches MWiK Bydgoszcz only for Bydgoszcz addresses', () => {
             const bydgoszcz = { cityName: 'Bydgoszcz', cityId: 928363, streetName1: 'Focha' };
             const torun = { cityName: 'Toruń', cityId: 929448, streetName1: 'Focha' };
             const alert = {
                 message: 'Planowane wyłączenie wody: Focha 4',
                 location: 'Miejscowość: Bydgoszcz',
-                source: 'mpwik_bydgoszcz'
+                source: 'mwik_bydgoszcz'
             };
 
             expect(matchesStreetName(alert, bydgoszcz)).toBe(true);
             expect(matchesStreetName(alert, torun)).toBe(false);
+        });
+
+        it('matches Wodociągi Kieleckie notices within its localities', () => {
+            const kielce = {
+                cityName: 'Kielce', cityId: 945930, voivodeship: 'Świętokrzyskie',
+                commune: 'Kielce', streetName1: 'Puscha'
+            };
+            const cedzyna = {
+                cityName: 'Cedzyna', voivodeship: 'Świętokrzyskie',
+                commune: 'Górno', streetName1: 'Lubrzanka'
+            };
+            const sameStreetElsewhere = {
+                cityName: 'Łódź', cityId: 958153, voivodeship: 'Łódzkie',
+                commune: 'Łódź', streetName1: 'Puscha'
+            };
+            const kielceAlert = {
+                message: 'Awaria wodociągowa: przerwy przy ul. Puscha 15 i 17',
+                location: 'Miejscowość: Kielce',
+                source: 'wodociagi_kieleckie'
+            };
+            const cedzynaAlert = {
+                message: 'Planowana przerwa w dostawie wody: ul. Lubrzanka',
+                location: 'Miejscowość: Górno, Cedzyna',
+                source: 'wodociagi_kieleckie'
+            };
+
+            expect(matchesStreetName(kielceAlert, kielce)).toBe(true);
+            expect(matchesStreetName(kielceAlert, sameStreetElsewhere)).toBe(false);
+            expect(matchesStreetName(cedzynaAlert, cedzyna)).toBe(true);
         });
 
         it('matches MPEC Rzeszów only for Rzeszów addresses', () => {
@@ -121,6 +150,31 @@ describe('Frontend Logic', () => {
             const alert = { message: 'Przerwa w dostawie ciepła przy ul. Architektów 3', source: 'mpec_rzeszow' };
             expect(matchesStreetName(alert, rzeszow)).toBe(true);
             expect(matchesStreetName(alert, lublin)).toBe(false);
+        });
+
+        it('matches MPEC Kielce streets only for Kielce addresses', () => {
+            const kielce = { cityName: 'Kielce', cityId: 945930, streetName1: 'Wrzosowa' };
+            const lublin = { cityName: 'Lublin', cityId: 959423, streetName1: 'Wrzosowa' };
+            const alert = {
+                message: 'Awaria ciepła: zakłócenia przy ul. Wrzosowej w Kielcach',
+                source: 'mpec_kielce'
+            };
+
+            expect(matchesStreetName(alert, kielce)).toBe(true);
+            expect(matchesStreetName(alert, lublin)).toBe(false);
+        });
+
+        it('matches PGE Toruń streets only for Toruń addresses', () => {
+            const torun = { cityName: 'Toruń', cityId: 929448, streetName1: 'Dąbrowskiego' };
+            const bydgoszcz = { cityName: 'Bydgoszcz', cityId: 928363, streetName1: 'Dąbrowskiego' };
+            const alert = {
+                message: 'Planowane przerwy w dostawie ciepłej wody — Wymiana armatury. Dąbrowskiego 1, 4',
+                location: 'Miejscowość: Toruń',
+                source: 'pge_torun_heat'
+            };
+
+            expect(matchesStreetName(alert, torun)).toBe(true);
+            expect(matchesStreetName(alert, bydgoszcz)).toBe(false);
         });
 
         it('matches Energa Ciepło Kaliskie only for Kalisz addresses', () => {
@@ -169,11 +223,80 @@ describe('Frontend Logic', () => {
         });
     });
 
+    describe('PGE Toruń source integration', () => {
+        it('registers the provider in the alphabetically sorted heating group', () => {
+            const heatingIds = getSources()
+                .filter(source => source.category === 'heating')
+                .map(source => source.id);
+            const provider = getSources().find(source => source.id === 'pge_torun_heat');
+
+            expect(provider).toMatchObject({
+                label: 'PGE Toruń',
+                category: 'heating',
+                region: 'torun',
+                i18nLabel: 'source_pge_torun_heat_name',
+                i18nShort: 'source_pge_torun_heat_short'
+            });
+            expect(heatingIds).toEqual([...heatingIds].sort());
+        });
+
+        it('uses the heat icon and style in the Home Assistant card', () => {
+            const Card = window.customElements.get('awaria-card');
+            const card = new Card();
+            expect(card.getProviderMeta('pge_torun_heat')).toEqual({
+                name: 'PGE Toruń',
+                icon: '🔥',
+                color: '#f44336'
+            });
+        });
+    });
+
+    describe('MPEC Kielce source integration', () => {
+        it('registers the provider in the alphabetically sorted heating group', () => {
+            const sources = getSources();
+            const heatingIds = sources.filter(source => source.category === 'heating').map(source => source.id);
+            const provider = sources.find(source => source.id === 'mpec_kielce');
+
+            expect(provider).toMatchObject({
+                label: 'MPEC Kielce',
+                category: 'heating',
+                region: 'kielce',
+                i18nLabel: 'source_mpec_kielce_name',
+                i18nShort: 'source_mpec_kielce_short'
+            });
+            expect(heatingIds).toEqual([...heatingIds].sort());
+        });
+
+        it('uses the shared heat styling in the Home Assistant card', () => {
+            const Card = window.customElements.get('awaria-card');
+            const card = new Card();
+            expect(card.getProviderMeta('mpec_kielce')).toEqual({
+                name: 'MPEC Kielce',
+                icon: '🔥',
+                color: '#f44336'
+            });
+        });
+    });
+
+    describe('getSources', () => {
+        it('registers Wodociągi Kieleckie in the water category before Płock by ID', () => {
+            const sources = getSources();
+            const provider = sources.find(source => source.id === 'wodociagi_kieleckie');
+            expect(provider).toMatchObject({
+                label: 'Wodociągi Kieleckie',
+                category: 'water',
+                region: 'wodociagi_kieleckie_area'
+            });
+            const waterIds = sources.filter(source => source.category === 'water').map(source => source.id);
+            expect(waterIds.indexOf('wodociagi_kieleckie')).toBeLessThan(waterIds.indexOf('wodociagi_plockie'));
+        });
+    });
+
     describe('Home Assistant card provider styling', () => {
-        it('uses the shared water styling for MPWiK Bydgoszcz', () => {
+        it('uses the shared water styling for MWiK Bydgoszcz', () => {
             const AwariaCard = customElements.get('awaria-card');
             const card = new AwariaCard();
-            const provider = card.getProviderMeta('mpwik_bydgoszcz');
+            const provider = card.getProviderMeta('mwik_bydgoszcz');
 
             expect(provider.icon).toBe('💧');
             expect(provider.color).toBe('#2196f3');
@@ -181,6 +304,16 @@ describe('Frontend Logic', () => {
             const heatProvider = card.getProviderMeta('energa_cieplo_kaliskie');
             expect(heatProvider.name).toBe('Energa Ciepło Kaliskie');
             expect(heatProvider.icon).toBe('🔥');
+        });
+
+        it('uses the full Wodociągi Kieleckie name and shared water styling', () => {
+            const AwariaCard = customElements.get('awaria-card');
+            const card = new AwariaCard();
+            const provider = card.getProviderMeta('wodociagi_kieleckie');
+
+            expect(provider.name).toBe('Wodociągi Kieleckie');
+            expect(provider.icon).toBe('💧');
+            expect(provider.color).toBe('#2196f3');
         });
     });
 
@@ -257,18 +390,18 @@ describe('Frontend Logic', () => {
     });
     describe('Deduplication logic (conceptual/manual)', () => {
         it('identifies duplicates by hash', () => {
-             const alerts = [
-                 { hash: 'abc', source: 'tauron', message: 'Alert' },
-                 { hash: 'abc', source: 'tauron', message: 'Alert' },
-                 { hash: 'def', source: 'tauron', message: 'Other' }
-             ];
-             const seen = new Set();
-             const deduplicated = alerts.filter(a => {
-                 if (seen.has(a.hash)) return false;
-                 seen.add(a.hash);
-                 return true;
-             });
-             expect(deduplicated).toHaveLength(2);
+            const alerts = [
+                { hash: 'abc', source: 'tauron', message: 'Alert' },
+                { hash: 'abc', source: 'tauron', message: 'Alert' },
+                { hash: 'def', source: 'tauron', message: 'Other' }
+            ];
+            const seen = new Set();
+            const deduplicated = alerts.filter(a => {
+                if (seen.has(a.hash)) return false;
+                seen.add(a.hash);
+                return true;
+            });
+            expect(deduplicated).toHaveLength(2);
         });
     });
 
@@ -282,13 +415,13 @@ describe('Frontend Logic', () => {
                     </div>
                 </div>
             `;
-            
+
             const { updateNotifyStatus } = require('../public/script.js');
-            
+
             // Initial state check
             updateNotifyStatus('source-tauron-check', 'notify-tauron-check');
             expect(document.getElementById('notify-tauron-check').disabled).toBe(false);
-            
+
             // Uncheck source
             document.getElementById('source-tauron-check').checked = false;
             updateNotifyStatus('source-tauron-check', 'notify-tauron-check');
@@ -297,7 +430,7 @@ describe('Frontend Logic', () => {
         });
 
         it('updateUpcomingStatus handles source disabling correctly', () => {
-             document.body.innerHTML = `
+            document.body.innerHTML = `
                 <div id="upcoming-row-container">
                     <input type="checkbox" id="upcoming-notify-check">
                 </div>
@@ -306,13 +439,13 @@ describe('Frontend Logic', () => {
                 </div>
                 <input type="checkbox" id="notify-tauron-check" checked>
             `;
-            
+
             const { updateUpcomingStatus } = require('../public/script.js');
-            
+
             // With enabled source notification
             updateUpcomingStatus();
             expect(document.getElementById('upcoming-notify-check').disabled).toBe(false);
-            
+
             // Disable all source notifications
             document.getElementById('notify-tauron-check').checked = false;
             updateUpcomingStatus();
@@ -322,18 +455,18 @@ describe('Frontend Logic', () => {
     });
 
     describe('renderAlerts', () => {
-        const mockSettings = { 
-            addresses: [{ name: 'Home', isActive: true }], 
-            enabledSources: ['tauron'] 
+        const mockSettings = {
+            addresses: [{ name: 'Home', isActive: true }],
+            enabledSources: ['tauron']
         };
 
         it('renders "no outages" message when alert list is empty', () => {
             document.body.innerHTML = '<div id="outages-container"></div>';
             const container = document.getElementById('outages-container');
             const { renderAlerts } = require('../public/script.js');
-            
+
             renderAlerts([], container, mockSettings, -1);
-            
+
             // Should show the "Everything looks good" dashboard
             expect(container.innerHTML).toContain('Everything looks good!');
         });
@@ -342,15 +475,15 @@ describe('Frontend Logic', () => {
             document.body.innerHTML = '<div id="outages-container"></div>';
             const container = document.getElementById('outages-container');
             const { renderAlerts } = require('../public/script.js');
-            
+
             const alerts = [
                 { source: 'tauron', message: 'Tauron Alert', hash: '1', isLocal: true, addressIndex: 0 },
                 { source: 'water', message: 'Water Alert', hash: '2', isLocal: true, addressIndex: 0 }
             ];
-            
+
             // Only tauron enabled in mockSettings
             renderAlerts(alerts, container, mockSettings, -1);
-            
+
             expect(container.innerHTML).toContain('Tauron Alert');
             expect(container.innerHTML).not.toContain('Water Alert');
         });
@@ -366,7 +499,7 @@ describe('Frontend Logic', () => {
         it('respects backend matching for specific sources', () => {
             const alert = { source: 'tauron', isLocal: true, addressIndex: 0 };
             expect(matchesAddress(alert, addresses, 0)).toBe(true);
-            
+
             const alert2 = { source: 'tauron', isLocal: true, addressIndex: 1 };
             expect(matchesAddress(alert2, addresses, 0)).toBe(false);
         });
@@ -379,7 +512,7 @@ describe('Frontend Logic', () => {
         it('matches by city name for addresses without streets', () => {
             const alert = { source: 'unknown', message: 'Awaria w mieście Oleśnica' };
             expect(matchesAddress(alert, addresses, 1)).toBe(true);
-            
+
             const alert2 = { source: 'unknown', message: 'Awaria w mieście Wrocław' };
             expect(matchesAddress(alert2, addresses, 1)).toBe(false);
         });
@@ -399,7 +532,7 @@ describe('Frontend Logic', () => {
 
     describe('renderAlerts complex scenarios', () => {
         const { renderAlerts, setSelectedAddressIndex } = require('../public/script.js');
-        
+
         it('renders empty state when no addresses', () => {
             document.body.innerHTML = '<div id="outages-container"></div>';
             const container = document.getElementById('outages-container');
@@ -431,7 +564,7 @@ describe('Frontend Logic', () => {
 
             // Filter for Home (index 0)
             renderAlerts(alerts, container, settings, 0);
-            
+
             expect(container.innerHTML).toContain('Your location');
             expect(container.innerHTML).toContain('Probusa 1');
             // Legnicka 1 is in "Other alerts" (now rendered synchronously alongside local alerts)

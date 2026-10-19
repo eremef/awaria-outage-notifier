@@ -13,11 +13,38 @@ import org.robolectric.annotation.Config
 class WidgetUtilsTest {
 
     @Test
-    fun testMpwikBydgoszczWidgetUsesWaterSourceAndRefreshAction() {
-        val provider = MpwikBydgoszczWidgetProvider()
+    fun testPgeTorunHeatWidgetUsesHeatSourceAndRefreshAction() {
+        val provider = PgeTorunHeatWidgetProvider()
 
-        assertEquals("mpwik_bydgoszcz", provider.sourceKey)
-        assertEquals("xyz.eremef.awaria.ACTION_REFRESH_MPWIK_BYDGOSZCZ", provider.refreshAction)
+        assertEquals("pge_torun_heat", provider.sourceKey)
+        assertEquals("xyz.eremef.awaria.ACTION_REFRESH_PGE_TORUN_HEAT", provider.refreshAction)
+        assertEquals(R.drawable.ic_heating, provider.iconResId)
+    }
+
+    @Test
+    fun testMpecKielceWidgetUsesHeatSourceAndRefreshAction() {
+        val provider = MpecKielceWidgetProvider()
+
+        assertEquals("mpec_kielce", provider.sourceKey)
+        assertEquals("xyz.eremef.awaria.ACTION_REFRESH_MPEC_KIELCE", provider.refreshAction)
+        assertEquals(R.drawable.ic_heating, provider.iconResId)
+    }
+
+    @Test
+    fun testMwikBydgoszczWidgetUsesWaterSourceAndRefreshAction() {
+        val provider = MwikBydgoszczWidgetProvider()
+
+        assertEquals("mwik_bydgoszcz", provider.sourceKey)
+        assertEquals("xyz.eremef.awaria.ACTION_REFRESH_MWIK_BYDGOSZCZ", provider.refreshAction)
+        assertEquals(R.drawable.ic_water, provider.iconResId)
+    }
+
+    @Test
+    fun testWodociagiKieleckieWidgetUsesWaterSourceAndRefreshAction() {
+        val provider = WodociagiKieleckieWidgetProvider()
+
+        assertEquals("wodociagi_kieleckie", provider.sourceKey)
+        assertEquals("xyz.eremef.awaria.ACTION_REFRESH_WODOCIAGI_KIELECKIE", provider.refreshAction)
         assertEquals(R.drawable.ic_water, provider.iconResId)
     }
 
