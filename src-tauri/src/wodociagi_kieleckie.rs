@@ -445,10 +445,11 @@ fn locality_matches_notice(text: &str, address: &AddressEntry) -> bool {
 }
 
 fn street_matches_notice(text: &str, address: &AddressEntry) -> bool {
-    let mut candidates = vec![address.street_name.as_str(), address.street_name_1.as_str()];
-    if let Some(second) = address.street_name_2.as_deref() {
-        candidates.push(second);
-    }
+    let candidates = crate::utils::configured_street_name_candidates(
+        &address.street_name,
+        &address.street_name_1,
+        address.street_name_2.as_deref(),
+    );
 
     let notice_words: Vec<_> = normalize_polish(text)
         .split(|character: char| !character.is_alphanumeric())

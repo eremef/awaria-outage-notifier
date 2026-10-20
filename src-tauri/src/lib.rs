@@ -653,19 +653,17 @@ fn torunskie_house_number_is_listed(house_number: &str, street_segment: &str) ->
 
 fn torunskie_notice_matches_house(address: &api_logic::AddressEntry, location: &str) -> bool {
     let normalized_location = utils::clean_text(location);
-    let mut street_names = vec![
-        address.street_name_1.as_str(),
-        address.street_name.as_str(),
-    ];
-    if let Some(street_name_2) = address.street_name_2.as_deref() {
-        street_names.push(street_name_2);
-    }
+    let street_names = utils::configured_street_name_candidates(
+        &address.street_name,
+        &address.street_name_1,
+        address.street_name_2.as_deref(),
+    );
 
     street_names
         .into_iter()
         .filter(|street| !street.trim().is_empty())
         .any(|street| {
-            let street = utils::clean_text(utils::strip_street_prefixes(street));
+            let street = utils::clean_text(utils::strip_street_prefixes(&street));
             let street_words: Vec<&str> = street
                 .split(|character: char| !character.is_alphanumeric())
                 .filter(|word| word.chars().count() > 2 && !word.chars().all(char::is_numeric))
@@ -716,6 +714,9 @@ fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Setti
                     alert.is_local = Some(true);
                 } else {
                     alert.is_local = Some(false);
+                    if let Some((locality, _)) = location.split_once(';') {
+                        alert.location = Some(locality.to_string());
+                    }
                 }
                 continue;
             }

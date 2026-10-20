@@ -102,10 +102,11 @@ fn street_matches_address(notice_text: &str, address: &AddressEntry) -> bool {
         .map(str::to_string)
         .collect::<Vec<_>>();
 
-    let mut configured_streets = vec![address.street_name.as_str(), address.street_name_1.as_str()];
-    if let Some(street) = address.street_name_2.as_deref() {
-        configured_streets.push(street);
-    }
+    let configured_streets = crate::utils::configured_street_name_candidates(
+        &address.street_name,
+        &address.street_name_1,
+        address.street_name_2.as_deref(),
+    );
 
     configured_streets.into_iter().any(|street| {
         let street = crate::utils::strip_street_prefixes(street.trim());

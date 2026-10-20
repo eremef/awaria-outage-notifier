@@ -459,10 +459,11 @@ fn strip_source_location(text: &str) -> String {
 
 fn street_matches_address(text: &str, address: &AddressEntry) -> bool {
     let notice = normalize_polish(&strip_source_location(text));
-    let mut configured_streets = vec![address.street_name.as_str(), address.street_name_1.as_str()];
-    if let Some(second) = address.street_name_2.as_deref() {
-        configured_streets.push(second);
-    }
+    let configured_streets = crate::utils::configured_street_name_candidates(
+        &address.street_name,
+        &address.street_name_1,
+        address.street_name_2.as_deref(),
+    );
     configured_streets.into_iter().any(|street| {
         let street = crate::utils::strip_street_prefixes(street.trim());
         let tokens = normalize_polish(street)

@@ -241,10 +241,11 @@ fn street_tokens_match(street_tokens: &[String], notice_tokens: &[String]) -> bo
 }
 
 fn street_matches_address(notice_text: &str, address: &crate::api_logic::AddressEntry) -> bool {
-    let mut streets = vec![address.street_name.as_str(), address.street_name_1.as_str()];
-    if let Some(street_name_2) = address.street_name_2.as_deref() {
-        streets.push(street_name_2);
-    }
+    let streets = crate::utils::configured_street_name_candidates(
+        &address.street_name,
+        &address.street_name_1,
+        address.street_name_2.as_deref(),
+    );
     let notice_tokens = tokenized_polish(notice_text);
 
     streets.into_iter().any(|street| {

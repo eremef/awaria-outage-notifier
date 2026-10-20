@@ -189,30 +189,18 @@ fn extract_affected_locations(details_cell: ElementRef<'_>, fallback: &str) -> V
     affected
 }
 
-fn summary_details(details_cell: ElementRef<'_>, fallback: &str) -> String {
+fn full_details(details_cell: ElementRef<'_>, fallback: &str) -> String {
     let paragraph_selector = Selector::parse("p").unwrap();
-    let mut summary = Vec::new();
+    let paragraphs: Vec<String> = details_cell
+        .select(&paragraph_selector)
+        .map(element_text)
+        .filter(|paragraph| !paragraph.is_empty())
+        .collect();
 
-    for paragraph in details_cell.select(&paragraph_selector).map(element_text) {
-        let normalized = normalize_polish(&paragraph);
-        if normalized.contains("posesji") && normalized.contains(':') {
-            if let Some(intro_index) = paragraph.to_lowercase().find("posesji") {
-                let cause = normalize_whitespace(paragraph[..intro_index].trim_end_matches(':'));
-                if !cause.is_empty() {
-                    summary.push(cause);
-                }
-            }
-            break;
-        }
-        if !paragraph.is_empty() {
-            summary.push(paragraph);
-        }
-    }
-
-    if summary.is_empty() {
+    if paragraphs.is_empty() {
         normalize_whitespace(fallback)
     } else {
-        summary.join(" ")
+        paragraphs.join("\n")
     }
 }
 
@@ -278,22 +266,12 @@ fn locality_label(text: &str, settings: &Settings) -> String {
     }
 }
 
-fn address_street_names(address: &AddressEntry) -> Vec<&str> {
-    let mut streets = Vec::new();
-    for candidate in [
-        Some(address.street_name.as_str()),
-        Some(address.street_name_1.as_str()),
+fn address_street_names(address: &AddressEntry) -> Vec<String> {
+    crate::utils::configured_street_name_candidates(
+        &address.street_name,
+        &address.street_name_1,
         address.street_name_2.as_deref(),
-    ]
-    .into_iter()
-    .flatten()
-    {
-        let candidate = crate::utils::strip_street_prefixes(candidate).trim();
-        if !candidate.is_empty() && !streets.contains(&candidate) {
-            streets.push(candidate);
-        }
-    }
-    streets
+    )
 }
 
 fn address_matches_notice(
@@ -334,7 +312,6 @@ fn parse_notice(
     let locality_text = format!("{address_cell} {details}");
     let locality_label = locality_label(&locality_text, settings);
 
-    let location = format!("Miejscowość: {locality_label}; {affected_text}");
     let matching_address = settings
         .addresses
         .iter()
@@ -349,10 +326,15 @@ fn parse_notice(
         })
         .map(|(index, _)| index);
 
+    let location = if matching_address.is_some() {
+        format!("Miejscowość: {locality_label}; {affected_text}")
+    } else {
+        format!("Miejscowość: {locality_label}")
+    };
     let message = format!(
         "{}: {}",
         kind.label(),
-        summary_details(details_cell, &details)
+        full_details(details_cell, &details)
     );
     let mut hasher = DefaultHasher::new();
     kind.hash(&mut hasher);
@@ -584,6 +566,51 @@ mod tests {
     }
 
     #[test]
+    fn falls_back_to_street_name_1_when_notice_omits_street_name_2() {
+        let mut address = test_address(
+            "Toruń",
+            "Toruń",
+            "ul. Andrzeja Waligórskiego",
+            "12",
+        );
+        address.street_name_1 = "Waligórskiego".to_string();
+        address.street_name_2 = Some("Andrzeja".to_string());
+
+        assert!(address_matches_notice(
+            &address,
+            "Toruń",
+            "ul. Waligórskiego 12"
+        ));
+        assert!(!address_matches_notice(&address, "Toruń", "ul. Andrzeja 12"));
+    }
+
+    #[test]
+    fn house_number_filter_only_rejects_unlisted_batorego_house_when_enabled() {
+        for (filter_by_house_no, expected_local) in [(false, true), (true, false)] {
+            let mut address = test_address(
+                "Toruń",
+                "Toruń",
+                "ul. Stefana Batorego",
+                "1",
+            );
+            address.street_name_1 = "Stefana Batorego".to_string();
+            address.street_name_2 = None;
+            address.city_id = Some(982724);
+            let settings = Settings {
+                addresses: vec![address],
+                filter_by_house_no,
+                ..Default::default()
+            };
+            let mut alerts = parse_bulletin(FIXTURE, &settings, test_now()).unwrap();
+
+            crate::apply_alert_filtering(&mut alerts, &Some(settings));
+
+            assert_eq!(alerts[0].is_local, Some(expected_local));
+            assert_eq!(alerts[0].address_index, Some(0));
+        }
+    }
+
+    #[test]
     fn parses_planned_multi_street_water_interruption_and_uses_affected_properties() {
         let settings = Settings {
             addresses: vec![test_address("Toruń", "Toruń", "Batorego", "42")],
@@ -601,7 +628,12 @@ mod tests {
         assert_eq!(alert.endDate.as_deref(), Some("2026-10-22 10:00"));
         assert!(alert.message.as_deref().unwrap().contains("DN 100"));
         assert!(alert.message.as_deref().unwrap().contains("7:30-10:00"));
-        assert!(!alert.message.as_deref().unwrap().contains("Kościuszki 55"));
+        assert!(alert.message.as_deref().unwrap().contains("Kościuszki 55"));
+        assert!(alert
+            .message
+            .as_deref()
+            .unwrap()
+            .contains("Za utrudnienia przepraszamy"));
         assert!(alert
             .location
             .as_deref()
@@ -619,6 +651,25 @@ mod tests {
             .contains("Batorego 42-44"));
         assert_eq!(alert.is_local, Some(true));
         assert_eq!(alert.address_index, Some(0));
+    }
+
+    #[test]
+    fn nonlocal_alert_keeps_full_message_and_uses_city_only_for_location() {
+        let settings = Settings {
+            addresses: vec![test_address("Toruń", "Toruń", "Hallera", "1")],
+            ..Default::default()
+        };
+        let alerts = parse_bulletin(FIXTURE, &settings, test_now()).unwrap();
+
+        assert_eq!(alerts.len(), 1);
+        assert_eq!(alerts[0].is_local, Some(false));
+        assert_eq!(alerts[0].location.as_deref(), Some("Miejscowość: Toruń"));
+        let message = alerts[0].message.as_deref().unwrap();
+        assert!(message.contains("Kościuszki 55, 57, 61-63"));
+        assert!(message.contains("Batorego 33, 32, 32A"));
+        assert!(message.contains("Dworcowa 3c, 3B, 3D"));
+        assert!(message.contains("Świętopełka 24D, 24E, 28E"));
+        assert!(message.contains("Za utrudnienia przepraszamy"));
     }
 
     #[test]
@@ -723,6 +774,7 @@ mod tests {
         crate::apply_alert_filtering(&mut alerts, &Some(settings));
 
         assert_eq!(alerts[0].is_local, Some(false));
+        assert_eq!(alerts[0].location.as_deref(), Some("Miejscowość: Toruń"));
     }
 
     #[test]

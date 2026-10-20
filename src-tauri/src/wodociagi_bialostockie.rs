@@ -532,17 +532,17 @@ fn locality_matches_notice(text: &str, address: &AddressEntry) -> bool {
 }
 
 fn street_matches_notice(text: &str, address: &AddressEntry) -> bool {
-    let candidates = [
-        Some(address.street_name.as_str()),
-        Some(address.street_name_1.as_str()),
+    let candidates = crate::utils::configured_street_name_candidates(
+        &address.street_name,
+        &address.street_name_1,
         address.street_name_2.as_deref(),
-    ];
+    );
     let notice_words: Vec<String> = normalize_polish(text)
         .split(|character: char| !character.is_alphanumeric())
         .map(str::to_string)
         .collect();
 
-    candidates.into_iter().flatten().any(|candidate| {
+    candidates.into_iter().any(|candidate| {
         let stripped = crate::utils::strip_street_prefixes(candidate.trim());
         let tokens: Vec<String> = normalize_polish(stripped)
             .split(|character: char| !character.is_alphanumeric())

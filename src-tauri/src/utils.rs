@@ -76,6 +76,60 @@ pub fn strip_street_prefixes(s: &str) -> &str {
     s.trim()
 }
 
+pub fn configured_street_name_candidates(
+    street_name: &str,
+    street_name_1: &str,
+    street_name_2: Option<&str>,
+) -> Vec<String> {
+    let street_name = strip_street_prefixes(street_name).trim();
+    let street_name_1 = strip_street_prefixes(street_name_1).trim();
+    let street_name_2 = street_name_2
+        .map(strip_street_prefixes)
+        .map(str::trim)
+        .filter(|name| !name.is_empty());
+    let mut candidates = Vec::new();
+
+    if !street_name_1.is_empty()
+        && let Some(street_name_2) = street_name_2
+    {
+        push_unique_street_candidate(
+            &mut candidates,
+            &format!("{street_name_2} {street_name_1}"),
+        );
+    }
+
+    if !street_name_1.is_empty() {
+        push_unique_street_candidate(&mut candidates, street_name_1);
+    }
+    if !street_name.is_empty() {
+        push_unique_street_candidate(&mut candidates, street_name);
+    }
+
+    let fallback_name = if street_name_1.is_empty() {
+        street_name
+    } else {
+        street_name_1
+    };
+    if let Some(last_word) = fallback_name.split_whitespace().last()
+        && last_word.chars().count() > 2
+        && !last_word.chars().all(char::is_numeric)
+    {
+        push_unique_street_candidate(&mut candidates, last_word);
+    }
+
+    candidates
+}
+
+fn push_unique_street_candidate(candidates: &mut Vec<String>, candidate: &str) {
+    let normalized_candidate = clean_text(candidate);
+    if !candidates
+        .iter()
+        .any(|existing| clean_text(existing) == normalized_candidate)
+    {
+        candidates.push(candidate.to_string());
+    }
+}
+
 pub async fn retry<T, E, F, Fut>(f: F, max_retries: usize) -> Result<T, E>
 
 where
@@ -335,6 +389,24 @@ mod tests {
         assert_eq!(parse_numeric_prefixes("od 1 do 9"), vec![1, 9]);
         assert_eq!(parse_numeric_prefixes("budynki 2, 4, 10a"), vec![2, 4, 10]);
         assert_eq!(parse_numeric_prefixes("brak"), Vec::<u32>::new());
+    }
+
+    #[test]
+    fn configured_street_candidates_try_compound_then_street_name_1_fallback() {
+        let candidates = configured_street_name_candidates(
+            "ul. Andrzeja Waligórskiego",
+            "Waligórskiego",
+            Some("Andrzeja"),
+        );
+
+        assert_eq!(candidates, ["Andrzeja Waligórskiego", "Waligórskiego"]);
+
+        let legacy_fields = configured_street_name_candidates(
+            "ul. Stefana Batorego",
+            "Stefana Batorego",
+            None,
+        );
+        assert_eq!(legacy_fields, ["Stefana Batorego", "Batorego"]);
     }
 
     #[test]
