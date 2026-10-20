@@ -47,6 +47,8 @@ pub enum AlertSource {
     WodociagiKieleckie,
     #[serde(rename = "torunskie_wodociagi")]
     TorunskieWodociagi,
+    #[serde(rename = "wodociagi_bialostockie")]
+    WodociagiBialostockie,
     #[serde(rename = "pwik_kalisz")]
     PwikKalisz,
     #[serde(rename = "pwik_czestochowa")]
@@ -141,6 +143,9 @@ impl AlertSource {
             AlertSource::TorunskieWodociagi => {
                 ServiceLocation::Cities(vec![is_torunskie_wodociagi_area])
             }
+            AlertSource::WodociagiBialostockie => {
+                ServiceLocation::Cities(vec![is_wodociagi_bialostockie_area])
+            }
             AlertSource::PwikCzestochowa => ServiceLocation::Cities(vec![is_czestochowa]),
             AlertSource::Psg => ServiceLocation::Nationwide,
             
@@ -194,6 +199,7 @@ impl AlertSource {
             AlertSource::WodociagiPlockie => "Wodociągi Płockie",
             AlertSource::WodociagiKieleckie => "Wodociągi Kieleckie",
             AlertSource::TorunskieWodociagi => "Toruńskie Wodociągi",
+            AlertSource::WodociagiBialostockie => "Wodociągi Białostockie",
             AlertSource::PwikKalisz => "PWiK Kalisz",
             AlertSource::PwikCzestochowa => "PWiK Częstochowa",
             AlertSource::GdanskieWodociagi => "Gdańskie Wodociągi",
@@ -398,7 +404,7 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea | AlertSource::Pge | AlertSource::Stoen => {
             if is_pl { "wyłączenie prądu" } else { "power outage" }
         }
-        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::WmRadom | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::WodociagiPlockie | AlertSource::WodociagiKieleckie | AlertSource::TorunskieWodociagi | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa | AlertSource::GdanskieWodociagi | AlertSource::PukRokietnica | AlertSource::MpwikLublin | AlertSource::MpwikRzeszow | AlertSource::MwikBydgoszcz => {
+        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::WmRadom | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::WodociagiPlockie | AlertSource::WodociagiKieleckie | AlertSource::TorunskieWodociagi | AlertSource::WodociagiBialostockie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa | AlertSource::GdanskieWodociagi | AlertSource::PukRokietnica | AlertSource::MpwikLublin | AlertSource::MpwikRzeszow | AlertSource::MwikBydgoszcz => {
             if is_pl { "wyłączenie wody" } else { "water outage" }
         }
         AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz | AlertSource::Gpec | AlertSource::KpecBydgoszcz | AlertSource::EneaCieplo | AlertSource::EnergaCieploKaliskie | AlertSource::Sec | AlertSource::Lpec | AlertSource::MpecRzeszow | AlertSource::MpecKielce | AlertSource::PgeTorunHeat => {
@@ -517,6 +523,7 @@ impl std::fmt::Display for AlertSource {
             AlertSource::WodociagiPlockie => "wodociagi_plockie",
             AlertSource::WodociagiKieleckie => "wodociagi_kieleckie",
             AlertSource::TorunskieWodociagi => "torunskie_wodociagi",
+            AlertSource::WodociagiBialostockie => "wodociagi_bialostockie",
             AlertSource::PwikKalisz => "pwik_kalisz",
             AlertSource::PwikCzestochowa => "pwik_czestochowa",
             AlertSource::GdanskieWodociagi => "gdanskie_wodociagi",
@@ -769,6 +776,47 @@ fn is_bialystok(addr: &AddressEntry) -> bool {
     let voivodeship = addr.voivodeship.trim().to_lowercase();
     is_bialystok && (voivodeship.is_empty() || voivodeship.starts_with("podlaskie"))
 }
+
+fn is_wodociagi_bialostockie_area(addr: &AddressEntry) -> bool {
+    let normalize = |value: &str| {
+        value
+            .trim()
+            .to_lowercase()
+            .replace('ą', "a")
+            .replace('ć', "c")
+            .replace('ę', "e")
+            .replace('ł', "l")
+            .replace('ń', "n")
+            .replace('ó', "o")
+            .replace('ś', "s")
+            .replace(['ź', 'ż'], "z")
+            .replace('-', " ")
+    };
+    let voivodeship = normalize(&addr.voivodeship);
+    if !voivodeship.is_empty() && !voivodeship.starts_with("podlaskie") {
+        return false;
+    }
+
+    let city = normalize(&addr.city_name);
+    let commune = normalize(&addr.commune);
+    addr.city_id == Some(922410)
+        || addr.city_id == Some(923526)
+        || city.starts_with("bialystok")
+        || city.starts_with("wasilkow")
+        || commune.starts_with("wasilkow")
+        || [
+            "jurowce",
+            "sochonie",
+            "woroszyl",
+            "wolka poduchowna",
+            "wolka przedmiescie",
+            "dabrowki",
+            "studzianki",
+        ]
+        .iter()
+        .any(|locality| city.starts_with(locality))
+}
+
 city_checker!(is_katowice, None::<u64>, "katowice");
 city_checker!(is_plock, None::<u64>, "płock", "plock");
 city_checker!(is_czestochowa, None::<u64>, "częstochowa", "czestochowa");
@@ -1448,6 +1496,62 @@ mod tests {
         assert_eq!(
             AlertSource::TorunskieWodociagi.display_name(),
             "Toruńskie Wodociągi"
+        );
+    }
+
+    #[test]
+    fn test_wodociagi_bialostockie_scope() {
+        let bialystok = AddressEntry {
+            city_name: "Białystok".to_string(),
+            voivodeship: "Podlaskie".to_string(),
+            city_id: Some(922410),
+            ..Default::default()
+        };
+        let wasilkow = AddressEntry {
+            city_name: "Wasilków".to_string(),
+            commune: "Wasilków".to_string(),
+            voivodeship: "Podlaskie".to_string(),
+            city_id: Some(923526),
+            ..Default::default()
+        };
+        let village = AddressEntry {
+            city_name: "Jurowce".to_string(),
+            commune: "Wasilków".to_string(),
+            voivodeship: "podlaskie".to_string(),
+            ..Default::default()
+        };
+        let other_area = AddressEntry {
+            city_name: "Łomża".to_string(),
+            voivodeship: "Podlaskie".to_string(),
+            ..Default::default()
+        };
+        let wrong_voivodeship = AddressEntry {
+            city_name: "Wasilków".to_string(),
+            voivodeship: "Mazowieckie".to_string(),
+            ..Default::default()
+        };
+
+        for address in [&bialystok, &wasilkow, &village] {
+            assert!(is_address_applicable_for_provider(
+                &AlertSource::WodociagiBialostockie,
+                address
+            ));
+        }
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::WodociagiBialostockie,
+            &other_area
+        ));
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::WodociagiBialostockie,
+            &wrong_voivodeship
+        ));
+        assert_eq!(
+            AlertSource::WodociagiBialostockie.to_string(),
+            "wodociagi_bialostockie"
+        );
+        assert_eq!(
+            AlertSource::WodociagiBialostockie.display_name(),
+            "Wodociągi Białostockie"
         );
     }
 

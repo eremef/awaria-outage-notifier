@@ -142,6 +142,7 @@ class WidgetConfigActivity : ComponentActivity() {
             className.contains("ZwikLodzWidgetProvider") -> ZwikLodzWidgetProvider()
             className.contains("PwikKaliszWidgetProvider") -> PwikKaliszWidgetProvider()
             className.contains("WodociagiPlockieWidgetProvider") -> WodociagiPlockieWidgetProvider()
+            className.contains("WodociagiBialostockieWidgetProvider") -> WodociagiBialostockieWidgetProvider()
             className.contains("WodociagiKieleckieWidgetProvider") -> WodociagiKieleckieWidgetProvider()
             className.contains("TorunskieWodociagiWidgetProvider") -> TorunskieWodociagiWidgetProvider()
             className.contains("PwikCzestochowaWidgetProvider") -> PwikCzestochowaWidgetProvider()

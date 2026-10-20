@@ -144,6 +144,36 @@ describe('Frontend Logic', () => {
             expect(matchesStreetName(cedzynaAlert, cedzyna)).toBe(true);
         });
 
+        it('matches WOBI notices only within Białystok and Wasilków', () => {
+            const bialystok = {
+                cityName: 'Białystok', cityId: 922410, voivodeship: 'Podlaskie',
+                commune: 'Białystok', streetName1: 'Chmielna'
+            };
+            const wasilkowVillage = {
+                cityName: 'Jurowce', voivodeship: 'Podlaskie',
+                commune: 'Wasilków', streetName1: 'Sadowa'
+            };
+            const sameStreetElsewhere = {
+                cityName: 'Łomża', voivodeship: 'Podlaskie',
+                commune: 'Łomża', streetName1: 'Chmielna'
+            };
+            const bialystokAlert = {
+                message: 'Planowane wyłączenie wody przy ulicach Chmielnej i Wąskiej 15',
+                location: 'Miejscowość: Białystok',
+                source: 'wodociagi_bialostockie'
+            };
+            const wasilkowAlert = {
+                message: 'Planowana przerwa w dostawie wody przy ul. Sadowej',
+                location: 'Miejscowość: Wasilków',
+                source: 'wodociagi_bialostockie'
+            };
+
+            expect(matchesStreetName(bialystokAlert, bialystok)).toBe(true);
+            expect(matchesStreetName(bialystokAlert, sameStreetElsewhere)).toBe(false);
+            expect(matchesStreetName(wasilkowAlert, wasilkowVillage)).toBe(true);
+            expect(matchesStreetName(wasilkowAlert, bialystok)).toBe(false);
+        });
+
         it('matches MPEC Rzeszów only for Rzeszów addresses', () => {
             const rzeszow = { cityName: 'Rzeszów', cityId: 974133, streetName1: 'Architektów' };
             const lublin = { cityName: 'Lublin', cityId: 959423, streetName1: 'Architektów' };
@@ -302,6 +332,20 @@ describe('Frontend Logic', () => {
             const waterIds = sources.filter(source => source.category === 'water').map(source => source.id);
             expect(waterIds).toEqual([...waterIds].sort());
         });
+
+        it('registers Wodociągi Białostockie in the water category before other Wodociągi IDs', () => {
+            const sources = getSources();
+            const provider = sources.find(source => source.id === 'wodociagi_bialostockie');
+            expect(provider).toMatchObject({
+                label: 'Wodociągi Białostockie',
+                category: 'water',
+                region: 'wodociagi_bialostockie_area',
+                i18nLabel: 'source_wodociagi_bialostockie_name',
+                i18nShort: 'source_wodociagi_bialostockie_short'
+            });
+            const waterIds = sources.filter(source => source.category === 'water').map(source => source.id);
+            expect(waterIds.indexOf('wodociagi_bialostockie')).toBeLessThan(waterIds.indexOf('wodociagi_kieleckie'));
+        });
     });
 
     describe('Toruńskie Wodociągi service area', () => {
@@ -352,6 +396,16 @@ describe('Frontend Logic', () => {
             const provider = card.getProviderMeta('torunskie_wodociagi');
 
             expect(provider.name).toBe('Toruńskie Wodociągi');
+            expect(provider.icon).toBe('💧');
+            expect(provider.color).toBe('#2196f3');
+        });
+
+        it('uses the full Wodociągi Białostockie name and shared water styling', () => {
+            const AwariaCard = customElements.get('awaria-card');
+            const card = new AwariaCard();
+            const provider = card.getProviderMeta('wodociagi_bialostockie');
+
+            expect(provider.name).toBe('Wodociągi Białostockie');
             expect(provider.icon).toBe('💧');
             expect(provider.color).toBe('#2196f3');
         });

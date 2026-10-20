@@ -28,6 +28,7 @@ pub mod zwik_lodz;
 pub mod wodociagi_plockie;
 pub mod wodociagi_kieleckie;
 pub mod torunskie_wodociagi;
+pub mod wodociagi_bialostockie;
 pub mod pwik_kalisz;
 pub mod pwik_czestochowa;
 pub mod gdanskie_wodociagi;
@@ -554,6 +555,7 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(wodociagi_plockie::WodociagiPlockieProvider),
         Box::new(wodociagi_kieleckie::WodociagiKieleckieProvider),
         Box::new(torunskie_wodociagi::TorunskieWodociagiProvider),
+        Box::new(wodociagi_bialostockie::WodociagiBialostockieProvider),
         Box::new(pwik_kalisz::PwikKaliszProvider),
         Box::new(pwik_czestochowa::PwikCzestochowaProvider),
         Box::new(gdanskie_wodociagi::GdanskieWodociagiProvider),

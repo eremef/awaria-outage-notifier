@@ -297,6 +297,24 @@ if (typeof document !== 'undefined') {
                 ['maslow', 'nowiny', 'sitkowka nowiny', 'zagnansk', 'gorno']
                     .some(name => commune.startsWith(name));
         },
+        wodociagi_bialostockie_area: (addr) => {
+            if (!addr) return false;
+            const normalize = (value) => (value || '').trim().toLowerCase()
+                .replace(/ą/g, 'a').replace(/ć/g, 'c').replace(/ę/g, 'e')
+                .replace(/ł/g, 'l').replace(/ń/g, 'n').replace(/ó/g, 'o')
+                .replace(/ś/g, 's').replace(/ź/g, 'z').replace(/ż/g, 'z')
+                .replace(/-/g, ' ');
+            const city = normalize(addr.cityName);
+            const commune = normalize(addr.commune);
+            const voivodeship = normalize(addr.voivodeship);
+            if (voivodeship && !voivodeship.startsWith('podlaskie')) return false;
+            return addr.cityId === 922410 || addr.cityId === 923526 ||
+                city.startsWith('bialystok') || city.startsWith('wasilkow') ||
+                commune.startsWith('wasilkow') ||
+                ['jurowc', 'sochon', 'woroszyl', 'wolka poduchown',
+                    'wolka przedmiesc', 'dabrowk', 'studzian']
+                    .some(locality => city.startsWith(locality));
+        },
         wm_radom_area: (addr) => {
             if (!addr) return false;
             if (addr.cityId === 972750 || addr.cityId === 642253) return true;
@@ -359,6 +377,7 @@ if (typeof document !== 'undefined') {
         { id: 'torunskie_wodociagi', label: 'Toruńskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_torunskie_wodociagi_name', i18nShort: 'source_torunskie_wodociagi_short', region: 'torunskie_wodociagi_area' },
         { id: 'wm_radom', label: 'WM Radom', category: 'water', defaultNotify: true, i18nLabel: 'source_wm_radom_name', i18nShort: 'source_wm_radom_short', region: 'wm_radom_area' },
         { id: 'wmk', label: 'WMK', category: 'water', defaultNotify: true, i18nLabel: 'source_wmk_name', i18nShort: 'source_wmk_short', region: 'krakow' },
+        { id: 'wodociagi_bialostockie', label: 'Wodociągi Białostockie', category: 'water', defaultNotify: true, i18nLabel: 'source_wodociagi_bialostockie_name', i18nShort: 'source_wodociagi_bialostockie_short', region: 'wodociagi_bialostockie_area' },
         { id: 'wodociagi_kieleckie', label: 'Wodociągi Kieleckie', category: 'water', defaultNotify: true, i18nLabel: 'source_wodociagi_kieleckie_name', i18nShort: 'source_wodociagi_kieleckie_short', region: 'wodociagi_kieleckie_area' },
         { id: 'wodociagi_plockie', label: 'Wodociągi Płockie', category: 'water', defaultNotify: true, i18nLabel: 'source_wodociagi_plockie_name', i18nShort: 'source_wodociagi_plockie_short', region: 'plock' },
         { id: 'zwik_lodz', label: 'ZWIK Łódź', category: 'water', defaultNotify: true, i18nLabel: 'source_zwik_lodz_name', i18nShort: 'source_zwik_lodz_short', region: 'lodz' },
@@ -2472,7 +2491,7 @@ if (typeof document !== 'undefined') {
             const singleCityProviders = [
                 'mpwik_wroclaw', 'mpwik_warszawa', 'katowickie_wodociagi',
                 'veolia_warszawa', 'veolia_poznan', 'veolia_lodz', 'zwik_lodz',
-                'wodociagi_plockie', 'wodociagi_kieleckie', 'pwik_kalisz', 'pwik_czestochowa', 'gdanskie_wodociagi', 'gpec', 'kpec_bydgoszcz', 'mwik_bydgoszcz', 'enea_cieplo', 'energa_cieplo_kaliskie', 'puk_rokietnica', 'sec', 'lpec', 'mpwik_lublin', 'mpwik_rzeszow', 'mpec_kielce', 'mpec_rzeszow', 'pge_torun_heat', 'torunskie_wodociagi', 'wm_radom'
+                'wodociagi_plockie', 'wodociagi_kieleckie', 'wodociagi_bialostockie', 'pwik_kalisz', 'pwik_czestochowa', 'gdanskie_wodociagi', 'gpec', 'kpec_bydgoszcz', 'mwik_bydgoszcz', 'enea_cieplo', 'energa_cieplo_kaliskie', 'puk_rokietnica', 'sec', 'lpec', 'mpwik_lublin', 'mpwik_rzeszow', 'mpec_kielce', 'mpec_rzeszow', 'pge_torun_heat', 'torunskie_wodociagi', 'wm_radom'
             ];
             if (singleCityProviders.includes(alert.source)) {
                 // For single-city providers, reject matching if the saved address is in a completely different city
@@ -2497,6 +2516,26 @@ if (typeof document !== 'undefined') {
                         [location.includes('zagnansk'), commune.startsWith('zagnansk')],
                         [location.includes('gorno'), commune.startsWith('gorno')],
                         [location.includes('cedzyna'), cityLower.startsWith('cedzyna') || commune.startsWith('gorno')]
+                    ].filter(([mentioned]) => mentioned);
+                    if (localityMatches.length && !localityMatches.some(([, matches]) => matches)) return false;
+                }
+                if (alert.source === 'wodociagi_bialostockie') {
+                    if (!REGION_MATCHERS.wodociagi_bialostockie_area(addr)) return false;
+                    const normalizeLocation = (value) => (value || '').toLowerCase()
+                        .replace(/ą/g, 'a').replace(/ć/g, 'c').replace(/ę/g, 'e')
+                        .replace(/ł/g, 'l').replace(/ń/g, 'n').replace(/ó/g, 'o')
+                        .replace(/ś/g, 's').replace(/ź/g, 'z').replace(/ż/g, 'z');
+                    const location = normalizeLocation(alert.location).replace(/^miejscowosc:\s*/, '');
+                    const commune = normalizeLocation(addr.commune);
+                    const isBialystok = cityLower.startsWith('bialystok') || addr.cityId === 922410;
+                    const isWasilkow = cityLower.startsWith('wasilkow') || addr.cityId === 923526 ||
+                        commune.startsWith('wasilkow') ||
+                        ['jurowc', 'sochon', 'woroszyl', 'wolka poduchown',
+                            'wolka przedmiesc', 'dabrowk', 'studzian']
+                            .some(locality => cityLower.startsWith(locality));
+                    const localityMatches = [
+                        [location.includes('bialystok'), isBialystok],
+                        [location.includes('wasilkow'), isWasilkow]
                     ].filter(([mentioned]) => mentioned);
                     if (localityMatches.length && !localityMatches.some(([, matches]) => matches)) return false;
                 }

@@ -24,6 +24,7 @@ class AwariaCard extends HTMLElement {
     if (s.includes('enea')) return { name: 'Enea', icon: '⚡', color: '#fb8c00' };
     if (s.includes('stoen')) return { name: 'Stoen', icon: '⚡', color: '#f57c00' };
     if (s.includes('mwik_bydgoszcz')) return { name: 'MWiK Bydgoszcz', icon: '💧', color: '#2196f3' };
+    if (s === 'wodociagi_bialostockie') return { name: 'Wodociągi Białostockie', icon: '💧', color: '#2196f3' };
     if (s === 'wodociagi_kieleckie') return { name: 'Wodociągi Kieleckie', icon: '💧', color: '#2196f3' };
     if (s.includes('mpwik_wroclaw') || s.includes('mpwik_warszawa') || s.includes('mwik_bydgoszcz') || s.includes('aquanet') || s.includes('wodociagi') || s.includes('pwik') || s.includes('zwik') || s.includes('wmk')) {
       return { name: source.toUpperCase().replace('_', ' '), icon: '💧', color: '#2196f3' };

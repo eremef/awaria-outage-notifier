@@ -57,6 +57,7 @@
   <string name="provider_wmk">WMK</string>
   <string name="provider_wm_radom">WM Radom</string>
   <string name="provider_wodociagi_plockie">WP Płock</string>
+  <string name="provider_wodociagi_bialostockie">WOBI BST</string>
   <string name="provider_wodociagi_kieleckie">WK Kielce</string>
   <string name="provider_torunskie_wodociagi">TW Toruń</string>
   <string name="provider_zwik_lodz">ZWIK Łódź</string>
@@ -96,6 +97,7 @@
   <string name="widget_label_wmk">Wodociągi Miasta Krakowa</string>
   <string name="widget_label_wm_radom">WM Radom</string>
   <string name="widget_label_wodociagi_plockie">Wodociągi Płockie</string>
+  <string name="widget_label_wodociagi_bialostockie">Wodociągi Białostockie</string>
   <string name="widget_label_wodociagi_kieleckie">Wodociągi Kieleckie</string>
   <string name="widget_label_torunskie_wodociagi">Toruńskie Wodociągi</string>
   <string name="widget_label_zwik_lodz">ZWIK Łódź</string>

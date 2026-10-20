@@ -329,6 +329,14 @@ class WidgetUpdateWorker(
             torunskieWodociagiProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        // Update Wodociągi Białostockie widgets
+        val wodociagiBialostockieName = ComponentName(context, WodociagiBialostockieWidgetProvider::class.java)
+        val wodociagiBialostockieIds = appWidgetManager.getAppWidgetIds(wodociagiBialostockieName)
+        val wodociagiBialostockieProvider = WodociagiBialostockieWidgetProvider()
+        for (id in wodociagiBialostockieIds) {
+            wodociagiBialostockieProvider.updateWidget(context, appWidgetManager, id)
+        }
+
         // Update WM Radom widgets
         val wmRadomName = ComponentName(context, WmRadomWidgetProvider::class.java)
         val wmRadomIds = appWidgetManager.getAppWidgetIds(wmRadomName)

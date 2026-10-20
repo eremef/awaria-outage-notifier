@@ -389,6 +389,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             "zwik_lodz" -> context.getString(R.string.provider_zwik_lodz)
             "pwik_kalisz" -> context.getString(R.string.provider_pwik_kalisz)
             "wodociagi_plockie" -> context.getString(R.string.provider_wodociagi_plockie)
+            "wodociagi_bialostockie" -> context.getString(R.string.provider_wodociagi_bialostockie)
             "wodociagi_kieleckie" -> context.getString(R.string.provider_wodociagi_kieleckie)
             "torunskie_wodociagi" -> context.getString(R.string.provider_torunskie_wodociagi)
             "pwik_czestochowa" -> context.getString(R.string.provider_pwik_czestochowa)
@@ -632,7 +633,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             val iconDesc = when (sourceKey) {
                 "tauron", "stoen", "enea", "energa", "pge" -> getTranslation(context, "power")
                 "enea_cieplo", "energa_cieplo_kaliskie", "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz", "sec", "lpec", "mpec_kielce", "mpec_rzeszow", "pge_torun_heat" -> getTranslation(context, "heat")
-                "mpwik_wroclaw", "mpwik_warszawa", "wmk", "wm_radom", "aquanet", "katowickie_wodociagi", "zwik_lodz", "pwik_kalisz", "wodociagi_plockie", "wodociagi_kieleckie", "torunskie_wodociagi", "pwik_czestochowa", "gdanskie_wodociagi", "puk_rokietnica", "mpwik_lublin", "mpwik_rzeszow", "mwik_bydgoszcz" -> getTranslation(context, "water")
+                "mpwik_wroclaw", "mpwik_warszawa", "wmk", "wm_radom", "aquanet", "katowickie_wodociagi", "zwik_lodz", "pwik_kalisz", "wodociagi_plockie", "wodociagi_bialostockie", "wodociagi_kieleckie", "torunskie_wodociagi", "pwik_czestochowa", "gdanskie_wodociagi", "puk_rokietnica", "mpwik_lublin", "mpwik_rzeszow", "mwik_bydgoszcz" -> getTranslation(context, "water")
                 "psg" -> getTranslation(context, "gas")
                 else -> getSourceName(context, sourceKey)
             }

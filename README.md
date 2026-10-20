@@ -57,6 +57,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **PUK Rokietnica**: Water maintenance and failures in Rokietnica.
   - **MPWiK Lublin**: Water maintenance and failures in Lublin.
   - **MPWiK Rzeszów**: Water interruptions and failures in Rzeszów and the covered nearby localities.
+  - **Wodociągi Białostockie**: Water outages and planned interruptions in Białystok and the Wasilków municipality.
   - **Wodociągi Kieleckie**: Water interruptions and failures in Kielce, its service municipalities, and reposted local notices.
   - **Toruńskie Wodociągi**: Water failures and planned water-network work in Toruń, Lubicz, Łysomice, Obrowo, Wielka Nieszawka, and Zławieś Wielka.
 

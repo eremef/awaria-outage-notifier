@@ -30,7 +30,9 @@ Dla każdego adresu, który chcesz monitorować, dodaj wpis zawierający:
 
 ### Aktywne źródła (Enabled Sources)
 
-Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `pge_torun_heat`, `mpec_kielce`, `wodociagi_kieleckie`, `torunskie_wodociagi`, `mwik_bydgoszcz`, `mpwik_warszawa`, `energa_cieplo_kaliskie`).
+Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `pge_torun_heat`, `mpec_kielce`, `wodociagi_kieleckie`, `torunskie_wodociagi`, `wodociagi_bialostockie`, `mwik_bydgoszcz`, `mpwik_warszawa`, `energa_cieplo_kaliskie`).
+
+Toruńskie Wodociągi obejmują Toruń i pięć sąsiednich gmin. Wodociągi Białostockie obejmują Białystok oraz gminę Wasilków.
 
 ## Użytkowanie
 
