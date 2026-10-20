@@ -27,6 +27,7 @@ pub mod veolia_lodz;
 pub mod zwik_lodz;
 pub mod wodociagi_plockie;
 pub mod wodociagi_kieleckie;
+pub mod torunskie_wodociagi;
 pub mod pwik_kalisz;
 pub mod pwik_czestochowa;
 pub mod gdanskie_wodociagi;
@@ -552,6 +553,7 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(zwik_lodz::ZwikLodzProvider),
         Box::new(wodociagi_plockie::WodociagiPlockieProvider),
         Box::new(wodociagi_kieleckie::WodociagiKieleckieProvider),
+        Box::new(torunskie_wodociagi::TorunskieWodociagiProvider),
         Box::new(pwik_kalisz::PwikKaliszProvider),
         Box::new(pwik_czestochowa::PwikCzestochowaProvider),
         Box::new(gdanskie_wodociagi::GdanskieWodociagiProvider),
@@ -569,6 +571,125 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
     ]
 }
 
+fn torunskie_street_segment(location: &str, street: &str) -> Option<String> {
+    let normalized_location = utils::clean_text(location);
+    let normalized_street = utils::clean_text(utils::strip_street_prefixes(street));
+    let last_street_word = normalized_street
+        .split(|character: char| !character.is_alphanumeric())
+        .filter(|word| word.chars().count() > 2 && !word.chars().all(char::is_numeric))
+        .last()?;
+    let street_word_index = normalized_location.find(last_street_word)?;
+    let after_street_character = street_word_index + last_street_word.chars().count();
+    let start_byte = location
+        .char_indices()
+        .nth(after_street_character)
+        .map(|(byte_index, _)| byte_index)
+        .unwrap_or(location.len());
+    let tail = &location[start_byte..];
+    let normalized_tail = utils::clean_text(tail);
+    let next_street_start = [
+        "ul.", "ul ", "ulica ", "al.", "al ", "aleja ", "pl.", "pl ", "plac ",
+    ]
+    .iter()
+    .filter_map(|prefix| normalized_tail.find(prefix))
+    .min();
+    let end_byte = next_street_start
+        .and_then(|character_index| {
+            tail.char_indices()
+                .nth(character_index)
+                .map(|(index, _)| index)
+        })
+        .unwrap_or(tail.len());
+    Some(tail[..end_byte].to_string())
+}
+
+fn torunskie_house_number_is_listed(house_number: &str, street_segment: &str) -> bool {
+    let normalized_house = utils::clean_text(house_number)
+        .chars()
+        .filter(|character| !character.is_whitespace())
+        .collect::<String>();
+    if normalized_house.is_empty() {
+        return true;
+    }
+
+    let normalized_segment = utils::clean_text(street_segment);
+    static HOUSE_RE: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
+    let house_re = HOUSE_RE
+        .get_or_init(|| regex::Regex::new(r"\d+[a-z]?(?:/\d+[a-z]?)?").unwrap());
+    if !house_re.is_match(&normalized_segment) {
+        return true;
+    }
+
+    let exact_pattern = format!(
+        r"(^|[^a-z0-9]){}([^a-z0-9]|$)",
+        regex::escape(&normalized_house)
+    );
+    if regex::Regex::new(&exact_pattern)
+        .is_ok_and(|pattern| pattern.is_match(&normalized_segment))
+    {
+        return true;
+    }
+
+    let Ok(user_number) = normalized_house.parse::<u32>() else {
+        return false;
+    };
+    static RANGE_RE: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
+    let range_re = RANGE_RE
+        .get_or_init(|| regex::Regex::new(r"(\d+)\s*(?:-|–|—|do)\s*(\d+)").unwrap());
+    range_re.captures_iter(&normalized_segment).any(|captures| {
+        let (Some(start), Some(end)) = (captures.get(1), captures.get(2)) else {
+            return false;
+        };
+        let (Ok(start), Ok(end)) = (
+            start.as_str().parse::<u32>(),
+            end.as_str().parse::<u32>(),
+        ) else {
+            return false;
+        };
+        user_number >= start.min(end) && user_number <= start.max(end)
+    })
+}
+
+fn torunskie_notice_matches_house(address: &api_logic::AddressEntry, location: &str) -> bool {
+    let normalized_location = utils::clean_text(location);
+    let mut street_names = vec![
+        address.street_name_1.as_str(),
+        address.street_name.as_str(),
+    ];
+    if let Some(street_name_2) = address.street_name_2.as_deref() {
+        street_names.push(street_name_2);
+    }
+
+    street_names
+        .into_iter()
+        .filter(|street| !street.trim().is_empty())
+        .any(|street| {
+            let street = utils::clean_text(utils::strip_street_prefixes(street));
+            let street_words: Vec<&str> = street
+                .split(|character: char| !character.is_alphanumeric())
+                .filter(|word| word.chars().count() > 2 && !word.chars().all(char::is_numeric))
+                .collect();
+            if street_words.is_empty() {
+                return false;
+            }
+            let location_words: Vec<&str> = normalized_location
+                .split(|character: char| !character.is_alphanumeric())
+                .collect();
+            let street_is_listed = street_words.iter().all(|word| {
+                location_words
+                    .iter()
+                    .any(|location_word| location_word == word || location_word.starts_with(word))
+            });
+            if !street_is_listed {
+                return false;
+            }
+        let Some(street_segment) = torunskie_street_segment(location, street.as_str()) else {
+            return false;
+        };
+        torunskie_house_number_is_listed(&address.house_no, &street_segment)
+        })
+}
+
 fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Settings>) {
     let s = match settings {
         Some(s) => s,
@@ -577,6 +698,27 @@ fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Setti
 
     if s.filter_by_house_no {
         for alert in alerts.iter_mut() {
+            if alert.source == api_logic::AlertSource::TorunskieWodociagi
+                && alert.is_local == Some(true)
+            {
+                let location = alert.location.as_deref().unwrap_or_default();
+                let matched_address = s.addresses.iter().enumerate().find(|(_, address)| {
+                    address.is_active
+                        && api_logic::is_address_applicable_for_provider(
+                            &alert.source,
+                            address,
+                        )
+                        && torunskie_notice_matches_house(address, location)
+                });
+                if let Some((index, _)) = matched_address {
+                    alert.address_index = Some(index);
+                    alert.is_local = Some(true);
+                } else {
+                    alert.is_local = Some(false);
+                }
+                continue;
+            }
+
             if alert.is_local == Some(true)
                 && let Some(idx) = alert.address_index
                     && idx < s.addresses.len() {

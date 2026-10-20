@@ -45,6 +45,8 @@ pub enum AlertSource {
     WodociagiPlockie,
     #[serde(rename = "wodociagi_kieleckie")]
     WodociagiKieleckie,
+    #[serde(rename = "torunskie_wodociagi")]
+    TorunskieWodociagi,
     #[serde(rename = "pwik_kalisz")]
     PwikKalisz,
     #[serde(rename = "pwik_czestochowa")]
@@ -136,6 +138,9 @@ impl AlertSource {
             AlertSource::WodociagiKieleckie => {
                 ServiceLocation::Cities(vec![is_wodociagi_kieleckie_area])
             }
+            AlertSource::TorunskieWodociagi => {
+                ServiceLocation::Cities(vec![is_torunskie_wodociagi_area])
+            }
             AlertSource::PwikCzestochowa => ServiceLocation::Cities(vec![is_czestochowa]),
             AlertSource::Psg => ServiceLocation::Nationwide,
             
@@ -188,6 +193,7 @@ impl AlertSource {
             AlertSource::ZwikLodz => "ZWiK Łódź",
             AlertSource::WodociagiPlockie => "Wodociągi Płockie",
             AlertSource::WodociagiKieleckie => "Wodociągi Kieleckie",
+            AlertSource::TorunskieWodociagi => "Toruńskie Wodociągi",
             AlertSource::PwikKalisz => "PWiK Kalisz",
             AlertSource::PwikCzestochowa => "PWiK Częstochowa",
             AlertSource::GdanskieWodociagi => "Gdańskie Wodociągi",
@@ -392,7 +398,7 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea | AlertSource::Pge | AlertSource::Stoen => {
             if is_pl { "wyłączenie prądu" } else { "power outage" }
         }
-        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::WmRadom | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::WodociagiPlockie | AlertSource::WodociagiKieleckie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa | AlertSource::GdanskieWodociagi | AlertSource::PukRokietnica | AlertSource::MpwikLublin | AlertSource::MpwikRzeszow | AlertSource::MwikBydgoszcz => {
+        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::WmRadom | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::WodociagiPlockie | AlertSource::WodociagiKieleckie | AlertSource::TorunskieWodociagi | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa | AlertSource::GdanskieWodociagi | AlertSource::PukRokietnica | AlertSource::MpwikLublin | AlertSource::MpwikRzeszow | AlertSource::MwikBydgoszcz => {
             if is_pl { "wyłączenie wody" } else { "water outage" }
         }
         AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz | AlertSource::Gpec | AlertSource::KpecBydgoszcz | AlertSource::EneaCieplo | AlertSource::EnergaCieploKaliskie | AlertSource::Sec | AlertSource::Lpec | AlertSource::MpecRzeszow | AlertSource::MpecKielce | AlertSource::PgeTorunHeat => {
@@ -510,6 +516,7 @@ impl std::fmt::Display for AlertSource {
             AlertSource::ZwikLodz => "zwik_lodz",
             AlertSource::WodociagiPlockie => "wodociagi_plockie",
             AlertSource::WodociagiKieleckie => "wodociagi_kieleckie",
+            AlertSource::TorunskieWodociagi => "torunskie_wodociagi",
             AlertSource::PwikKalisz => "pwik_kalisz",
             AlertSource::PwikCzestochowa => "pwik_czestochowa",
             AlertSource::GdanskieWodociagi => "gdanskie_wodociagi",
@@ -700,6 +707,24 @@ fn is_mpwik_rzeszow_area(addr: &AddressEntry) -> bool {
 }
 city_checker!(is_gdansk, Some(908123_u64), "gdańsk", "gdansk");
 city_checker!(is_bydgoszcz, Some(928363_u64), "bydgoszcz");
+
+fn is_torunskie_wodociagi_area(addr: &AddressEntry) -> bool {
+    let city = crate::utils::clean_text(&addr.city_name).replace('-', " ");
+    let commune = crate::utils::clean_text(&addr.commune).replace('-', " ");
+    let voivodeship = crate::utils::clean_text(&addr.voivodeship).replace('-', " ");
+
+    if !voivodeship.is_empty() && !voivodeship.starts_with("kujawsko pomorskie") {
+        return false;
+    }
+
+    if addr.city_id == Some(929448) || city.starts_with("torun") {
+        return true;
+    }
+
+    ["lubicz", "lysomice", "obrowo", "wielka nieszawka", "zlawies wielka"]
+        .iter()
+        .any(|area| city.starts_with(area) || commune.starts_with(area))
+}
 
 fn is_wodociagi_kieleckie_area(addr: &AddressEntry) -> bool {
     let normalize = |value: &str| {
@@ -1332,6 +1357,97 @@ mod tests {
         assert_eq!(
             AlertSource::WodociagiKieleckie.display_name(),
             "Wodociągi Kieleckie"
+        );
+    }
+
+    #[test]
+    fn test_torunskie_wodociagi_scope() {
+        let torun = AddressEntry {
+            city_name: "Toruń".to_string(),
+            commune: "Toruń".to_string(),
+            voivodeship: "Kujawsko-Pomorskie".to_string(),
+            city_id: Some(929448),
+            is_active: true,
+            ..Default::default()
+        };
+        let lubicz = AddressEntry {
+            city_name: "Lubicz Dolny".to_string(),
+            commune: "Lubicz".to_string(),
+            voivodeship: "Kujawsko-Pomorskie".to_string(),
+            is_active: true,
+            ..Default::default()
+        };
+        let lysomice = AddressEntry {
+            city_name: "Łysomice".to_string(),
+            commune: "Łysomice".to_string(),
+            voivodeship: "Kujawsko-Pomorskie".to_string(),
+            is_active: true,
+            ..Default::default()
+        };
+        let obrowo = AddressEntry {
+            city_name: "Obrowo".to_string(),
+            commune: "Obrowo".to_string(),
+            voivodeship: "Kujawsko-Pomorskie".to_string(),
+            is_active: true,
+            ..Default::default()
+        };
+        let wielka_nieszawka = AddressEntry {
+            city_name: "Wielka Nieszawka".to_string(),
+            commune: "Wielka Nieszawka".to_string(),
+            voivodeship: "Kujawsko-Pomorskie".to_string(),
+            is_active: true,
+            ..Default::default()
+        };
+        let zlawies_wielka = AddressEntry {
+            city_name: "Przysiek".to_string(),
+            commune: "Zławieś Wielka".to_string(),
+            voivodeship: "Kujawsko-Pomorskie".to_string(),
+            is_active: true,
+            ..Default::default()
+        };
+        let ciechocinek = AddressEntry {
+            city_name: "Ciechocinek".to_string(),
+            commune: "Ciechocinek".to_string(),
+            voivodeship: "Kujawsko-Pomorskie".to_string(),
+            is_active: true,
+            ..Default::default()
+        };
+        let lublin = AddressEntry {
+            city_name: "Lublin".to_string(),
+            commune: "Lublin".to_string(),
+            voivodeship: "Lubelskie".to_string(),
+            is_active: true,
+            ..Default::default()
+        };
+
+        for address in [
+            &torun,
+            &lubicz,
+            &lysomice,
+            &obrowo,
+            &wielka_nieszawka,
+            &zlawies_wielka,
+        ] {
+            assert!(is_address_applicable_for_provider(
+                &AlertSource::TorunskieWodociagi,
+                address
+            ));
+        }
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::TorunskieWodociagi,
+            &ciechocinek
+        ));
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::TorunskieWodociagi,
+            &lublin
+        ));
+        assert_eq!(
+            AlertSource::TorunskieWodociagi.to_string(),
+            "torunskie_wodociagi"
+        );
+        assert_eq!(
+            AlertSource::TorunskieWodociagi.display_name(),
+            "Toruńskie Wodociągi"
         );
     }
 

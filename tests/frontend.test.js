@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect } from 'vitest';
-const { filterAlerts, formatDate, matchesStreetName, getSources } = require('../public/script.js');
+const { filterAlerts, formatDate, matchesStreetName, getSources, getRegionMatchers } = require('../public/script.js');
 require('../public/awaria-card.js');
 describe('Frontend Logic', () => {
     describe('filtering logic', () => {
@@ -290,6 +290,36 @@ describe('Frontend Logic', () => {
             const waterIds = sources.filter(source => source.category === 'water').map(source => source.id);
             expect(waterIds.indexOf('wodociagi_kieleckie')).toBeLessThan(waterIds.indexOf('wodociagi_plockie'));
         });
+
+        it('registers Toruńskie Wodociągi alphabetically in the water category', () => {
+            const sources = getSources();
+            const provider = sources.find(source => source.id === 'torunskie_wodociagi');
+            expect(provider).toMatchObject({
+                label: 'Toruńskie Wodociągi',
+                category: 'water',
+                region: 'torunskie_wodociagi_area'
+            });
+            const waterIds = sources.filter(source => source.category === 'water').map(source => source.id);
+            expect(waterIds).toEqual([...waterIds].sort());
+        });
+    });
+
+    describe('Toruńskie Wodociągi service area', () => {
+        const matchesArea = getRegionMatchers().torunskie_wodociagi_area;
+
+        it('matches Toruń and the five documented neighboring communes', () => {
+            expect(matchesArea({ cityName: 'Toruń', cityId: 929448, voivodeship: 'Kujawsko-Pomorskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Lubicz Dolny', commune: 'Lubicz', voivodeship: 'Kujawsko-Pomorskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Łysomice', commune: 'Łysomice', voivodeship: 'Kujawsko-Pomorskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Obrowo', commune: 'Obrowo', voivodeship: 'Kujawsko-Pomorskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Wielka Nieszawka', commune: 'Wielka Nieszawka', voivodeship: 'Kujawsko-Pomorskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Przysiek', commune: 'Zławieś Wielka', voivodeship: 'Kujawsko-Pomorskie' })).toBe(true);
+        });
+
+        it('rejects cities outside the documented supply area', () => {
+            expect(matchesArea({ cityName: 'Ciechocinek', commune: 'Ciechocinek', voivodeship: 'Kujawsko-Pomorskie' })).toBe(false);
+            expect(matchesArea({ cityName: 'Lubicz Dolny', commune: 'Lubicz', voivodeship: 'Pomorskie' })).toBe(false);
+        });
     });
 
     describe('Home Assistant card provider styling', () => {
@@ -312,6 +342,16 @@ describe('Frontend Logic', () => {
             const provider = card.getProviderMeta('wodociagi_kieleckie');
 
             expect(provider.name).toBe('Wodociągi Kieleckie');
+            expect(provider.icon).toBe('💧');
+            expect(provider.color).toBe('#2196f3');
+        });
+
+        it('uses the Toruńskie Wodociągi name and shared water styling', () => {
+            const AwariaCard = customElements.get('awaria-card');
+            const card = new AwariaCard();
+            const provider = card.getProviderMeta('torunskie_wodociagi');
+
+            expect(provider.name).toBe('Toruńskie Wodociągi');
             expect(provider.icon).toBe('💧');
             expect(provider.color).toBe('#2196f3');
         });

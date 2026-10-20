@@ -58,6 +58,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **MPWiK Lublin**: Water maintenance and failures in Lublin.
   - **MPWiK Rzeszów**: Water interruptions and failures in Rzeszów and the covered nearby localities.
   - **Wodociągi Kieleckie**: Water interruptions and failures in Kielce, its service municipalities, and reposted local notices.
+  - **Toruńskie Wodociągi**: Water failures and planned water-network work in Toruń, Lubicz, Łysomice, Obrowo, Wielka Nieszawka, and Zławieś Wielka.
 
 ## Android app
 
@@ -196,7 +197,7 @@ For each address you want to monitor, add an entry with:
 
 #### Enabled Sources
 
-Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `mpwik_warszawa`).
+Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `mpwik_warszawa`, `torunskie_wodociagi`).
 
 ### Usage
 

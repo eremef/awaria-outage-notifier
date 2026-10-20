@@ -257,6 +257,21 @@ if (typeof document !== 'undefined') {
             const city = (addr.cityName || '').trim().toLowerCase();
             return city.startsWith('toruń') || city.startsWith('torun') || addr.cityId === 929448;
         },
+        torunskie_wodociagi_area: (addr) => {
+            if (!addr) return false;
+            const normalize = (value) => (value || '').trim().toLowerCase()
+                .replace(/ą/g, 'a').replace(/ć/g, 'c').replace(/ę/g, 'e')
+                .replace(/ł/g, 'l').replace(/ń/g, 'n').replace(/ó/g, 'o')
+                .replace(/ś/g, 's').replace(/ź/g, 'z').replace(/ż/g, 'z')
+                .replace(/-/g, ' ');
+            const city = normalize(addr.cityName);
+            const commune = normalize(addr.commune);
+            const voivodeship = normalize(addr.voivodeship);
+            if (voivodeship && !voivodeship.startsWith('kujawsko pomorskie')) return false;
+            return addr.cityId === 929448 || city.startsWith('torun') ||
+                ['lubicz', 'lysomice', 'obrowo', 'wielka nieszawka', 'zlawies wielka']
+                    .some(name => city.startsWith(name) || commune.startsWith(name));
+        },
         mpwik_rzeszow_area: (addr) => {
             if (!addr) return false;
             const city = (addr.cityName || '').trim().toLowerCase();
@@ -333,14 +348,15 @@ if (typeof document !== 'undefined') {
         { id: 'aquanet', label: 'Aquanet', category: 'water', defaultNotify: true, i18nLabel: 'source_aquanet_name', i18nShort: 'source_aquanet_short', region: 'poznan' },
         { id: 'gdanskie_wodociagi', label: 'Gdańskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_gdanskie_wodociagi_name', i18nShort: 'source_gdanskie_wodociagi_short', region: 'gdansk' },
         { id: 'katowickie_wodociagi', label: 'Katowickie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_katowickie_wodociagi_name', i18nShort: 'source_katowickie_wodociagi_short', region: 'katowice' },
-        { id: 'mwik_bydgoszcz', label: 'MWiK Bydgoszcz', category: 'water', defaultNotify: true, i18nLabel: 'source_mwik_bydgoszcz_name', i18nShort: 'source_mwik_bydgoszcz_short', region: 'bydgoszcz' },
         { id: 'mpwik_lublin', label: 'MPWiK Lublin', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_lublin_name', i18nShort: 'source_mpwik_lublin_short', region: 'lublin' },
         { id: 'mpwik_rzeszow', label: 'MPWiK Rzeszów', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_rzeszow_name', i18nShort: 'source_mpwik_rzeszow_short', region: 'mpwik_rzeszow_area' },
         { id: 'mpwik_warszawa', label: 'MPWiK Warszawa', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_warszawa_name', i18nShort: 'source_mpwik_warszawa_short', region: 'mpwik_warszawa_area' },
         { id: 'mpwik_wroclaw', label: 'MPWiK Wrocław', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_wroclaw_name', i18nShort: 'source_mpwik_wroclaw_short', region: 'wroclaw' },
+        { id: 'mwik_bydgoszcz', label: 'MWiK Bydgoszcz', category: 'water', defaultNotify: true, i18nLabel: 'source_mwik_bydgoszcz_name', i18nShort: 'source_mwik_bydgoszcz_short', region: 'bydgoszcz' },
         { id: 'puk_rokietnica', label: 'PUK Rokietnica', category: 'water', defaultNotify: true, i18nLabel: 'source_puk_rokietnica_name', i18nShort: 'source_puk_rokietnica_short', region: 'rokietnica' },
         { id: 'pwik_czestochowa', label: 'PWiK Częstochowa', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_czestochowa_name', i18nShort: 'source_pwik_czestochowa_short', region: 'czestochowa' },
         { id: 'pwik_kalisz', label: 'PWiK Kalisz', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_kalisz_name', i18nShort: 'source_pwik_kalisz_short', region: 'kalisz' },
+        { id: 'torunskie_wodociagi', label: 'Toruńskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_torunskie_wodociagi_name', i18nShort: 'source_torunskie_wodociagi_short', region: 'torunskie_wodociagi_area' },
         { id: 'wm_radom', label: 'WM Radom', category: 'water', defaultNotify: true, i18nLabel: 'source_wm_radom_name', i18nShort: 'source_wm_radom_short', region: 'wm_radom_area' },
         { id: 'wmk', label: 'WMK', category: 'water', defaultNotify: true, i18nLabel: 'source_wmk_name', i18nShort: 'source_wmk_short', region: 'krakow' },
         { id: 'wodociagi_kieleckie', label: 'Wodociągi Kieleckie', category: 'water', defaultNotify: true, i18nLabel: 'source_wodociagi_kieleckie_name', i18nShort: 'source_wodociagi_kieleckie_short', region: 'wodociagi_kieleckie_area' },
@@ -2456,7 +2472,7 @@ if (typeof document !== 'undefined') {
             const singleCityProviders = [
                 'mpwik_wroclaw', 'mpwik_warszawa', 'katowickie_wodociagi',
                 'veolia_warszawa', 'veolia_poznan', 'veolia_lodz', 'zwik_lodz',
-                'wodociagi_plockie', 'wodociagi_kieleckie', 'pwik_kalisz', 'pwik_czestochowa', 'gdanskie_wodociagi', 'gpec', 'kpec_bydgoszcz', 'mwik_bydgoszcz', 'enea_cieplo', 'energa_cieplo_kaliskie', 'puk_rokietnica', 'sec', 'lpec', 'mpwik_lublin', 'mpwik_rzeszow', 'mpec_kielce', 'mpec_rzeszow', 'pge_torun_heat', 'wm_radom'
+                'wodociagi_plockie', 'wodociagi_kieleckie', 'pwik_kalisz', 'pwik_czestochowa', 'gdanskie_wodociagi', 'gpec', 'kpec_bydgoszcz', 'mwik_bydgoszcz', 'enea_cieplo', 'energa_cieplo_kaliskie', 'puk_rokietnica', 'sec', 'lpec', 'mpwik_lublin', 'mpwik_rzeszow', 'mpec_kielce', 'mpec_rzeszow', 'pge_torun_heat', 'torunskie_wodociagi', 'wm_radom'
             ];
             if (singleCityProviders.includes(alert.source)) {
                 // For single-city providers, reject matching if the saved address is in a completely different city
@@ -2523,6 +2539,29 @@ if (typeof document !== 'undefined') {
                 if (alert.source === 'mpec_kielce' && !REGION_MATCHERS.kielce(addr)) return false;
                 if (alert.source === 'pge_torun_heat' &&
                     !(cityLower.startsWith('toruń') || cityLower.startsWith('torun') || addr.cityId === 929448)) return false;
+                if (alert.source === 'torunskie_wodociagi') {
+                    if (!REGION_MATCHERS.torunskie_wodociagi_area(addr)) return false;
+                    const normalizeLocation = (value) => (value || '').toLowerCase()
+                        .replace(/ą/g, 'a').replace(/ć/g, 'c').replace(/ę/g, 'e')
+                        .replace(/ł/g, 'l').replace(/ń/g, 'n').replace(/ó/g, 'o')
+                        .replace(/ś/g, 's').replace(/ź/g, 'z').replace(/ż/g, 'z')
+                        .replace(/[^a-z0-9]+/g, ' ').trim();
+                    const locationWords = normalizeLocation(alert.location).split(/\s+/).filter(Boolean);
+                    const hasPhrase = (phrase) => {
+                        const words = phrase.split(' ');
+                        return locationWords.some((_, index) =>
+                            words.every((word, offset) => locationWords[index + offset] === word));
+                    };
+                    const localities = [
+                        ['torun', cityLower.startsWith('torun') || addr.cityId === 929448 || normalizeLocation(addr.commune).startsWith('torun')],
+                        ['lubicz', cityLower.startsWith('lubicz') || normalizeLocation(addr.commune).startsWith('lubicz')],
+                        ['lysomice', cityLower.startsWith('lysomice') || normalizeLocation(addr.commune).startsWith('lysomice')],
+                        ['obrowo', cityLower.startsWith('obrowo') || normalizeLocation(addr.commune).startsWith('obrowo')],
+                        ['wielka nieszawka', cityLower.startsWith('wielka nieszawka') || normalizeLocation(addr.commune).startsWith('wielka nieszawka')],
+                        ['zlawies wielka', cityLower.startsWith('zlawies wielka') || normalizeLocation(addr.commune).startsWith('zlawies wielka')]
+                    ].filter(([name]) => hasPhrase(name));
+                    if (localities.length && !localities.some(([, matches]) => matches)) return false;
+                }
                 if ((alert.source === 'gdanskie_wodociagi' || alert.source === 'gpec') &&
                     !cityLower.startsWith('gdań') &&
                     !cityLower.startsWith('gdan') &&
@@ -3063,6 +3102,7 @@ if (typeof document !== 'undefined') {
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = {
             getSources: () => SOURCES,
+            getRegionMatchers: () => REGION_MATCHERS,
             filterAlerts,
             formatDate,
             matchesStreetName,

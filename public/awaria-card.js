@@ -17,6 +17,7 @@ class AwariaCard extends HTMLElement {
     if (s.includes('tauron')) return { name: 'Tauron', icon: '⚡', color: '#ff9800' };
     if (s.includes('pge_torun_heat')) return { name: 'PGE Toruń', icon: '🔥', color: '#f44336' };
     if (s.includes('mpec_kielce')) return { name: 'MPEC Kielce', icon: '🔥', color: '#f44336' };
+    if (s === 'torunskie_wodociagi') return { name: 'Toruńskie Wodociągi', icon: '💧', color: '#2196f3' };
     if (s.includes('pge')) return { name: 'PGE', icon: '⚡', color: '#ffb74d' };
     if (s.includes('energa_cieplo_kaliskie')) return { name: 'Energa Ciepło Kaliskie', icon: '🔥', color: '#f44336' };
     if (s.includes('energa')) return { name: 'Energa', icon: '⚡', color: '#ffa726' };

@@ -189,7 +189,7 @@ class AllWidgetProvider : BaseWidgetProvider() {
                                         .sum()
                             }
                             val w = async {
-                                val waterSources = listOf("mpwik_wroclaw", "mpwik_warszawa", "wmk", "wm_radom", "aquanet", "katowickie_wodociagi", "zwik_lodz", "pwik_kalisz", "pwik_czestochowa", "wodociagi_kieleckie", "wodociagi_plockie", "gdanskie_wodociagi", "puk_rokietnica", "mpwik_rzeszow", "mwik_bydgoszcz")
+                                val waterSources = listOf("mpwik_wroclaw", "mpwik_warszawa", "wmk", "wm_radom", "aquanet", "katowickie_wodociagi", "zwik_lodz", "pwik_kalisz", "pwik_czestochowa", "wodociagi_kieleckie", "wodociagi_plockie", "torunskie_wodociagi", "gdanskie_wodociagi", "puk_rokietnica", "mpwik_rzeszow", "mwik_bydgoszcz")
                                         .filter { allEnabledByDefault || it in enabledSources }
                                 waterSources
                                     .map { source ->
@@ -344,7 +344,7 @@ class AllWidgetProvider : BaseWidgetProvider() {
         val heatEnabled =
                 allEnabledByDefault || listOf("enea_cieplo", "energa_cieplo_kaliskie", "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz", "mpec_kielce", "mpec_rzeszow", "pge_torun_heat").any { it in enabledSources }
         val waterEnabled =
-                allEnabledByDefault || listOf("mpwik_wroclaw", "mpwik_warszawa", "wmk", "wm_radom", "aquanet", "katowickie_wodociagi", "zwik_lodz", "pwik_kalisz", "pwik_czestochowa", "wodociagi_kieleckie", "wodociagi_plockie", "gdanskie_wodociagi", "puk_rokietnica", "mpwik_rzeszow", "mwik_bydgoszcz").any { it in enabledSources }
+                allEnabledByDefault || listOf("mpwik_wroclaw", "mpwik_warszawa", "wmk", "wm_radom", "aquanet", "katowickie_wodociagi", "zwik_lodz", "pwik_kalisz", "pwik_czestochowa", "wodociagi_kieleckie", "wodociagi_plockie", "torunskie_wodociagi", "gdanskie_wodociagi", "puk_rokietnica", "mpwik_rzeszow", "mwik_bydgoszcz").any { it in enabledSources }
         val gasEnabled = allEnabledByDefault || listOf("psg").any { it in enabledSources }
 
         // Theme

@@ -58,6 +58,7 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
   - **MPWiK Lublin**: Awarie i konserwacje wodociągowe w Lublinie.
   - **MPWiK Rzeszów**: Przerwy w dostawie wody i awarie w Rzeszowie oraz obsługiwanych okolicznych miejscowościach.
   - **Wodociągi Kieleckie**: Przerwy w dostawie wody i awarie w Kielcach, obsługiwanych gminach oraz publikowanych lokalnych komunikatach.
+  - **Toruńskie Wodociągi**: Awarie i planowane prace na sieci wodociągowej w Toruniu, Lubiczu, Łysomicach, Obrowie, Wielkiej Nieszawce i Złej Wsi Wielkiej.
 
 ## Aplikacja Android
 
@@ -196,7 +197,7 @@ Dla każdego adresu, który chcesz monitorować, dodaj wpis zawierający:
 
 #### Aktywne źródła (Enabled Sources)
 
-Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `mpwik_warszawa`).
+Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `mpwik_warszawa`, `torunskie_wodociagi`).
 
 ### Użytkowanie
 
