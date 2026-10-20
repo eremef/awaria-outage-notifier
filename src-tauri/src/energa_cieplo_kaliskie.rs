@@ -256,10 +256,10 @@ fn street_matches_address(notice_text: &str, address: &crate::api_logic::Address
         }
 
         // Some notices shorten a hyphenated TERYT street name to its final part.
-        if street.contains('-') {
-            if let Some(last_token) = full_tokens.last() {
-                return street_tokens_match(std::slice::from_ref(last_token), &notice_tokens);
-            }
+        if street.contains('-')
+            && let Some(last_token) = full_tokens.last()
+        {
+            return street_tokens_match(std::slice::from_ref(last_token), &notice_tokens);
         }
         false
     })

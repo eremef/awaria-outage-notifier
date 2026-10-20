@@ -218,13 +218,13 @@ fn extract_dates(text: &str, publication_date: Option<NaiveDate>) -> Vec<ParsedD
     }
 
     if dates.is_empty()
-        && publication_date.is_some()
         && ["dzisiaj", "dzisiejszy", "dzisiejszym", "dzisiejszego"]
             .iter()
             .any(|word| normalized.contains(word))
+        && let Some(publication_date) = publication_date
     {
         dates.push(ParsedDate {
-            date: publication_date.unwrap(),
+            date: publication_date,
             position: 0,
             explicit_year: false,
         });
@@ -544,7 +544,7 @@ fn street_matches_notice(text: &str, address: &AddressEntry) -> bool {
 
     candidates.into_iter().flatten().any(|candidate| {
         let stripped = crate::utils::strip_street_prefixes(candidate.trim());
-        let tokens: Vec<String> = normalize_polish(&stripped)
+        let tokens: Vec<String> = normalize_polish(stripped)
             .split(|character: char| !character.is_alphanumeric())
             .filter(|token| token.chars().count() > 2)
             .map(str::to_string)

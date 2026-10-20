@@ -578,8 +578,7 @@ fn torunskie_street_segment(location: &str, street: &str) -> Option<String> {
     let normalized_street = utils::clean_text(utils::strip_street_prefixes(street));
     let last_street_word = normalized_street
         .split(|character: char| !character.is_alphanumeric())
-        .filter(|word| word.chars().count() > 2 && !word.chars().all(char::is_numeric))
-        .last()?;
+        .rfind(|word| word.chars().count() > 2 && !word.chars().all(char::is_numeric))?;
     let street_word_index = normalized_location.find(last_street_word)?;
     let after_street_character = street_word_index + last_street_word.chars().count();
     let start_byte = location

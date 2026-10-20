@@ -97,15 +97,14 @@ fn format_local_time(value: NaiveDateTime) -> String {
     value.format("%Y-%m-%d %H:%M").to_string()
 }
 
-fn parse_schedule(
-    date: NaiveDate,
-    details: &str,
-) -> Option<(
+type ParsedSchedule = (
     String,
     Option<String>,
     Option<NaiveDateTime>,
     Option<NaiveDateTime>,
-)> {
+);
+
+fn parse_schedule(date: NaiveDate, details: &str) -> Option<ParsedSchedule> {
     if let Some(captures) = time_range_regex().captures(details) {
         let start_time = parse_time(&captures, 1, 2)?;
         let end_time = parse_time(&captures, 3, 4)?;

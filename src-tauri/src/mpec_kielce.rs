@@ -465,7 +465,7 @@ fn street_matches_address(text: &str, address: &AddressEntry) -> bool {
     }
     configured_streets.into_iter().any(|street| {
         let street = crate::utils::strip_street_prefixes(street.trim());
-        let tokens = normalize_polish(&street)
+        let tokens = normalize_polish(street)
             .split(|character: char| !character.is_alphanumeric())
             .filter(|token| token.chars().count() > 2)
             .map(str::to_string)
@@ -515,10 +515,10 @@ fn notice_location(text: &str) -> String {
     ];
     for pattern in patterns {
         let regex = Regex::new(pattern).unwrap();
-        if let Some(captures) = regex.captures(&normalized) {
-            if let Some(area) = captures.get(1) {
-                return format!("Miejscowość: Kielce, {}", clean_text(area.as_str()));
-            }
+        if let Some(captures) = regex.captures(&normalized)
+            && let Some(area) = captures.get(1)
+        {
+            return format!("Miejscowość: Kielce, {}", clean_text(area.as_str()));
         }
     }
     "Miejscowość: Kielce".to_string()
@@ -697,12 +697,12 @@ fn meaningful_location_tokens(value: &str) -> Vec<String> {
 
 fn restoration_location_terms(title: &str, body: &str) -> Vec<String> {
     let normalized_title = normalize_polish(title);
-    if let Some(captures) = restoration_title_regex().captures(&normalized_title) {
-        if let Some(value) = captures.get(1) {
-            let title_tokens = meaningful_location_tokens(value.as_str());
-            if !title_tokens.is_empty() {
-                return title_tokens;
-            }
+    if let Some(captures) = restoration_title_regex().captures(&normalized_title)
+        && let Some(value) = captures.get(1)
+    {
+        let title_tokens = meaningful_location_tokens(value.as_str());
+        if !title_tokens.is_empty() {
+            return title_tokens;
         }
     }
 

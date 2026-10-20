@@ -456,7 +456,7 @@ fn street_matches_notice(text: &str, address: &AddressEntry) -> bool {
         .collect();
     candidates.into_iter().any(|candidate| {
         let candidate = crate::utils::strip_street_prefixes(candidate.trim());
-        let tokens: Vec<_> = normalize_polish(&candidate)
+        let tokens: Vec<_> = normalize_polish(candidate)
             .split(|character: char| !character.is_alphanumeric())
             .filter(|token| token.chars().count() > 2)
             .map(str::to_string)
