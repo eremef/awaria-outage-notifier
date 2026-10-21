@@ -604,53 +604,6 @@ fn torunskie_street_segment(location: &str, street: &str) -> Option<String> {
     Some(tail[..end_byte].to_string())
 }
 
-fn torunskie_house_number_is_listed(house_number: &str, street_segment: &str) -> bool {
-    let normalized_house = utils::clean_text(house_number)
-        .chars()
-        .filter(|character| !character.is_whitespace())
-        .collect::<String>();
-    if normalized_house.is_empty() {
-        return true;
-    }
-
-    let normalized_segment = utils::clean_text(street_segment);
-    static HOUSE_RE: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
-    let house_re = HOUSE_RE
-        .get_or_init(|| regex::Regex::new(r"\d+[a-z]?(?:/\d+[a-z]?)?").unwrap());
-    if !house_re.is_match(&normalized_segment) {
-        return true;
-    }
-
-    let exact_pattern = format!(
-        r"(^|[^a-z0-9]){}([^a-z0-9]|$)",
-        regex::escape(&normalized_house)
-    );
-    if regex::Regex::new(&exact_pattern)
-        .is_ok_and(|pattern| pattern.is_match(&normalized_segment))
-    {
-        return true;
-    }
-
-    let Ok(user_number) = normalized_house.parse::<u32>() else {
-        return false;
-    };
-    static RANGE_RE: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
-    let range_re = RANGE_RE
-        .get_or_init(|| regex::Regex::new(r"(\d+)\s*(?:-|–|—|do)\s*(\d+)").unwrap());
-    range_re.captures_iter(&normalized_segment).any(|captures| {
-        let (Some(start), Some(end)) = (captures.get(1), captures.get(2)) else {
-            return false;
-        };
-        let (Ok(start), Ok(end)) = (
-            start.as_str().parse::<u32>(),
-            end.as_str().parse::<u32>(),
-        ) else {
-            return false;
-        };
-        user_number >= start.min(end) && user_number <= start.max(end)
-    })
-}
-
 fn torunskie_notice_matches_house(address: &api_logic::AddressEntry, location: &str) -> bool {
     let normalized_location = utils::clean_text(location);
     let street_names = utils::configured_street_name_candidates(
@@ -685,7 +638,7 @@ fn torunskie_notice_matches_house(address: &api_logic::AddressEntry, location: &
         let Some(street_segment) = torunskie_street_segment(location, street.as_str()) else {
             return false;
         };
-        torunskie_house_number_is_listed(&address.house_no, &street_segment)
+        utils::match_house_number(&address.house_no, &street_segment, None)
         })
 }
 
@@ -1082,7 +1035,7 @@ mod tests {
         let client = NetworkState::build_client().unwrap();
         let items = enea::fetch_all_enea_outages(&client, &[7]).await.unwrap();
         
-        let compiled = CompiledEneaRegex::new("Kicin", "Poznańska", &None);
+        let compiled = CompiledEneaRegex::new("Kicin", "Poznańska", "Poznańska", &None);
         let kicin_items: Vec<_> = items.into_iter()
             .filter(|i| i.matches_address_compiled(&compiled))
             .collect();

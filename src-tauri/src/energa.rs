@@ -78,7 +78,13 @@ pub struct CompiledEnergaRegex {
 }
 
 impl CompiledEnergaRegex {
-    pub fn new(city: &str, commune: &str, street_name_1: &str, street_name_2: &Option<String>) -> Self {
+    pub fn new(
+        city: &str,
+        commune: &str,
+        street_name: &str,
+        street_name_1: &str,
+        street_name_2: &Option<String>,
+    ) -> Self {
         let city_pattern = format!(r"(?i)(?:^|[^\p{{L}}]){}(?:[^\p{{L}}]|$)", regex::escape(city));
         let city_regex = Regex::new(&city_pattern).unwrap_or_else(|_| Regex::new("").unwrap());
 
@@ -87,15 +93,11 @@ impl CompiledEnergaRegex {
 
         let mut street_candidates = Vec::new();
         if !street_name_1.is_empty() {
-            let mut candidates = Vec::new();
-            if let Some(n2) = street_name_2
-                && !n2.is_empty() && n2 != "null" {
-                    let compound = format!("{} {}", n2.trim(), street_name_1.trim());
-                    candidates.push(compound);
-                }
-            candidates.push(street_name_1.trim().to_string());
-
-            for word in candidates {
+            for word in crate::utils::configured_street_name_candidates(
+                street_name,
+                street_name_1,
+                street_name_2.as_deref(),
+            ) {
                 let p = format!(r"(?i)(?:^|[^\p{{L}}]){}(?:[^\p{{L}}]|$)", regex::escape(&word));
                 if let Ok(r) = Regex::new(&p) {
                     street_candidates.push(r);
@@ -212,7 +214,7 @@ impl AlertProvider for EnergaProvider {
                         .enumerate()
                         .filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::Energa, a))
                         .map(|(idx, a)| {
-                            (idx, Arc::new(CompiledEnergaRegex::new(&a.city_name, &a.commune, &a.street_name_1, &a.street_name_2)), a.city_name.clone())
+                            (idx, Arc::new(CompiledEnergaRegex::new(&a.city_name, &a.commune, &a.street_name, &a.street_name_1, &a.street_name_2)), a.city_name.clone())
                         })
                         .collect();
 
@@ -251,19 +253,19 @@ mod tests {
         };
 
         // Complete match -> true
-        let compiled_tuliszkow = CompiledEnergaRegex::new("Tuliszków", "Tuliszków", "Długa", &None);
+        let compiled_tuliszkow = CompiledEnergaRegex::new("Tuliszków", "Tuliszków", "Długa", "Długa", &None);
         assert!(shutdown.matches_address_compiled(&compiled_tuliszkow));
 
         // Wrong commune -> false
-        let compiled_commune_fail = CompiledEnergaRegex::new("Tuliszków", "Wrocław", "Długa", &None);
+        let compiled_commune_fail = CompiledEnergaRegex::new("Tuliszków", "Wrocław", "Długa", "Długa", &None);
         assert!(!shutdown.matches_address_compiled(&compiled_commune_fail));
 
         // Wrong city -> false
-        let compiled_city_fail = CompiledEnergaRegex::new("Gdańsk", "Tuliszków", "Długa", &None);
+        let compiled_city_fail = CompiledEnergaRegex::new("Gdańsk", "Tuliszków", "Długa", "Długa", &None);
         assert!(!shutdown.matches_address_compiled(&compiled_city_fail));
 
         // Matching city but completely wrong street -> should fail
-        let compiled_street_fail = CompiledEnergaRegex::new("Tuliszków", "Tuliszków", "Króótka", &None);
+        let compiled_street_fail = CompiledEnergaRegex::new("Tuliszków", "Tuliszków", "Króótka", "Króótka", &None);
         assert!(!shutdown.matches_address_compiled(&compiled_street_fail));
     }
 

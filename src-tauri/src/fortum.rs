@@ -184,6 +184,7 @@ impl AlertProvider for FortumProvider {
                                 for (idx, addr) in &addrs {
                                     if matches_street_only(
                                         &a.message,
+                                        &addr.street_name,
                                         &addr.street_name_1,
                                         &addr.street_name_2,
                                     ) {
@@ -225,6 +226,7 @@ impl AlertProvider for FortumProvider {
 
 pub fn matches_street_only(
     message: &Option<String>,
+    street_name: &str,
     street_name_1: &str,
     street_name_2: &Option<String>,
 ) -> bool {
@@ -243,16 +245,13 @@ pub fn matches_street_only(
         return true;
     }
 
-    // Build priority list: compound name first (if nazwa_2 exists), then street_name_1
-    let mut candidates: Vec<String> = Vec::new();
-    if let Some(n2) = street_name_2
-        && !n2.is_empty() && n2 != "null" {
-            let compound = format!("{} {}", n2.trim(), street_name_1.trim());
-            candidates.push(compound);
-        }
-    candidates.push(street_name_1.trim().to_string());
-
-    candidates.iter().any(|c| word_match(message, c))
+    crate::utils::configured_street_name_candidates(
+        street_name,
+        street_name_1,
+        street_name_2.as_deref(),
+    )
+        .iter()
+        .any(|candidate| word_match(message, candidate))
 }
 
 #[cfg(test)]
@@ -264,17 +263,20 @@ mod tests {
         assert!(matches_street_only(
             &Some("Wrocław, ul. Legnicka 10".to_string()),
             "Legnicka",
+            "Legnicka",
             &None
         ));
 
         assert!(matches_street_only(
             &Some("Wrocław, ul. Henryka Probusa 12".to_string()),
+            "Henryka Probusa",
             "Probusa",
             &Some("Henryka".to_string())
         ));
 
         assert!(!matches_street_only(
             &Some("Wrocław, ul. Legnicka 10".to_string()),
+            "Probusa",
             "Probusa",
             &None
         ));

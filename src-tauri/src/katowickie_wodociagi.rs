@@ -66,28 +66,25 @@ impl CompiledWodociagiRegex {
         let has_street = !address.street_name_1.is_empty();
 
         if has_street {
-            let mut regex_patterns = Vec::new();
-            let n1 = address.street_name_1.trim();
-            let n2 = address.street_name_2.as_deref().unwrap_or("").trim();
+            let mut regex_patterns: Vec<String> = crate::utils::configured_street_name_candidates(
+                &address.street_name,
+                &address.street_name_1,
+                address.street_name_2.as_deref(),
+            )
+            .iter()
+            .map(|candidate| regex::escape(candidate))
+            .collect();
 
-            if !n2.is_empty() && n2 != "null" {
-                regex_patterns.push(regex::escape(&format!("{} {}", n2, n1)));
+            // Keep case-inflection handling for Polish adjectival street names.
+            if let Some(last) = address.street_name_1.split_whitespace().last()
+                && last.chars().count() > 3
+                && last.ends_with('a')
+                && last.chars().count() > 4
+            {
+                let mut chars = last.chars();
+                chars.next_back();
+                regex_patterns.push(format!(r"{}\p{{L}}*", regex::escape(chars.as_str())));
             }
-            regex_patterns.push(regex::escape(n1));
-
-            if let Some(last) = n1.split_whitespace().last()
-                && last.chars().count() > 3 {
-                    regex_patterns.push(regex::escape(last));
-                    
-                    // Simple stemming for Polish adjectival streets
-                    // e.g., Dębowa -> Dębowej (locative/genitive), Dębową (instrumental)
-                    if last.ends_with('a') && last.chars().count() > 4 {
-                        let mut chars = last.chars();
-                        chars.next_back(); // remove 'a'
-                        let stem = chars.as_str();
-                        regex_patterns.push(format!(r"{}\p{{L}}*", regex::escape(stem)));
-                    }
-                }
 
             for p in &regex_patterns {
                 let pat = format!(r"(?i){}", p);

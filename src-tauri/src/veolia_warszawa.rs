@@ -195,7 +195,11 @@ impl CompiledVeoliaRegex {
             }
         }
 
-        let mut raw_candidates = vec![n1.to_string()];
+        let mut raw_candidates = crate::utils::configured_street_name_candidates(
+            &address.street_name,
+            &address.street_name_1,
+            address.street_name_2.as_deref(),
+        );
 
         if !n2.is_empty() && n2 != "null" {
             raw_candidates.push(format!("{} {}", n2, n1));

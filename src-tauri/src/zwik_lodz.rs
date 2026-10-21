@@ -204,14 +204,19 @@ impl AlertProvider for ZwikLodzProvider {
                             let combined_text = format!("Łódź {}", li_text).to_lowercase();
                                 
                             for (idx, a) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::ZwikLodz, a)) {
-                                let mut is_match = false;
-                                if check_street(&a.street_name_1, &combined_text) {
-                                    is_match = true;
+                                let mut configured_streets = crate::utils::configured_street_name_candidates(
+                                    &a.street_name,
+                                    &a.street_name_1,
+                                    a.street_name_2.as_deref(),
+                                );
+                                if let Some(second) = a.street_name_2.as_deref()
+                                    && !second.trim().is_empty()
+                                {
+                                    configured_streets.push(second.to_string());
                                 }
-                                if let Some(s2) = &a.street_name_2
-                                    && check_street(s2, &combined_text) {
-                                        is_match = true;
-                                    }
+                                let is_match = configured_streets
+                                    .iter()
+                                    .any(|street| check_street(street, &combined_text));
                                     
                                 if is_match {
                                     alert.is_local = Some(true);
@@ -361,14 +366,19 @@ mod tests {
                         let combined_text = format!("Łódź {}", li_text).to_lowercase();
                         
                         for (idx, a) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::ZwikLodz, a)) {
-                            let mut is_match = false;
-                            if check_street(&a.street_name_1, &combined_text) {
-                                is_match = true;
+                            let mut configured_streets = crate::utils::configured_street_name_candidates(
+                                &a.street_name,
+                                &a.street_name_1,
+                                a.street_name_2.as_deref(),
+                            );
+                            if let Some(second) = a.street_name_2.as_deref()
+                                && !second.trim().is_empty()
+                            {
+                                configured_streets.push(second.to_string());
                             }
-                            if let Some(s2) = &a.street_name_2
-                                && check_street(s2, &combined_text) {
-                                    is_match = true;
-                                }
+                            let is_match = configured_streets
+                                .iter()
+                                .any(|street| check_street(street, &combined_text));
                             
                             if is_match {
                                 alert.is_local = Some(true);
@@ -485,10 +495,14 @@ mod tests {
                         let combined_text = format!("Łódź {}", li_text).to_lowercase();
                         
                         for (idx, a) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::ZwikLodz, a)) {
-                            let mut is_match = false;
-                            if check_street(&a.street_name_1, &combined_text) {
-                                is_match = true;
-                            }
+                            let configured_streets = crate::utils::configured_street_name_candidates(
+                                &a.street_name,
+                                &a.street_name_1,
+                                a.street_name_2.as_deref(),
+                            );
+                            let is_match = configured_streets
+                                .iter()
+                                .any(|street| check_street(street, &combined_text));
                             
                             if is_match {
                                 alert.is_local = Some(true);

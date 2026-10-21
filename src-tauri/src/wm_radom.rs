@@ -254,13 +254,19 @@ fn street_matches_notice(text: &str, address: &AddressEntry) -> bool {
         .split(|ch: char| !ch.is_alphanumeric())
         .filter(|word| !word.is_empty())
         .collect();
-    let mut candidates = vec![address.street_name.as_str(), address.street_name_1.as_str()];
-    if let Some(second) = address.street_name_2.as_deref() {
-        candidates.push(second);
+    let mut candidates = crate::utils::configured_street_name_candidates(
+        &address.street_name,
+        &address.street_name_1,
+        address.street_name_2.as_deref(),
+    );
+    if let Some(second) = address.street_name_2.as_deref()
+        && !second.trim().is_empty()
+    {
+        candidates.push(second.to_string());
     }
 
     candidates.into_iter().any(|candidate| {
-        let tokens = normalized_tokens(candidate);
+        let tokens = normalized_tokens(&candidate);
         if tokens.is_empty() {
             return false;
         }

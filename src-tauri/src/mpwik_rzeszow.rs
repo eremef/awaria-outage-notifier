@@ -166,13 +166,19 @@ fn strip_street_prefix(value: &str) -> String {
 
 fn street_matches_notice(text: &str, address: &AddressEntry) -> bool {
     let notice = normalize_polish(text);
-    let mut candidates = vec![address.street_name.as_str(), address.street_name_1.as_str()];
-    if let Some(second) = address.street_name_2.as_deref() {
-        candidates.push(second);
+    let mut candidates = crate::utils::configured_street_name_candidates(
+        &address.street_name,
+        &address.street_name_1,
+        address.street_name_2.as_deref(),
+    );
+    if let Some(second) = address.street_name_2.as_deref()
+        && !second.trim().is_empty()
+    {
+        candidates.push(second.to_string());
     }
 
     candidates.into_iter().any(|candidate| {
-        let candidate = strip_street_prefix(candidate);
+        let candidate = strip_street_prefix(&candidate);
         let tokens: Vec<_> = normalize_polish(&candidate)
             .split(|ch: char| !ch.is_alphanumeric())
             .filter(|token| token.chars().count() > 2)

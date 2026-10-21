@@ -578,7 +578,14 @@ pub fn parse_psg_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAle
             let norm_area = normalize(&area);
 
             for (idx, addr) in settings.addresses.iter().enumerate().filter(|(_, a)| a.is_active && crate::api_logic::is_address_applicable_for_provider(&AlertSource::Psg, a)) {
-                let addr_street = normalize(&addr.street_name_1);
+                let street_candidates = crate::utils::configured_street_name_candidates(
+                    &addr.street_name,
+                    &addr.street_name_1,
+                    addr.street_name_2.as_deref(),
+                )
+                .into_iter()
+                .map(|candidate| normalize(&candidate))
+                .collect::<Vec<_>>();
 
                 // For direct matching, check if the normalized scraped city matches the user's city
                 let addr_city = normalize(&addr.city_name);
@@ -599,15 +606,16 @@ pub fn parse_psg_html(html_content: &str, settings: &Settings) -> Vec<UnifiedAle
                         || norm_area.contains("calyobszarmiejscowosci")
                 };
 
-                let clean_addr_street = crate::utils::strip_street_prefixes(&addr_street);
-                let core_street = get_core_street_name(&addr.street_name_1);
-
-                let street_match = if addr_street.is_empty() || is_locality_wide {
+                let street_match = if addr.street_name_1.is_empty() || is_locality_wide {
                     true 
                 } else {
-                    norm_area.contains(&addr_street)
-                        || (!clean_addr_street.is_empty() && norm_area.contains(clean_addr_street))
-                        || (!core_street.is_empty() && norm_area.contains(&core_street))
+                    street_candidates.iter().any(|candidate| {
+                        let clean_candidate = crate::utils::strip_street_prefixes(candidate);
+                        let core_candidate = get_core_street_name(candidate);
+                        norm_area.contains(candidate)
+                            || (!clean_candidate.is_empty() && norm_area.contains(clean_candidate))
+                            || (!core_candidate.is_empty() && norm_area.contains(&core_candidate))
+                    })
                 };
 
                 if (city_match || city_in_area) && street_match {

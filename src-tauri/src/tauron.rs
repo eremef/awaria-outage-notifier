@@ -339,7 +339,12 @@ pub struct CompiledTauronRegex {
 }
 
 impl CompiledTauronRegex {
-    pub fn new(city_name: &str, street_name_1: &str, street_name_2: &Option<String>) -> Self {
+    pub fn new(
+        city_name: &str,
+        street_name: &str,
+        street_name_1: &str,
+        street_name_2: &Option<String>,
+    ) -> Self {
         let city_pattern = format!(r"(?i)(?:^|[^\p{{L}}]){}(?:[^\p{{L}}]|$)", regex::escape(city_name));
         let city = regex::Regex::new(&city_pattern).unwrap_or_else(|_| regex::Regex::new("").unwrap());
 
@@ -347,15 +352,11 @@ impl CompiledTauronRegex {
         let has_street = !street_name_1.is_empty();
         
         if has_street {
-            let mut candidates = Vec::new();
-            if let Some(n2) = street_name_2
-                && !n2.is_empty() && n2 != "null" {
-                    let compound = format!("{} {}", n2.trim(), street_name_1.trim());
-                    candidates.push(compound);
-                }
-            candidates.push(street_name_1.trim().to_string());
-
-            for word in candidates {
+            for word in crate::utils::configured_street_name_candidates(
+                street_name,
+                street_name_1,
+                street_name_2.as_deref(),
+            ) {
                 let p = format!(r"(?i)(?:^|[^\p{{L}}]){}(?:[^\p{{L}}]|$)", regex::escape(&word));
                 if let Ok(r) = regex::Regex::new(&p) {
                     street_candidates.push(r);
@@ -399,6 +400,7 @@ async fn fetch_for_settings(
         let addr = addr.clone();
         let compiled = Arc::new(CompiledTauronRegex::new(
             &addr.city_name,
+            &addr.street_name,
             &addr.street_name_1,
             &addr.street_name_2,
         ));
@@ -501,7 +503,7 @@ mod tests {
     #[test]
     fn test_tauron_matches_address() {
         // Base case: City + Street match
-        let compiled = CompiledTauronRegex::new("Wrocław", "Probusa", &Some("Henryka".to_string()));
+        let compiled = CompiledTauronRegex::new("Wrocław", "Henryka Probusa", "Probusa", &Some("Henryka".to_string()));
         assert!(compiled.is_match("Wrocław, ul. Henryka Probusa 12"));
 
         // Case-insensitivity
@@ -511,19 +513,19 @@ mod tests {
         assert!(compiled.is_match("Wrocław, ul. Probusa 5"));
 
         // Wrong city
-        let compiled_wroclaw = CompiledTauronRegex::new("Wrocław", "Probusa", &None);
+        let compiled_wroclaw = CompiledTauronRegex::new("Wrocław", "Probusa", "Probusa", &None);
         assert!(!compiled_wroclaw.is_match("Warszawa, ul. Henryka Probusa 12"));
 
         // Compound name match
-        let compiled_pawla = CompiledTauronRegex::new("Wrocław", "Pawła", &Some("Jana".to_string()));
+        let compiled_pawla = CompiledTauronRegex::new("Wrocław", "Jana Pawła II", "Pawła", &Some("Jana".to_string()));
         assert!(compiled_pawla.is_match("Wrocław, Jana Pawła II 5"));
 
         // Specific case reported by user (Polish characters)
-        let compiled_wieniawskiego = CompiledTauronRegex::new("Wrocław", "Wieniawskiego", &None);
+        let compiled_wieniawskiego = CompiledTauronRegex::new("Wrocław", "Wieniawskiego", "Wieniawskiego", &None);
         assert!(compiled_wieniawskiego.is_match("Wrocław, ul. Wieniawskiego 12"));
 
         // Ensure we don't match substrings (like Wroc in Wrocław)
-        let compiled_wroc = CompiledTauronRegex::new("Wroc", "Wieniawskie", &None);
+        let compiled_wroc = CompiledTauronRegex::new("Wroc", "Wieniawskie", "Wieniawskie", &None);
         assert!(!compiled_wroc.is_match("Wrocław, ul. Wieniawskiego 12"));
     }
 

@@ -650,20 +650,11 @@ impl CompiledAquanetRegex {
         let has_street = !address.street_name_1.is_empty();
 
         if has_street {
-            let mut candidates = Vec::new();
-            let n1 = address.street_name_1.trim();
-            let n2 = address.street_name_2.as_deref().unwrap_or("").trim();
-
-            if !n2.is_empty() && n2 != "null" {
-                candidates.push(format!("{} {}", n2, n1));
-            }
-            candidates.push(n1.to_string());
-
-            // Also last word for surname-based street names
-            if let Some(last) = n1.split_whitespace().last()
-                && last.len() > 3 {
-                    candidates.push(last.to_string());
-                }
+            let candidates = crate::utils::configured_street_name_candidates(
+                &address.street_name,
+                &address.street_name_1,
+                address.street_name_2.as_deref(),
+            );
 
             for cand in &candidates {
                 let mut c_clean = cand.to_string();

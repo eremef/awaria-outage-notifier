@@ -28,18 +28,14 @@ fn check_local_matching(alert: &mut UnifiedAlert, settings: &Settings, combined_
     let mut active_addresses = Vec::new();
     for (idx, addr) in settings.addresses.iter().enumerate() {
         if addr.is_active && crate::api_logic::is_address_applicable_for_provider(&crate::api_logic::AlertSource::Sec, addr) {
-            let raw_street_name = if !addr.street_name_1.is_empty() {
-                &addr.street_name_1
-            } else {
-                &addr.street_name
-            };
-            
-            let street_name = crate::utils::strip_street_prefixes(raw_street_name);
-            
-            if !street_name.is_empty() {
-                let pattern = format!(r"(?i)\b{}\b", regex::escape(street_name));
+            for street_name in crate::utils::configured_street_name_candidates(
+                &addr.street_name,
+                &addr.street_name_1,
+                addr.street_name_2.as_deref(),
+            ) {
+                let pattern = format!(r"(?i)\b{}\b", regex::escape(&street_name));
                 if let Ok(re) = Regex::new(&pattern) {
-                    active_addresses.push((idx, street_name.to_string(), re));
+                    active_addresses.push((idx, street_name, re));
                 }
             }
         }

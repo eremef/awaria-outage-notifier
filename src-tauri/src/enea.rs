@@ -156,21 +156,22 @@ pub struct CompiledEneaRegex {
 }
 
 impl CompiledEneaRegex {
-    pub fn new(city: &str, street_name_1: &str, street_name_2: &Option<String>) -> Self {
+    pub fn new(
+        city: &str,
+        street_name: &str,
+        street_name_1: &str,
+        street_name_2: &Option<String>,
+    ) -> Self {
         let city_pattern = format!(r"(?i)(?:^|[^\p{{L}}]){}(?:[^\p{{L}}]|$)", regex::escape(city));
         let city_regex = regex::Regex::new(&city_pattern).unwrap_or_else(|_| regex::Regex::new("").unwrap());
 
         let mut street_candidates = Vec::new();
         if !street_name_1.is_empty() {
-            let mut candidates = Vec::new();
-            if let Some(n2) = street_name_2
-                && !n2.is_empty() && n2 != "null" {
-                    let compound = format!("{} {}", n2.trim(), street_name_1.trim());
-                    candidates.push(compound);
-                }
-            candidates.push(street_name_1.trim().to_string());
-
-            for word in candidates {
+            for word in crate::utils::configured_street_name_candidates(
+                street_name,
+                street_name_1,
+                street_name_2.as_deref(),
+            ) {
                 let p = format!(r"(?i)(?:^|[^\p{{L}}]){}(?:[^\p{{L}}]|$)", regex::escape(&word));
                 if let Ok(r) = regex::Regex::new(&p) {
                     street_candidates.push(r);
@@ -307,7 +308,7 @@ impl AlertProvider for EneaProvider {
                     .enumerate()
                     .filter(|(_, a)| a.is_active)
                     .map(|(idx, a)| {
-                        (idx, Arc::new(CompiledEneaRegex::new(&a.city_name, &a.street_name_1, &a.street_name_2)), a.city_name.clone())
+                        (idx, Arc::new(CompiledEneaRegex::new(&a.city_name, &a.street_name, &a.street_name_1, &a.street_name_2)), a.city_name.clone())
                     })
                     .collect();
 
@@ -343,13 +344,13 @@ mod tests {
             description: Some("Obszar Świdnica\nw dniach: 2026-03-30\nmiejscowości Piaski 45, 46, działki".to_string()),
         };
 
-        let compiled_piaski = CompiledEneaRegex::new("Piaski", "Piaski", &None);
+        let compiled_piaski = CompiledEneaRegex::new("Piaski", "Piaski", "Piaski", &None);
         assert!(item.matches_address_compiled(&compiled_piaski));
         
-        let compiled_swidnica = CompiledEneaRegex::new("Świdnica", "", &None);
+        let compiled_swidnica = CompiledEneaRegex::new("Świdnica", "", "", &None);
         assert!(item.matches_address_compiled(&compiled_swidnica));
         
-        let compiled_wroclaw = CompiledEneaRegex::new("Wrocław", "", &None);
+        let compiled_wroclaw = CompiledEneaRegex::new("Wrocław", "", "", &None);
         assert!(!item.matches_address_compiled(&compiled_wroclaw));
 
         let kicin = EneaItem {
@@ -357,15 +358,15 @@ mod tests {
             description: Some("Obszar Kicin\nw dniach: 2026-04-16\nKicin: ul. Swarzędzka od 1 do 9, ul. Gwarna 2, 4, ,ul. Poznańska 43, 45, 47.".to_string()),
         };
 
-        let compiled_kicin = CompiledEneaRegex::new("Kicin", "Poznańska", &None);
+        let compiled_kicin = CompiledEneaRegex::new("Kicin", "Poznańska", "Poznańska", &None);
         assert!(kicin.matches_address_compiled(&compiled_kicin));
 
         // Case insensitivity
-        let compiled_kicin_lower = CompiledEneaRegex::new("kicin", "poznańska", &None);
+        let compiled_kicin_lower = CompiledEneaRegex::new("kicin", "poznańska", "poznańska", &None);
         assert!(kicin.matches_address_compiled(&compiled_kicin_lower));
 
         // Wrong city
-        let compiled_wrocl = CompiledEneaRegex::new("Wrocław", "Poznańska", &None);
+        let compiled_wrocl = CompiledEneaRegex::new("Wrocław", "Poznańska", "Poznańska", &None);
         assert!(!kicin.matches_address_compiled(&compiled_wrocl));
     }
 

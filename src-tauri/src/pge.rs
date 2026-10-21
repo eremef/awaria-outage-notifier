@@ -104,7 +104,7 @@ pub struct PgePreparedAddress<'a> {
     pub voivodeship_upper: String,
     pub district_lower: String,
     pub commune_lower: String,
-    pub street_name_1_lower: String,
+    pub street_name_candidates_lower: Vec<String>,
 }
 
 impl<'a> PgePreparedAddress<'a> {
@@ -116,10 +116,17 @@ impl<'a> PgePreparedAddress<'a> {
             voivodeship_upper: address.voivodeship.to_uppercase(),
             district_lower: address.district.to_lowercase(),
             commune_lower: address.commune.to_lowercase(),
-            street_name_1_lower: if address.street_name_1.is_empty() {
-                String::new()
+            street_name_candidates_lower: if address.street_name_1.is_empty() {
+                Vec::new()
             } else {
-                address.street_name_1.to_lowercase()
+                crate::utils::configured_street_name_candidates(
+                    &address.street_name,
+                    &address.street_name_1,
+                    address.street_name_2.as_deref(),
+                )
+                .into_iter()
+                .map(|candidate| candidate.to_lowercase())
+                .collect()
             },
         }
     }
@@ -159,10 +166,15 @@ pub fn matches_prepared_address(
             }
             
             // Check street. PGE streetName includes "ul. " etc.
-            let street_match = if prep.street_name_1_lower.is_empty() {
+            let street_match = if prep.street_name_candidates_lower.is_empty() {
                 true 
             } else {
-                teryt.streetName.as_ref().map(|s| s.to_lowercase().contains(&prep.street_name_1_lower)).unwrap_or(false)
+                teryt.streetName.as_ref().is_some_and(|street| {
+                    let street = street.to_lowercase();
+                    prep.street_name_candidates_lower
+                        .iter()
+                        .any(|candidate| street.contains(candidate))
+                })
             };
 
             if street_match {
@@ -170,11 +182,15 @@ pub fn matches_prepared_address(
             }
         } else if city_match_desc {
             // Fallback to description match if TERYT is missing but city matches
-            if prep.street_name_1_lower.is_empty() {
+            if prep.street_name_candidates_lower.is_empty() {
                 return true;
             }
             let street_match = outage_desc_lower.as_ref()
-                .map(|d| d.contains(&prep.street_name_1_lower))
+                .map(|description| {
+                    prep.street_name_candidates_lower
+                        .iter()
+                        .any(|candidate| description.contains(candidate))
+                })
                 .unwrap_or(false);
             if street_match {
                 return true;

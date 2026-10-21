@@ -81,9 +81,15 @@ fn normalize_polish(value: &str) -> String {
 }
 
 fn street_matches_address(address_text: &str, address: &crate::api_logic::AddressEntry) -> bool {
-    let mut configured_streets = vec![address.street_name.as_str(), address.street_name_1.as_str()];
-    if let Some(street_name_2) = address.street_name_2.as_deref() {
-        configured_streets.push(street_name_2);
+    let mut configured_streets = crate::utils::configured_street_name_candidates(
+        &address.street_name,
+        &address.street_name_1,
+        address.street_name_2.as_deref(),
+    );
+    if let Some(street_name_2) = address.street_name_2.as_deref()
+        && !street_name_2.trim().is_empty()
+    {
+        configured_streets.push(street_name_2.to_string());
     }
 
     let normalized_notice = normalize_polish(address_text);

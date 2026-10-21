@@ -54,18 +54,13 @@ impl CompiledWmkRegex {
         let has_street = !address.street_name_1.is_empty();
 
         if has_street {
-            let mut raw_candidates = Vec::new();
-            
-            let n1 = address.street_name_1.trim();
-            let n2 = address.street_name_2.as_ref().map(|s| s.trim()).unwrap_or("");
+            let mut raw_candidates = crate::utils::configured_street_name_candidates(
+                &address.street_name,
+                &address.street_name_1,
+                address.street_name_2.as_deref(),
+            );
 
-            // 1. The original names
-            if !n2.is_empty() && n2 != "null" {
-                raw_candidates.push(format!("{} {}", n2, n1));
-            }
-            raw_candidates.push(n1.to_string());
-
-            // 2. Normalized names (remove prefixes like "Plac", "ul.", etc.)
+            // Keep provider-specific prefix variants in addition to the shared candidates.
             let mut normalized = Vec::new();
             for cand in &raw_candidates {
                 let clean = cand.to_lowercase()
@@ -85,17 +80,7 @@ impl CompiledWmkRegex {
             }
             raw_candidates.extend(normalized);
 
-            // 3. Last word (often the surname which is used alone in reports)
-            let mut last_words = Vec::new();
-            for cand in &raw_candidates {
-                if let Some(last) = cand.split_whitespace().last()
-                    && last.len() > 2 { // Avoid short things like "II"
-                        last_words.push(last.to_string());
-                    }
-            }
-            raw_candidates.extend(last_words);
-
-            // 4. Deduplicate and create regexes
+            // Deduplicate and create regexes.
             let mut unique_cands: Vec<String> = raw_candidates.into_iter()
                 .map(|s| s.to_lowercase())
                 .collect();

@@ -142,7 +142,14 @@ pub fn matches_address(outage: &StoenOutage, address: &AddressEntry) -> bool {
         return true;
     }
 
-    let street_query = address.street_name_1.to_lowercase();
+    let street_candidates = crate::utils::configured_street_name_candidates(
+        &address.street_name,
+        &address.street_name_1,
+        address.street_name_2.as_deref(),
+    )
+    .into_iter()
+    .map(|candidate| candidate.to_lowercase())
+    .collect::<Vec<_>>();
 
     for addr in &outage.addresses {
         if let Some(street) = &addr.streetName {
@@ -158,7 +165,10 @@ pub fn matches_address(outage: &StoenOutage, address: &AddressEntry) -> bool {
                 continue;
             }
             
-            if street_norm.contains(&street_query) || street_query.contains(&street_norm) {
+            if street_candidates
+                .iter()
+                .any(|candidate| street_norm.contains(candidate) || candidate.contains(&street_norm))
+            {
                 return true;
             }
         }
