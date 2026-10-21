@@ -19,7 +19,7 @@ Use this skill when evaluating or adding a utility outage provider. Start by ins
 
 ### 2. Prepare the implementation plan
 
-Before editing application source, create or update a root-level `implementation_plan.md`. Make the plan specific to the provider and include evidence, affected files, implementation choices, test coverage, and unresolved questions. Ask the user to review and approve that plan before changing provider source code.
+Before editing application source, create or update implementation plan. Make the plan specific to the provider and include evidence, affected files, implementation choices, test coverage, and unresolved questions. Ask the user to review and approve that plan before changing provider source code.
 
 Inspect current conventions and cover applicable integration points:
 
@@ -35,7 +35,7 @@ Keep the implementation small and consistent with a recent provider that has a s
 
 ### 3. Review gate
 
-- Present the completed `implementation_plan.md` and ask the user to approve it before implementation.
+- Present the completed implementation plan and ask the user to approve it before implementation.
 - Do not modify application source until the user approves the plan. Research, plan edits, and read-only repository inspection can continue while waiting.
 - Do not stage, commit, or push unless the user explicitly asks.
 
