@@ -2,6 +2,7 @@ pub mod api_logic;
 mod aquanet;
 mod enea;
 mod enea_cieplo;
+mod eco_sa;
 mod energa_cieplo_kaliskie;
 mod energa;
 mod fortum;
@@ -40,6 +41,8 @@ pub mod sec;
 pub mod lpec;
 pub mod mpwik_lublin;
 pub mod mpwik_rzeszow;
+pub mod pwik_olsztyn;
+pub mod wik_opole;
 pub mod mwik_bydgoszcz;
 pub mod mpec_rzeszow;
 pub mod mpec_kielce;
@@ -541,6 +544,7 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(energa::EnergaProvider),
         Box::new(enea::EneaProvider),
         Box::new(enea_cieplo::EneaCieploProvider),
+        Box::new(eco_sa::EcoSaProvider),
         Box::new(energa_cieplo_kaliskie::EnergaCieploKaliskieProvider),
         Box::new(pge::PgeProvider),
         Box::new(pge_torun_heat::PgeTorunHeatProvider),
@@ -570,6 +574,8 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(lpec::LpecProvider),
         Box::new(mpwik_lublin::MpwikLublinProvider),
         Box::new(mpwik_rzeszow::MpwikRzeszowProvider),
+        Box::new(pwik_olsztyn::PwikOlsztynProvider),
+        Box::new(wik_opole::WikOpoleProvider),
         Box::new(mwik_bydgoszcz::MwikBydgoszczProvider),
         Box::new(mpec_rzeszow::MpecRzeszowProvider),
         Box::new(mpec_kielce::MpecKielceProvider),
@@ -860,6 +866,96 @@ fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Setti
                     if let Some((locality, _)) = location.split_once(';') {
                         alert.location = Some(locality.to_string());
                     }
+                }
+                continue;
+            }
+
+            if alert.source == api_logic::AlertSource::PwikOlsztyn
+                && alert.is_local == Some(true)
+            {
+                let location = alert.location.as_deref().unwrap_or_default();
+                let matched_address = s.addresses.iter().enumerate().find(|(_, address)| {
+                    address.is_active
+                        && api_logic::is_address_applicable_for_provider(
+                            &alert.source,
+                            address,
+                        )
+                        && pwik_olsztyn::location_matches_address(location, address)
+                        && utils::match_house_number(
+                            &address.house_no,
+                            location,
+                            if !address.street_name_1.is_empty() {
+                                Some(address.street_name_1.as_str())
+                            } else if !address.street_name.is_empty() {
+                                Some(address.street_name.as_str())
+                            } else {
+                                None
+                            },
+                        )
+                });
+                if let Some((index, _)) = matched_address {
+                    alert.address_index = Some(index);
+                    alert.is_local = Some(true);
+                } else {
+                    alert.address_index = None;
+                    alert.is_local = Some(false);
+                    if let Some((locality, _)) = location.split_once(';') {
+                        alert.location = Some(locality.to_string());
+                    }
+                }
+                continue;
+            }
+
+            if matches!(
+                alert.source,
+                api_logic::AlertSource::WikOpole | api_logic::AlertSource::EcoSa
+            ) && alert.is_local == Some(true)
+            {
+                let location = alert.location.as_deref().unwrap_or_default();
+                let matched_address = s.addresses.iter().enumerate().find(|(_, address)| {
+                    address.is_active
+                        && api_logic::is_address_applicable_for_provider(&alert.source, address)
+                        && match alert.source {
+                            api_logic::AlertSource::WikOpole => {
+                                wik_opole::location_matches_address(location, address)
+                            }
+                            api_logic::AlertSource::EcoSa => {
+                                eco_sa::location_matches_address(location, address)
+                            }
+                            _ => false,
+                        }
+                        && {
+                            let number_spec = if alert.source == api_logic::AlertSource::EcoSa {
+                                eco_sa::number_spec_for_address(location, address)
+                            } else {
+                                location.to_string()
+                            };
+                            let street = if alert.source == api_logic::AlertSource::WikOpole {
+                                if !address.street_name_1.is_empty() {
+                                    Some(address.street_name_1.as_str())
+                                } else if !address.street_name.is_empty() {
+                                    Some(address.street_name.as_str())
+                                } else {
+                                    None
+                                }
+                            } else {
+                                None
+                            };
+                            utils::match_house_number(&address.house_no, &number_spec, street)
+                        }
+                });
+                if let Some((index, _)) = matched_address {
+                    alert.address_index = Some(index);
+                } else {
+                    alert.address_index = None;
+                    alert.is_local = Some(false);
+                    alert.location = Some(
+                        location
+                            .split([';', '\n'])
+                            .next()
+                            .unwrap_or(location)
+                            .to_string(),
+                    );
                 }
                 continue;
             }

@@ -27,6 +27,7 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
   - **Stoen**: Planowane wyłączenia prądu (Warszawa i okolice).
 - **🔥 Gaz - PSG**: Planowane i bieżące wyłączenia gazu.
 - **🌡️ Ciepło**
+  - **ECO SA**: Przerwy w dostawie ciepła systemowego w publikowanych miejscowościach Grupy ECO, m.in. Krapkowicach, Kętach, Lublińcu i Malborku.
   - **ENEA Ciepło Białystok**: Przerwy w dostawie ciepła w Białymstoku.
   - **Energa Ciepło Kaliskie**: Przerwy w dostawie ciepła w Kaliszu.
   - **Fortum**: Planowane i bieżące wyłączenia ogrzewania oraz ciepłej wody.
@@ -53,6 +54,8 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
   - **ZWiK Łódź**: Awarie i konserwacje wodociągowe w Łodzi.
   - **PWiK Kalisz**: Awarie i konserwacje wodociągowe w Kaliszu.
   - **PWiK Częstochowa**: Awarie i konserwacje wodociągowe w Częstochowie.
+  - **PWiK Olsztyn**: Awarie i planowane przerwy w dostawie wody w Olsztynie oraz miejscowościach wymienionych w komunikatach PWiK.
+  - **WiK Opole**: Przerwy w dostawie wody w Opolu i obsługiwanych częściach gmin Komprachcice, Prószków i Turawa.
   - **PEWIK Gdynia**: Awarie i planowane przerwy w dostawie wody w publikowanym obszarze usług wokół Gdyni, Rumi, Redy i Wejherowa.
   - **Wodociągi Płockie**: Awarie i konserwacje wodociągowe w Płocku.
   - **Gdańskie Wodociągi**: Awarie i konserwacje wodociągowe w Gdańsku.

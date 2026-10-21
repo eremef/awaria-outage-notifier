@@ -53,6 +53,10 @@ pub enum AlertSource {
     PwikKalisz,
     #[serde(rename = "pwik_czestochowa")]
     PwikCzestochowa,
+    #[serde(rename = "pwik_olsztyn")]
+    PwikOlsztyn,
+    #[serde(rename = "wik_opole")]
+    WikOpole,
     #[serde(rename = "pewik_gdynia")]
     PewikGdynia,
     #[serde(rename = "gdanskie_wodociagi")]
@@ -67,6 +71,8 @@ pub enum AlertSource {
     EneaCieplo,
     #[serde(rename = "energa_cieplo_kaliskie")]
     EnergaCieploKaliskie,
+    #[serde(rename = "eco_sa")]
+    EcoSa,
     #[serde(rename = "puk_rokietnica")]
     PukRokietnica,
     Sec,
@@ -151,6 +157,8 @@ impl AlertSource {
                 ServiceLocation::Cities(vec![is_wodociagi_bialostockie_area])
             }
             AlertSource::PwikCzestochowa => ServiceLocation::Cities(vec![is_czestochowa]),
+            AlertSource::PwikOlsztyn => ServiceLocation::Cities(vec![is_pwik_olsztyn_area]),
+            AlertSource::WikOpole => ServiceLocation::Cities(vec![is_wik_opole_area]),
             AlertSource::PewikGdynia => ServiceLocation::Cities(vec![is_pewik_gdynia_area]),
             AlertSource::Psg => ServiceLocation::Nationwide,
             
@@ -171,6 +179,9 @@ impl AlertSource {
             AlertSource::MwikBydgoszcz => ServiceLocation::Cities(vec![is_bydgoszcz]),
             AlertSource::EneaCieplo => ServiceLocation::Cities(vec![is_bialystok]),
             AlertSource::EnergaCieploKaliskie => ServiceLocation::Cities(vec![is_kalisz]),
+            // The bulletin spans several ECO companies; its complete heat-service
+            // city roster is not published. Each notice must match its own city.
+            AlertSource::EcoSa => ServiceLocation::Nationwide,
             AlertSource::PukRokietnica => ServiceLocation::Cities(vec![is_rokietnica]),
             AlertSource::Sec => ServiceLocation::Cities(vec![is_szczecin]),
             AlertSource::Lpec => ServiceLocation::Cities(vec![is_lublin]),
@@ -208,6 +219,8 @@ impl AlertSource {
             AlertSource::WodociagiBialostockie => "Wodociągi Białostockie",
             AlertSource::PwikKalisz => "PWiK Kalisz",
             AlertSource::PwikCzestochowa => "PWiK Częstochowa",
+            AlertSource::PwikOlsztyn => "PWiK Olsztyn",
+            AlertSource::WikOpole => "WiK Opole",
             AlertSource::PewikGdynia => "PEWIK Gdynia",
             AlertSource::GdanskieWodociagi => "Gdańskie Wodociągi",
             AlertSource::Gpec => "GPEC Gdańsk",
@@ -215,6 +228,7 @@ impl AlertSource {
             AlertSource::KpecBydgoszcz => "KPEC Bydgoszcz",
             AlertSource::EneaCieplo => "ENEA Ciepło Białystok",
             AlertSource::EnergaCieploKaliskie => "Energa Ciepło Kaliskie",
+            AlertSource::EcoSa => "ECO SA",
             AlertSource::Sec => "SEC Szczecin",
             AlertSource::Lpec => "LPEC Lublin",
             AlertSource::PukRokietnica => "PUK Rokietnica",
@@ -414,10 +428,10 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea | AlertSource::Pge | AlertSource::Stoen => {
             if is_pl { "wyłączenie prądu" } else { "power outage" }
         }
-        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::WmRadom | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::WodociagiPlockie | AlertSource::WodociagiKieleckie | AlertSource::TorunskieWodociagi | AlertSource::WodociagiBialostockie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa | AlertSource::PewikGdynia | AlertSource::GdanskieWodociagi | AlertSource::PukRokietnica | AlertSource::MpwikLublin | AlertSource::MpwikRzeszow | AlertSource::MwikBydgoszcz => {
+        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::WmRadom | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::WodociagiPlockie | AlertSource::WodociagiKieleckie | AlertSource::TorunskieWodociagi | AlertSource::WodociagiBialostockie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa | AlertSource::PwikOlsztyn | AlertSource::WikOpole | AlertSource::PewikGdynia | AlertSource::GdanskieWodociagi | AlertSource::PukRokietnica | AlertSource::MpwikLublin | AlertSource::MpwikRzeszow | AlertSource::MwikBydgoszcz => {
             if is_pl { "wyłączenie wody" } else { "water outage" }
         }
-        AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz | AlertSource::Gpec | AlertSource::OpecGdynia | AlertSource::KpecBydgoszcz | AlertSource::EneaCieplo | AlertSource::EnergaCieploKaliskie | AlertSource::Sec | AlertSource::Lpec | AlertSource::MpecRzeszow | AlertSource::MpecKielce | AlertSource::PgeTorunHeat => {
+        AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz | AlertSource::Gpec | AlertSource::OpecGdynia | AlertSource::KpecBydgoszcz | AlertSource::EneaCieplo | AlertSource::EnergaCieploKaliskie | AlertSource::EcoSa | AlertSource::Sec | AlertSource::Lpec | AlertSource::MpecRzeszow | AlertSource::MpecKielce | AlertSource::PgeTorunHeat => {
             if is_pl { "wyłączenie ogrzewania" } else { "heat outage" }
         }
         AlertSource::Psg => {
@@ -537,6 +551,8 @@ impl std::fmt::Display for AlertSource {
             AlertSource::WodociagiBialostockie => "wodociagi_bialostockie",
             AlertSource::PwikKalisz => "pwik_kalisz",
             AlertSource::PwikCzestochowa => "pwik_czestochowa",
+            AlertSource::PwikOlsztyn => "pwik_olsztyn",
+            AlertSource::WikOpole => "wik_opole",
             AlertSource::PewikGdynia => "pewik_gdynia",
             AlertSource::GdanskieWodociagi => "gdanskie_wodociagi",
             AlertSource::Gpec => "gpec",
@@ -544,6 +560,7 @@ impl std::fmt::Display for AlertSource {
             AlertSource::KpecBydgoszcz => "kpec_bydgoszcz",
             AlertSource::EneaCieplo => "enea_cieplo",
             AlertSource::EnergaCieploKaliskie => "energa_cieplo_kaliskie",
+            AlertSource::EcoSa => "eco_sa",
             AlertSource::PukRokietnica => "puk_rokietnica",
             AlertSource::Sec => "sec",
             AlertSource::Lpec => "lpec",
@@ -700,6 +717,54 @@ fn is_wm_radom_area(addr: &AddressEntry) -> bool {
 
 city_checker!(is_rzeszow, Some(974133_u64), "rzeszów", "rzeszow");
 city_checker!(is_torun, Some(929448_u64), "toruń", "torun");
+fn is_wik_opole_area(addr: &AddressEntry) -> bool {
+    if addr.city_id == Some(965016) {
+        return true;
+    }
+    let city = crate::utils::clean_text(&addr.city_name);
+    let commune = crate::utils::clean_text(&addr.commune);
+    let voivodeship = crate::utils::clean_text(&addr.voivodeship);
+    (voivodeship.is_empty() || voivodeship.starts_with("opolskie"))
+        && (city == "opole"
+            || ["komprachcice", "proszkow", "turawa"]
+                .iter()
+                .any(|area| city == *area || commune == *area))
+}
+
+fn is_pwik_olsztyn_area(addr: &AddressEntry) -> bool {
+    const SERVICE_CITY_IDS: [u64; 9] = [
+        964465, 470036, 477080, 486698, 473135, 473098, 473129, 473589, 488830,
+    ];
+    if let Some(city_id) = addr.city_id {
+        return SERVICE_CITY_IDS.contains(&city_id);
+    }
+
+    let normalize = |value: &str| crate::utils::clean_text(value).replace(['-', ' '], "");
+    let city = normalize(&addr.city_name);
+    let commune = normalize(&addr.commune);
+    let voivodeship = normalize(&addr.voivodeship);
+    if !voivodeship.is_empty() && !voivodeship.starts_with("warminsko") {
+        return false;
+    }
+
+    let localities = [
+        "olsztyn",
+        "nikielkowo",
+        "jonkowo",
+        "ostrzeszewo",
+        "zalbki",
+        "myki",
+        "wadag",
+        "gietrzwald",
+        "bartag",
+    ];
+    localities.iter().any(|locality| {
+        city == *locality
+            || commune == *locality
+            || (city.is_empty() && commune.starts_with(locality))
+    })
+}
+
 fn is_mpwik_rzeszow_area(addr: &AddressEntry) -> bool {
     if let Some(city_id) = addr.city_id {
         return matches!(city_id, 974133 | 644750 | 652688 | 1043193 | 975078);

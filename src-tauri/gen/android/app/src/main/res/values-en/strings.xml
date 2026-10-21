@@ -26,6 +26,7 @@
   <string name="provider_aquanet">Aquanet</string>
   <string name="provider_enea">Enea</string>
   <string name="provider_enea_cieplo">ENEA Ciepło</string>
+  <string name="provider_eco_sa">ECO SA</string>
   <string name="provider_energa_cieplo_kaliskie">Energa Ciepło Kalisz</string>
   <string name="provider_energa">Energa</string>
   <string name="provider_fortum">Fortum</string>
@@ -48,6 +49,7 @@
   <string name="provider_puk_rokietnica">PUK Rokietnica</string>
   <string name="provider_pwik_czestochowa">PWiK CZW</string>
   <string name="provider_pwik_kalisz">PWiK Kalisz</string>
+  <string name="provider_pwik_olsztyn">PWiK Olsztyn</string>
   <string name="provider_sec">SEC</string>
   <string name="provider_stoen">Stoen</string>
   <string name="provider_tauron">Tauron</string>
@@ -61,11 +63,13 @@
   <string name="provider_wodociagi_bialostockie">WOBI BST</string>
   <string name="provider_wodociagi_kieleckie">WK Kielce</string>
   <string name="provider_torunskie_wodociagi">TW Toruń</string>
+  <string name="provider_wik_opole">WiK Opole</string>
   <string name="provider_zwik_lodz">ZWIK Łódź</string>
   <string name="widget_label_all">Address: all utilities</string>
   <string name="widget_label_aquanet">Aquanet</string>
   <string name="widget_label_enea">Enea</string>
   <string name="widget_label_enea_cieplo">ENEA Ciepło</string>
+  <string name="widget_label_eco_sa">ECO heat network</string>
   <string name="widget_label_energa_cieplo_kaliskie">Energa Ciepło Kaliskie</string>
   <string name="widget_label_energa">Energa</string>
   <string name="widget_label_fortum">Fortum</string>
@@ -88,6 +92,7 @@
   <string name="widget_label_puk_rokietnica">PUK Rokietnica</string>
   <string name="widget_label_pwik_czestochowa">PWiK Częstochowa</string>
   <string name="widget_label_pwik_kalisz">PWiK Kalisz</string>
+  <string name="widget_label_pwik_olsztyn">PWiK Olsztyn</string>
   <string name="widget_label_sec">SEC Szczecin</string>
   <string name="widget_label_stoen">Stoen</string>
   <string name="widget_label_tauron">Tauron</string>
@@ -102,6 +107,7 @@
   <string name="widget_label_wodociagi_bialostockie">Wodociągi Białostockie</string>
   <string name="widget_label_wodociagi_kieleckie">Wodociągi Kieleckie</string>
   <string name="widget_label_torunskie_wodociagi">Toruńskie Wodociągi</string>
+  <string name="widget_label_wik_opole">Opole Water and Sewerage</string>
   <string name="widget_label_zwik_lodz">ZWiK Łódź</string>
   <string name="provider_pewik_gdynia">PEWIK GDY</string>
   <string name="widget_label_pewik_gdynia">PEWIK Gdynia</string>

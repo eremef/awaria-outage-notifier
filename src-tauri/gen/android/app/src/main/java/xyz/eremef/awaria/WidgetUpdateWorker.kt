@@ -209,6 +209,14 @@ class WidgetUpdateWorker(
             pwikCzestochowaProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        // Update PWiK Olsztyn widgets
+        val pwikOlsztynName = ComponentName(context, PwikOlsztynWidgetProvider::class.java)
+        val pwikOlsztynIds = appWidgetManager.getAppWidgetIds(pwikOlsztynName)
+        val pwikOlsztynProvider = PwikOlsztynWidgetProvider()
+        for (id in pwikOlsztynIds) {
+            pwikOlsztynProvider.updateWidget(context, appWidgetManager, id)
+        }
+
         // Update Gdańskie Wodociągi widgets
         val gdanskieWodociagiName = ComponentName(context, GdanskieWodociagiWidgetProvider::class.java)
         val gdanskieWodociagiIds = appWidgetManager.getAppWidgetIds(gdanskieWodociagiName)
@@ -223,6 +231,14 @@ class WidgetUpdateWorker(
         val gpecProvider = GpecWidgetProvider()
         for (id in gpecIds) {
             gpecProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update ECO SA widgets
+        val ecoSaName = ComponentName(context, EcoSaWidgetProvider::class.java)
+        val ecoSaIds = appWidgetManager.getAppWidgetIds(ecoSaName)
+        val ecoSaProvider = EcoSaWidgetProvider()
+        for (id in ecoSaIds) {
+            ecoSaProvider.updateWidget(context, appWidgetManager, id)
         }
 
         // Update OPEC Gdynia widgets
@@ -335,6 +351,14 @@ class WidgetUpdateWorker(
         val wodociagiKieleckieProvider = WodociagiKieleckieWidgetProvider()
         for (id in wodociagiKieleckieIds) {
             wodociagiKieleckieProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update WiK Opole widgets
+        val wikOpoleName = ComponentName(context, WikOpoleWidgetProvider::class.java)
+        val wikOpoleIds = appWidgetManager.getAppWidgetIds(wikOpoleName)
+        val wikOpoleProvider = WikOpoleWidgetProvider()
+        for (id in wikOpoleIds) {
+            wikOpoleProvider.updateWidget(context, appWidgetManager, id)
         }
 
         // Update Toruńskie Wodociągi widgets

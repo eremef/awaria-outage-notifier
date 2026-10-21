@@ -30,9 +30,11 @@ Dla każdego adresu, który chcesz monitorować, dodaj wpis zawierający:
 
 ### Aktywne źródła (Enabled Sources)
 
-Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `pge_torun_heat`, `mpec_kielce`, `opec_gdynia`, `pewik_gdynia`, `wodociagi_kieleckie`, `torunskie_wodociagi`, `wodociagi_bialostockie`, `mwik_bydgoszcz`, `mpwik_warszawa`, `energa_cieplo_kaliskie`).
+Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `pge_torun_heat`, `mpec_kielce`, `opec_gdynia`, `eco_sa`, `pewik_gdynia`, `wik_opole`, `wodociagi_kieleckie`, `torunskie_wodociagi`, `wodociagi_bialostockie`, `mwik_bydgoszcz`, `mpwik_warszawa`, `pwik_olsztyn`, `energa_cieplo_kaliskie`).
 
 Toruńskie Wodociągi obejmują Toruń i pięć sąsiednich gmin. Wodociągi Białostockie obejmują Białystok oraz gminę Wasilków.
+PWiK Olsztyn obejmuje Olsztyn i miejscowości wymienione w komunikatach o awariach.
+WiK Opole obejmuje obszary zaopatrzenia w wodę w Opolu oraz gminach Komprachcice, Prószków i Turawa. ECO SA publikuje komunikaty o przerwach w dostawie ciepła z wielu miast; dopasowanie opiera się na miejscowości z komunikatu.
 
 ## Użytkowanie
 

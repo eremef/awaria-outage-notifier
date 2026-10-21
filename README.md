@@ -27,6 +27,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **Stoen**: Planned power outages (Warsaw area).
 - **🔥 Gas - PSG**: Planned and current gas outages.
 - **🌡️ Heat**
+  - **ECO SA**: System-heat interruptions in the ECO group's published service cities, including Krapkowice, Kęty, Lubliniec, and Malbork.
   - **ENEA Ciepło Białystok**: Heat outages in Białystok.
   - **Energa Ciepło Kaliskie**: Heat outages in Kalisz.
   - **Fortum**: Planned and current heat/hot water outages.
@@ -53,6 +54,8 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **ZWiK Łódź**: Water maintenance and failures in Łódź.
   - **PWiK Kalisz**: Water maintenance and failures in Kalisz.
   - **PWiK Częstochowa**: Water maintenance and failures in Częstochowa.
+  - **PWiK Olsztyn**: Emergency and planned water interruptions in Olsztyn and the localities named in PWiK notices.
+  - **WiK Opole**: Water interruptions in Opole and WiK's covered parts of Komprachcice, Prószków, and Turawa.
   - **PEWIK Gdynia**: Emergency and planned water interruptions in its published service localities around Gdynia, Rumia, Reda, and Wejherowo.
   - **Wodociągi Płockie**: Water maintenance and failures in Płock.
   - **Gdańskie Wodociągi**: Water maintenance and failures in Gdańsk.

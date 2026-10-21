@@ -300,6 +300,20 @@ if (typeof document !== 'undefined') {
             const city = (addr.cityName || '').trim().toLowerCase();
             return city.startsWith('toruń') || city.startsWith('torun') || addr.cityId === 929448;
         },
+        wik_opole_area: (addr) => {
+            if (!addr) return false;
+            if (addr.cityId === 965016) return true;
+            const normalize = (value) => (value || '').trim().toLowerCase()
+                .replace(/ą/g, 'a').replace(/ć/g, 'c').replace(/ę/g, 'e')
+                .replace(/ł/g, 'l').replace(/ń/g, 'n').replace(/ó/g, 'o')
+                .replace(/ś/g, 's').replace(/ź/g, 'z').replace(/ż/g, 'z');
+            const voivodeship = normalize(addr.voivodeship);
+            if (voivodeship && !voivodeship.startsWith('opolskie')) return false;
+            const city = normalize(addr.cityName);
+            const commune = normalize(addr.commune);
+            return city === 'opole' || ['komprachcice', 'proszkow', 'turawa']
+                .some(area => city === area || commune === area);
+        },
         torunskie_wodociagi_area: (addr) => {
             if (!addr) return false;
             const normalize = (value) => (value || '').trim().toLowerCase()
@@ -323,6 +337,24 @@ if (typeof document !== 'undefined') {
             const voivodeship = (addr.voivodeship || '').trim().toLowerCase();
             return (!voivodeship || voivodeship.startsWith('podkarpackie')) &&
                 ['rzeszów', 'rzeszow', 'boguchwała', 'boguchwala', 'krasne', 'tyczyn'].some(name => city.startsWith(name));
+        },
+        pwik_olsztyn_area: (addr) => {
+            if (!addr) return false;
+            const serviceCityIds = [964465, 470036, 477080, 486698, 473135, 473098, 473129, 473589, 488830];
+            if (addr.cityId != null) return serviceCityIds.includes(addr.cityId);
+
+            const normalize = (value) => (value || '').trim().toLowerCase()
+                .replace(/ą/g, 'a').replace(/ć/g, 'c').replace(/ę/g, 'e')
+                .replace(/ł/g, 'l').replace(/ń/g, 'n').replace(/ó/g, 'o')
+                .replace(/ś/g, 's').replace(/ź/g, 'z').replace(/ż/g, 'z')
+                .replace(/[-\s]/g, '');
+            const city = normalize(addr.cityName);
+            const commune = normalize(addr.commune);
+            const voivodeship = normalize(addr.voivodeship);
+            if (voivodeship && !voivodeship.startsWith('warminsko')) return false;
+            const localities = ['olsztyn', 'nikielkowo', 'jonkowo', 'ostrzeszewo', 'zalbki', 'myki', 'wadag', 'gietrzwald', 'bartag'];
+            const locality = localities.find(name => city === name || commune === name);
+            return !!locality && (locality !== 'olsztyn' || voivodeship.startsWith('warminsko'));
         },
         wodociagi_kieleckie_area: (addr) => {
             if (!addr) return false;
@@ -391,6 +423,7 @@ if (typeof document !== 'undefined') {
         // Gas
         { id: 'psg', label: 'PSG', category: 'gas', defaultNotify: true, i18nLabel: 'source_psg_name', i18nShort: 'source_psg_short' },
         // Heating
+        { id: 'eco_sa', label: 'ECO SA', category: 'heating', defaultNotify: true, i18nLabel: 'source_eco_sa_name', i18nShort: 'source_eco_sa_short' },
         { id: 'enea_cieplo', label: 'ENEA Ciepło', category: 'heating', defaultNotify: true, i18nLabel: 'source_enea_cieplo_name', i18nShort: 'source_enea_cieplo_short', region: 'bialystok' },
         { id: 'energa_cieplo_kaliskie', label: 'Energa Ciepło Kaliskie', category: 'heating', defaultNotify: true, i18nLabel: 'source_energa_cieplo_kaliskie_name', i18nShort: 'source_energa_cieplo_kaliskie_short', region: 'kalisz' },
         { id: 'fortum', label: 'Fortum', category: 'heating', defaultNotify: true, i18nLabel: 'source_fortum_name', i18nShort: 'source_fortum_short' },
@@ -419,7 +452,9 @@ if (typeof document !== 'undefined') {
         { id: 'puk_rokietnica', label: 'PUK Rokietnica', category: 'water', defaultNotify: true, i18nLabel: 'source_puk_rokietnica_name', i18nShort: 'source_puk_rokietnica_short', region: 'rokietnica' },
         { id: 'pwik_czestochowa', label: 'PWiK Częstochowa', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_czestochowa_name', i18nShort: 'source_pwik_czestochowa_short', region: 'czestochowa' },
         { id: 'pwik_kalisz', label: 'PWiK Kalisz', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_kalisz_name', i18nShort: 'source_pwik_kalisz_short', region: 'kalisz' },
+        { id: 'pwik_olsztyn', label: 'PWiK Olsztyn', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_olsztyn_name', i18nShort: 'source_pwik_olsztyn_short', region: 'pwik_olsztyn_area' },
         { id: 'torunskie_wodociagi', label: 'Toruńskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_torunskie_wodociagi_name', i18nShort: 'source_torunskie_wodociagi_short', region: 'torunskie_wodociagi_area' },
+        { id: 'wik_opole', label: 'WiK Opole', category: 'water', defaultNotify: true, i18nLabel: 'source_wik_opole_name', i18nShort: 'source_wik_opole_short', region: 'wik_opole_area' },
         { id: 'wm_radom', label: 'WM Radom', category: 'water', defaultNotify: true, i18nLabel: 'source_wm_radom_name', i18nShort: 'source_wm_radom_short', region: 'wm_radom_area' },
         { id: 'wmk', label: 'WMK', category: 'water', defaultNotify: true, i18nLabel: 'source_wmk_name', i18nShort: 'source_wmk_short', region: 'krakow' },
         { id: 'wodociagi_bialostockie', label: 'Wodociągi Białostockie', category: 'water', defaultNotify: true, i18nLabel: 'source_wodociagi_bialostockie_name', i18nShort: 'source_wodociagi_bialostockie_short', region: 'wodociagi_bialostockie_area' },
@@ -2524,7 +2559,9 @@ if (typeof document !== 'undefined') {
     function matchesStreetName(alert, addr) {
         if (!alert.message || !addr) return false;
 
-        const message = alert.message;
+        const message = ['pwik_olsztyn', 'wik_opole', 'eco_sa'].includes(alert.source) && alert.location
+            ? alert.location
+            : alert.message;
         const streetName1 = addr.streetName1 || '';
         const streetName2 = addr.streetName2 || null;
         const cityName = addr.cityName || '';
@@ -2532,13 +2569,51 @@ if (typeof document !== 'undefined') {
         const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
         if (alert.source === 'pewik_gdynia' && !REGION_MATCHERS.pewik_gdynia_area(addr)) return false;
+        if (alert.source === 'wik_opole' && !REGION_MATCHERS.wik_opole_area(addr)) return false;
+        if (['wik_opole', 'eco_sa'].includes(alert.source) && alert.location) {
+            const normalize = (value) => (value || '').toLowerCase()
+                .replace(/ą/g, 'a').replace(/ć/g, 'c').replace(/ę/g, 'e')
+                .replace(/ł/g, 'l').replace(/ń/g, 'n').replace(/ó/g, 'o')
+                .replace(/ś/g, 's').replace(/ź/g, 'z').replace(/ż/g, 'z').trim();
+            const locality = normalize(alert.location.split(/[;\n]/)[0].replace(/^Miejscowość:\s*/i, ''));
+            if (locality && locality !== normalize(addr.cityName)) return false;
+        }
+        if (alert.source === 'pwik_olsztyn') {
+            if (!REGION_MATCHERS.pwik_olsztyn_area(addr)) return false;
+            const normalizeLocation = (value) => (value || '').toLowerCase()
+                .replace(/ą/g, 'a').replace(/ć/g, 'c').replace(/ę/g, 'e')
+                .replace(/ł/g, 'l').replace(/ń/g, 'n').replace(/ó/g, 'o')
+                .replace(/ś/g, 's').replace(/ź/g, 'z').replace(/ż/g, 'z')
+                .replace(/[^a-z0-9]+/g, ' ').trim();
+            const location = normalizeLocation((alert.location || '').split(';')[0].replace(/^Miejscowość:\s*/i, ''));
+            const city = normalizeLocation(addr.cityName);
+            const commune = normalizeLocation(addr.commune);
+            const serviceLocalities = [
+                ['olsztyn', [964465], true],
+                ['nikielkowo', [470036], false],
+                ['jonkowo', [477080], false],
+                ['ostrzeszewo', [486698], false],
+                ['zalbki', [473135], false],
+                ['myki', [473098], false],
+                ['wadag', [473129], false],
+                ['gietrzwald', [473589], false],
+                ['bartag', [488830], false]
+            ];
+            const matchedLocality = serviceLocalities.find(([name]) => location === name);
+            if (!matchedLocality) return false;
+            const [name, ids, requiresVoivodeship] = matchedLocality;
+            const localityAddressMatches = ids.includes(addr.cityId) || city === name || commune === name;
+            if (!localityAddressMatches) return false;
+            if (requiresVoivodeship && !ids.includes(addr.cityId) &&
+                !(city === name && (addr.voivodeship || '').toLowerCase().startsWith('warmińsko'))) return false;
+        }
 
         // Prevent cross-city street matches for multi-city providers
         if (cityName) {
             const singleCityProviders = [
                 'mpwik_wroclaw', 'mpwik_warszawa', 'katowickie_wodociagi',
                 'veolia_warszawa', 'veolia_poznan', 'veolia_lodz', 'zwik_lodz',
-                'wodociagi_plockie', 'wodociagi_kieleckie', 'wodociagi_bialostockie', 'pwik_kalisz', 'pwik_czestochowa', 'pewik_gdynia', 'gdanskie_wodociagi', 'gpec', 'kpec_bydgoszcz', 'mwik_bydgoszcz', 'enea_cieplo', 'energa_cieplo_kaliskie', 'puk_rokietnica', 'sec', 'lpec', 'mpwik_lublin', 'mpwik_rzeszow', 'mpec_kielce', 'mpec_rzeszow', 'opec_gdynia', 'pge_torun_heat', 'torunskie_wodociagi', 'wm_radom'
+                'wodociagi_plockie', 'wodociagi_kieleckie', 'wodociagi_bialostockie', 'pwik_kalisz', 'pwik_czestochowa', 'pwik_olsztyn', 'pewik_gdynia', 'gdanskie_wodociagi', 'gpec', 'kpec_bydgoszcz', 'mwik_bydgoszcz', 'enea_cieplo', 'energa_cieplo_kaliskie', 'puk_rokietnica', 'sec', 'lpec', 'mpwik_lublin', 'mpwik_rzeszow', 'mpec_kielce', 'mpec_rzeszow', 'opec_gdynia', 'pge_torun_heat', 'torunskie_wodociagi', 'wm_radom'
             ];
             if (singleCityProviders.includes(alert.source)) {
                 // For single-city providers, reject matching if the saved address is in a completely different city

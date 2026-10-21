@@ -21,11 +21,14 @@ class AwariaCard extends HTMLElement {
     if (s === 'torunskie_wodociagi') return { name: 'Toruńskie Wodociągi', icon: '💧', color: '#2196f3' };
     if (s.includes('pge')) return { name: 'PGE', icon: '⚡', color: '#ffb74d' };
     if (s.includes('energa_cieplo_kaliskie')) return { name: 'Energa Ciepło Kaliskie', icon: '🔥', color: '#f44336' };
+    if (s === 'eco_sa') return { name: 'ECO SA', icon: '🔥', color: '#f44336' };
     if (s.includes('energa')) return { name: 'Energa', icon: '⚡', color: '#ffa726' };
     if (s.includes('enea')) return { name: 'Enea', icon: '⚡', color: '#fb8c00' };
     if (s.includes('stoen')) return { name: 'Stoen', icon: '⚡', color: '#f57c00' };
     if (s.includes('mwik_bydgoszcz')) return { name: 'MWiK Bydgoszcz', icon: '💧', color: '#2196f3' };
     if (s === 'pewik_gdynia') return { name: 'PEWIK Gdynia', icon: '💧', color: '#2196f3' };
+    if (s === 'pwik_olsztyn') return { name: 'PWiK Olsztyn', icon: '💧', color: '#2196f3' };
+    if (s === 'wik_opole') return { name: 'WiK Opole', icon: '💧', color: '#2196f3' };
     if (s === 'wodociagi_bialostockie') return { name: 'Wodociągi Białostockie', icon: '💧', color: '#2196f3' };
     if (s === 'wodociagi_kieleckie') return { name: 'Wodociągi Kieleckie', icon: '💧', color: '#2196f3' };
     if (s.includes('mpwik_wroclaw') || s.includes('mpwik_warszawa') || s.includes('mwik_bydgoszcz') || s.includes('aquanet') || s.includes('wodociagi') || s.includes('pwik') || s.includes('zwik') || s.includes('wmk')) {

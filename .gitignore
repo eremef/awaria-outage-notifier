@@ -31,3 +31,4 @@ test-results/
 src-tauri/gen/android/current_build_log.txt
 .serena/
 AGENTS.md
+.playwright-mcp/
