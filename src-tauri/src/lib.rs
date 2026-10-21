@@ -642,8 +642,47 @@ fn torunskie_notice_matches_house(address: &api_logic::AddressEntry, location: &
         let Some(street_segment) = torunskie_street_segment(location, street.as_str()) else {
             return false;
         };
+        if has_unlisted_house_suffix(&address.house_no, &street_segment) {
+            return false;
+        }
         utils::match_house_number(&address.house_no, &street_segment, None)
         })
+}
+
+fn has_unlisted_house_suffix(house_no: &str, street_segment: &str) -> bool {
+    static HOUSE_RE: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
+    let house_re = HOUSE_RE.get_or_init(|| regex::Regex::new(r"(?i)\d+\s*[a-z]?").unwrap());
+    let requested = utils::clean_text(house_no).replace(' ', "");
+    let requested_base: String = requested
+        .chars()
+        .take_while(|character| character.is_ascii_digit())
+        .collect();
+    if requested_base.is_empty()
+        || !requested
+            .chars()
+            .any(|character| character.is_ascii_alphabetic())
+    {
+        return false;
+    }
+
+    let listed_houses: Vec<String> = house_re
+        .find_iter(street_segment)
+        .map(|value| utils::clean_text(value.as_str()).replace(' ', ""))
+        .collect();
+    if listed_houses.iter().any(|listed| listed == &requested) {
+        return false;
+    }
+
+    listed_houses.iter().any(|listed| {
+        let listed_base: String = listed
+            .chars()
+            .take_while(|character| character.is_ascii_digit())
+            .collect();
+        listed_base == requested_base
+            && listed
+                .chars()
+                .any(|character| character.is_ascii_alphabetic())
+    })
 }
 
 fn opec_gdynia_notice_matches_house(address: &api_logic::AddressEntry, location: &str) -> bool {
@@ -1246,28 +1285,30 @@ mod tests {
 
     #[test]
     fn pewik_house_filter_checks_all_listed_streets_centrally() {
-        let mut settings = Settings::default();
-        settings.filter_by_house_no = true;
-        settings.addresses = vec![
-            api_logic::AddressEntry {
-                city_name: "Gdynia".to_string(),
-                voivodeship: "Pomorskie".to_string(),
-                street_name: "Owsiana".to_string(),
-                street_name_1: "Owsiana".to_string(),
-                house_no: "5".to_string(),
-                is_active: true,
-                ..Default::default()
-            },
-            api_logic::AddressEntry {
-                city_name: "Gdynia".to_string(),
-                voivodeship: "Pomorskie".to_string(),
-                street_name: "Lniana".to_string(),
-                street_name_1: "Lniana".to_string(),
-                house_no: "12".to_string(),
-                is_active: true,
-                ..Default::default()
-            },
-        ];
+        let mut settings = Settings {
+            filter_by_house_no: true,
+            addresses: vec![
+                api_logic::AddressEntry {
+                    city_name: "Gdynia".to_string(),
+                    voivodeship: "Pomorskie".to_string(),
+                    street_name: "Owsiana".to_string(),
+                    street_name_1: "Owsiana".to_string(),
+                    house_no: "5".to_string(),
+                    is_active: true,
+                    ..Default::default()
+                },
+                api_logic::AddressEntry {
+                    city_name: "Gdynia".to_string(),
+                    voivodeship: "Pomorskie".to_string(),
+                    street_name: "Lniana".to_string(),
+                    street_name_1: "Lniana".to_string(),
+                    house_no: "12".to_string(),
+                    is_active: true,
+                    ..Default::default()
+                },
+            ],
+            ..Default::default()
+        };
         let make_alert = || UnifiedAlert {
             source: api_logic::AlertSource::PewikGdynia,
             message: Some("Awaria wodociągowa: Owsianej 1-4 i Lnianej 10-14".to_string()),
@@ -1293,28 +1334,30 @@ mod tests {
 
     #[test]
     fn opec_house_filter_checks_all_addresses_and_matches_suffixes_exactly() {
-        let mut settings = Settings::default();
-        settings.filter_by_house_no = true;
-        settings.addresses = vec![
-            api_logic::AddressEntry {
-                city_name: "Gdynia".to_string(),
-                voivodeship: "Pomorskie".to_string(),
-                street_name: "Podgórska".to_string(),
-                street_name_1: "Podgórska".to_string(),
-                house_no: "99".to_string(),
-                is_active: true,
-                ..Default::default()
-            },
-            api_logic::AddressEntry {
-                city_name: "Gdynia".to_string(),
-                voivodeship: "Pomorskie".to_string(),
-                street_name: "Unruga".to_string(),
-                street_name_1: "Unruga".to_string(),
-                house_no: "90".to_string(),
-                is_active: true,
-                ..Default::default()
-            },
-        ];
+        let mut settings = Settings {
+            filter_by_house_no: true,
+            addresses: vec![
+                api_logic::AddressEntry {
+                    city_name: "Gdynia".to_string(),
+                    voivodeship: "Pomorskie".to_string(),
+                    street_name: "Podgórska".to_string(),
+                    street_name_1: "Podgórska".to_string(),
+                    house_no: "99".to_string(),
+                    is_active: true,
+                    ..Default::default()
+                },
+                api_logic::AddressEntry {
+                    city_name: "Gdynia".to_string(),
+                    voivodeship: "Pomorskie".to_string(),
+                    street_name: "Unruga".to_string(),
+                    street_name_1: "Unruga".to_string(),
+                    house_no: "90".to_string(),
+                    is_active: true,
+                    ..Default::default()
+                },
+            ],
+            ..Default::default()
+        };
         let make_alert = || UnifiedAlert {
             source: api_logic::AlertSource::OpecGdynia,
             message: Some("Awaria ciepła: Gdynia street notice".to_string()),

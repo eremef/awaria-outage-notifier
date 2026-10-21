@@ -247,6 +247,7 @@ mod tests {
         assert!(matches_address(&outage, &addr));
 
         let mut addr_wrong = addr.clone();
+        addr_wrong.street_name = "ul. Marszałkowska".to_string();
         addr_wrong.street_name_1 = "Marszałkowska".to_string();
         assert!(!matches_address(&outage, &addr_wrong));
         

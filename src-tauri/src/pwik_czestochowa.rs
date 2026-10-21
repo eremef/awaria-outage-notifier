@@ -404,7 +404,6 @@ mod tests {
                                 combined_text.contains(&s_lower)
                             };
 
-                            let mut is_match = false;
                             let mut configured_streets = crate::utils::configured_street_name_candidates(
                                 &a.street_name,
                                 &a.street_name_1,
@@ -415,7 +414,7 @@ mod tests {
                             {
                                 configured_streets.push(second.to_string());
                             }
-                            is_match = configured_streets
+                            let mut is_match = configured_streets
                                 .iter()
                                 .any(|street| check_street(street));
                             if a.street_name_1.is_empty() && a.street_name_2.as_deref().unwrap_or("").is_empty() && a_city == city.to_lowercase() {

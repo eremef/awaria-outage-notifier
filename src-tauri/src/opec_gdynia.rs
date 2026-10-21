@@ -30,6 +30,13 @@ struct OpecPost {
     categories: Vec<u64>,
 }
 
+struct ParsedSchedule {
+    start_date: String,
+    end_date: Option<String>,
+    start: Option<NaiveDateTime>,
+    end: Option<NaiveDateTime>,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 enum Locality {
     Gdynia,
@@ -115,14 +122,7 @@ fn date_is_schedule_start(text: &str, date_start: usize) -> bool {
         || prefix.ends_with("w terminie")
 }
 
-fn parse_schedule(
-    text: &str,
-) -> Option<(
-    String,
-    Option<String>,
-    Option<NaiveDateTime>,
-    Option<NaiveDateTime>,
-)> {
+fn parse_schedule(text: &str) -> Option<ParsedSchedule> {
     let date_matches: Vec<_> = date_regex()
         .captures_iter(text)
         .filter_map(|captures| {
@@ -174,7 +174,12 @@ fn parse_schedule(
         .map(|value| value.format("%Y-%m-%dT%H:%M:%S").to_string())
         .unwrap_or_else(|| start_date.format("%Y-%m-%d").to_string());
     let end_string = end.map(|value| value.format("%Y-%m-%dT%H:%M:%S").to_string());
-    Some((start_string, end_string, start, end))
+    Some(ParsedSchedule {
+        start_date: start_string,
+        end_date: end_string,
+        start,
+        end,
+    })
 }
 
 fn content_parts(content_html: &str) -> (String, Vec<String>) {
@@ -296,7 +301,12 @@ fn parse_post(
     if localities.is_empty() {
         return None;
     }
-    let (start_date, end_date, start, end) = parse_schedule(&text)?;
+    let ParsedSchedule {
+        start_date,
+        end_date,
+        start,
+        end,
+    } = parse_schedule(&text)?;
     if end.is_some_and(|end| end <= now_local)
         || (end.is_none()
             && start.is_none()
@@ -625,9 +635,7 @@ mod tests {
 
     #[test]
     fn parses_dotted_times_and_leaves_unknown_end_unset() {
-        let one_time = LIVE_POST
-            .replace(" do 15.00", "")
-            .replace("<p>Przerwa spowodowana jest", "<p>Przerwa spowodowana jest");
+        let one_time = LIVE_POST.replace(" do 15.00", "");
         let mut settings = Settings::default();
         settings.addresses.push(address("Gdynia", "Unruga", "90"));
         let alerts =
