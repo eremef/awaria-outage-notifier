@@ -40,6 +40,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **LPEC Lublin**: Heat outages in Lublin.
   - **MPEC Kielce**: District-heating and hot-water interruptions in Kielce.
   - **MPEC Rzeszów**: Heating and domestic hot-water supply interruptions in Rzeszów.
+  - **OPEC Gdynia**: Street-level heat and domestic-hot-water interruption notices for served areas in Gdynia, Rumia, Reda, Kosakowo, and Wejherowo.
   - **PGE Toruń**: Planned domestic hot-water interruptions in Toruń.
 - **💧 Water**
   - **MPWiK Wrocław**: Water failures and maintenance work in Wrocław.
@@ -52,6 +53,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **ZWiK Łódź**: Water maintenance and failures in Łódź.
   - **PWiK Kalisz**: Water maintenance and failures in Kalisz.
   - **PWiK Częstochowa**: Water maintenance and failures in Częstochowa.
+  - **PEWIK Gdynia**: Emergency and planned water interruptions in its published service localities around Gdynia, Rumia, Reda, and Wejherowo.
   - **Wodociągi Płockie**: Water maintenance and failures in Płock.
   - **Gdańskie Wodociągi**: Water maintenance and failures in Gdańsk.
   - **PUK Rokietnica**: Water maintenance and failures in Rokietnica.
@@ -198,7 +200,7 @@ For each address you want to monitor, add an entry with:
 
 #### Enabled Sources
 
-Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `mpwik_warszawa`, `torunskie_wodociagi`).
+Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`).
 
 ### Usage
 

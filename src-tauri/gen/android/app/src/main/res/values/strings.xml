@@ -31,6 +31,7 @@
   <string name="provider_fortum">Fortum</string>
   <string name="provider_gdanskie_wodociagi">GW GDA</string>
   <string name="provider_gpec">GPEC GDA</string>
+  <string name="provider_opec_gdynia">OPEC GDY</string>
   <string name="provider_kpec_bydgoszcz">KPEC BDG</string>
   <string name="provider_katowickie_wodociagi">KW KTW</string>
   <string name="provider_lpec">LPEC</string>
@@ -70,6 +71,7 @@
   <string name="widget_label_fortum">Fortum</string>
   <string name="widget_label_gdanskie_wodociagi">Gdańskie Wodociągi</string>
   <string name="widget_label_gpec">GPEC Gdańsk</string>
+  <string name="widget_label_opec_gdynia">OPEC Gdynia</string>
   <string name="widget_label_kpec_bydgoszcz">KPEC Bydgoszcz</string>
   <string name="widget_label_katowickiewodociagi">Katowickie Wodociągi</string>
   <string name="widget_label_lpec">LPEC Lublin</string>
@@ -101,4 +103,6 @@
   <string name="widget_label_wodociagi_kieleckie">Wodociągi Kieleckie</string>
   <string name="widget_label_torunskie_wodociagi">Toruńskie Wodociągi</string>
   <string name="widget_label_zwik_lodz">ZWIK Łódź</string>
+  <string name="provider_pewik_gdynia">PEWIK GDY</string>
+  <string name="widget_label_pewik_gdynia">PEWIK Gdynia</string>
 </resources>

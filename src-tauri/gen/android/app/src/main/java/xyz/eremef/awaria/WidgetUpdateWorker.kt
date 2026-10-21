@@ -225,6 +225,14 @@ class WidgetUpdateWorker(
             gpecProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        // Update OPEC Gdynia widgets
+        val opecGdyniaName = ComponentName(context, OpecGdyniaWidgetProvider::class.java)
+        val opecGdyniaIds = appWidgetManager.getAppWidgetIds(opecGdyniaName)
+        val opecGdyniaProvider = OpecGdyniaWidgetProvider()
+        for (id in opecGdyniaIds) {
+            opecGdyniaProvider.updateWidget(context, appWidgetManager, id)
+        }
+
         // Update KPEC Bydgoszcz widgets
         val kpecBydgoszczName = ComponentName(context, KpecBydgoszczWidgetProvider::class.java)
         val kpecBydgoszczIds = appWidgetManager.getAppWidgetIds(kpecBydgoszczName)
@@ -311,6 +319,14 @@ class WidgetUpdateWorker(
         val mwikBydgoszczProvider = MwikBydgoszczWidgetProvider()
         for (id in mwikBydgoszczIds) {
             mwikBydgoszczProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update PEWIK Gdynia widgets
+        val pewikGdyniaName = ComponentName(context, PewikGdyniaWidgetProvider::class.java)
+        val pewikGdyniaIds = appWidgetManager.getAppWidgetIds(pewikGdyniaName)
+        val pewikGdyniaProvider = PewikGdyniaWidgetProvider()
+        for (id in pewikGdyniaIds) {
+            pewikGdyniaProvider.updateWidget(context, appWidgetManager, id)
         }
 
         // Update Wodociągi Kieleckie widgets

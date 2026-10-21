@@ -40,6 +40,7 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
   - **LPEC Lublin**: Przerwy w dostawie ciepła w Lublinie.
   - **MPEC Kielce**: Przerwy w dostawie ciepła i ciepłej wody w Kielcach.
   - **MPEC Rzeszów**: Przerwy w dostawie ciepła i ciepłej wody użytkowej w Rzeszowie.
+  - **OPEC Gdynia**: Uliczne komunikaty o przerwach w dostawie ciepła i ciepłej wody w obsługiwanych rejonach Gdyni, Rumi, Redy, Kosakowa i Wejherowa.
   - **PGE Toruń**: Planowane przerwy w dostawie ciepłej wody w Toruniu.
 - **💧 Woda**
   - **MPWiK Wrocław**: Awarie wodociągowe i prace konserwacyjne we Wrocławiu.
@@ -52,6 +53,7 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
   - **ZWiK Łódź**: Awarie i konserwacje wodociągowe w Łodzi.
   - **PWiK Kalisz**: Awarie i konserwacje wodociągowe w Kaliszu.
   - **PWiK Częstochowa**: Awarie i konserwacje wodociągowe w Częstochowie.
+  - **PEWIK Gdynia**: Awarie i planowane przerwy w dostawie wody w publikowanym obszarze usług wokół Gdyni, Rumi, Redy i Wejherowa.
   - **Wodociągi Płockie**: Awarie i konserwacje wodociągowe w Płocku.
   - **Gdańskie Wodociągi**: Awarie i konserwacje wodociągowe w Gdańsku.
   - **PUK Rokietnica**: Awarie i konserwacje wodociągowe w Rokietnicy.
@@ -198,7 +200,7 @@ Dla każdego adresu, który chcesz monitorować, dodaj wpis zawierający:
 
 #### Aktywne źródła (Enabled Sources)
 
-Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `mpwik_warszawa`, `torunskie_wodociagi`).
+Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`).
 
 ### Użytkowanie
 

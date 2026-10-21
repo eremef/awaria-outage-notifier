@@ -472,6 +472,22 @@
         </receiver>
 
         <receiver
+            android:name=".OpecGdyniaWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_opec_gdynia">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_OPEC_GDYNIA" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_single_info" />
+        </receiver>
+
+        <receiver
             android:name=".KpecBydgoszczWidgetProvider"
             android:exported="true"
             android:label="@string/widget_label_kpec_bydgoszcz">
@@ -642,6 +658,22 @@
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
                 <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
                 <action android:name="xyz.eremef.awaria.ACTION_REFRESH_MWIK_BYDGOSZCZ" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_single_info" />
+        </receiver>
+
+        <receiver
+            android:name=".PewikGdyniaWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_pewik_gdynia">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_PEWIK_GDYNIA" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"

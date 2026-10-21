@@ -33,6 +33,8 @@ pub mod pwik_kalisz;
 pub mod pwik_czestochowa;
 pub mod gdanskie_wodociagi;
 pub mod gpec;
+pub mod opec_gdynia;
+pub mod pewik_gdynia;
 pub mod puk_rokietnica;
 pub mod sec;
 pub mod lpec;
@@ -553,6 +555,7 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(veolia_lodz::VeoliaLodzProvider),
         Box::new(zwik_lodz::ZwikLodzProvider),
         Box::new(wodociagi_plockie::WodociagiPlockieProvider),
+        Box::new(pewik_gdynia::PewikGdyniaProvider),
         Box::new(wodociagi_kieleckie::WodociagiKieleckieProvider),
         Box::new(torunskie_wodociagi::TorunskieWodociagiProvider),
         Box::new(wodociagi_bialostockie::WodociagiBialostockieProvider),
@@ -560,6 +563,7 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(pwik_czestochowa::PwikCzestochowaProvider),
         Box::new(gdanskie_wodociagi::GdanskieWodociagiProvider),
         Box::new(gpec::GpecProvider),
+        Box::new(opec_gdynia::OpecGdyniaProvider),
         Box::new(kpec_bydgoszcz::KpecBydgoszczProvider),
         Box::new(puk_rokietnica::PukRokietnicaProvider),
         Box::new(sec::SecProvider),
@@ -642,6 +646,103 @@ fn torunskie_notice_matches_house(address: &api_logic::AddressEntry, location: &
         })
 }
 
+fn opec_gdynia_notice_matches_house(address: &api_logic::AddressEntry, location: &str) -> bool {
+    let street_names = utils::configured_street_name_candidates(
+        &address.street_name,
+        &address.street_name_1,
+        address.street_name_2.as_deref(),
+    );
+    let requested = address.house_no.trim();
+    static HOUSE_RE: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
+    let house_re = HOUSE_RE.get_or_init(|| regex::Regex::new(r"(?i)\d+\s*[a-z]?").unwrap());
+    static RANGE_RE: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
+    let range_re =
+        RANGE_RE.get_or_init(|| regex::Regex::new(r"(?i)(\d+)\s*(?:-|–|—|do)\s*(\d+)").unwrap());
+
+    let requested_house = house_re
+        .find(requested)
+        .map(|value| utils::clean_text(value.as_str()).replace(' ', ""));
+    let Some(requested_house) = requested_house else {
+        return true;
+    };
+    let requested_number = requested_house
+        .chars()
+        .take_while(|character| character.is_ascii_digit())
+        .collect::<String>()
+        .parse::<u32>()
+        .ok();
+    let has_suffix = requested_house
+        .chars()
+        .any(|character| character.is_ascii_alphabetic());
+
+    for street in street_names
+        .into_iter()
+        .filter(|street| !street.trim().is_empty())
+    {
+        let street_words: Vec<String> = utils::clean_text(utils::strip_street_prefixes(&street))
+            .split(|character: char| !character.is_alphanumeric())
+            .filter(|word| !word.is_empty())
+            .map(str::to_owned)
+            .collect();
+        if street_words.is_empty() {
+            continue;
+        }
+
+        for segment in location.split(';') {
+            let segment_words: Vec<String> = utils::clean_text(segment)
+                .split(|character: char| !character.is_alphanumeric())
+                .filter(|word| !word.is_empty())
+                .map(str::to_owned)
+                .collect();
+            if !segment_words
+                .windows(street_words.len())
+                .any(|candidate| candidate == street_words.as_slice())
+            {
+                continue;
+            }
+
+            let listed_houses: Vec<String> = house_re
+                .find_iter(segment)
+                .map(|value| utils::clean_text(value.as_str()).replace(' ', ""))
+                .collect();
+            if listed_houses.is_empty() {
+                return true;
+            }
+            if listed_houses.iter().any(|house| house == &requested_house) {
+                return true;
+            }
+            if has_suffix {
+                continue;
+            }
+
+            if let Some(number) = requested_number {
+                if range_re.captures_iter(segment).any(|captures| {
+                    let start = captures.get(1).and_then(|value| value.as_str().parse::<u32>().ok());
+                    let end = captures.get(2).and_then(|value| value.as_str().parse::<u32>().ok());
+                    matches!((start, end), (Some(start), Some(end)) if number >= start.min(end) && number <= start.max(end))
+                }) {
+                    return true;
+                }
+                let normalized_segment = utils::clean_text(segment);
+                if (normalized_segment.contains("nieparzyste")
+                    || normalized_segment.contains("nieparz"))
+                    && !number.is_multiple_of(2)
+                {
+                    return true;
+                }
+                if (normalized_segment.contains("parzyste") || normalized_segment.contains("parz"))
+                    && !normalized_segment.contains("nieparz")
+                    && number.is_multiple_of(2)
+                {
+                    return true;
+                }
+            }
+        }
+    }
+
+    false
+}
+
 fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Settings>) {
     let s = match settings {
         Some(s) => s,
@@ -650,6 +751,56 @@ fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Setti
 
     if s.filter_by_house_no {
         for alert in alerts.iter_mut() {
+            if alert.source == api_logic::AlertSource::PewikGdynia
+                && alert.is_local == Some(true)
+            {
+                let location = alert.location.as_deref().unwrap_or_default();
+                let matched_address = s.addresses.iter().enumerate().find(|(_, address)| {
+                    address.is_active
+                        && api_logic::is_address_applicable_for_provider(
+                            &alert.source,
+                            address,
+                        )
+                        && pewik_gdynia::address_house_matches_notice(address, location)
+                });
+                if let Some((index, _)) = matched_address {
+                    alert.address_index = Some(index);
+                    alert.is_local = Some(true);
+                } else {
+                    alert.address_index = None;
+                    alert.is_local = Some(false);
+                    if let Some((locality, _)) = location.split_once(';') {
+                        alert.location = Some(locality.to_string());
+                    }
+                }
+                continue;
+            }
+
+            if alert.source == api_logic::AlertSource::OpecGdynia
+                && alert.is_local == Some(true)
+            {
+                let location = alert.location.as_deref().unwrap_or_default();
+                let matched_address = s.addresses.iter().enumerate().find(|(_, address)| {
+                    address.is_active
+                        && api_logic::is_address_applicable_for_provider(
+                            &alert.source,
+                            address,
+                        )
+                        && opec_gdynia_notice_matches_house(address, location)
+                });
+                if let Some((index, _)) = matched_address {
+                    alert.address_index = Some(index);
+                    alert.is_local = Some(true);
+                } else {
+                    alert.address_index = None;
+                    alert.is_local = Some(false);
+                    if let Some((locality, _)) = location.split_once(';') {
+                        alert.location = Some(locality.to_string());
+                    }
+                }
+                continue;
+            }
+
             if alert.source == api_logic::AlertSource::TorunskieWodociagi
                 && alert.is_local == Some(true)
             {
@@ -1029,6 +1180,166 @@ mod tests {
     use super::*;
     use crate::network_state::NetworkState;
     use crate::enea::CompiledEneaRegex;
+
+    #[cfg(feature = "smoke-tests")]
+    #[tokio::test]
+    #[ignore]
+    async fn test_opec_gdynia_live_api() {
+        let client = NetworkState::build_client().expect("Failed to build HTTP client");
+        let client_http1 = NetworkState::build_client_http1()
+            .expect("Failed to build HTTP/1.1 client");
+        let settings = Settings {
+            addresses: vec![api_logic::AddressEntry {
+                name: "Mock Gdynia".to_string(),
+                city_name: "Gdynia".to_string(),
+                voivodeship: "Pomorskie".to_string(),
+                street_name: "Unruga".to_string(),
+                street_name_1: "Unruga".to_string(),
+                house_no: "90".to_string(),
+                is_active: true,
+                ..Default::default()
+            }],
+            ..Default::default()
+        };
+
+        let provider = opec_gdynia::OpecGdyniaProvider;
+        let (alerts, errors) = provider
+            .fetch(&client, &client_http1, &settings, None)
+            .await;
+        assert!(errors.is_empty(), "OPEC Gdynia live API returned errors: {errors:?}");
+        println!("OPEC Gdynia live API parsed {} current alerts", alerts.len());
+    }
+
+    #[cfg(feature = "smoke-tests")]
+    #[tokio::test]
+    #[ignore]
+    async fn test_pewik_gdynia_live_publications() {
+        let client = NetworkState::build_client().expect("Failed to build HTTP client");
+        let client_http1 = NetworkState::build_client_http1()
+            .expect("Failed to build HTTP/1.1 client");
+        let settings = Settings {
+            addresses: vec![api_logic::AddressEntry {
+                name: "Mock Gdynia".to_string(),
+                city_name: "Gdynia".to_string(),
+                voivodeship: "Pomorskie".to_string(),
+                street_name: "Owsiana".to_string(),
+                street_name_1: "Owsiana".to_string(),
+                house_no: "12".to_string(),
+                is_active: true,
+                ..Default::default()
+            }],
+            ..Default::default()
+        };
+        let provider = pewik_gdynia::PewikGdyniaProvider;
+        let (alerts, errors) = provider
+            .fetch(&client, &client_http1, &settings, None)
+            .await;
+        assert!(
+            errors.iter().all(|error| error.contains("planned notice")),
+            "PEWIK Gdynia emergency publication failed: {errors:?}"
+        );
+        println!(
+            "PEWIK Gdynia live publications parsed {} alerts; additional endpoint errors: {errors:?}",
+            alerts.len()
+        );
+    }
+
+    #[test]
+    fn pewik_house_filter_checks_all_listed_streets_centrally() {
+        let mut settings = Settings::default();
+        settings.filter_by_house_no = true;
+        settings.addresses = vec![
+            api_logic::AddressEntry {
+                city_name: "Gdynia".to_string(),
+                voivodeship: "Pomorskie".to_string(),
+                street_name: "Owsiana".to_string(),
+                street_name_1: "Owsiana".to_string(),
+                house_no: "5".to_string(),
+                is_active: true,
+                ..Default::default()
+            },
+            api_logic::AddressEntry {
+                city_name: "Gdynia".to_string(),
+                voivodeship: "Pomorskie".to_string(),
+                street_name: "Lniana".to_string(),
+                street_name_1: "Lniana".to_string(),
+                house_no: "12".to_string(),
+                is_active: true,
+                ..Default::default()
+            },
+        ];
+        let make_alert = || UnifiedAlert {
+            source: api_logic::AlertSource::PewikGdynia,
+            message: Some("Awaria wodociągowa: Owsianej 1-4 i Lnianej 10-14".to_string()),
+            location: Some("Miejscowość: Gdynia; Owsianej 1-4; Lnianej 10-14".to_string()),
+            address_index: Some(0),
+            is_local: Some(true),
+            ..Default::default()
+        };
+
+        let mut alerts = vec![make_alert()];
+        apply_alert_filtering(&mut alerts, &Some(settings.clone()));
+        assert_eq!(alerts[0].address_index, Some(1));
+        assert_eq!(alerts[0].is_local, Some(true));
+
+        settings.addresses[1].house_no = "16".to_string();
+        let mut alerts = vec![make_alert()];
+        apply_alert_filtering(&mut alerts, &Some(settings));
+        assert_eq!(alerts[0].address_index, None);
+        assert_eq!(alerts[0].is_local, Some(false));
+        assert_eq!(alerts[0].location.as_deref(), Some("Miejscowość: Gdynia"));
+        assert!(alerts[0].message.as_deref().unwrap().contains("Owsianej 1-4"));
+    }
+
+    #[test]
+    fn opec_house_filter_checks_all_addresses_and_matches_suffixes_exactly() {
+        let mut settings = Settings::default();
+        settings.filter_by_house_no = true;
+        settings.addresses = vec![
+            api_logic::AddressEntry {
+                city_name: "Gdynia".to_string(),
+                voivodeship: "Pomorskie".to_string(),
+                street_name: "Podgórska".to_string(),
+                street_name_1: "Podgórska".to_string(),
+                house_no: "99".to_string(),
+                is_active: true,
+                ..Default::default()
+            },
+            api_logic::AddressEntry {
+                city_name: "Gdynia".to_string(),
+                voivodeship: "Pomorskie".to_string(),
+                street_name: "Unruga".to_string(),
+                street_name_1: "Unruga".to_string(),
+                house_no: "90".to_string(),
+                is_active: true,
+                ..Default::default()
+            },
+        ];
+        let make_alert = || UnifiedAlert {
+            source: api_logic::AlertSource::OpecGdynia,
+            message: Some("Awaria ciepła: Gdynia street notice".to_string()),
+            location: Some(
+                "Miejscowość: Gdynia; ul. Unruga 90, 92; ul. Podgórska 1, 2, 2A, 3, 5, 7, 9, 11"
+                    .to_string(),
+            ),
+            address_index: Some(0),
+            is_local: Some(true),
+            ..Default::default()
+        };
+
+        let mut alerts = vec![make_alert()];
+        apply_alert_filtering(&mut alerts, &Some(settings.clone()));
+        assert_eq!(alerts[0].is_local, Some(true));
+        assert_eq!(alerts[0].address_index, Some(1));
+
+        settings.addresses[1].house_no = "90A".to_string();
+        let mut alerts = vec![make_alert()];
+        apply_alert_filtering(&mut alerts, &Some(settings));
+        assert_eq!(alerts[0].is_local, Some(false));
+        assert_eq!(alerts[0].address_index, None);
+        assert_eq!(alerts[0].location.as_deref(), Some("Miejscowość: Gdynia"));
+        assert!(alerts[0].message.as_deref().unwrap().contains("street notice"));
+    }
 
     #[tokio::test]
     async fn test_fetch_enea_outages_real_backend() {

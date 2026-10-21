@@ -203,6 +203,49 @@ if (typeof document !== 'undefined') {
             const city = (addr.cityName || '').trim().toLowerCase();
             return city.startsWith('gdańsk') || city.startsWith('gdansk') || addr.cityId === 908123;
         },
+        opec_gdynia_area: (addr) => {
+            if (!addr) return false;
+            const normalize = (value) => (value || '').trim().toLowerCase()
+                .replace(/ą/g, 'a').replace(/ć/g, 'c').replace(/ę/g, 'e')
+                .replace(/ł/g, 'l').replace(/ń/g, 'n').replace(/ó/g, 'o')
+                .replace(/ś/g, 's').replace(/ź/g, 'z').replace(/ż/g, 'z');
+            const city = normalize(addr.cityName);
+            const commune = normalize(addr.commune);
+            const voivodeship = normalize(addr.voivodeship);
+            if (voivodeship && !voivodeship.startsWith('pomorskie')) return false;
+            return ['gdyn', 'rumi', 'red', 'wejherow'].some(name => city.startsWith(name)) ||
+                city.startsWith('kosakow') || commune.startsWith('kosakow');
+        },
+        pewik_gdynia_area: (addr) => {
+            if (!addr) return false;
+            const normalize = (value) => (value || '').trim().toLowerCase()
+                .replace(/ą/g, 'a').replace(/ć/g, 'c').replace(/ę/g, 'e')
+                .replace(/ł/g, 'l').replace(/ń/g, 'n').replace(/ó/g, 'o')
+                .replace(/ś/g, 's').replace(/ź/g, 'z').replace(/ż/g, 'z')
+                .replace(/-/g, ' ');
+            const city = normalize(addr.cityName);
+            const commune = normalize(addr.commune);
+            const district = normalize(addr.district);
+            const voivodeship = normalize(addr.voivodeship);
+            if (voivodeship && !voivodeship.startsWith('pomorskie')) return false;
+            if (district.includes('port') || district.includes('wojsk')) return false;
+
+            if (city.startsWith('gdyn')) {
+                const streets = [addr.streetName, addr.streetName1, addr.streetName2]
+                    .map(normalize).filter(Boolean);
+                if (streets.some(street => ['losiowa', 'sarnia', 'jelenia'].includes(street))) return false;
+                return true;
+            }
+
+            if (['rumi', 'reda', 'wejherow'].some(name => city.startsWith(name))) return true;
+
+            const inKosakowo = commune.startsWith('kosakowo') || commune.startsWith('gmina kosakowo');
+            const inWejherowo = commune.startsWith('wejherowo') || commune.startsWith('gmina wejherowo');
+            const kosakowoVillages = ['debogorze wybudowanie', 'kazimierz', 'kosakowo', 'pogorze'];
+            const wejherowoVillages = ['bolszewo', 'goscicino', 'gora', 'kniewo', 'orle', 'warszkowo', 'zamostne'];
+            return (inKosakowo && kosakowoVillages.some(village => city.startsWith(village))) ||
+                (inWejherowo && wejherowoVillages.some(village => city.startsWith(village)));
+        },
         katowice: (addr) => {
             if (!addr) return false;
             const city = (addr.cityName || '').trim().toLowerCase();
@@ -356,6 +399,7 @@ if (typeof document !== 'undefined') {
         { id: 'lpec', label: 'LPEC', category: 'heating', defaultNotify: true, i18nLabel: 'source_lpec_name', i18nShort: 'source_lpec_short', region: 'lublin' },
         { id: 'mpec_kielce', label: 'MPEC Kielce', category: 'heating', defaultNotify: true, i18nLabel: 'source_mpec_kielce_name', i18nShort: 'source_mpec_kielce_short', region: 'kielce' },
         { id: 'mpec_rzeszow', label: 'MPEC Rzeszów', category: 'heating', defaultNotify: true, i18nLabel: 'source_mpec_rzeszow_name', i18nShort: 'source_mpec_rzeszow_short', region: 'rzeszow' },
+        { id: 'opec_gdynia', label: 'OPEC Gdynia', category: 'heating', defaultNotify: true, i18nLabel: 'source_opec_gdynia_name', i18nShort: 'source_opec_gdynia_short', region: 'opec_gdynia_area' },
         { id: 'pge_torun_heat', label: 'PGE Toruń', category: 'heating', defaultNotify: true, i18nLabel: 'source_pge_torun_heat_name', i18nShort: 'source_pge_torun_heat_short', region: 'torun' },
         { id: 'sec', label: 'SEC', category: 'heating', defaultNotify: true, i18nLabel: 'source_sec_name', i18nShort: 'source_sec_short', region: 'szczecin' },
         { id: 'tauron_heat', label: 'Tauron Ciepło', category: 'heating', defaultNotify: true, i18nLabel: 'source_tauron_heat_name', i18nShort: 'source_tauron_heat_short' },
@@ -371,6 +415,7 @@ if (typeof document !== 'undefined') {
         { id: 'mpwik_warszawa', label: 'MPWiK Warszawa', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_warszawa_name', i18nShort: 'source_mpwik_warszawa_short', region: 'mpwik_warszawa_area' },
         { id: 'mpwik_wroclaw', label: 'MPWiK Wrocław', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_wroclaw_name', i18nShort: 'source_mpwik_wroclaw_short', region: 'wroclaw' },
         { id: 'mwik_bydgoszcz', label: 'MWiK Bydgoszcz', category: 'water', defaultNotify: true, i18nLabel: 'source_mwik_bydgoszcz_name', i18nShort: 'source_mwik_bydgoszcz_short', region: 'bydgoszcz' },
+        { id: 'pewik_gdynia', label: 'PEWIK Gdynia', category: 'water', defaultNotify: true, i18nLabel: 'source_pewik_gdynia_name', i18nShort: 'source_pewik_gdynia_short', region: 'pewik_gdynia_area' },
         { id: 'puk_rokietnica', label: 'PUK Rokietnica', category: 'water', defaultNotify: true, i18nLabel: 'source_puk_rokietnica_name', i18nShort: 'source_puk_rokietnica_short', region: 'rokietnica' },
         { id: 'pwik_czestochowa', label: 'PWiK Częstochowa', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_czestochowa_name', i18nShort: 'source_pwik_czestochowa_short', region: 'czestochowa' },
         { id: 'pwik_kalisz', label: 'PWiK Kalisz', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_kalisz_name', i18nShort: 'source_pwik_kalisz_short', region: 'kalisz' },
@@ -2486,12 +2531,14 @@ if (typeof document !== 'undefined') {
 
         const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+        if (alert.source === 'pewik_gdynia' && !REGION_MATCHERS.pewik_gdynia_area(addr)) return false;
+
         // Prevent cross-city street matches for multi-city providers
         if (cityName) {
             const singleCityProviders = [
                 'mpwik_wroclaw', 'mpwik_warszawa', 'katowickie_wodociagi',
                 'veolia_warszawa', 'veolia_poznan', 'veolia_lodz', 'zwik_lodz',
-                'wodociagi_plockie', 'wodociagi_kieleckie', 'wodociagi_bialostockie', 'pwik_kalisz', 'pwik_czestochowa', 'gdanskie_wodociagi', 'gpec', 'kpec_bydgoszcz', 'mwik_bydgoszcz', 'enea_cieplo', 'energa_cieplo_kaliskie', 'puk_rokietnica', 'sec', 'lpec', 'mpwik_lublin', 'mpwik_rzeszow', 'mpec_kielce', 'mpec_rzeszow', 'pge_torun_heat', 'torunskie_wodociagi', 'wm_radom'
+                'wodociagi_plockie', 'wodociagi_kieleckie', 'wodociagi_bialostockie', 'pwik_kalisz', 'pwik_czestochowa', 'pewik_gdynia', 'gdanskie_wodociagi', 'gpec', 'kpec_bydgoszcz', 'mwik_bydgoszcz', 'enea_cieplo', 'energa_cieplo_kaliskie', 'puk_rokietnica', 'sec', 'lpec', 'mpwik_lublin', 'mpwik_rzeszow', 'mpec_kielce', 'mpec_rzeszow', 'opec_gdynia', 'pge_torun_heat', 'torunskie_wodociagi', 'wm_radom'
             ];
             if (singleCityProviders.includes(alert.source)) {
                 // For single-city providers, reject matching if the saved address is in a completely different city
@@ -2578,6 +2625,23 @@ if (typeof document !== 'undefined') {
                 if (alert.source === 'mpec_kielce' && !REGION_MATCHERS.kielce(addr)) return false;
                 if (alert.source === 'pge_torun_heat' &&
                     !(cityLower.startsWith('toruń') || cityLower.startsWith('torun') || addr.cityId === 929448)) return false;
+                if (alert.source === 'opec_gdynia') {
+                    if (!REGION_MATCHERS.opec_gdynia_area(addr)) return false;
+                    const normalizeLocation = (value) => (value || '').toLowerCase()
+                        .replace(/ą/g, 'a').replace(/ć/g, 'c').replace(/ę/g, 'e')
+                        .replace(/ł/g, 'l').replace(/ń/g, 'n').replace(/ó/g, 'o')
+                        .replace(/ś/g, 's').replace(/ź/g, 'z').replace(/ż/g, 'z');
+                    const location = normalizeLocation(alert.location).replace(/^miejscowosc:\s*/, '');
+                    const commune = normalizeLocation(addr.commune);
+                    const localityMatches = [
+                        [location.includes('gdyn'), cityLower.startsWith('gdyn')],
+                        [location.includes('rumi'), cityLower.startsWith('rumi')],
+                        [location.includes('red'), cityLower.startsWith('red')],
+                        [location.includes('kosakow'), cityLower.startsWith('kosakow') || commune.startsWith('kosakow')],
+                        [location.includes('wejherow'), cityLower.startsWith('wejherow')]
+                    ].filter(([mentioned]) => mentioned);
+                    if (localityMatches.length && !localityMatches.some(([, matches]) => matches)) return false;
+                }
                 if (alert.source === 'torunskie_wodociagi') {
                     if (!REGION_MATCHERS.torunskie_wodociagi_area(addr)) return false;
                     const normalizeLocation = (value) => (value || '').toLowerCase()

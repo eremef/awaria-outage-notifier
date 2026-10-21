@@ -309,6 +309,20 @@ describe('Frontend Logic', () => {
     });
 
     describe('getSources', () => {
+        it('registers OPEC Gdynia in heating order with its service-area matcher', () => {
+            const sources = getSources();
+            const provider = sources.find(source => source.id === 'opec_gdynia');
+            expect(provider).toMatchObject({
+                label: 'OPEC Gdynia',
+                category: 'heating',
+                region: 'opec_gdynia_area',
+                i18nLabel: 'source_opec_gdynia_name',
+                i18nShort: 'source_opec_gdynia_short'
+            });
+            const heatingIds = sources.filter(source => source.category === 'heating').map(source => source.id);
+            expect(heatingIds).toEqual([...heatingIds].sort());
+        });
+
         it('registers Wodociągi Kieleckie in the water category before Płock by ID', () => {
             const sources = getSources();
             const provider = sources.find(source => source.id === 'wodociagi_kieleckie');
@@ -346,6 +360,66 @@ describe('Frontend Logic', () => {
             const waterIds = sources.filter(source => source.category === 'water').map(source => source.id);
             expect(waterIds.indexOf('wodociagi_bialostockie')).toBeLessThan(waterIds.indexOf('wodociagi_kieleckie'));
         });
+
+        it('registers PEWIK Gdynia alphabetically as a water provider', () => {
+            const sources = getSources();
+            const provider = sources.find(source => source.id === 'pewik_gdynia');
+            expect(provider).toMatchObject({
+                label: 'PEWIK Gdynia',
+                category: 'water',
+                region: 'pewik_gdynia_area',
+                i18nLabel: 'source_pewik_gdynia_name',
+                i18nShort: 'source_pewik_gdynia_short'
+            });
+            const waterIds = sources.filter(source => source.category === 'water').map(source => source.id);
+            expect(waterIds).toEqual([...waterIds].sort());
+
+            const Card = window.customElements.get('awaria-card');
+            const card = new Card();
+            expect(card.getProviderMeta('pewik_gdynia')).toEqual({
+                name: 'PEWIK Gdynia',
+                icon: '💧',
+                color: '#2196f3'
+            });
+        });
+    });
+
+    describe('PEWIK Gdynia service area', () => {
+        const matchesArea = getRegionMatchers().pewik_gdynia_area;
+
+        it('matches the listed Pomorskie localities', () => {
+            expect(matchesArea({ cityName: 'Gdynia', streetName1: 'Owsiana', voivodeship: 'Pomorskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Rumia', voivodeship: 'Pomorskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Reda', voivodeship: 'Pomorskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Pogórze', commune: 'Gmina Kosakowo', voivodeship: 'Pomorskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Bolszewo', commune: 'Gmina Wejherowo', voivodeship: 'Pomorskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Gdynia', district: 'Oksywie', voivodeship: 'Pomorskie' })).toBe(true);
+        });
+
+        it('rejects other suppliers and localities outside PEWIK water coverage', () => {
+            expect(matchesArea({ cityName: 'Gdynia', streetName1: 'Sarnia', voivodeship: 'Pomorskie' })).toBe(false);
+            expect(matchesArea({ cityName: 'Gdynia', district: 'Port Gdynia', voivodeship: 'Pomorskie' })).toBe(false);
+            expect(matchesArea({ cityName: 'Łężyce', commune: 'Gmina Wejherowo', voivodeship: 'Pomorskie' })).toBe(false);
+            expect(matchesArea({ cityName: 'Sopot', voivodeship: 'Pomorskie' })).toBe(false);
+            expect(matchesArea({ cityName: 'Gdynia', voivodeship: 'Mazowieckie' })).toBe(false);
+        });
+    });
+
+    describe('OPEC Gdynia service area', () => {
+        const matchesArea = getRegionMatchers().opec_gdynia_area;
+
+        it('matches the five published service localities, including the Kosakowo commune', () => {
+            expect(matchesArea({ cityName: 'Gdynia', voivodeship: 'Pomorskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Rumia', voivodeship: 'Pomorskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Reda', voivodeship: 'Pomorskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Pogórze', commune: 'Kosakowo', voivodeship: 'Pomorskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Wejherowo', voivodeship: 'Pomorskie' })).toBe(true);
+        });
+
+        it('rejects addresses outside the published service area', () => {
+            expect(matchesArea({ cityName: 'Sopot', voivodeship: 'Pomorskie' })).toBe(false);
+            expect(matchesArea({ cityName: 'Gdynia', voivodeship: 'Mazowieckie' })).toBe(false);
+        });
     });
 
     describe('Toruńskie Wodociągi service area', () => {
@@ -367,6 +441,16 @@ describe('Frontend Logic', () => {
     });
 
     describe('Home Assistant card provider styling', () => {
+        it('uses the OPEC Gdynia name and shared heat styling', () => {
+            const AwariaCard = customElements.get('awaria-card');
+            const card = new AwariaCard();
+            expect(card.getProviderMeta('opec_gdynia')).toEqual({
+                name: 'OPEC Gdynia',
+                icon: '🔥',
+                color: '#f44336'
+            });
+        });
+
         it('uses the shared water styling for MWiK Bydgoszcz', () => {
             const AwariaCard = customElements.get('awaria-card');
             const card = new AwariaCard();

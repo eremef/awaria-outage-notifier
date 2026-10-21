@@ -53,10 +53,14 @@ pub enum AlertSource {
     PwikKalisz,
     #[serde(rename = "pwik_czestochowa")]
     PwikCzestochowa,
+    #[serde(rename = "pewik_gdynia")]
+    PewikGdynia,
     #[serde(rename = "gdanskie_wodociagi")]
     GdanskieWodociagi,
     #[serde(rename = "gpec")]
     Gpec,
+    #[serde(rename = "opec_gdynia")]
+    OpecGdynia,
     #[serde(rename = "kpec_bydgoszcz")]
     KpecBydgoszcz,
     #[serde(rename = "enea_cieplo")]
@@ -147,6 +151,7 @@ impl AlertSource {
                 ServiceLocation::Cities(vec![is_wodociagi_bialostockie_area])
             }
             AlertSource::PwikCzestochowa => ServiceLocation::Cities(vec![is_czestochowa]),
+            AlertSource::PewikGdynia => ServiceLocation::Cities(vec![is_pewik_gdynia_area]),
             AlertSource::Psg => ServiceLocation::Nationwide,
             
             AlertSource::Stoen => ServiceLocation::Cities(vec![is_warszawa]),
@@ -161,6 +166,7 @@ impl AlertSource {
             AlertSource::PwikKalisz => ServiceLocation::Cities(vec![is_kalisz]),
             AlertSource::GdanskieWodociagi => ServiceLocation::Cities(vec![is_gdansk]),
             AlertSource::Gpec => ServiceLocation::Cities(vec![is_gdansk]),
+            AlertSource::OpecGdynia => ServiceLocation::Cities(vec![is_opec_gdynia_area]),
             AlertSource::KpecBydgoszcz => ServiceLocation::Cities(vec![is_bydgoszcz]),
             AlertSource::MwikBydgoszcz => ServiceLocation::Cities(vec![is_bydgoszcz]),
             AlertSource::EneaCieplo => ServiceLocation::Cities(vec![is_bialystok]),
@@ -202,8 +208,10 @@ impl AlertSource {
             AlertSource::WodociagiBialostockie => "Wodociągi Białostockie",
             AlertSource::PwikKalisz => "PWiK Kalisz",
             AlertSource::PwikCzestochowa => "PWiK Częstochowa",
+            AlertSource::PewikGdynia => "PEWIK Gdynia",
             AlertSource::GdanskieWodociagi => "Gdańskie Wodociągi",
             AlertSource::Gpec => "GPEC Gdańsk",
+            AlertSource::OpecGdynia => "OPEC Gdynia",
             AlertSource::KpecBydgoszcz => "KPEC Bydgoszcz",
             AlertSource::EneaCieplo => "ENEA Ciepło Białystok",
             AlertSource::EnergaCieploKaliskie => "Energa Ciepło Kaliskie",
@@ -342,6 +350,8 @@ impl<'a> MonitorEngine<'a> {
                 // --- UPCOMING NOTIFICATION ---
                 if self.settings.upcoming_notification_enabled
                     && let Some(start_str) = &alert.startDate
+                    // Date-only start values have no precise upcoming window.
+                    && chrono::NaiveDate::parse_from_str(start_str, "%Y-%m-%d").is_err()
                         && let Some(start_dt) = crate::utils::parse_date(start_str) {
                             let now_utc = chrono::Utc::now();
                             let diff_hours = (start_dt - now_utc).num_hours();
@@ -404,10 +414,10 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea | AlertSource::Pge | AlertSource::Stoen => {
             if is_pl { "wyłączenie prądu" } else { "power outage" }
         }
-        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::WmRadom | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::WodociagiPlockie | AlertSource::WodociagiKieleckie | AlertSource::TorunskieWodociagi | AlertSource::WodociagiBialostockie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa | AlertSource::GdanskieWodociagi | AlertSource::PukRokietnica | AlertSource::MpwikLublin | AlertSource::MpwikRzeszow | AlertSource::MwikBydgoszcz => {
+        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::WmRadom | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::WodociagiPlockie | AlertSource::WodociagiKieleckie | AlertSource::TorunskieWodociagi | AlertSource::WodociagiBialostockie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa | AlertSource::PewikGdynia | AlertSource::GdanskieWodociagi | AlertSource::PukRokietnica | AlertSource::MpwikLublin | AlertSource::MpwikRzeszow | AlertSource::MwikBydgoszcz => {
             if is_pl { "wyłączenie wody" } else { "water outage" }
         }
-        AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz | AlertSource::Gpec | AlertSource::KpecBydgoszcz | AlertSource::EneaCieplo | AlertSource::EnergaCieploKaliskie | AlertSource::Sec | AlertSource::Lpec | AlertSource::MpecRzeszow | AlertSource::MpecKielce | AlertSource::PgeTorunHeat => {
+        AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz | AlertSource::Gpec | AlertSource::OpecGdynia | AlertSource::KpecBydgoszcz | AlertSource::EneaCieplo | AlertSource::EnergaCieploKaliskie | AlertSource::Sec | AlertSource::Lpec | AlertSource::MpecRzeszow | AlertSource::MpecKielce | AlertSource::PgeTorunHeat => {
             if is_pl { "wyłączenie ogrzewania" } else { "heat outage" }
         }
         AlertSource::Psg => {
@@ -436,20 +446,21 @@ pub fn format_notification_body(alert: &UnifiedAlert, settings: &Settings) -> St
         _ => true,
     };
 
+    let format_alert_date = |value: &str| {
+        chrono::NaiveDate::parse_from_str(value, "%Y-%m-%d")
+            .map(|date| date.format("%d-%m-%Y").to_string())
+            .unwrap_or_else(|_| {
+                crate::utils::parse_date(value)
+                    .map(crate::utils::format_date)
+                    .unwrap_or_else(|| value.to_string())
+            })
+    };
     let mut time_info = Vec::new();
     if let Some(start) = &alert.startDate {
-        if let Some(dt) = crate::utils::parse_date(start) {
-            time_info.push(crate::utils::format_date(dt));
-        } else {
-            time_info.push(start.clone());
-        }
+        time_info.push(format_alert_date(start));
     }
     if let Some(end) = &alert.endDate {
-        if let Some(dt) = crate::utils::parse_date(end) {
-            time_info.push(crate::utils::format_date(dt));
-        } else {
-            time_info.push(end.clone());
-        }
+        time_info.push(format_alert_date(end));
     }
     let times = if time_info.is_empty() {
         if is_pl { "Brak danych".to_string() } else { "No data".to_string() }
@@ -526,8 +537,10 @@ impl std::fmt::Display for AlertSource {
             AlertSource::WodociagiBialostockie => "wodociagi_bialostockie",
             AlertSource::PwikKalisz => "pwik_kalisz",
             AlertSource::PwikCzestochowa => "pwik_czestochowa",
+            AlertSource::PewikGdynia => "pewik_gdynia",
             AlertSource::GdanskieWodociagi => "gdanskie_wodociagi",
             AlertSource::Gpec => "gpec",
+            AlertSource::OpecGdynia => "opec_gdynia",
             AlertSource::KpecBydgoszcz => "kpec_bydgoszcz",
             AlertSource::EneaCieplo => "enea_cieplo",
             AlertSource::EnergaCieploKaliskie => "energa_cieplo_kaliskie",
@@ -714,6 +727,81 @@ fn is_mpwik_rzeszow_area(addr: &AddressEntry) -> bool {
 }
 city_checker!(is_gdansk, Some(908123_u64), "gdańsk", "gdansk");
 city_checker!(is_bydgoszcz, Some(928363_u64), "bydgoszcz");
+
+fn is_opec_gdynia_area(addr: &AddressEntry) -> bool {
+    let city = crate::utils::clean_text(&addr.city_name);
+    let commune = crate::utils::clean_text(&addr.commune);
+    let voivodeship = crate::utils::clean_text(&addr.voivodeship);
+    if !voivodeship.is_empty() && !voivodeship.starts_with("pomorskie") {
+        return false;
+    }
+
+    ["gdyn", "rumi", "red", "wejherow"]
+        .iter()
+        .any(|name| city.starts_with(name))
+        || city.starts_with("kosakow")
+        || commune.starts_with("kosakow")
+}
+
+fn is_pewik_gdynia_area(addr: &AddressEntry) -> bool {
+    let normalize = |value: &str| crate::utils::clean_text(value).replace('-', " ");
+    let city = normalize(&addr.city_name);
+    let commune = normalize(&addr.commune);
+    let district = normalize(&addr.district);
+    let voivodeship = normalize(&addr.voivodeship);
+    if !voivodeship.is_empty() && !voivodeship.starts_with("pomorskie") {
+        return false;
+    }
+    if district.contains("port") || district.contains("wojsk") {
+        return false;
+    }
+
+    if city.starts_with("gdyn") {
+        let streets = crate::utils::configured_street_name_candidates(
+            &addr.street_name,
+            &addr.street_name_1,
+            addr.street_name_2.as_deref(),
+        );
+        return !streets.iter().any(|street| {
+            let street = normalize(street);
+            ["losiowa", "sarnia", "jelenia"]
+                .iter()
+                .any(|excluded| street == *excluded)
+        });
+    }
+
+    if ["rumi", "reda", "wejherow"]
+        .iter()
+        .any(|prefix| city.starts_with(prefix))
+    {
+        return true;
+    }
+
+    let in_kosakowo = commune.starts_with("kosakowo") || commune.starts_with("gmina kosakowo");
+    let in_wejherowo_commune =
+        commune.starts_with("wejherowo") || commune.starts_with("gmina wejherowo");
+    let kosakowo_villages = [
+        "debogorze wybudowanie",
+        "kazimierz",
+        "kosakowo",
+        "pogorze",
+    ];
+    let wejherowo_villages = [
+        "bolszewo",
+        "goscicino",
+        "gora",
+        "kniewo",
+        "orle",
+        "warszkowo",
+        "zamostne",
+    ];
+
+    (in_kosakowo && kosakowo_villages.iter().any(|village| city.starts_with(village)))
+        || (in_wejherowo_commune
+            && wejherowo_villages
+                .iter()
+                .any(|village| city.starts_with(village)))
+}
 
 fn is_torunskie_wodociagi_area(addr: &AddressEntry) -> bool {
     let city = crate::utils::clean_text(&addr.city_name).replace('-', " ");
@@ -1226,6 +1314,48 @@ mod tests {
     }
 
     #[test]
+    fn date_only_start_does_not_trigger_a_false_upcoming_notification() {
+        let mut mock_db = MockDatabaseInterface::new();
+        let mut mock_notifier = MockNotificationProvider::new();
+        let tomorrow = (chrono::Utc::now() + chrono::Duration::days(1))
+            .with_timezone(&chrono_tz::Europe::Warsaw)
+            .format("%Y-%m-%d")
+            .to_string();
+        let settings = Settings {
+            notification_preferences: [("pewik_gdynia".to_string(), true)].into(),
+            enabled_sources: Some(vec!["pewik_gdynia".to_string()]),
+            upcoming_notification_enabled: true,
+            upcoming_notification_hours: 48,
+            ..Default::default()
+        };
+        let alerts = vec![UnifiedAlert {
+            source: AlertSource::PewikGdynia,
+            startDate: Some(tomorrow),
+            message: Some("Awaria wodociągowa".to_string()),
+            is_local: Some(true),
+            ..Default::default()
+        }];
+        let hash = alerts[0].to_hash();
+        mock_db
+            .expect_is_alert_seen()
+            .with(predicate::eq("pewik_gdynia"), predicate::eq(hash.clone()))
+            .times(1)
+            .returning(|_, _| Ok(false));
+        mock_db
+            .expect_mark_alert_as_seen()
+            .with(predicate::eq("pewik_gdynia"), predicate::eq(hash))
+            .times(1)
+            .returning(|_, _| Ok(()));
+        mock_notifier
+            .expect_show_notification()
+            .withf(|title, _, _| title.starts_with("Nowe") && !title.contains("Nadchodzące"))
+            .times(1)
+            .returning(|_, _, _| ());
+
+        MonitorEngine::new(&mock_db, &mock_notifier, &settings).process_alerts(alerts);
+    }
+
+    #[test]
     fn test_format_notification_body_with_custom_dates() {
         let alert = UnifiedAlert {
             source: AlertSource::Psg,
@@ -1406,6 +1536,61 @@ mod tests {
             AlertSource::WodociagiKieleckie.display_name(),
             "Wodociągi Kieleckie"
         );
+    }
+
+    #[test]
+    fn test_opec_gdynia_scope() {
+        let gdynia = AddressEntry {
+            city_name: "Gdynia".to_string(),
+            voivodeship: "Pomorskie".to_string(),
+            ..Default::default()
+        };
+        let rumia = AddressEntry {
+            city_name: "Rumia".to_string(),
+            voivodeship: "Pomorskie".to_string(),
+            ..Default::default()
+        };
+        let reda = AddressEntry {
+            city_name: "Reda".to_string(),
+            voivodeship: "Pomorskie".to_string(),
+            ..Default::default()
+        };
+        let kosakowo_commune = AddressEntry {
+            city_name: "Pogórze".to_string(),
+            commune: "Kosakowo".to_string(),
+            voivodeship: "Pomorskie".to_string(),
+            ..Default::default()
+        };
+        let wejherowo = AddressEntry {
+            city_name: "Wejherowo".to_string(),
+            voivodeship: "Pomorskie".to_string(),
+            ..Default::default()
+        };
+        let sopot = AddressEntry {
+            city_name: "Sopot".to_string(),
+            voivodeship: "Pomorskie".to_string(),
+            ..Default::default()
+        };
+        let wrong_voivodeship = AddressEntry {
+            city_name: "Gdynia".to_string(),
+            voivodeship: "Mazowieckie".to_string(),
+            ..Default::default()
+        };
+
+        for address in [&gdynia, &rumia, &reda, &kosakowo_commune, &wejherowo] {
+            assert!(is_address_applicable_for_provider(
+                &AlertSource::OpecGdynia,
+                address
+            ));
+        }
+        for address in [&sopot, &wrong_voivodeship] {
+            assert!(!is_address_applicable_for_provider(
+                &AlertSource::OpecGdynia,
+                address
+            ));
+        }
+        assert_eq!(AlertSource::OpecGdynia.to_string(), "opec_gdynia");
+        assert_eq!(AlertSource::OpecGdynia.display_name(), "OPEC Gdynia");
     }
 
     #[test]
@@ -1753,6 +1938,77 @@ mod tests {
 
         let body = format_notification_body(&alert, &settings);
         assert_eq!(body, "Kiedy: 20-05-2024 10:00 - 20-05-2024 15:00\nGdzie: Stoisława 5, Szczecin");
+    }
+
+    #[test]
+    fn pewik_gdynia_service_area_uses_water_localities_and_excludes_other_territories() {
+        let address = |city: &str, commune: &str, street: &str| AddressEntry {
+            city_name: city.to_string(),
+            commune: commune.to_string(),
+            street_name: street.to_string(),
+            street_name_1: street.to_string(),
+            voivodeship: "Pomorskie".to_string(),
+            is_active: true,
+            ..Default::default()
+        };
+
+        assert!(is_address_applicable_for_provider(
+            &AlertSource::PewikGdynia,
+            &address("Gdynia", "Gdynia", "Owsiana")
+        ));
+        assert!(is_address_applicable_for_provider(
+            &AlertSource::PewikGdynia,
+            &address("Bolszewo", "Gmina Wejherowo", "Długa")
+        ));
+        assert!(is_address_applicable_for_provider(
+            &AlertSource::PewikGdynia,
+            &address("Pogórze", "Gmina Kosakowo", "Szkolna")
+        ));
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::PewikGdynia,
+            &address("Gdynia", "Gdynia", "Sarnia")
+        ));
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::PewikGdynia,
+            &AddressEntry {
+                district: "Port Gdynia".to_string(),
+                ..address("Gdynia", "Gdynia", "Morska")
+            }
+        ));
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::PewikGdynia,
+            &address("Sopot", "Sopot", "Morska")
+        ));
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::PewikGdynia,
+            &address("Łężyce", "Gmina Wejherowo", "Leśna")
+        ));
+        assert_eq!(AlertSource::PewikGdynia.to_string(), "pewik_gdynia");
+        assert_eq!(AlertSource::PewikGdynia.display_name(), "PEWIK Gdynia");
+    }
+
+    #[test]
+    fn date_only_alert_start_is_not_formatted_as_2359() {
+        let alert = UnifiedAlert {
+            source: AlertSource::PewikGdynia,
+            startDate: Some("2026-10-21".to_string()),
+            endDate: Some("2026-10-21T19:00:00".to_string()),
+            address_index: Some(0),
+            ..Default::default()
+        };
+        let settings = Settings {
+            language: Some("pl".to_string()),
+            addresses: vec![AddressEntry {
+                name: "Dom".to_string(),
+                city_name: "Gdynia".to_string(),
+                street_name: "Owsiana".to_string(),
+                house_no: "12".to_string(),
+                ..Default::default()
+            }],
+            ..Default::default()
+        };
+        let body = format_notification_body(&alert, &settings);
+        assert!(body.starts_with("Kiedy: 21-10-2026 - 21-10-2026 19:00"));
     }
 }
 

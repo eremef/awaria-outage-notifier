@@ -40,6 +40,15 @@ class WidgetUtilsTest {
     }
 
     @Test
+    fun testPewikGdyniaWidgetUsesWaterSourceAndRefreshAction() {
+        val provider = PewikGdyniaWidgetProvider()
+
+        assertEquals("pewik_gdynia", provider.sourceKey)
+        assertEquals("xyz.eremef.awaria.ACTION_REFRESH_PEWIK_GDYNIA", provider.refreshAction)
+        assertEquals(R.drawable.ic_water, provider.iconResId)
+    }
+
+    @Test
     fun testWodociagiKieleckieWidgetUsesWaterSourceAndRefreshAction() {
         val provider = WodociagiKieleckieWidgetProvider()
 

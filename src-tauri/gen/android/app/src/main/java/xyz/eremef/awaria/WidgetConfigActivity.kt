@@ -148,6 +148,7 @@ class WidgetConfigActivity : ComponentActivity() {
             className.contains("PwikCzestochowaWidgetProvider") -> PwikCzestochowaWidgetProvider()
             className.contains("GdanskieWodociagiWidgetProvider") -> GdanskieWodociagiWidgetProvider()
             className.contains("GpecWidgetProvider") -> GpecWidgetProvider()
+            className.contains("OpecGdyniaWidgetProvider") -> OpecGdyniaWidgetProvider()
             className.contains("KpecBydgoszczWidgetProvider") -> KpecBydgoszczWidgetProvider()
             className.contains("EneaCieploWidgetProvider") -> EneaCieploWidgetProvider()
             className.contains("EnergaCieploKaliskieWidgetProvider") -> EnergaCieploKaliskieWidgetProvider()
@@ -158,6 +159,7 @@ class WidgetConfigActivity : ComponentActivity() {
             className.contains("MpecRzeszowWidgetProvider") -> MpecRzeszowWidgetProvider()
             className.contains("MpwikRzeszowWidgetProvider") -> MpwikRzeszowWidgetProvider()
             className.contains("MwikBydgoszczWidgetProvider") -> MwikBydgoszczWidgetProvider()
+            className.contains("PewikGdyniaWidgetProvider") -> PewikGdyniaWidgetProvider()
             className.contains("WmRadomWidgetProvider") -> WmRadomWidgetProvider()
             else -> TriWidgetProvider()
         }
