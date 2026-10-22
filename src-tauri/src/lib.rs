@@ -1,3 +1,11 @@
+#[cfg(all(test, target_os = "windows", target_env = "msvc"))]
+#[link(
+    name = "awaria_windows_test_manifest",
+    kind = "static",
+    modifiers = "+whole-archive"
+)]
+unsafe extern "C" {}
+
 pub mod api_logic;
 mod aquanet;
 mod enea;

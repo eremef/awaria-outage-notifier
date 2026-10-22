@@ -491,14 +491,17 @@ fn address_has_street(address: &AddressEntry) -> bool {
 }
 
 fn address_is_in_legnica(address: &AddressEntry) -> bool {
+    let voivodeship = normalize_polish(&address.voivodeship);
+    if !voivodeship.trim().is_empty() && !voivodeship.trim().starts_with("dolnoslaskie") {
+        return false;
+    }
+
     if let Some(city_id) = address.city_id {
         return city_id == LEGNICA_CITY_ID;
     }
 
     let city = normalize_polish(&address.city_name);
-    let voivodeship = normalize_polish(&address.voivodeship);
     city.trim().starts_with("legnica")
-        && (voivodeship.trim().is_empty() || voivodeship.trim().starts_with("dolnoslaskie"))
 }
 
 fn address_street_candidates(address: &AddressEntry) -> Vec<String> {
