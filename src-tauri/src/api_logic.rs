@@ -41,6 +41,8 @@ pub enum AlertSource {
     VeoliaLodz,
     #[serde(rename = "zwik_lodz")]
     ZwikLodz,
+    #[serde(rename = "zwik_zielona_gora")]
+    ZwikZielonaGora,
     #[serde(rename = "wodociagi_plockie")]
     WodociagiPlockie,
     #[serde(rename = "wodociagi_kieleckie")]
@@ -159,6 +161,9 @@ impl AlertSource {
             AlertSource::PwikCzestochowa => ServiceLocation::Cities(vec![is_czestochowa]),
             AlertSource::PwikOlsztyn => ServiceLocation::Cities(vec![is_pwik_olsztyn_area]),
             AlertSource::WikOpole => ServiceLocation::Cities(vec![is_wik_opole_area]),
+            AlertSource::ZwikZielonaGora => {
+                ServiceLocation::Cities(vec![is_zwik_zielona_gora_area])
+            }
             AlertSource::PewikGdynia => ServiceLocation::Cities(vec![is_pewik_gdynia_area]),
             AlertSource::Psg => ServiceLocation::Nationwide,
             
@@ -213,6 +218,7 @@ impl AlertSource {
             AlertSource::VeoliaPoznan => "Veolia Poznań",
             AlertSource::VeoliaLodz => "Veolia Łódź",
             AlertSource::ZwikLodz => "ZWiK Łódź",
+            AlertSource::ZwikZielonaGora => "ZWiK Zielona Góra",
             AlertSource::WodociagiPlockie => "Wodociągi Płockie",
             AlertSource::WodociagiKieleckie => "Wodociągi Kieleckie",
             AlertSource::TorunskieWodociagi => "Toruńskie Wodociągi",
@@ -428,7 +434,7 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea | AlertSource::Pge | AlertSource::Stoen => {
             if is_pl { "wyłączenie prądu" } else { "power outage" }
         }
-        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::WmRadom | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::WodociagiPlockie | AlertSource::WodociagiKieleckie | AlertSource::TorunskieWodociagi | AlertSource::WodociagiBialostockie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa | AlertSource::PwikOlsztyn | AlertSource::WikOpole | AlertSource::PewikGdynia | AlertSource::GdanskieWodociagi | AlertSource::PukRokietnica | AlertSource::MpwikLublin | AlertSource::MpwikRzeszow | AlertSource::MwikBydgoszcz => {
+        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::WmRadom | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::ZwikZielonaGora | AlertSource::WodociagiPlockie | AlertSource::WodociagiKieleckie | AlertSource::TorunskieWodociagi | AlertSource::WodociagiBialostockie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa | AlertSource::PwikOlsztyn | AlertSource::WikOpole | AlertSource::PewikGdynia | AlertSource::GdanskieWodociagi | AlertSource::PukRokietnica | AlertSource::MpwikLublin | AlertSource::MpwikRzeszow | AlertSource::MwikBydgoszcz => {
             if is_pl { "wyłączenie wody" } else { "water outage" }
         }
         AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz | AlertSource::Gpec | AlertSource::OpecGdynia | AlertSource::KpecBydgoszcz | AlertSource::EneaCieplo | AlertSource::EnergaCieploKaliskie | AlertSource::EcoSa | AlertSource::Sec | AlertSource::Lpec | AlertSource::MpecRzeszow | AlertSource::MpecKielce | AlertSource::PgeTorunHeat => {
@@ -545,6 +551,7 @@ impl std::fmt::Display for AlertSource {
             AlertSource::VeoliaPoznan => "veolia_poznan",
             AlertSource::VeoliaLodz => "veolia_lodz",
             AlertSource::ZwikLodz => "zwik_lodz",
+            AlertSource::ZwikZielonaGora => "zwik_zielona_gora",
             AlertSource::WodociagiPlockie => "wodociagi_plockie",
             AlertSource::WodociagiKieleckie => "wodociagi_kieleckie",
             AlertSource::TorunskieWodociagi => "torunskie_wodociagi",
@@ -672,6 +679,58 @@ city_checker!(is_kalisz, Some(936579_u64), "kalisz");
 city_checker!(is_szczecin, Some(977976_u64), "szczecin");
 city_checker!(is_lublin, Some(959423_u64), "lublin");
 city_checker!(is_kielce, Some(945930_u64), "kielce");
+
+fn is_zwik_zielona_gora_area(addr: &AddressEntry) -> bool {
+    const SERVICE_CITY_IDS: [u64; 28] = [
+        917313, 917320, 988320, 917336, 917342, 917359, 917365, 988336, 917371, 917388, 917394,
+        917425, 917431, 917448, 1_038_186, 917520, 917477, 917483, 1_038_513, 917490, 917508,
+        917514, 1_038_192, 917537, 917543, 988313, 917419, 917402,
+    ];
+    const SERVICE_LOCALITIES: [&str; 28] = [
+        "barcikowice",
+        "barcikowiczki",
+        "chynow",
+        "drzonkow",
+        "jany",
+        "jarogniewice",
+        "jeleniow",
+        "jedrzychow",
+        "kielpin",
+        "krepa",
+        "krepa mala",
+        "lezyca",
+        "lugowo",
+        "marzecin",
+        "nowy kisielin",
+        "ochla",
+        "piskorze",
+        "przydroze",
+        "przylep",
+        "racula",
+        "raculka",
+        "stary kisielin",
+        "stozne",
+        "sucha",
+        "wlosan",
+        "zatonie",
+        "zawada",
+        "zielona gora",
+    ];
+    if let Some(city_id) = addr.city_id {
+        return SERVICE_CITY_IDS.contains(&city_id);
+    }
+
+    let city = crate::utils::clean_text(&addr.city_name);
+    let commune = crate::utils::clean_text(&addr.commune);
+    let voivodeship = crate::utils::clean_text(&addr.voivodeship);
+    if !voivodeship.starts_with("lubuskie") {
+        return false;
+    }
+
+    SERVICE_LOCALITIES.contains(&city.as_str())
+        || commune == "zielona gora"
+        || commune == "gmina zielona gora"
+}
 fn is_wm_radom_area(addr: &AddressEntry) -> bool {
     if addr.city_id == Some(972750) || addr.city_id == Some(642253) {
         return true;
@@ -2074,6 +2133,89 @@ mod tests {
         };
         let body = format_notification_body(&alert, &settings);
         assert!(body.starts_with("Kiedy: 21-10-2026 - 21-10-2026 19:00"));
+    }
+}
+
+#[cfg(test)]
+mod zwik_zielona_gora_scope_tests {
+    use super::{is_address_applicable_for_provider, AddressEntry, AlertSource};
+
+    #[test]
+    fn zwik_zielona_gora_scope_uses_current_municipal_simc_ids() {
+        let ochla = AddressEntry {
+            city_name: "Ochla".to_string(),
+            commune: "Zielona Góra".to_string(),
+            city_id: Some(917448),
+            ..Default::default()
+        };
+        assert!(is_address_applicable_for_provider(
+            &AlertSource::ZwikZielonaGora,
+            &ochla
+        ));
+    }
+
+    #[test]
+    fn zwik_zielona_gora_text_fallback_requires_lubuskie() {
+        let local = AddressEntry {
+            city_name: "Racula".to_string(),
+            commune: "Zielona Góra".to_string(),
+            voivodeship: "Lubuskie".to_string(),
+            ..Default::default()
+        };
+        let local_name_without_id = AddressEntry {
+            city_name: "Ochla".to_string(),
+            voivodeship: "Lubuskie".to_string(),
+            ..Default::default()
+        };
+        let same_name_elsewhere = AddressEntry {
+            city_name: "Zielona Góra".to_string(),
+            voivodeship: "Dolnośląskie".to_string(),
+            ..Default::default()
+        };
+        let unknown_teryt_city_id = AddressEntry {
+            city_name: "Zielona Góra".to_string(),
+            voivodeship: "Lubuskie".to_string(),
+            city_id: Some(999001),
+            ..Default::default()
+        };
+        let ambiguous_without_region = AddressEntry {
+            city_name: "Zielona Góra".to_string(),
+            ..Default::default()
+        };
+
+        assert!(is_address_applicable_for_provider(
+            &AlertSource::ZwikZielonaGora,
+            &local
+        ));
+        assert!(is_address_applicable_for_provider(
+            &AlertSource::ZwikZielonaGora,
+            &local_name_without_id
+        ));
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::ZwikZielonaGora,
+            &same_name_elsewhere
+        ));
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::ZwikZielonaGora,
+            &unknown_teryt_city_id
+        ));
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::ZwikZielonaGora,
+            &ambiguous_without_region
+        ));
+    }
+
+    #[test]
+    fn zwik_zielona_gora_has_stable_source_id_and_display_name() {
+        assert_eq!(AlertSource::ZwikZielonaGora.to_string(), "zwik_zielona_gora");
+        assert_eq!(
+            AlertSource::ZwikZielonaGora.display_name(),
+            "ZWiK Zielona Góra"
+        );
+        assert_eq!(
+            serde_json::to_string(&AlertSource::ZwikZielonaGora).unwrap(),
+            "\"zwik_zielona_gora\""
+        );
     }
 }
 

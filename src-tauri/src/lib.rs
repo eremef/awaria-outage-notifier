@@ -26,6 +26,7 @@ mod veolia_warszawa;
 mod veolia_poznan;
 pub mod veolia_lodz;
 pub mod zwik_lodz;
+pub mod zwik_zielona_gora;
 pub mod wodociagi_plockie;
 pub mod wodociagi_kieleckie;
 pub mod torunskie_wodociagi;
@@ -558,6 +559,7 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(veolia_poznan::VeoliaPoznanProvider),
         Box::new(veolia_lodz::VeoliaLodzProvider),
         Box::new(zwik_lodz::ZwikLodzProvider),
+        Box::new(zwik_zielona_gora::ZwikZielonaGoraProvider),
         Box::new(wodociagi_plockie::WodociagiPlockieProvider),
         Box::new(pewik_gdynia::PewikGdyniaProvider),
         Box::new(wodociagi_kieleckie::WodociagiKieleckieProvider),
@@ -969,15 +971,23 @@ fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Setti
                             api_logic::AlertSource::TauronHeat
                         );
                         if !is_street_wide_only {
-                            let mut spec = String::new();
-                            if let Some(msg) = &alert.message {
-                                spec.push_str(msg);
-                            }
-                            if let Some(loc) = &alert.location {
-                                if !spec.is_empty() {
-                                    spec.push(' ');
+                            let mut spec = if alert.source
+                                == api_logic::AlertSource::ZwikZielonaGora
+                            {
+                                alert.location.clone().unwrap_or_default()
+                            } else {
+                                String::new()
+                            };
+                            if alert.source != api_logic::AlertSource::ZwikZielonaGora {
+                                if let Some(msg) = &alert.message {
+                                    spec.push_str(msg);
                                 }
-                                spec.push_str(loc);
+                                if let Some(loc) = &alert.location {
+                                    if !spec.is_empty() {
+                                        spec.push(' ');
+                                    }
+                                    spec.push_str(loc);
+                                }
                             }
                             let street_to_match = if !addr.street_name_1.is_empty() {
                                 Some(addr.street_name_1.as_str())
@@ -2056,6 +2066,58 @@ pub async fn get_psg_html_android() -> Result<String, String> {
             Err(e) => Err(e.to_string())
         }
     }).await.map_err(|e: tokio::task::JoinError| e.to_string())?
+}
+
+#[cfg(test)]
+mod zwik_zielona_gora_house_number_filter_tests {
+    use super::*;
+
+    fn alert() -> UnifiedAlert {
+        UnifiedAlert {
+            source: api_logic::AlertSource::ZwikZielonaGora,
+            message: Some(
+                "Przerwa przy ul. Chmielna 1-23; ul. Zacisze 80 również objęta pracami."
+                    .to_string(),
+            ),
+            location: Some("Zielona Góra; ul. Chmielna 1-23".to_string()),
+            address_index: Some(0),
+            is_local: Some(true),
+            ..Default::default()
+        }
+    }
+
+    fn settings(filter_by_house_no: bool) -> Option<Settings> {
+        Some(Settings {
+            addresses: vec![AddressEntry {
+                name: "Dom".to_string(),
+                city_name: "Zielona Góra".to_string(),
+                voivodeship: "Lubuskie".to_string(),
+                commune: "Zielona Góra".to_string(),
+                street_name: "Chmielna".to_string(),
+                street_name_1: "Chmielna".to_string(),
+                house_no: "80".to_string(),
+                city_id: Some(988313),
+                is_active: true,
+                ..Default::default()
+            }],
+            filter_by_house_no,
+            ..Settings::default()
+        })
+    }
+
+    #[test]
+    fn zwik_house_number_filter_uses_the_street_scoped_location() {
+        let mut alerts = vec![alert()];
+        apply_alert_filtering(&mut alerts, &settings(true));
+        assert_eq!(alerts[0].is_local, Some(false));
+    }
+
+    #[test]
+    fn zwik_house_number_filter_remains_setting_controlled() {
+        let mut alerts = vec![alert()];
+        apply_alert_filtering(&mut alerts, &settings(false));
+        assert_eq!(alerts[0].is_local, Some(true));
+    }
 }
 
 #[cfg(target_os = "android")]

@@ -65,6 +65,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **Wodociągi Białostockie**: Water outages and planned interruptions in Białystok and the Wasilków municipality.
   - **Wodociągi Kieleckie**: Water interruptions and failures in Kielce, its service municipalities, and reposted local notices.
   - **Toruńskie Wodociągi**: Water failures and planned water-network work in Toruń, Lubicz, Łysomice, Obrowo, Wielka Nieszawka, and Zławieś Wielka.
+  - **ZWiK Zielona Góra**: Water failures and planned interruptions in Zielona Góra and localities within its merged municipality.
 
 ## Android app
 

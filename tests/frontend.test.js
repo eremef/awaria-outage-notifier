@@ -251,6 +251,25 @@ describe('Frontend Logic', () => {
             const alert2 = { message: 'Milionowa (Przędzalniana - do pos. 25/27) - wyłączenie', source: 'zwik_lodz' };
             expect(matchesStreetName(alert2, addr2)).toBe(true);
         });
+
+        it('matches ZWiK Zielona Góra streets only within its municipality', () => {
+            const zielonaGora = {
+                cityName: 'Zielona Góra', cityId: 988313, voivodeship: 'Lubuskie',
+                streetName1: 'Chmielna'
+            };
+            const lubsko = {
+                cityName: 'Lubsko', cityId: 988890, voivodeship: 'Lubuskie',
+                streetName1: 'Chmielna'
+            };
+            const alert = {
+                message: 'Prace remontowe na sieci wodociągowej przy ul. Chmielnej — pełna treść komunikatu',
+                location: 'Miejscowość: Zielona Góra',
+                source: 'zwik_zielona_gora'
+            };
+
+            expect(matchesStreetName(alert, zielonaGora)).toBe(true);
+            expect(matchesStreetName(alert, lubsko)).toBe(false);
+        });
     });
 
     describe('PGE Toruń source integration', () => {
@@ -381,6 +400,45 @@ describe('Frontend Logic', () => {
                 icon: '💧',
                 color: '#2196f3'
             });
+        });
+
+        it('registers ZWiK Zielona Góra alphabetically with generic water styling', () => {
+            const sources = getSources();
+            const provider = sources.find(source => source.id === 'zwik_zielona_gora');
+            const waterIds = sources.filter(source => source.category === 'water').map(source => source.id);
+
+            expect(provider).toMatchObject({
+                label: 'ZWiK Zielona Góra',
+                category: 'water',
+                region: 'zwik_zielona_gora_area',
+                i18nLabel: 'source_zwik_zielona_gora_name',
+                i18nShort: 'source_zwik_zielona_gora_short'
+            });
+            expect(waterIds).toEqual([...waterIds].sort());
+
+            const Card = window.customElements.get('awaria-card');
+            const card = new Card();
+            expect(card.getProviderMeta('zwik_zielona_gora')).toMatchObject({
+                icon: '💧',
+                color: '#2196f3'
+            });
+        });
+    });
+
+    describe('ZWiK Zielona Góra service area', () => {
+        const matchesArea = getRegionMatchers().zwik_zielona_gora_area;
+
+        it('matches the city and constituent localities in the merged municipality', () => {
+            expect(matchesArea({ cityName: 'Zielona Góra', cityId: 988313, voivodeship: 'Lubuskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Drzonków', cityId: 917336, voivodeship: 'Lubuskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Ochla', voivodeship: 'Lubuskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Racula', commune: 'Zielona Góra', voivodeship: 'Lubuskie' })).toBe(true);
+        });
+
+        it('rejects same-named or nearby addresses outside the municipality', () => {
+            expect(matchesArea({ cityName: 'Zielona Góra', cityId: 999001, voivodeship: 'Lubuskie' })).toBe(false);
+            expect(matchesArea({ cityName: 'Lubsko', voivodeship: 'Lubuskie' })).toBe(false);
+            expect(matchesArea({ cityName: 'Ochla', voivodeship: 'Dolnośląskie' })).toBe(false);
         });
     });
 

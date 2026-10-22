@@ -185,6 +185,14 @@ class WidgetUpdateWorker(
             zwikLodzProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        // Update ZWiK Zielona Góra widgets
+        val zwikZielonaGoraName = ComponentName(context, ZwikZielonaGoraWidgetProvider::class.java)
+        val zwikZielonaGoraIds = appWidgetManager.getAppWidgetIds(zwikZielonaGoraName)
+        val zwikZielonaGoraProvider = ZwikZielonaGoraWidgetProvider()
+        for (id in zwikZielonaGoraIds) {
+            zwikZielonaGoraProvider.updateWidget(context, appWidgetManager, id)
+        }
+
         // Update PWiK Kalisz widgets
         val pwikKaliszName = ComponentName(context, PwikKaliszWidgetProvider::class.java)
         val pwikKaliszIds = appWidgetManager.getAppWidgetIds(pwikKaliszName)

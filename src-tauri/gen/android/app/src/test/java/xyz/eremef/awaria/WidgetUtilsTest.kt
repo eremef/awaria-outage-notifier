@@ -57,6 +57,16 @@ class WidgetUtilsTest {
         assertEquals(R.drawable.ic_water, provider.iconResId)
     }
 
+    @Test
+    fun testZwikZielonaGoraWidgetUsesWaterCategoryAndRefreshAction() {
+        val provider = ZwikZielonaGoraWidgetProvider()
+
+        assertEquals("zwik_zielona_gora", provider.sourceKey)
+        assertEquals("xyz.eremef.awaria.ACTION_REFRESH_ZWIK_ZIELONA_GORA", provider.refreshAction)
+        assertEquals("outages", provider.labelKey)
+        assertEquals(R.drawable.ic_water, provider.iconResId)
+    }
+
     private fun createSettings(
         cityName: String = "",
         commune: String = "",

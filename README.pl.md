@@ -65,6 +65,7 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
   - **Wodociągi Białostockie**: Awarie i planowane przerwy w dostawie wody w Białymstoku oraz gminie Wasilków.
   - **Wodociągi Kieleckie**: Przerwy w dostawie wody i awarie w Kielcach, obsługiwanych gminach oraz publikowanych lokalnych komunikatach.
   - **Toruńskie Wodociągi**: Awarie i planowane prace na sieci wodociągowej w Toruniu, Lubiczu, Łysomicach, Obrowie, Wielkiej Nieszawce i Złej Wsi Wielkiej.
+  - **ZWiK Zielona Góra**: Awarie i planowane przerwy w dostawie wody w Zielonej Górze oraz miejscowościach w granicach połączonej gminy.
 
 ## Aplikacja Android
 

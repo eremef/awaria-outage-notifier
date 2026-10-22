@@ -30,11 +30,12 @@ For each address you want to monitor, add an entry with:
 
 ### Enabled Sources
 
-Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `pge_torun_heat`, `mpec_kielce`, `opec_gdynia`, `eco_sa`, `pewik_gdynia`, `wik_opole`, `wodociagi_kieleckie`, `torunskie_wodociagi`, `wodociagi_bialostockie`, `mwik_bydgoszcz`, `mpwik_warszawa`, `pwik_olsztyn`, `enea_cieplo`, `energa_cieplo_kaliskie`).
+Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `pge_torun_heat`, `mpec_kielce`, `opec_gdynia`, `eco_sa`, `pewik_gdynia`, `wik_opole`, `wodociagi_kieleckie`, `torunskie_wodociagi`, `wodociagi_bialostockie`, `mwik_bydgoszcz`, `mpwik_warszawa`, `pwik_olsztyn`, `zwik_zielona_gora`, `enea_cieplo`, `energa_cieplo_kaliskie`).
 
 Toruńskie Wodociągi covers Toruń and five neighboring municipalities. Wodociągi Białostockie covers Białystok and the Wasilków municipality.
 PWiK Olsztyn covers Olsztyn and the localities included in the company's outage notices.
 WiK Opole covers water-service areas in Opole, Komprachcice, Prószków, and Turawa. ECO SA publishes heat notices for multiple cities; matching uses the notice locality rather than the company's Opole address.
+ZWiK Zielona Góra covers the combined Zielona Góra municipality, including its constituent localities.
 
 ## Usage
 

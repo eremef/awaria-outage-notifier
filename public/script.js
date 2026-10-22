@@ -314,6 +314,33 @@ if (typeof document !== 'undefined') {
             return city === 'opole' || ['komprachcice', 'proszkow', 'turawa']
                 .some(area => city === area || commune === area);
         },
+        zwik_zielona_gora_area: (addr) => {
+            if (!addr) return false;
+            const serviceCityIds = [
+                917313, 917320, 917336, 917342, 917359, 917365, 917371,
+                917388, 917394, 917402, 917419, 917425, 917431, 917448,
+                917477, 917483, 917490, 917508, 917514, 917520, 917537,
+                917543, 988313, 988320, 988336, 1038186, 1038192, 1038513
+            ];
+            if (addr.cityId != null) return serviceCityIds.includes(addr.cityId);
+
+            const normalize = (value) => (value || '').trim().toLowerCase()
+                .replace(/ą/g, 'a').replace(/ć/g, 'c').replace(/ę/g, 'e')
+                .replace(/ł/g, 'l').replace(/ń/g, 'n').replace(/ó/g, 'o')
+                .replace(/ś/g, 's').replace(/ź/g, 'z').replace(/ż/g, 'z');
+            const city = normalize(addr.cityName);
+            const commune = normalize(addr.commune);
+            const voivodeship = normalize(addr.voivodeship);
+            if (!voivodeship.startsWith('lubuskie')) return false;
+            const localities = [
+                'zielona gora', 'barcikowice', 'barcikowiczki', 'chynow', 'drzonkow',
+                'jany', 'jarogniewice', 'jedrzychow', 'jeleniow', 'kielpin', 'krepa',
+                'krepa mala', 'lezyca', 'lugowo', 'marzecin', 'nowy kisielin', 'ochla',
+                'przylep', 'racula', 'raculka', 'stary kisielin', 'stozne', 'sucha',
+                'przydroze', 'zatonie', 'zawada', 'piskorze', 'wlosan'
+            ];
+            return localities.includes(city) || ['zielona gora', 'gmina zielona gora'].includes(commune);
+        },
         torunskie_wodociagi_area: (addr) => {
             if (!addr) return false;
             const normalize = (value) => (value || '').trim().toLowerCase()
@@ -461,6 +488,7 @@ if (typeof document !== 'undefined') {
         { id: 'wodociagi_kieleckie', label: 'Wodociągi Kieleckie', category: 'water', defaultNotify: true, i18nLabel: 'source_wodociagi_kieleckie_name', i18nShort: 'source_wodociagi_kieleckie_short', region: 'wodociagi_kieleckie_area' },
         { id: 'wodociagi_plockie', label: 'Wodociągi Płockie', category: 'water', defaultNotify: true, i18nLabel: 'source_wodociagi_plockie_name', i18nShort: 'source_wodociagi_plockie_short', region: 'plock' },
         { id: 'zwik_lodz', label: 'ZWIK Łódź', category: 'water', defaultNotify: true, i18nLabel: 'source_zwik_lodz_name', i18nShort: 'source_zwik_lodz_short', region: 'lodz' },
+        { id: 'zwik_zielona_gora', label: 'ZWiK Zielona Góra', category: 'water', defaultNotify: true, i18nLabel: 'source_zwik_zielona_gora_name', i18nShort: 'source_zwik_zielona_gora_short', region: 'zwik_zielona_gora_area' },
     ];
 
     const getSourceIcon = (s) => {
@@ -2613,6 +2641,7 @@ if (typeof document !== 'undefined') {
             const singleCityProviders = [
                 'mpwik_wroclaw', 'mpwik_warszawa', 'katowickie_wodociagi',
                 'veolia_warszawa', 'veolia_poznan', 'veolia_lodz', 'zwik_lodz',
+                'zwik_zielona_gora',
                 'wodociagi_plockie', 'wodociagi_kieleckie', 'wodociagi_bialostockie', 'pwik_kalisz', 'pwik_czestochowa', 'pwik_olsztyn', 'pewik_gdynia', 'gdanskie_wodociagi', 'gpec', 'kpec_bydgoszcz', 'mwik_bydgoszcz', 'enea_cieplo', 'energa_cieplo_kaliskie', 'puk_rokietnica', 'sec', 'lpec', 'mpwik_lublin', 'mpwik_rzeszow', 'mpec_kielce', 'mpec_rzeszow', 'opec_gdynia', 'pge_torun_heat', 'torunskie_wodociagi', 'wm_radom'
             ];
             if (singleCityProviders.includes(alert.source)) {
@@ -2622,6 +2651,7 @@ if (typeof document !== 'undefined') {
                 if (alert.source === 'mpwik_warszawa' && !REGIONS.mpwik_warszawa_area({ cityName: cityLower, cityId: 0 })) return false;
                 if (alert.source === 'wmk' && !cityLower.startsWith('krak')) return false;
                 if (alert.source === 'zwik_lodz' && !cityLower.startsWith('łódź') && !cityLower.startsWith('lodz')) return false;
+                if (alert.source === 'zwik_zielona_gora' && !REGION_MATCHERS.zwik_zielona_gora_area(addr)) return false;
                 if (alert.source === 'wodociagi_plockie' && !cityLower.startsWith('pło') && !cityLower.startsWith('plo')) return false;
                 if (alert.source === 'wodociagi_kieleckie') {
                     if (!REGION_MATCHERS.wodociagi_kieleckie_area(addr)) return false;

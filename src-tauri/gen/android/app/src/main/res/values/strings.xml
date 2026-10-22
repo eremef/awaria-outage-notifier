@@ -65,6 +65,7 @@
   <string name="provider_torunskie_wodociagi">TW Toruń</string>
   <string name="provider_wik_opole">WiK Opole</string>
   <string name="provider_zwik_lodz">ZWIK Łódź</string>
+  <string name="provider_zwik_zielona_gora">ZWiK ZG</string>
   <string name="widget_label_all">Adres: wszystkie media</string>
   <string name="widget_label_aquanet">Aquanet</string>
   <string name="widget_label_enea">Enea</string>
@@ -109,6 +110,7 @@
   <string name="widget_label_torunskie_wodociagi">Toruńskie Wodociągi</string>
   <string name="widget_label_wik_opole">Wodociągi i Kanalizacja w Opolu</string>
   <string name="widget_label_zwik_lodz">ZWIK Łódź</string>
+  <string name="widget_label_zwik_zielona_gora">ZWiK Zielona Góra</string>
   <string name="provider_pewik_gdynia">PEWIK GDY</string>
   <string name="widget_label_pewik_gdynia">PEWIK Gdynia</string>
 </resources>

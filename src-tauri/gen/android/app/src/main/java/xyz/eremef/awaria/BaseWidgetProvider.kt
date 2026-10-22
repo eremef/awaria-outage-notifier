@@ -388,6 +388,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             "veolia_poznan" -> context.getString(R.string.provider_veolia_poznan)
             "veolia_lodz" -> context.getString(R.string.provider_veolia_lodz)
             "zwik_lodz" -> context.getString(R.string.provider_zwik_lodz)
+            "zwik_zielona_gora" -> context.getString(R.string.provider_zwik_zielona_gora)
             "pwik_kalisz" -> context.getString(R.string.provider_pwik_kalisz)
             "wodociagi_plockie" -> context.getString(R.string.provider_wodociagi_plockie)
             "wodociagi_bialostockie" -> context.getString(R.string.provider_wodociagi_bialostockie)
@@ -638,7 +639,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             val iconDesc = when (sourceKey) {
                 "tauron", "stoen", "enea", "energa", "pge" -> getTranslation(context, "power")
                 "enea_cieplo", "eco_sa", "energa_cieplo_kaliskie", "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz", "sec", "lpec", "mpec_kielce", "mpec_rzeszow", "opec_gdynia", "pge_torun_heat" -> getTranslation(context, "heat")
-                "mpwik_wroclaw", "mpwik_warszawa", "wmk", "wm_radom", "aquanet", "katowickie_wodociagi", "zwik_lodz", "pwik_kalisz", "wodociagi_plockie", "wodociagi_bialostockie", "wodociagi_kieleckie", "torunskie_wodociagi", "pwik_czestochowa", "pwik_olsztyn", "wik_opole", "gdanskie_wodociagi", "puk_rokietnica", "mpwik_lublin", "mpwik_rzeszow", "mwik_bydgoszcz", "pewik_gdynia" -> getTranslation(context, "water")
+                "mpwik_wroclaw", "mpwik_warszawa", "wmk", "wm_radom", "aquanet", "katowickie_wodociagi", "zwik_lodz", "zwik_zielona_gora", "pwik_kalisz", "wodociagi_plockie", "wodociagi_bialostockie", "wodociagi_kieleckie", "torunskie_wodociagi", "pwik_czestochowa", "pwik_olsztyn", "wik_opole", "gdanskie_wodociagi", "puk_rokietnica", "mpwik_lublin", "mpwik_rzeszow", "mwik_bydgoszcz", "pewik_gdynia" -> getTranslation(context, "water")
                 "psg" -> getTranslation(context, "gas")
                 else -> getSourceName(context, sourceKey)
             }
