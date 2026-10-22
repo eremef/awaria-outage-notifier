@@ -256,6 +256,27 @@ if (typeof document !== 'undefined') {
             const city = (addr.cityName || '').trim().toLowerCase();
             return city.startsWith('bydgoszcz') || addr.cityId === 928363;
         },
+        elblag: (addr) => {
+            if (!addr) return false;
+            const city = (addr.cityName || '').trim().toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const rawCityId = addr.cityId == null ? '' : String(addr.cityId).trim();
+            const cityId = rawCityId ? Number(rawCityId) : null;
+            if (cityId != null && Number.isFinite(cityId) && cityId !== 932703) return false;
+            return cityId === 932703 || city === 'elblag';
+        },
+        bytom: (addr) => {
+            if (!addr) return false;
+            const city = (addr.cityName || '').trim().toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const rawCityId = addr.cityId == null ? '' : String(addr.cityId).trim();
+            const cityId = rawCityId ? Number(rawCityId) : null;
+            const voivodeship = (addr.voivodeship || '').trim().toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            if (voivodeship && !voivodeship.startsWith('slaskie')) return false;
+            if (cityId != null && Number.isFinite(cityId) && cityId !== 938670) return false;
+            return cityId === 938670 || city === 'bytom';
+        },
         bialystok: (addr) => {
             if (!addr) return false;
             const city = (addr.cityName || '').trim().toLowerCase();
@@ -299,6 +320,19 @@ if (typeof document !== 'undefined') {
             if (!addr) return false;
             const city = (addr.cityName || '').trim().toLowerCase();
             return city.startsWith('toruń') || city.startsWith('torun') || addr.cityId === 929448;
+        },
+        lpwik_legnica_area: (addr) => {
+            if (!addr) return false;
+            if (addr.cityId != null) return addr.cityId === 954047;
+
+            const normalize = (value) => (value || '').trim().toLowerCase()
+                .replace(/ą/g, 'a').replace(/ć/g, 'c').replace(/ę/g, 'e')
+                .replace(/ł/g, 'l').replace(/ń/g, 'n').replace(/ó/g, 'o')
+                .replace(/ś/g, 's').replace(/ź/g, 'z').replace(/ż/g, 'z');
+            const city = normalize(addr.cityName);
+            const voivodeship = normalize(addr.voivodeship);
+            return city === 'legnica' &&
+                (!voivodeship || voivodeship.startsWith('dolnoslaskie'));
         },
         wik_opole_area: (addr) => {
             if (!addr) return false;
@@ -453,6 +487,7 @@ if (typeof document !== 'undefined') {
         { id: 'eco_sa', label: 'ECO SA', category: 'heating', defaultNotify: true, i18nLabel: 'source_eco_sa_name', i18nShort: 'source_eco_sa_short' },
         { id: 'enea_cieplo', label: 'ENEA Ciepło', category: 'heating', defaultNotify: true, i18nLabel: 'source_enea_cieplo_name', i18nShort: 'source_enea_cieplo_short', region: 'bialystok' },
         { id: 'energa_cieplo_kaliskie', label: 'Energa Ciepło Kaliskie', category: 'heating', defaultNotify: true, i18nLabel: 'source_energa_cieplo_kaliskie_name', i18nShort: 'source_energa_cieplo_kaliskie_short', region: 'kalisz' },
+        { id: 'epec_elblag', label: 'EPEC Elbląg', category: 'heating', defaultNotify: true, i18nLabel: 'source_epec_elblag_name', i18nShort: 'source_epec_elblag_short', region: 'elblag' },
         { id: 'fortum', label: 'Fortum', category: 'heating', defaultNotify: true, i18nLabel: 'source_fortum_name', i18nShort: 'source_fortum_short' },
         { id: 'gpec', label: 'GPEC Gdańsk', category: 'heating', defaultNotify: true, i18nLabel: 'source_gpec_name', i18nShort: 'source_gpec_short', region: 'gdansk' },
         { id: 'kpec_bydgoszcz', label: 'KPEC Bydgoszcz', category: 'heating', defaultNotify: true, i18nLabel: 'source_kpec_bydgoszcz_name', i18nShort: 'source_kpec_bydgoszcz_short', region: 'bydgoszcz' },
@@ -468,8 +503,10 @@ if (typeof document !== 'undefined') {
         { id: 'veolia_warszawa', label: 'Veolia Warszawa', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_warszawa_name', i18nShort: 'source_veolia_warszawa_short', region: 'warszawa' },
         // Water
         { id: 'aquanet', label: 'Aquanet', category: 'water', defaultNotify: true, i18nLabel: 'source_aquanet_name', i18nShort: 'source_aquanet_short', region: 'poznan' },
+        { id: 'bytomskie_wodociagi', label: 'Bytomskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_bytomskie_wodociagi_name', i18nShort: 'source_bytomskie_wodociagi_short', region: 'bytom' },
         { id: 'gdanskie_wodociagi', label: 'Gdańskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_gdanskie_wodociagi_name', i18nShort: 'source_gdanskie_wodociagi_short', region: 'gdansk' },
         { id: 'katowickie_wodociagi', label: 'Katowickie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_katowickie_wodociagi_name', i18nShort: 'source_katowickie_wodociagi_short', region: 'katowice' },
+        { id: 'lpwik_legnica', label: 'LPWiK Legnica', category: 'water', defaultNotify: true, i18nLabel: 'source_lpwik_legnica_name', i18nShort: 'source_lpwik_legnica_short', region: 'lpwik_legnica_area' },
         { id: 'mpwik_lublin', label: 'MPWiK Lublin', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_lublin_name', i18nShort: 'source_mpwik_lublin_short', region: 'lublin' },
         { id: 'mpwik_rzeszow', label: 'MPWiK Rzeszów', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_rzeszow_name', i18nShort: 'source_mpwik_rzeszow_short', region: 'mpwik_rzeszow_area' },
         { id: 'mpwik_warszawa', label: 'MPWiK Warszawa', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_warszawa_name', i18nShort: 'source_mpwik_warszawa_short', region: 'mpwik_warszawa_area' },
@@ -2574,6 +2611,8 @@ if (typeof document !== 'undefined') {
         const addr = addresses[addrIdx];
         if (!addr || addr.isActive === false) return false;
 
+        if (alert.source === 'epec_elblag' && !REGION_MATCHERS.elblag(addr)) return false;
+
         // Trust backend evaluation if available
         if (alert.isLocal !== undefined && alert.isLocal !== null) {
             return alert.isLocal && (addrIdx === -1 || alert.addressIndex === addrIdx || alert.addressIndex === -1);
@@ -2596,6 +2635,9 @@ if (typeof document !== 'undefined') {
 
         const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+        if (alert.source === 'lpwik_legnica' && !REGION_MATCHERS.lpwik_legnica_area(addr)) return false;
+        if (alert.source === 'bytomskie_wodociagi' && !REGION_MATCHERS.bytom(addr)) return false;
+        if (alert.source === 'epec_elblag' && !REGION_MATCHERS.elblag(addr)) return false;
         if (alert.source === 'pewik_gdynia' && !REGION_MATCHERS.pewik_gdynia_area(addr)) return false;
         if (alert.source === 'wik_opole' && !REGION_MATCHERS.wik_opole_area(addr)) return false;
         if (['wik_opole', 'eco_sa'].includes(alert.source) && alert.location) {
@@ -2641,7 +2683,7 @@ if (typeof document !== 'undefined') {
             const singleCityProviders = [
                 'mpwik_wroclaw', 'mpwik_warszawa', 'katowickie_wodociagi',
                 'veolia_warszawa', 'veolia_poznan', 'veolia_lodz', 'zwik_lodz',
-                'zwik_zielona_gora',
+                'epec_elblag', 'lpwik_legnica', 'zwik_zielona_gora',
                 'wodociagi_plockie', 'wodociagi_kieleckie', 'wodociagi_bialostockie', 'pwik_kalisz', 'pwik_czestochowa', 'pwik_olsztyn', 'pewik_gdynia', 'gdanskie_wodociagi', 'gpec', 'kpec_bydgoszcz', 'mwik_bydgoszcz', 'enea_cieplo', 'energa_cieplo_kaliskie', 'puk_rokietnica', 'sec', 'lpec', 'mpwik_lublin', 'mpwik_rzeszow', 'mpec_kielce', 'mpec_rzeszow', 'opec_gdynia', 'pge_torun_heat', 'torunskie_wodociagi', 'wm_radom'
             ];
             if (singleCityProviders.includes(alert.source)) {
@@ -2728,6 +2770,7 @@ if (typeof document !== 'undefined') {
                 if (alert.source === 'mpec_rzeszow' &&
                     !(cityLower.startsWith('rzeszów') || cityLower.startsWith('rzeszow') || addr.cityId === 974133)) return false;
                 if (alert.source === 'mpec_kielce' && !REGION_MATCHERS.kielce(addr)) return false;
+                if (alert.source === 'epec_elblag' && !REGION_MATCHERS.elblag(addr)) return false;
                 if (alert.source === 'pge_torun_heat' &&
                     !(cityLower.startsWith('toruń') || cityLower.startsWith('torun') || addr.cityId === 929448)) return false;
                 if (alert.source === 'opec_gdynia') {

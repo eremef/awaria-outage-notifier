@@ -44,9 +44,12 @@ pub mod mpwik_lublin;
 pub mod mpwik_rzeszow;
 pub mod pwik_olsztyn;
 pub mod wik_opole;
+pub mod lpwik_legnica;
+pub mod bytomskie_wodociagi;
 pub mod mwik_bydgoszcz;
 pub mod mpec_rzeszow;
 pub mod mpec_kielce;
+pub mod epec_elblag;
 pub mod wm_radom;
 
 use crate::network_state::NetworkState;
@@ -578,9 +581,12 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(mpwik_rzeszow::MpwikRzeszowProvider),
         Box::new(pwik_olsztyn::PwikOlsztynProvider),
         Box::new(wik_opole::WikOpoleProvider),
+        Box::new(lpwik_legnica::LpwikLegnicaProvider),
+        Box::new(bytomskie_wodociagi::BytomskieWodociagiProvider),
         Box::new(mwik_bydgoszcz::MwikBydgoszczProvider),
         Box::new(mpec_rzeszow::MpecRzeszowProvider),
         Box::new(mpec_kielce::MpecKielceProvider),
+        Box::new(epec_elblag::EpecElblagProvider),
         Box::new(wm_radom::WmRadomProvider),
     ]
 }
@@ -798,6 +804,85 @@ fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Setti
 
     if s.filter_by_house_no {
         for alert in alerts.iter_mut() {
+            if alert.source == api_logic::AlertSource::LpwikLegnica
+                && alert.is_local == Some(true)
+            {
+                let message = alert.message.as_deref().unwrap_or_default();
+                let location = alert.location.as_deref().unwrap_or_default();
+                let matched_address = s.addresses.iter().enumerate().find(|(_, address)| {
+                    address.is_active
+                        && api_logic::is_address_applicable_for_provider(
+                            &alert.source,
+                            address,
+                        )
+                        && lpwik_legnica::address_matches_notice(message, location, address)
+                        && lpwik_legnica::house_number_matches_notice(
+                            message, location, address,
+                        )
+                });
+                if let Some((index, _)) = matched_address {
+                    alert.address_index = Some(index);
+                    alert.is_local = Some(true);
+                } else {
+                    alert.address_index = None;
+                    alert.is_local = Some(false);
+                    if let Some((locality, _)) = location.split_once(';') {
+                        alert.location = Some(locality.to_string());
+                    }
+                }
+                continue;
+            }
+
+            if alert.source == api_logic::AlertSource::BytomskieWodociagi
+                && alert.is_local == Some(true)
+            {
+                let location = alert.location.as_deref().unwrap_or_default();
+                let matched_address = s.addresses.iter().enumerate().find(|(_, address)| {
+                    address.is_active
+                        && api_logic::is_address_applicable_for_provider(
+                            &alert.source,
+                            address,
+                        )
+                        && bytomskie_wodociagi::location_matches_address(location, address)
+                        && bytomskie_wodociagi::house_number_matches_notice(location, address)
+                });
+                if let Some((index, _)) = matched_address {
+                    alert.address_index = Some(index);
+                    alert.is_local = Some(true);
+                } else {
+                    alert.address_index = None;
+                    alert.is_local = Some(false);
+                    if let Some((locality, _)) = location.split_once(';') {
+                        alert.location = Some(locality.to_string());
+                    }
+                }
+                continue;
+            }
+
+            if alert.source == api_logic::AlertSource::EpecElblag
+                && alert.is_local == Some(true)
+            {
+                let message = alert.message.as_deref().unwrap_or_default();
+                let location = alert.location.as_deref().unwrap_or_default();
+                let matched_address = s.addresses.iter().enumerate().find(|(_, address)| {
+                    address.is_active
+                        && api_logic::is_address_applicable_for_provider(
+                            &alert.source,
+                            address,
+                        )
+                        && epec_elblag::address_matches_notice(message, location, address)
+                        && epec_elblag::house_number_matches_notice(message, location, address)
+                });
+                if let Some((index, _)) = matched_address {
+                    alert.address_index = Some(index);
+                    alert.is_local = Some(true);
+                } else {
+                    alert.address_index = None;
+                    alert.is_local = Some(false);
+                }
+                continue;
+            }
+
             if alert.source == api_logic::AlertSource::PewikGdynia
                 && alert.is_local == Some(true)
             {
@@ -2117,6 +2202,120 @@ mod zwik_zielona_gora_house_number_filter_tests {
         let mut alerts = vec![alert()];
         apply_alert_filtering(&mut alerts, &settings(false));
         assert_eq!(alerts[0].is_local, Some(true));
+    }
+}
+
+#[cfg(test)]
+mod lpwik_legnica_house_number_filter_tests {
+    use super::*;
+
+    #[test]
+    fn lpwik_legnica_provider_is_registered() {
+        assert!(get_providers()
+            .iter()
+            .any(|provider| provider.source() == api_logic::AlertSource::LpwikLegnica));
+    }
+
+    fn alert() -> UnifiedAlert {
+        UnifiedAlert {
+            source: api_logic::AlertSource::LpwikLegnica,
+            message: Some(
+                "Prace przy ul. Sokolskiej. Przerwy w dostawie wody: ul. Sokolska 1-37 oraz ul. Jaskółcza 1-3."
+                    .to_string(),
+            ),
+            location: Some("Legnica; ul. Sokolska 1-37; ul. Jaskółcza 1-3".to_string()),
+            address_index: Some(0),
+            is_local: Some(true),
+            ..Default::default()
+        }
+    }
+
+    fn settings(filter_by_house_no: bool) -> Option<Settings> {
+        Some(Settings {
+            addresses: vec![AddressEntry {
+                name: "Dom".to_string(),
+                city_name: "Legnica".to_string(),
+                voivodeship: "Dolnośląskie".to_string(),
+                street_name: "Sokolska".to_string(),
+                street_name_1: "Sokolska".to_string(),
+                house_no: "40".to_string(),
+                city_id: Some(954047),
+                is_active: true,
+                ..Default::default()
+            }],
+            filter_by_house_no,
+            ..Settings::default()
+        })
+    }
+
+    #[test]
+    fn lpwik_house_number_matching_is_controlled_by_the_central_setting() {
+        let mut disabled_alerts = vec![alert()];
+        apply_alert_filtering(&mut disabled_alerts, &settings(false));
+        assert_eq!(disabled_alerts[0].is_local, Some(true));
+
+        let mut enabled_alerts = vec![alert()];
+        apply_alert_filtering(&mut enabled_alerts, &settings(true));
+        assert_eq!(enabled_alerts[0].is_local, Some(false));
+        assert_eq!(enabled_alerts[0].address_index, None);
+    }
+}
+
+#[cfg(test)]
+mod bytomskie_wodociagi_house_number_filter_tests {
+    use super::*;
+
+    #[test]
+    fn bytomskie_wodociagi_provider_is_registered() {
+        assert!(get_providers().iter().any(|provider| {
+            provider.source() == api_logic::AlertSource::BytomskieWodociagi
+        }));
+    }
+
+    fn alert() -> UnifiedAlert {
+        UnifiedAlert {
+            source: api_logic::AlertSource::BytomskieWodociagi,
+            message: Some("Przerwa w dostawie wody".to_string()),
+            location: Some("Miejscowość: Bytom; ul. Testowa 12-16".to_string()),
+            address_index: Some(0),
+            is_local: Some(true),
+            ..Default::default()
+        }
+    }
+
+    fn settings(filter_by_house_no: bool, house_no: &str) -> Option<Settings> {
+        Some(Settings {
+            addresses: vec![AddressEntry {
+                name: "Dom".to_string(),
+                city_name: "Bytom".to_string(),
+                voivodeship: "Śląskie".to_string(),
+                street_name: "Testowa".to_string(),
+                street_name_1: "Testowa".to_string(),
+                house_no: house_no.to_string(),
+                city_id: Some(938670),
+                is_active: true,
+                ..Default::default()
+            }],
+            filter_by_house_no,
+            ..Settings::default()
+        })
+    }
+
+    #[test]
+    fn bytomskie_wodociagi_house_number_filter_is_setting_controlled() {
+        let mut disabled_alerts = vec![alert()];
+        apply_alert_filtering(&mut disabled_alerts, &settings(false, "25"));
+        assert_eq!(disabled_alerts[0].is_local, Some(true));
+
+        let mut matching_alerts = vec![alert()];
+        apply_alert_filtering(&mut matching_alerts, &settings(true, "14"));
+        assert_eq!(matching_alerts[0].is_local, Some(true));
+        assert_eq!(matching_alerts[0].address_index, Some(0));
+
+        let mut non_matching_alerts = vec![alert()];
+        apply_alert_filtering(&mut non_matching_alerts, &settings(true, "25"));
+        assert_eq!(non_matching_alerts[0].is_local, Some(false));
+        assert_eq!(non_matching_alerts[0].address_index, None);
     }
 }
 

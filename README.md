@@ -28,6 +28,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
 - **🔥 Gas - PSG**: Planned and current gas outages.
 - **🌡️ Heat**
   - **ECO SA**: System-heat interruptions in the ECO group's published service cities, including Krapkowice, Kęty, Lubliniec, and Malbork.
+  - **EPEC Elbląg**: District-heating and hot-water interruptions in Elbląg only.
   - **ENEA Ciepło Białystok**: Heat outages in Białystok.
   - **Energa Ciepło Kaliskie**: Heat outages in Kalisz.
   - **Fortum**: Planned and current heat/hot water outages.
@@ -45,6 +46,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **PGE Toruń**: Planned domestic hot-water interruptions in Toruń.
 - **💧 Water**
   - **MPWiK Wrocław**: Water failures and maintenance work in Wrocław.
+  - **Bytomskie Wodociągi**: Water outages and planned interruptions in Bytom only.
   - **MWiK Bydgoszcz**: Planned water shutoffs and network failures in Bydgoszcz.
   - **MPWiK Warszawa**: Water failures and repairs in Warsaw.
   - **WMK**: Water maintenance and failures in Kraków.
@@ -62,6 +64,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **PUK Rokietnica**: Water maintenance and failures in Rokietnica.
   - **MPWiK Lublin**: Water maintenance and failures in Lublin.
   - **MPWiK Rzeszów**: Water interruptions and failures in Rzeszów and the covered nearby localities.
+  - **LPWiK Legnica**: Water failures, repairs, and planned interruptions in Legnica only.
   - **Wodociągi Białostockie**: Water outages and planned interruptions in Białystok and the Wasilków municipality.
   - **Wodociągi Kieleckie**: Water interruptions and failures in Kielce, its service municipalities, and reposted local notices.
   - **Toruńskie Wodociągi**: Water failures and planned water-network work in Toruń, Lubicz, Łysomice, Obrowo, Wielka Nieszawka, and Zławieś Wielka.
@@ -204,7 +207,7 @@ For each address you want to monitor, add an entry with:
 
 #### Enabled Sources
 
-Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`).
+Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `epec_elblag`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`, `bytomskie_wodociagi`).
 
 ### Usage
 

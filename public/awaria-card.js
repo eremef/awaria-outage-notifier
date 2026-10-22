@@ -18,7 +18,10 @@ class AwariaCard extends HTMLElement {
     if (s.includes('pge_torun_heat')) return { name: 'PGE Toruń', icon: '🔥', color: '#f44336' };
     if (s.includes('mpec_kielce')) return { name: 'MPEC Kielce', icon: '🔥', color: '#f44336' };
     if (s === 'opec_gdynia') return { name: 'OPEC Gdynia', icon: '🔥', color: '#f44336' };
+    if (s === 'epec_elblag') return { name: 'EPEC Elbląg', icon: '🔥', color: '#f44336' };
     if (s === 'torunskie_wodociagi') return { name: 'Toruńskie Wodociągi', icon: '💧', color: '#2196f3' };
+    if (s === 'lpwik_legnica') return { name: 'LPWiK Legnica', icon: '💧', color: '#2196f3' };
+    if (s === 'bytomskie_wodociagi') return { name: 'Bytomskie Wodociągi', icon: '💧', color: '#2196f3' };
     if (s === 'zwik_zielona_gora') return { name: 'ZWiK Zielona Góra', icon: '💧', color: '#2196f3' };
     if (s.includes('pge')) return { name: 'PGE', icon: '⚡', color: '#ffb74d' };
     if (s.includes('energa_cieplo_kaliskie')) return { name: 'Energa Ciepło Kaliskie', icon: '🔥', color: '#f44336' };

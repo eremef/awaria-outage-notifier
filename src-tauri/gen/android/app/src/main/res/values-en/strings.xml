@@ -45,6 +45,7 @@
   <string name="provider_mpwik_wroclaw">MPWiK WRO</string>
   <string name="provider_pge">PGE</string>
   <string name="provider_pge_torun_heat">PGE Toruń</string>
+  <string name="provider_epec_elblag">EPEC Elbląg</string>
   <string name="provider_psg">PSG</string>
   <string name="provider_puk_rokietnica">PUK Rokietnica</string>
   <string name="provider_pwik_czestochowa">PWiK CZW</string>
@@ -64,6 +65,7 @@
   <string name="provider_wodociagi_kieleckie">WK Kielce</string>
   <string name="provider_torunskie_wodociagi">TW Toruń</string>
   <string name="provider_wik_opole">WiK Opole</string>
+  <string name="provider_bytomskie_wodociagi">Bytom Water Utility</string>
   <string name="provider_zwik_lodz">ZWIK Łódź</string>
   <string name="provider_zwik_zielona_gora">ZWiK ZG</string>
   <string name="widget_label_all">Address: all utilities</string>
@@ -89,7 +91,10 @@
   <string name="widget_label_mpwik_warszawa">MPWiK Warszawa</string>
   <string name="widget_label_pge">PGE</string>
   <string name="widget_label_pge_torun_heat">PGE Toruń</string>
+  <string name="widget_label_epec_elblag">EPEC Elbląg</string>
   <string name="widget_label_psg">PSG</string>
+  <string name="widget_label_lpwik_legnica">LPWiK Legnica</string>
+  <string name="widget_label_bytomskie_wodociagi">Bytom Water Utility</string>
   <string name="widget_label_puk_rokietnica">PUK Rokietnica</string>
   <string name="widget_label_pwik_czestochowa">PWiK Częstochowa</string>
   <string name="widget_label_pwik_kalisz">PWiK Kalisz</string>

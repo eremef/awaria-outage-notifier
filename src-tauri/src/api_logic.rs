@@ -89,6 +89,12 @@ pub enum AlertSource {
     MpecRzeszow,
     #[serde(rename = "mpec_kielce")]
     MpecKielce,
+    #[serde(rename = "lpwik_legnica")]
+    LpwikLegnica,
+    #[serde(rename = "bytomskie_wodociagi")]
+    BytomskieWodociagi,
+    #[serde(rename = "epec_elblag")]
+    EpecElblag,
 }
 
 pub enum ServiceLocation {
@@ -194,6 +200,9 @@ impl AlertSource {
             AlertSource::MpwikRzeszow => ServiceLocation::Cities(vec![is_mpwik_rzeszow_area]),
             AlertSource::MpecRzeszow => ServiceLocation::Cities(vec![is_rzeszow]),
             AlertSource::MpecKielce => ServiceLocation::Cities(vec![is_kielce]),
+            AlertSource::LpwikLegnica => ServiceLocation::Cities(vec![is_lpwik_legnica]),
+            AlertSource::BytomskieWodociagi => ServiceLocation::Cities(vec![is_bytom]),
+            AlertSource::EpecElblag => ServiceLocation::Cities(vec![is_elblag]),
         }
     }
 
@@ -243,6 +252,9 @@ impl AlertSource {
             AlertSource::MwikBydgoszcz => "MWiK Bydgoszcz",
             AlertSource::MpecRzeszow => "MPEC Rzeszów",
             AlertSource::MpecKielce => "MPEC Kielce",
+            AlertSource::LpwikLegnica => "LPWiK Legnica",
+            AlertSource::BytomskieWodociagi => "Bytomskie Wodociągi",
+            AlertSource::EpecElblag => "EPEC Elbląg",
         }
     }
 }
@@ -434,10 +446,10 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea | AlertSource::Pge | AlertSource::Stoen => {
             if is_pl { "wyłączenie prądu" } else { "power outage" }
         }
-        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::WmRadom | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::ZwikZielonaGora | AlertSource::WodociagiPlockie | AlertSource::WodociagiKieleckie | AlertSource::TorunskieWodociagi | AlertSource::WodociagiBialostockie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa | AlertSource::PwikOlsztyn | AlertSource::WikOpole | AlertSource::PewikGdynia | AlertSource::GdanskieWodociagi | AlertSource::PukRokietnica | AlertSource::MpwikLublin | AlertSource::MpwikRzeszow | AlertSource::MwikBydgoszcz => {
+        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::WmRadom | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::ZwikZielonaGora | AlertSource::WodociagiPlockie | AlertSource::WodociagiKieleckie | AlertSource::TorunskieWodociagi | AlertSource::WodociagiBialostockie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa | AlertSource::PwikOlsztyn | AlertSource::WikOpole | AlertSource::PewikGdynia | AlertSource::GdanskieWodociagi | AlertSource::PukRokietnica | AlertSource::MpwikLublin | AlertSource::MpwikRzeszow | AlertSource::MwikBydgoszcz | AlertSource::LpwikLegnica | AlertSource::BytomskieWodociagi => {
             if is_pl { "wyłączenie wody" } else { "water outage" }
         }
-        AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz | AlertSource::Gpec | AlertSource::OpecGdynia | AlertSource::KpecBydgoszcz | AlertSource::EneaCieplo | AlertSource::EnergaCieploKaliskie | AlertSource::EcoSa | AlertSource::Sec | AlertSource::Lpec | AlertSource::MpecRzeszow | AlertSource::MpecKielce | AlertSource::PgeTorunHeat => {
+        AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz | AlertSource::Gpec | AlertSource::OpecGdynia | AlertSource::KpecBydgoszcz | AlertSource::EneaCieplo | AlertSource::EnergaCieploKaliskie | AlertSource::EcoSa | AlertSource::Sec | AlertSource::Lpec | AlertSource::MpecRzeszow | AlertSource::MpecKielce | AlertSource::PgeTorunHeat | AlertSource::EpecElblag => {
             if is_pl { "wyłączenie ogrzewania" } else { "heat outage" }
         }
         AlertSource::Psg => {
@@ -576,6 +588,9 @@ impl std::fmt::Display for AlertSource {
             AlertSource::MwikBydgoszcz => "mwik_bydgoszcz",
             AlertSource::MpecRzeszow => "mpec_rzeszow",
             AlertSource::MpecKielce => "mpec_kielce",
+            AlertSource::LpwikLegnica => "lpwik_legnica",
+            AlertSource::BytomskieWodociagi => "bytomskie_wodociagi",
+            AlertSource::EpecElblag => "epec_elblag",
         };
         write!(f, "{}", s)
     }
@@ -679,6 +694,38 @@ city_checker!(is_kalisz, Some(936579_u64), "kalisz");
 city_checker!(is_szczecin, Some(977976_u64), "szczecin");
 city_checker!(is_lublin, Some(959423_u64), "lublin");
 city_checker!(is_kielce, Some(945930_u64), "kielce");
+fn is_lpwik_legnica(addr: &AddressEntry) -> bool {
+    if let Some(city_id) = addr.city_id {
+        return city_id == 954047;
+    }
+
+    let city = crate::utils::clean_text(&addr.city_name);
+    let voivodeship = crate::utils::clean_text(&addr.voivodeship);
+    city.trim().starts_with("legnica")
+        && (voivodeship.trim().is_empty() || voivodeship.trim().starts_with("dolnoslaskie"))
+}
+
+fn is_bytom(addr: &AddressEntry) -> bool {
+    let voivodeship = crate::utils::clean_text(&addr.voivodeship);
+    if !voivodeship.trim().is_empty() && !voivodeship.trim().starts_with("slaskie") {
+        return false;
+    }
+
+    if let Some(city_id) = addr.city_id {
+        return city_id == 938670;
+    }
+
+    let city = crate::utils::clean_text(&addr.city_name);
+    city.trim().starts_with("bytom")
+}
+
+fn is_elblag(addr: &AddressEntry) -> bool {
+    if let Some(city_id) = addr.city_id {
+        return city_id == 932_703;
+    }
+
+    crate::utils::clean_text(&addr.city_name).trim() == "elblag"
+}
 
 fn is_zwik_zielona_gora_area(addr: &AddressEntry) -> bool {
     const SERVICE_CITY_IDS: [u64; 28] = [
@@ -2216,6 +2263,163 @@ mod zwik_zielona_gora_scope_tests {
             serde_json::to_string(&AlertSource::ZwikZielonaGora).unwrap(),
             "\"zwik_zielona_gora\""
         );
+    }
+}
+
+#[cfg(test)]
+mod lpwik_legnica_registration_tests {
+    use super::{
+        format_notification_title, is_address_applicable_for_provider, AddressEntry, AlertSource,
+        Settings, UnifiedAlert,
+    };
+
+    #[test]
+    fn lpwik_legnica_uses_the_legnica_simc_and_city_name_fallback() {
+        let by_simc = AddressEntry {
+            city_name: "Legnica".to_string(),
+            city_id: Some(954047),
+            ..Default::default()
+        };
+        let by_name = AddressEntry {
+            city_name: "Legnica".to_string(),
+            ..Default::default()
+        };
+        let outside_service_area = AddressEntry {
+            city_name: "Lubin".to_string(),
+            city_id: Some(954071),
+            ..Default::default()
+        };
+        let conflicting_identity = AddressEntry {
+            city_name: "Legnica".to_string(),
+            voivodeship: "Dolnośląskie".to_string(),
+            city_id: Some(999001),
+            ..Default::default()
+        };
+        assert!(is_address_applicable_for_provider(
+            &AlertSource::LpwikLegnica,
+            &by_simc
+        ));
+        assert!(is_address_applicable_for_provider(
+            &AlertSource::LpwikLegnica,
+            &by_name
+        ));
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::LpwikLegnica,
+            &outside_service_area
+        ));
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::LpwikLegnica,
+            &conflicting_identity
+        ));
+    }
+
+    #[test]
+    fn lpwik_legnica_has_a_stable_source_id_and_water_notification_classification() {
+        assert_eq!(AlertSource::LpwikLegnica.to_string(), "lpwik_legnica");
+        assert_eq!(
+            AlertSource::LpwikLegnica.display_name(),
+            "LPWiK Legnica"
+        );
+        assert_eq!(
+            serde_json::to_string(&AlertSource::LpwikLegnica).unwrap(),
+            "\"lpwik_legnica\""
+        );
+
+        let title = format_notification_title(
+            &UnifiedAlert {
+                source: AlertSource::LpwikLegnica,
+                ..Default::default()
+            },
+            &Settings::default(),
+            false,
+        );
+        assert_eq!(title, "Nowe wyłączenie wody - LPWiK Legnica");
+    }
+
+    #[test]
+    fn bytomskie_wodociagi_is_limited_to_bytom() {
+        let by_simc = AddressEntry {
+            city_name: "Bytom".to_string(),
+            voivodeship: "Śląskie".to_string(),
+            city_id: Some(938670),
+            ..Default::default()
+        };
+        let by_name = AddressEntry {
+            city_name: "Bytom".to_string(),
+            voivodeship: "Slaskie".to_string(),
+            ..Default::default()
+        };
+        let unknown_voivodeship = AddressEntry {
+            city_name: "BYTOM".to_string(),
+            ..Default::default()
+        };
+        let wrong_city = AddressEntry {
+            city_name: "Gliwice".to_string(),
+            voivodeship: "Śląskie".to_string(),
+            city_id: Some(937001),
+            ..Default::default()
+        };
+        let wrong_voivodeship = AddressEntry {
+            city_name: "Bytom".to_string(),
+            voivodeship: "Mazowieckie".to_string(),
+            ..Default::default()
+        };
+        let conflicting_identity = AddressEntry {
+            city_name: "Bytom".to_string(),
+            voivodeship: "Śląskie".to_string(),
+            city_id: Some(999001),
+            ..Default::default()
+        };
+        let wrong_known_voivodeship = AddressEntry {
+            city_name: "Bytom".to_string(),
+            voivodeship: "Mazowieckie".to_string(),
+            city_id: Some(938670),
+            ..Default::default()
+        };
+
+        for address in [&by_simc, &by_name, &unknown_voivodeship] {
+            assert!(is_address_applicable_for_provider(
+                &AlertSource::BytomskieWodociagi,
+                address
+            ));
+        }
+        for address in [
+            &wrong_city,
+            &wrong_voivodeship,
+            &conflicting_identity,
+            &wrong_known_voivodeship,
+        ] {
+            assert!(!is_address_applicable_for_provider(
+                &AlertSource::BytomskieWodociagi,
+                address
+            ));
+        }
+    }
+
+    #[test]
+    fn bytomskie_wodociagi_has_a_stable_source_id_and_water_notification_classification() {
+        assert_eq!(
+            AlertSource::BytomskieWodociagi.to_string(),
+            "bytomskie_wodociagi"
+        );
+        assert_eq!(
+            AlertSource::BytomskieWodociagi.display_name(),
+            "Bytomskie Wodociągi"
+        );
+        assert_eq!(
+            serde_json::to_string(&AlertSource::BytomskieWodociagi).unwrap(),
+            "\"bytomskie_wodociagi\""
+        );
+
+        let title = format_notification_title(
+            &UnifiedAlert {
+                source: AlertSource::BytomskieWodociagi,
+                ..Default::default()
+            },
+            &Settings::default(),
+            false,
+        );
+        assert_eq!(title, "Nowe wyłączenie wody - Bytomskie Wodociągi");
     }
 }
 

@@ -87,6 +87,14 @@ class WidgetUpdateWorker(
             pgeTorunHeatProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        // Update EPEC Elbląg widgets
+        val epecElblagName = ComponentName(context, EpecElblagWidgetProvider::class.java)
+        val epecElblagIds = appWidgetManager.getAppWidgetIds(epecElblagName)
+        val epecElblagProvider = EpecElblagWidgetProvider()
+        for (id in epecElblagIds) {
+            epecElblagProvider.updateWidget(context, appWidgetManager, id)
+        }
+
         // Update Stoen widgets
         val stoenName = ComponentName(context, StoenWidgetProvider::class.java)
         val stoenIds = appWidgetManager.getAppWidgetIds(stoenName)
@@ -383,6 +391,22 @@ class WidgetUpdateWorker(
         val wodociagiBialostockieProvider = WodociagiBialostockieWidgetProvider()
         for (id in wodociagiBialostockieIds) {
             wodociagiBialostockieProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update LPWiK Legnica widgets
+        val lpwikLegnicaName = ComponentName(context, LpwikLegnicaWidgetProvider::class.java)
+        val lpwikLegnicaIds = appWidgetManager.getAppWidgetIds(lpwikLegnicaName)
+        val lpwikLegnicaProvider = LpwikLegnicaWidgetProvider()
+        for (id in lpwikLegnicaIds) {
+            lpwikLegnicaProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update Bytomskie Wodociągi widgets
+        val bytomskieWodociagiName = ComponentName(context, BytomskieWodociagiWidgetProvider::class.java)
+        val bytomskieWodociagiIds = appWidgetManager.getAppWidgetIds(bytomskieWodociagiName)
+        val bytomskieWodociagiProvider = BytomskieWodociagiWidgetProvider()
+        for (id in bytomskieWodociagiIds) {
+            bytomskieWodociagiProvider.updateWidget(context, appWidgetManager, id)
         }
 
         // Update WM Radom widgets

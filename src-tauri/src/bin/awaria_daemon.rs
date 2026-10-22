@@ -337,6 +337,7 @@ async fn get_calendar_handler(Extension(alerts): Extension<SharedAlerts>) -> imp
             | app_lib::api_logic::AlertSource::OpecGdynia
             | app_lib::api_logic::AlertSource::KpecBydgoszcz
             | app_lib::api_logic::AlertSource::PgeTorunHeat
+            | app_lib::api_logic::AlertSource::EpecElblag
             | app_lib::api_logic::AlertSource::EneaCieplo
             | app_lib::api_logic::AlertSource::EnergaCieploKaliskie
             | app_lib::api_logic::AlertSource::EcoSa
@@ -349,7 +350,8 @@ async fn get_calendar_handler(Extension(alerts): Extension<SharedAlerts>) -> imp
             | app_lib::api_logic::AlertSource::TorunskieWodociagi
             | app_lib::api_logic::AlertSource::WodociagiBialostockie
             | app_lib::api_logic::AlertSource::PwikOlsztyn
-            | app_lib::api_logic::AlertSource::ZwikZielonaGora => "Awaria wody",
+            | app_lib::api_logic::AlertSource::ZwikZielonaGora
+            | app_lib::api_logic::AlertSource::LpwikLegnica => "Awaria wody",
             app_lib::api_logic::AlertSource::WikOpole => "Awaria wody",
             _ => "Awaria wody",
         };

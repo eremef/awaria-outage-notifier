@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect } from 'vitest';
 const { filterAlerts, formatDate, matchesStreetName, getSources, getRegionMatchers } = require('../public/script.js');
+const { translations } = require('../public/i18n.js');
 require('../public/awaria-card.js');
 describe('Frontend Logic', () => {
     describe('filtering logic', () => {
@@ -380,6 +381,48 @@ describe('Frontend Logic', () => {
             expect(waterIds.indexOf('wodociagi_bialostockie')).toBeLessThan(waterIds.indexOf('wodociagi_kieleckie'));
         });
 
+        it('registers LPWiK Legnica alphabetically with generic water styling', () => {
+            const sources = getSources();
+            const provider = sources.find(source => source.id === 'lpwik_legnica');
+            const waterIds = sources.filter(source => source.category === 'water').map(source => source.id);
+
+            expect(provider).toMatchObject({
+                label: 'LPWiK Legnica',
+                category: 'water',
+                region: 'lpwik_legnica_area',
+                i18nLabel: 'source_lpwik_legnica_name',
+                i18nShort: 'source_lpwik_legnica_short'
+            });
+            expect(waterIds).toEqual([...waterIds].sort());
+
+            const Card = window.customElements.get('awaria-card');
+            const card = new Card();
+            expect(card.getProviderMeta('lpwik_legnica')).toEqual({
+                name: 'LPWiK Legnica',
+                icon: '💧',
+                color: '#2196f3'
+            });
+        });
+
+        it('registers Bytomskie Wodociągi alphabetically with Polish and English labels', () => {
+            const sources = getSources();
+            const provider = sources.find(source => source.id === 'bytomskie_wodociagi');
+            const waterIds = sources.filter(source => source.category === 'water').map(source => source.id);
+
+            expect(provider).toMatchObject({
+                label: 'Bytomskie Wodociągi',
+                category: 'water',
+                region: 'bytom',
+                i18nLabel: 'source_bytomskie_wodociagi_name',
+                i18nShort: 'source_bytomskie_wodociagi_short'
+            });
+            expect(waterIds).toEqual([...waterIds].sort());
+            expect(translations.en.source_bytomskie_wodociagi_name).toBe('Bytomskie Wodociągi');
+            expect(translations.en.source_bytomskie_wodociagi_short).toBe('BW Bytom');
+            expect(translations.pl.source_bytomskie_wodociagi_name).toBe('Bytomskie Wodociągi');
+            expect(translations.pl.source_bytomskie_wodociagi_short).toBe('BW Bytom');
+        });
+
         it('registers PEWIK Gdynia alphabetically as a water provider', () => {
             const sources = getSources();
             const provider = sources.find(source => source.id === 'pewik_gdynia');
@@ -439,6 +482,54 @@ describe('Frontend Logic', () => {
             expect(matchesArea({ cityName: 'Zielona Góra', cityId: 999001, voivodeship: 'Lubuskie' })).toBe(false);
             expect(matchesArea({ cityName: 'Lubsko', voivodeship: 'Lubuskie' })).toBe(false);
             expect(matchesArea({ cityName: 'Ochla', voivodeship: 'Dolnośląskie' })).toBe(false);
+        });
+    });
+
+    describe('LPWiK Legnica service area', () => {
+        const matchesArea = getRegionMatchers().lpwik_legnica_area;
+
+        it('matches the TERYT city ID and normalized Legnica fallback', () => {
+            expect(matchesArea({ cityName: 'Legnica', cityId: 954047, voivodeship: 'Dolnośląskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'LEGNICA', voivodeship: 'Dolnośląskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Legnica' })).toBe(true);
+        });
+
+        it('rejects other city IDs, voivodeships, and same-street matches outside Legnica', () => {
+            expect(matchesArea({ cityName: 'Legnica', cityId: 999001, voivodeship: 'Dolnośląskie' })).toBe(false);
+            expect(matchesArea({ cityName: 'Legnica', voivodeship: 'Lubuskie' })).toBe(false);
+            expect(matchesArea({ cityName: 'Lubin', voivodeship: 'Dolnośląskie' })).toBe(false);
+
+            const alert = {
+                message: 'Awaria wodociągowa przy ul. Kwiatowej 12',
+                source: 'lpwik_legnica'
+            };
+            expect(matchesStreetName(alert, {
+                cityName: 'Legnica', cityId: 954047, voivodeship: 'Dolnośląskie', streetName1: 'Kwiatowa'
+            })).toBe(true);
+            expect(matchesStreetName(alert, {
+                cityName: 'Lubin', cityId: 954123, voivodeship: 'Dolnośląskie', streetName1: 'Kwiatowa'
+            })).toBe(false);
+        });
+    });
+
+    describe('Bytomskie Wodociągi service area', () => {
+        const matchesArea = getRegionMatchers().bytom;
+
+        it('matches Bytom by TERYT ID or normalized city name', () => {
+            expect(matchesArea({ cityName: 'Bytom', cityId: 938670 })).toBe(true);
+            expect(matchesArea({ cityName: '  BYTOM  ' })).toBe(true);
+            expect(matchesArea({ cityName: 'Bytom', cityId: '938670' })).toBe(true);
+            expect(matchesArea({ cityName: 'Bytom', voivodeship: 'Śląskie' })).toBe(true);
+        });
+
+        it('rejects other cities, including matching streets outside Bytom', () => {
+            expect(matchesArea({ cityName: 'Gliwice', cityId: 938671 })).toBe(false);
+            expect(matchesArea({ cityName: 'Bytom', cityId: 938671 })).toBe(false);
+            expect(matchesArea({ cityName: 'Bytom', voivodeship: 'Mazowieckie' })).toBe(false);
+            expect(matchesStreetName(
+                { source: 'bytomskie_wodociagi', message: 'Awaria przy ul. Dworcowej' },
+                { cityName: 'Gliwice', cityId: 938671, streetName1: 'Dworcowa' }
+            )).toBe(false);
         });
     });
 
@@ -520,6 +611,17 @@ describe('Frontend Logic', () => {
             const heatProvider = card.getProviderMeta('energa_cieplo_kaliskie');
             expect(heatProvider.name).toBe('Energa Ciepło Kaliskie');
             expect(heatProvider.icon).toBe('🔥');
+        });
+
+        it('uses the explicit Bytomskie Wodociągi name and shared water styling', () => {
+            const AwariaCard = customElements.get('awaria-card');
+            const card = new AwariaCard();
+
+            expect(card.getProviderMeta('bytomskie_wodociagi')).toEqual({
+                name: 'Bytomskie Wodociągi',
+                icon: '💧',
+                color: '#2196f3'
+            });
         });
 
         it('uses the full Wodociągi Kieleckie name and shared water styling', () => {

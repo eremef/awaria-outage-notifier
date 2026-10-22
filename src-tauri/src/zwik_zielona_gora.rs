@@ -795,7 +795,7 @@ fn address_matches_scope(address: &AddressEntry, street_scope: Option<&str>) -> 
                 && address
                     .street_name_2
                     .as_deref()
-                    .map_or(true, |street| street.trim().is_empty())
+                    .is_none_or(|street| street.trim().is_empty())
         }
     }
 }

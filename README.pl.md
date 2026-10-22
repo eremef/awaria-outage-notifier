@@ -28,6 +28,7 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
 - **🔥 Gaz - PSG**: Planowane i bieżące wyłączenia gazu.
 - **🌡️ Ciepło**
   - **ECO SA**: Przerwy w dostawie ciepła systemowego w publikowanych miejscowościach Grupy ECO, m.in. Krapkowicach, Kętach, Lublińcu i Malborku.
+  - **EPEC Elbląg**: Przerwy w dostawie ciepła i ciepłej wody w Elblągu.
   - **ENEA Ciepło Białystok**: Przerwy w dostawie ciepła w Białymstoku.
   - **Energa Ciepło Kaliskie**: Przerwy w dostawie ciepła w Kaliszu.
   - **Fortum**: Planowane i bieżące wyłączenia ogrzewania oraz ciepłej wody.
@@ -45,6 +46,7 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
   - **PGE Toruń**: Planowane przerwy w dostawie ciepłej wody w Toruniu.
 - **💧 Woda**
   - **MPWiK Wrocław**: Awarie wodociągowe i prace konserwacyjne we Wrocławiu.
+  - **Bytomskie Wodociągi**: Awarie i planowane przerwy w dostawie wody wyłącznie w Bytomiu.
   - **MWiK Bydgoszcz**: Planowane wyłączenia wody i awarie sieci wodociągowej w Bydgoszczy.
   - **MPWiK Warszawa**: Awarie i naprawy wodociągowe w Warszawie.
   - **WMK**: Awarie i konserwacje wodociągowe w Krakowie.
@@ -62,6 +64,7 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
   - **PUK Rokietnica**: Awarie i konserwacje wodociągowe w Rokietnicy.
   - **MPWiK Lublin**: Awarie i konserwacje wodociągowe w Lublinie.
   - **MPWiK Rzeszów**: Przerwy w dostawie wody i awarie w Rzeszowie oraz obsługiwanych okolicznych miejscowościach.
+  - **LPWiK Legnica**: Awarie, naprawy i planowane przerwy w dostawie wody wyłącznie w Legnicy.
   - **Wodociągi Białostockie**: Awarie i planowane przerwy w dostawie wody w Białymstoku oraz gminie Wasilków.
   - **Wodociągi Kieleckie**: Przerwy w dostawie wody i awarie w Kielcach, obsługiwanych gminach oraz publikowanych lokalnych komunikatach.
   - **Toruńskie Wodociągi**: Awarie i planowane prace na sieci wodociągowej w Toruniu, Lubiczu, Łysomicach, Obrowie, Wielkiej Nieszawce i Złej Wsi Wielkiej.
@@ -204,7 +207,7 @@ Dla każdego adresu, który chcesz monitorować, dodaj wpis zawierający:
 
 #### Aktywne źródła (Enabled Sources)
 
-Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`).
+Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `epec_elblag`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`, `bytomskie_wodociagi`).
 
 ### Użytkowanie
 

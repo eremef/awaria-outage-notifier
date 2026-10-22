@@ -182,6 +182,22 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_single_info" />
         </receiver>
+
+        <receiver
+            android:name=".EpecElblagWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_epec_elblag">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_EPEC_ELBLAG" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_single_info" />
+        </receiver>
         
         <receiver
             android:name=".StoenWidgetProvider"
@@ -449,6 +465,38 @@
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
                 <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
                 <action android:name="xyz.eremef.awaria.ACTION_REFRESH_WODOCIAGI_BIALOSTOCKIE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_single_info" />
+        </receiver>
+
+        <receiver
+            android:name=".LpwikLegnicaWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_lpwik_legnica">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_LPWIK_LEGNICA" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_single_info" />
+        </receiver>
+
+        <receiver
+            android:name=".BytomskieWodociagiWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_bytomskie_wodociagi">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_BYTOMSKIE_WODOCIAGI" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
