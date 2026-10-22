@@ -15,18 +15,28 @@ fn main() {
             PathBuf::from(env::var_os("OUT_DIR").expect("Cargo sets OUT_DIR for build scripts"));
         let target_arch = env::var("CARGO_CFG_TARGET_ARCH")
             .expect("Cargo sets CARGO_CFG_TARGET_ARCH for build scripts");
-        let (resource_arch, machine) = match target_arch.as_str() {
+        let (target_arch, machine) = match target_arch.as_str() {
             "x86_64" => ("x64", "X64"),
             "x86" => ("x86", "X86"),
             "aarch64" => ("arm64", "ARM64"),
             _ => panic!("unsupported Windows MSVC test target architecture: {target_arch}"),
         };
+        // rc.exe runs on the build host; the resource object is converted for the target below.
+        let host_arch = match env::consts::ARCH {
+            "x86_64" => "x64",
+            "x86" => "x86",
+            "aarch64" => "arm64",
+            _ => panic!(
+                "unsupported Windows MSVC build host architecture: {}",
+                env::consts::ARCH
+            ),
+        };
 
-        let rc = find_windows_sdk_tool("rc.exe", resource_arch)
+        let rc = find_windows_sdk_tool("rc.exe", host_arch)
             .expect("Windows SDK rc.exe is required to embed the test manifest");
-        let cvtres = find_msvc_tool("cvtres.exe", resource_arch)
+        let cvtres = find_msvc_tool("cvtres.exe", target_arch)
             .expect("MSVC cvtres.exe is required to embed the test manifest");
-        let lib = find_msvc_tool("lib.exe", resource_arch)
+        let lib = find_msvc_tool("lib.exe", target_arch)
             .expect("MSVC lib.exe is required to embed the test manifest");
 
         let manifest_for_rc = manifest.to_string_lossy().replace('\\', "/");
@@ -76,14 +86,14 @@ fn run_tool(command: &mut Command) {
     assert!(status.success(), "{tool} failed with {status}");
 }
 
-fn find_windows_sdk_tool(name: &str, target_arch: &str) -> Option<PathBuf> {
+fn find_windows_sdk_tool(name: &str, host_arch: &str) -> Option<PathBuf> {
     if let Some(sdk_dir) = env::var_os("WindowsSdkDir") {
         let sdk_dir = PathBuf::from(sdk_dir);
         if let Some(version) = env::var_os("WindowsSDKVersion") {
             let path = sdk_dir
                 .join("bin")
                 .join(version.to_string_lossy().trim_end_matches(['\\', '/']))
-                .join(target_arch)
+                .join(host_arch)
                 .join(name);
             if path.is_file() {
                 return Some(path);
@@ -103,7 +113,7 @@ fn find_windows_sdk_tool(name: &str, target_arch: &str) -> Option<PathBuf> {
     versions.sort_by_key(|entry| entry.file_name());
 
     versions.into_iter().rev().find_map(|version| {
-        let path = version.path().join(target_arch).join(name);
+        let path = version.path().join(host_arch).join(name);
         path.is_file().then_some(path)
     })
 }
@@ -112,17 +122,28 @@ fn find_msvc_tool(name: &str, target_arch: &str) -> Option<PathBuf> {
     let tools_dir = env::var_os("VCToolsInstallDir")
         .map(PathBuf::from)
         .or_else(find_msvc_tools_dir)?;
-    let host_arch = match env::consts::ARCH {
-        "x86_64" => "Hostx64",
-        "x86" => "Hostx86",
+    let (host_arch, host_target_arch) = match env::consts::ARCH {
+        "x86_64" => ("Hostx64", "x64"),
+        "x86" => ("Hostx86", "x86"),
+        "aarch64" => ("Hostarm64", "arm64"),
         _ => return None,
     };
-    let path = tools_dir
+
+    let target_tool = tools_dir
         .join("bin")
         .join(host_arch)
         .join(target_arch)
         .join(name);
-    path.is_file().then_some(path)
+    if target_tool.is_file() {
+        return Some(target_tool);
+    }
+
+    let host_tool = tools_dir
+        .join("bin")
+        .join(host_arch)
+        .join(host_target_arch)
+        .join(name);
+    host_tool.is_file().then_some(host_tool)
 }
 
 fn find_msvc_tools_dir() -> Option<PathBuf> {

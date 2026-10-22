@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Awaria",
-  "version": "1.0.75-beta.5",
+  "version": "1.0.75-beta.6",
   "identifier": "xyz.eremef.awaria",
   "build": {
     "frontendDist": "../public"
@@ -44,11 +44,11 @@
       "entitlements": null
     },
     "android": {
-      "versionCode": 10076
+      "versionCode": 10077
     },
     "windows": {
       "wix": {
-        "version": "1.0.75.5"
+        "version": "1.0.75.6"
       }
     }
   }
