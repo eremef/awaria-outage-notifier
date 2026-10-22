@@ -40,9 +40,10 @@ fn db_path(app: &AppHandle) -> Result<std::path::PathBuf, String> {
     use tauri_plugin_fs::FsExt;
     if let Ok(resource_path) = app.path().resolve("teryt", BaseDirectory::Resource)
         && let Ok(bytes) = app.fs().read(&resource_path)
-            && std::fs::write(&db, bytes).is_ok() {
-                return Ok(db);
-            }
+        && std::fs::write(&db, bytes).is_ok()
+    {
+        return Ok(db);
+    }
 
     // Fallback: dev mode relative to Cargo.toml
     let dev_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -63,10 +64,46 @@ pub fn lookup_cities(app: &AppHandle, city_name: &str) -> Result<Vec<TerytCity>,
     lookup_cities_by_path(&path, city_name)
 }
 
-pub fn lookup_cities_by_path(db_path: &std::path::Path, city_name: &str) -> Result<Vec<TerytCity>, String> {
+pub fn lookup_cities_by_path(
+    db_path: &std::path::Path,
+    city_name: &str,
+) -> Result<Vec<TerytCity>, String> {
     let conn = Connection::open_with_flags(db_path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
         .map_err(|e| format!("Failed to open teryt DB: {}", e))?;
     _lookup_cities(&conn, city_name)
+}
+
+/// Returns a root SIMC ID and every SIMC child whose `sympod` points to it.
+/// The city autocomplete deliberately stores root IDs, while source data may
+/// identify a district or other child locality by its own SIMC code.
+pub fn lookup_city_scope_ids(app: &AppHandle, city_id: u64) -> Result<Vec<u64>, String> {
+    let path = db_path(app)?;
+    lookup_city_scope_ids_by_path(&path, city_id)
+}
+
+pub fn lookup_city_scope_ids_by_path(
+    db_path: &std::path::Path,
+    city_id: u64,
+) -> Result<Vec<u64>, String> {
+    let conn = Connection::open_with_flags(db_path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
+        .map_err(|e| format!("Failed to open teryt DB: {}", e))?;
+    _lookup_city_scope_ids(&conn, city_id)
+}
+
+fn _lookup_city_scope_ids(conn: &Connection, city_id: u64) -> Result<Vec<u64>, String> {
+    let mut stmt = conn
+        .prepare("SELECT sym FROM simc WHERE sym = ?1 OR sympod = ?1 ORDER BY sym")
+        .map_err(|e| format!("Failed to prepare TERYT city-scope query: {}", e))?;
+    let city_id_i64 = city_id as i64;
+    let rows = stmt
+        .query_map([city_id_i64], |row| row.get::<_, i64>(0))
+        .map_err(|e| format!("TERYT city-scope query failed: {}", e))?;
+
+    rows.map(|row| {
+        row.map(|sym| sym as u64)
+            .map_err(|e| format!("TERYT city-scope row error: {}", e))
+    })
+    .collect()
 }
 
 fn _lookup_cities(conn: &Connection, city_name: &str) -> Result<Vec<TerytCity>, String> {
@@ -231,6 +268,22 @@ mod tests {
     }
 
     #[test]
+    fn test_lookup_city_scope_ids_includes_root_and_child_localities() {
+        let conn = setup_mock_db();
+        conn.execute(
+            "INSERT INTO simc VALUES ('02', '64', '01', '1', 99, 'Wrocław-Śródmieście', 969416, 969400)",
+            [],
+        )
+        .unwrap();
+
+        assert_eq!(
+            _lookup_city_scope_ids(&conn, 969400).unwrap(),
+            vec![969400, 969416]
+        );
+        assert_eq!(_lookup_city_scope_ids(&conn, 969416).unwrap(), vec![969416]);
+    }
+
+    #[test]
     fn test_lookup_streets() {
         let conn = setup_mock_db();
         let results = _lookup_streets(&conn, 969400, "Kuź").unwrap();
@@ -250,16 +303,37 @@ mod tests {
         let dev_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("assets")
             .join("teryt");
-        if !dev_path.exists() { return; }
-        let conn = Connection::open_with_flags(dev_path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY).unwrap();
-        
+        if !dev_path.exists() {
+            return;
+        }
+        let conn =
+            Connection::open_with_flags(dev_path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
+                .unwrap();
+
         // Use the ID we found for Kraków (950463)
         let city_id = 950463;
         let results = _lookup_streets(&conn, city_id, "Waligórskiego").unwrap();
         assert!(!results.is_empty(), "Should find Waligórskiego in Kraków");
-        
+
         let w = &results[0];
         assert_eq!(w.street_name_1, "Waligórskiego");
         assert_eq!(w.street_name_2.as_deref(), Some("Andrzeja"));
+    }
+
+    #[test]
+    fn test_lodz_city_scope_includes_baluty_simc_code() {
+        let dev_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("assets")
+            .join("teryt");
+        if !dev_path.exists() {
+            return;
+        }
+        let conn =
+            Connection::open_with_flags(dev_path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
+                .unwrap();
+
+        let city_scope_ids = _lookup_city_scope_ids(&conn, 957650).unwrap();
+        assert!(city_scope_ids.contains(&957650));
+        assert!(city_scope_ids.contains(&957666));
     }
 }
