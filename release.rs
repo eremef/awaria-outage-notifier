@@ -198,9 +198,9 @@ fn update_tauri_conf(version: &str) {
                     .collect::<String>();
                 let has_comma = line.trim().ends_with(',');                    
                 if has_comma {
-                    format!("{}\"version\": {},", indent, tauri_version)
+                    format!("{}\"version\": \"{}\",", indent, tauri_version)
                 } else {
-                    format!("{}\"version\": {}", indent, tauri_version)
+                    format!("{}\"version\": \"{}\"", indent, tauri_version)
                 }
             } else if line.contains("\"versionCode\"") {
                 let indent = line
