@@ -8,6 +8,7 @@ unsafe extern "C" {}
 
 pub mod api_logic;
 mod aquanet;
+mod aqua_bielsko;
 mod enea;
 mod enea_cieplo;
 mod eco_sa;
@@ -18,6 +19,7 @@ mod mpwik;
 mod mpwik_warsaw;
 mod pge;
 mod pge_torun_heat;
+mod pec_gliwice;
 pub mod network_state;
 mod state_db;
 mod stoen;
@@ -51,9 +53,12 @@ pub mod lpec;
 pub mod mpwik_lublin;
 pub mod mpwik_rzeszow;
 pub mod pwik_olsztyn;
+pub mod pwik_gorzow;
+pub mod pwik_gliwice;
 pub mod wik_opole;
 pub mod lpwik_legnica;
 pub mod bytomskie_wodociagi;
+pub mod dabrowskie_wodociagi;
 pub mod mwik_bydgoszcz;
 pub mod mpec_rzeszow;
 pub mod mpec_kielce;
@@ -591,10 +596,15 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(wik_opole::WikOpoleProvider),
         Box::new(lpwik_legnica::LpwikLegnicaProvider),
         Box::new(bytomskie_wodociagi::BytomskieWodociagiProvider),
+        Box::new(dabrowskie_wodociagi::DabrowskieWodociagiProvider),
+        Box::new(aqua_bielsko::AquaBielskoProvider),
+        Box::new(pwik_gorzow::PwikGorzowProvider),
+        Box::new(pwik_gliwice::PwikGliwiceProvider),
         Box::new(mwik_bydgoszcz::MwikBydgoszczProvider),
         Box::new(mpec_rzeszow::MpecRzeszowProvider),
         Box::new(mpec_kielce::MpecKielceProvider),
         Box::new(epec_elblag::EpecElblagProvider),
+        Box::new(pec_gliwice::PecGliwiceProvider),
         Box::new(wm_radom::WmRadomProvider),
     ]
 }
@@ -841,6 +851,85 @@ fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Setti
                 continue;
             }
 
+            if alert.source == api_logic::AlertSource::AquaBielsko
+                && alert.is_local == Some(true)
+            {
+                let notice = alert.message.as_deref().unwrap_or_default();
+                let matched_address = s.addresses.iter().enumerate().find(|(_, address)| {
+                    address.is_active
+                        && api_logic::is_address_applicable_for_provider(&alert.source, address)
+                        && aqua_bielsko::location_matches_address(notice, address)
+                        && (!s.filter_by_house_no
+                            || aqua_bielsko::house_number_matches_notice(notice, address))
+                });
+                if let Some((index, _)) = matched_address {
+                    alert.address_index = Some(index);
+                    alert.is_local = Some(true);
+                } else {
+                    alert.address_index = None;
+                    alert.is_local = Some(false);
+                }
+                continue;
+            }
+
+            if alert.source == api_logic::AlertSource::PwikGorzow
+                && alert.is_local == Some(true)
+            {
+                let location = alert.location.as_deref().unwrap_or_default();
+                let matched_address = s.addresses.iter().enumerate().find(|(_, address)| {
+                    address.is_active
+                        && api_logic::is_address_applicable_for_provider(&alert.source, address)
+                        && pwik_gorzow::location_matches_address(location, address)
+                        && (!s.filter_by_house_no
+                            || pwik_gorzow::house_number_matches_notice(location, address))
+                });
+                if let Some((index, _)) = matched_address {
+                    alert.address_index = Some(index);
+                    alert.is_local = Some(true);
+                } else {
+                    alert.address_index = None;
+                    alert.is_local = Some(false);
+                }
+                continue;
+            }
+
+            if matches!(
+                alert.source,
+                api_logic::AlertSource::PecGliwice | api_logic::AlertSource::PwikGliwice
+            ) && alert.is_local == Some(true)
+            {
+                let notice = alert.message.as_deref().unwrap_or_default();
+                let matched_address = s.addresses.iter().enumerate().find(|(_, address)| {
+                    if !address.is_active
+                        || !api_logic::is_address_applicable_for_provider(&alert.source, address)
+                    {
+                        return false;
+                    }
+
+                    match alert.source {
+                        api_logic::AlertSource::PecGliwice => {
+                            pec_gliwice::location_matches_address(notice, address)
+                                && (!s.filter_by_house_no
+                                    || pec_gliwice::house_number_matches_notice(notice, address))
+                        }
+                        api_logic::AlertSource::PwikGliwice => {
+                            pwik_gliwice::location_matches_address(notice, address)
+                                && (!s.filter_by_house_no
+                                    || pwik_gliwice::house_number_matches_notice(notice, address))
+                        }
+                        _ => false,
+                    }
+                });
+                if let Some((index, _)) = matched_address {
+                    alert.address_index = Some(index);
+                    alert.is_local = Some(true);
+                } else {
+                    alert.address_index = None;
+                    alert.is_local = Some(false);
+                }
+                continue;
+            }
+
             if alert.source == api_logic::AlertSource::BytomskieWodociagi
                 && alert.is_local == Some(true)
             {
@@ -863,6 +952,29 @@ fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Setti
                     if let Some((locality, _)) = location.split_once(';') {
                         alert.location = Some(locality.to_string());
                     }
+                }
+                continue;
+            }
+
+            if alert.source == api_logic::AlertSource::DabrowskieWodociagi
+                && alert.is_local == Some(true)
+            {
+                let location = alert.location.as_deref().unwrap_or_default();
+                let matched_address = s.addresses.iter().enumerate().find(|(_, address)| {
+                    address.is_active
+                        && api_logic::is_address_applicable_for_provider(
+                            &alert.source,
+                            address,
+                        )
+                        && dabrowskie_wodociagi::location_matches_address(location, address)
+                        && dabrowskie_wodociagi::house_number_matches_notice(location, address)
+                });
+                if let Some((index, _)) = matched_address {
+                    alert.address_index = Some(index);
+                    alert.is_local = Some(true);
+                } else {
+                    alert.address_index = None;
+                    alert.is_local = Some(false);
                 }
                 continue;
             }
@@ -1061,7 +1173,7 @@ fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Setti
                         let addr = &s.addresses[idx];
                         let is_street_wide_only = matches!(
                             alert.source,
-                            api_logic::AlertSource::TauronHeat
+                            api_logic::AlertSource::TauronHeat | api_logic::AlertSource::AquaBielsko
                         );
                         if !is_street_wide_only {
                             let mut spec = if alert.source
@@ -2270,6 +2382,45 @@ mod lpwik_legnica_house_number_filter_tests {
 }
 
 #[cfg(test)]
+mod aqua_bielsko_house_number_filter_tests {
+    use super::*;
+
+    fn alert() -> UnifiedAlert {
+        UnifiedAlert {
+            source: api_logic::AlertSource::AquaBielsko,
+            message: Some("Awaria w Bielsko-Biała przy ul. Testowa nr 12-16".to_string()),
+            address_index: Some(0), is_local: Some(true), ..Default::default()
+        }
+    }
+
+    fn settings(filter_by_house_no: bool, house_no: &str) -> Option<Settings> {
+        Some(Settings {
+            addresses: vec![AddressEntry {
+                name: "Dom".to_string(), city_name: "Bielsko-Biała".to_string(),
+                voivodeship: "Śląskie".to_string(), commune: "Bielsko-Biała".to_string(),
+                street_name: "Testowa".to_string(), street_name_1: "Testowa".to_string(),
+                house_no: house_no.to_string(), city_id: Some(923584), is_active: true, ..Default::default()
+            }],
+            filter_by_house_no, ..Settings::default()
+        })
+    }
+
+    #[test]
+    fn aqua_bielsko_provider_is_registered_and_number_filter_is_setting_controlled() {
+        assert!(get_providers().iter().any(|provider| provider.source() == api_logic::AlertSource::AquaBielsko));
+        let mut disabled = vec![alert()];
+        apply_alert_filtering(&mut disabled, &settings(false, "25"));
+        assert_eq!(disabled[0].is_local, Some(true));
+        let mut included = vec![alert()];
+        apply_alert_filtering(&mut included, &settings(true, "14"));
+        assert_eq!(included[0].is_local, Some(true));
+        let mut excluded = vec![alert()];
+        apply_alert_filtering(&mut excluded, &settings(true, "25"));
+        assert_eq!(excluded[0].is_local, Some(false));
+    }
+}
+
+#[cfg(test)]
 mod bytomskie_wodociagi_house_number_filter_tests {
     use super::*;
 
@@ -2417,4 +2568,148 @@ pub async fn fetch_url_via_android(url: &str) -> Result<String, String> {
             Err(e) => Err(e.to_string())
         }
     }).await.map_err(|e: tokio::task::JoinError| e.to_string())?
+}
+
+#[cfg(test)]
+mod pwik_gorzow_house_number_filter_tests {
+    use super::*;
+
+    fn alert() -> UnifiedAlert {
+        let notice = "Gorzowie Wlkp. - ul. Osiedlowa nr od 14 do 25 oraz od 31 do 35";
+        UnifiedAlert {
+            source: api_logic::AlertSource::PwikGorzow,
+            message: Some(format!("Awaria — W trakcie: {notice}")),
+            location: Some(notice.to_string()),
+            address_index: Some(0),
+            is_local: Some(true),
+            ..Default::default()
+        }
+    }
+
+    fn settings(filter_by_house_no: bool, house_no: &str) -> Option<Settings> {
+        Some(Settings {
+            addresses: vec![AddressEntry {
+                name: "Dom".to_string(),
+                city_name: "Gorzów Wielkopolski".to_string(),
+                voivodeship: "Lubuskie".to_string(),
+                commune: "Gorzów Wielkopolski".to_string(),
+                street_name: "Osiedlowa".to_string(),
+                street_name_1: "Osiedlowa".to_string(),
+                house_no: house_no.to_string(),
+                city_id: Some(935_140),
+                is_active: true,
+                ..Default::default()
+            }],
+            filter_by_house_no,
+            ..Settings::default()
+        })
+    }
+
+    #[test]
+    fn pwik_gorzow_provider_is_registered_and_house_filter_respects_setting() {
+        assert!(get_providers()
+            .iter()
+            .any(|provider| provider.source() == api_logic::AlertSource::PwikGorzow));
+
+        let mut disabled = vec![alert()];
+        apply_alert_filtering(&mut disabled, &settings(false, "26"));
+        assert_eq!(disabled[0].is_local, Some(true));
+
+        let mut included = vec![alert()];
+        apply_alert_filtering(&mut included, &settings(true, "14"));
+        assert_eq!(included[0].is_local, Some(true));
+
+        let mut excluded = vec![alert()];
+        apply_alert_filtering(&mut excluded, &settings(true, "26"));
+        assert!(excluded.is_empty());
+    }
+}
+
+#[cfg(test)]
+mod gliwice_provider_house_number_filter_tests {
+    use super::*;
+
+    fn settings(source: api_logic::AlertSource, filter_by_house_no: bool, house_no: &str) -> Option<Settings> {
+        let (city_name, commune, city_id) = match source {
+            api_logic::AlertSource::PecGliwice => ("Gliwice", "Gliwice", 940_000),
+            api_logic::AlertSource::PwikGliwice => ("Gliwice", "Gliwice", 940_000),
+            _ => unreachable!(),
+        };
+        Some(Settings {
+            addresses: vec![AddressEntry {
+                name: "Dom".to_string(),
+                city_name: city_name.to_string(),
+                voivodeship: "Śląskie".to_string(),
+                commune: commune.to_string(),
+                street_name: "Testowa".to_string(),
+                street_name_1: "Testowa".to_string(),
+                house_no: house_no.to_string(),
+                city_id: Some(city_id),
+                is_active: true,
+                ..Default::default()
+            }],
+            filter_by_house_no,
+            ..Settings::default()
+        })
+    }
+
+    fn pec_alert() -> UnifiedAlert {
+        UnifiedAlert {
+            source: api_logic::AlertSource::PecGliwice,
+            message: Some("Awaryjna przerwa w dostawie ciepła w Gliwicach przy ul. Testowej 12-16.".into()),
+            location: Some("Gliwice; ul. Testowa 12-16".into()),
+            address_index: Some(0),
+            is_local: Some(true),
+            ..Default::default()
+        }
+    }
+
+    fn pwik_alert() -> UnifiedAlert {
+        UnifiedAlert {
+            source: api_logic::AlertSource::PwikGliwice,
+            message: Some("PLANOWANE. Przerwa w dostawie wody w Gliwicach przy ul. Testowej nr 12-16.".into()),
+            location: Some("Miejscowość: Gliwice; ul. Testowa 12-16".into()),
+            address_index: Some(0),
+            is_local: Some(true),
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn pec_gliwice_provider_is_registered_and_house_filter_respects_setting() {
+        assert!(get_providers()
+            .iter()
+            .any(|provider| provider.source() == api_logic::AlertSource::PecGliwice));
+
+        let mut disabled = vec![pec_alert()];
+        apply_alert_filtering(&mut disabled, &settings(api_logic::AlertSource::PecGliwice, false, "25"));
+        assert_eq!(disabled[0].is_local, Some(true));
+
+        let mut included = vec![pec_alert()];
+        apply_alert_filtering(&mut included, &settings(api_logic::AlertSource::PecGliwice, true, "14"));
+        assert_eq!(included[0].is_local, Some(true));
+
+        let mut excluded = vec![pec_alert()];
+        apply_alert_filtering(&mut excluded, &settings(api_logic::AlertSource::PecGliwice, true, "25"));
+        assert_eq!(excluded[0].is_local, Some(false));
+    }
+
+    #[test]
+    fn pwik_gliwice_provider_is_registered_and_house_filter_respects_setting() {
+        assert!(get_providers()
+            .iter()
+            .any(|provider| provider.source() == api_logic::AlertSource::PwikGliwice));
+
+        let mut disabled = vec![pwik_alert()];
+        apply_alert_filtering(&mut disabled, &settings(api_logic::AlertSource::PwikGliwice, false, "25"));
+        assert_eq!(disabled[0].is_local, Some(true));
+
+        let mut included = vec![pwik_alert()];
+        apply_alert_filtering(&mut included, &settings(api_logic::AlertSource::PwikGliwice, true, "14"));
+        assert_eq!(included[0].is_local, Some(true));
+
+        let mut excluded = vec![pwik_alert()];
+        apply_alert_filtering(&mut excluded, &settings(api_logic::AlertSource::PwikGliwice, true, "25"));
+        assert_eq!(excluded[0].is_local, Some(false));
+    }
 }

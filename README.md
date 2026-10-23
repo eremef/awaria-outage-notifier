@@ -22,7 +22,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
 - **⚡ Power**
   - **Tauron**: Planned maintenance and emergency power outages.
   - **Energa**: Planned power outages (Northern Poland).
-  - **Enea**: Planned maintenance (Western Poland).
+  - **Enea**: [Planned power outages](https://wylaczenia.operator.enea.pl/) and [current failures](https://wylaczenia.operator.enea.pl/awarie/) (Western Poland).
   - **PGE**: Planned power outages (Eastern/Central Poland).
   - **Stoen**: Planned power outages (Warsaw area).
 - **🔥 Gas - PSG**: Planned and current gas outages.
@@ -43,19 +43,24 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **MPEC Kielce**: District-heating and hot-water interruptions in Kielce.
   - **MPEC Rzeszów**: Heating and domestic hot-water supply interruptions in Rzeszów.
   - **OPEC Gdynia**: Street-level heat and domestic-hot-water interruption notices for served areas in Gdynia, Rumia, Reda, Kosakowo, and Wejherowo.
+  - **PEC Gliwice**: District-heating interruption notices for Gliwice.
   - **PGE Toruń**: Planned domestic hot-water interruptions in Toruń.
 - **💧 Water**
   - **MPWiK Wrocław**: Water failures and maintenance work in Wrocław.
   - **Bytomskie Wodociągi**: Water outages and planned interruptions in Bytom only.
+  - **Dąbrowskie Wodociągi**: Water interruptions, pressure changes, and water-quality notices in Dąbrowa Górnicza only.
   - **MWiK Bydgoszcz**: Planned water shutoffs and network failures in Bydgoszcz.
   - **MPWiK Warszawa**: Water failures and repairs in Warsaw.
   - **WMK**: Water maintenance and failures in Kraków.
   - **WM Radom**: Water interruptions and failures in Radom and WM Radom's surrounding service municipalities.
   - **Aquanet**: Water maintenance and failures in Poznań and surrounding areas.
+  - **AQUA S.A.**: Water-supply notices in Bielsko-Biała, Bestwina, Buczkowice, Chybie, Czechowice-Dziedzice, Jasienica, Jaworze, Kęty, Kozy, Porąbka, Szczyrk, Wilamowice, and Wilkowice; not a general Silesia-wide source.
   - **Katowickie Wodociągi**: Water maintenance and failures in Katowice.
   - **ZWiK Łódź**: Water maintenance and failures in Łódź.
   - **PWiK Kalisz**: Water maintenance and failures in Kalisz.
   - **PWiK Częstochowa**: Water maintenance and failures in Częstochowa.
+  - **PWiK Gorzów**: Water failures and planned interruptions in Gorzów Wielkopolski and Kłodawa, Bogdaniec, Lubiszyn, Deszczno, and Santok; notices marked as repaired are no longer active outages.
+  - **PWiK Gliwice**: Planned water interruptions in its published service area of Gliwice, Pyskowice, Rudziniec, Sośnicowice, and Zbrosławice.
   - **PWiK Olsztyn**: Emergency and planned water interruptions in Olsztyn and the localities named in PWiK notices.
   - **WiK Opole**: Water interruptions in Opole and WiK's covered parts of Komprachcice, Prószków, and Turawa.
   - **PEWIK Gdynia**: Emergency and planned water interruptions in its published service localities around Gdynia, Rumia, Reda, and Wejherowo.

@@ -22,7 +22,7 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
 - **⚡ Prąd**
   - **Tauron**: Planowane konserwacje i awaryjne wyłączenia prądu.
   - **Energa**: Planowane wyłączenia prądu (Północna Polska).
-  - **Enea**: Planowane konserwacje (Zachodnia Polska).
+  - **Enea**: [Planowane wyłączenia prądu](https://wylaczenia.operator.enea.pl/) i [bieżące awarie](https://wylaczenia.operator.enea.pl/awarie/) (Zachodnia Polska).
   - **PGE**: Planowane wyłączenia prądu (Wschodnia i Centralna Polska).
   - **Stoen**: Planowane wyłączenia prądu (Warszawa i okolice).
 - **🔥 Gaz - PSG**: Planowane i bieżące wyłączenia gazu.
@@ -43,19 +43,24 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
   - **MPEC Kielce**: Przerwy w dostawie ciepła i ciepłej wody w Kielcach.
   - **MPEC Rzeszów**: Przerwy w dostawie ciepła i ciepłej wody użytkowej w Rzeszowie.
   - **OPEC Gdynia**: Uliczne komunikaty o przerwach w dostawie ciepła i ciepłej wody w obsługiwanych rejonach Gdyni, Rumi, Redy, Kosakowa i Wejherowa.
+  - **PEC Gliwice**: Komunikaty o przerwach w dostawie ciepła w Gliwicach.
   - **PGE Toruń**: Planowane przerwy w dostawie ciepłej wody w Toruniu.
 - **💧 Woda**
   - **MPWiK Wrocław**: Awarie wodociągowe i prace konserwacyjne we Wrocławiu.
   - **Bytomskie Wodociągi**: Awarie i planowane przerwy w dostawie wody wyłącznie w Bytomiu.
+  - **Dąbrowskie Wodociągi**: Awarie, planowane przerwy, spadki ciśnienia i komunikaty o jakości wody w Dąbrowie Górniczej.
   - **MWiK Bydgoszcz**: Planowane wyłączenia wody i awarie sieci wodociągowej w Bydgoszczy.
   - **MPWiK Warszawa**: Awarie i naprawy wodociągowe w Warszawie.
   - **WMK**: Awarie i konserwacje wodociągowe w Krakowie.
   - **WM Radom**: Awarie i planowane przerwy w dostawie wody w Radomiu i obsługiwanych okolicznych gminach.
   - **Aquanet**: Awarie i konserwacje wodociągowe w Poznaniu i okolicach.
+  - **AQUA S.A.**: Komunikaty dotyczące zaopatrzenia w wodę w Bielsku-Białej, Bestwinie, Buczkowicach, Chybiu, Czechowicach-Dziedzicach, Jasienicy, Jaworzu, Kętach, Kozach, Porąbce, Szczyrku, Wilamowicach i Wilkowicach; nie jest to źródło obejmujące całe województwo śląskie.
   - **Katowickie Wodociągi**: Awarie i konserwacje wodociągowe w Katowicach.
   - **ZWiK Łódź**: Awarie i konserwacje wodociągowe w Łodzi.
   - **PWiK Kalisz**: Awarie i konserwacje wodociągowe w Kaliszu.
   - **PWiK Częstochowa**: Awarie i konserwacje wodociągowe w Częstochowie.
+  - **PWiK Gorzów**: Awarie i planowane przerwy w dostawie wody w Gorzowie Wielkopolskim oraz gminach Kłodawa, Bogdaniec, Lubiszyn, Deszczno i Santok; komunikaty ze statusem „Naprawiona” nie są traktowane jako aktywne awarie.
+  - **PWiK Gliwice**: Planowane przerwy w dostawie wody na opublikowanym obszarze działania: Gliwice, Pyskowice, Rudziniec, Sośnicowice i Zbrosławice.
   - **PWiK Olsztyn**: Awarie i planowane przerwy w dostawie wody w Olsztynie oraz miejscowościach wymienionych w komunikatach PWiK.
   - **WiK Opole**: Przerwy w dostawie wody w Opolu i obsługiwanych częściach gmin Komprachcice, Prószków i Turawa.
   - **PEWIK Gdynia**: Awarie i planowane przerwy w dostawie wody w publikowanym obszarze usług wokół Gdyni, Rumi, Redy i Wejherowa.

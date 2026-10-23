@@ -139,6 +139,37 @@ if (typeof document !== 'undefined') {
     let streetDebounceTimer = null;
     let cityHasNoStreets = false;
     const REGION_MATCHERS = {
+        aqua_bielsko_area: (addr) => {
+            if (!addr) return false;
+            const normalize = (value) => (value || '').trim().toLowerCase()
+                .replace(/ą/g, 'a').replace(/ć/g, 'c').replace(/ę/g, 'e')
+                .replace(/ł/g, 'l').replace(/ń/g, 'n').replace(/ó/g, 'o')
+                .replace(/ś/g, 's').replace(/ź/g, 'z').replace(/ż/g, 'z')
+                .replace(/[^a-z0-9]+/g, ' ').trim();
+            const city = normalize(addr.cityName);
+            const commune = normalize(addr.commune).replace(/^(gmina|gm) /, '');
+            const voivodeship = normalize(addr.voivodeship);
+            const municipalityIds = {
+                'bielsko biala': 923584, bestwina: 212110, buczkowice: 48395,
+                chybie: 50765, 'czechowice dziedzice': 939094, jasienica: 54674,
+                jaworze: 55290, kety: 924365, kozy: 58028, porabka: 64773,
+                szczyrk: 925850, wilamowice: 926996, wilkowice: 76612
+            };
+            const municipalityNames = Object.keys(municipalityIds);
+            const cityMunicipality = municipalityNames.includes(city) ? city : null;
+            const communeMunicipality = municipalityNames.includes(commune) ? commune : null;
+            const cityId = addr.cityId == null ? null : Number(addr.cityId);
+            const idMunicipality = municipalityNames.find(name => municipalityIds[name] === cityId) || null;
+            if (cityMunicipality && cityId != null && municipalityIds[cityMunicipality] !== cityId) return false;
+            if (cityMunicipality && communeMunicipality && cityMunicipality !== communeMunicipality) return false;
+            const matchedMunicipality = communeMunicipality || cityMunicipality || idMunicipality;
+            if (!matchedMunicipality) return false;
+            const expectedVoivodeship = matchedMunicipality === 'kety'
+                ? ['malopolskie', 'lesser poland']
+                : ['slaskie', 'silesian'];
+            if (voivodeship && !expectedVoivodeship.some(name => voivodeship.startsWith(name))) return false;
+            return true;
+        },
         warszawa: (addr) => {
             if (!addr) return false;
             const city = (addr.cityName || '').trim().toLowerCase();
@@ -277,6 +308,23 @@ if (typeof document !== 'undefined') {
             if (cityId != null && Number.isFinite(cityId) && cityId !== 938670) return false;
             return cityId === 938670 || city === 'bytom';
         },
+        dabrowskie_wodociagi_area: (addr) => {
+            if (!addr) return false;
+            const normalize = (value) => (value || '').trim().toLowerCase()
+                .replace(/ł/g, 'l')
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-z0-9]+/g, ' ').trim();
+            const city = normalize(addr.cityName);
+            const commune = normalize(addr.commune)
+                .replace(/^(gmina miejska|gmina|gm|miasto|m) /, '');
+            const rawCityId = addr.cityId == null ? '' : String(addr.cityId).trim();
+            const cityId = rawCityId ? Number(rawCityId) : null;
+            const voivodeship = normalize(addr.voivodeship);
+            if (voivodeship && !voivodeship.startsWith('slaskie')) return false;
+            if (cityId === 939473) return true;
+            if (cityId != null && Number.isFinite(cityId)) return commune === 'dabrowa gornicza';
+            return commune === 'dabrowa gornicza' || city === 'dabrowa gornicza';
+        },
         bialystok: (addr) => {
             if (!addr) return false;
             const city = (addr.cityName || '').trim().toLowerCase();
@@ -374,6 +422,93 @@ if (typeof document !== 'undefined') {
                 'przydroze', 'zatonie', 'zawada', 'piskorze', 'wlosan'
             ];
             return localities.includes(city) || ['zielona gora', 'gmina zielona gora'].includes(commune);
+        },
+        pwik_gorzow_area: (addr) => {
+            if (!addr) return false;
+
+            const normalize = (value) => (value || '').trim().toLowerCase()
+                .replace(/ą/g, 'a').replace(/ć/g, 'c').replace(/ę/g, 'e')
+                .replace(/ł/g, 'l').replace(/ń/g, 'n').replace(/ó/g, 'o')
+                .replace(/ś/g, 's').replace(/ź/g, 'z').replace(/ż/g, 'z')
+                .replace(/[^a-z0-9]+/g, ' ').trim();
+            const normalizeArea = (value) => {
+                const name = normalize(value).replace(/^(?:gmina|gm|m) /, '');
+                return ['gorzow', 'gorzow wielkopolski', 'gorzow wlkp', 'gorzow wlk'].includes(name)
+                    ? 'gorzow wielkopolski'
+                    : name;
+            };
+            const voivodeship = normalize(addr.voivodeship);
+            if (voivodeship && !voivodeship.startsWith('lubuskie')) return false;
+
+            const serviceAreas = [
+                'gorzow wielkopolski', 'bogdaniec', 'lubiszyn', 'deszczno', 'klodawa', 'santok'
+            ];
+            const city = normalizeArea(addr.cityName);
+            const commune = normalizeArea(addr.commune);
+            const cityId = addr.cityId == null ? null : Number(addr.cityId);
+            const cityIds = {
+                935140: 'gorzow wielkopolski',
+                178672: 'bogdaniec',
+                182662: 'lubiszyn',
+                179520: 'deszczno',
+                181817: 'klodawa',
+                186708: 'santok'
+            };
+            const cityArea = serviceAreas.includes(city) ? city : null;
+            const communeArea = serviceAreas.includes(commune) ? commune : null;
+            const idArea = cityId == null ? null : cityIds[cityId] || null;
+
+            if ((cityArea && communeArea && cityArea !== communeArea) ||
+                (cityArea && cityId != null && cityArea !== idArea) ||
+                (communeArea && idArea && communeArea !== idArea)) return false;
+
+            return !!(cityArea || communeArea || idArea);
+        },
+        pec_gliwice_area: (addr) => {
+            if (!addr) return false;
+            const normalize = (value) => (value || '').trim().toLowerCase()
+                .replace(/ą/g, 'a').replace(/ć/g, 'c').replace(/ę/g, 'e')
+                .replace(/ł/g, 'l').replace(/ń/g, 'n').replace(/ó/g, 'o')
+                .replace(/ś/g, 's').replace(/ź/g, 'z').replace(/ż/g, 'z')
+                .replace(/[^a-z0-9]+/g, ' ').trim();
+            const voivodeship = normalize(addr.voivodeship);
+            if (voivodeship && !voivodeship.startsWith('slaskie') && !voivodeship.startsWith('silesian')) return false;
+            if (addr.cityId != null) return Number(addr.cityId) === 940000;
+            return normalize(addr.cityName) === 'gliwice';
+        },
+        pwik_gliwice_area: (addr) => {
+            if (!addr) return false;
+            const normalize = (value) => (value || '').trim().toLowerCase()
+                .replace(/ą/g, 'a').replace(/ć/g, 'c').replace(/ę/g, 'e')
+                .replace(/ł/g, 'l').replace(/ń/g, 'n').replace(/ó/g, 'o')
+                .replace(/ś/g, 's').replace(/ź/g, 'z').replace(/ż/g, 'z')
+                .replace(/[^a-z0-9]+/g, ' ').trim();
+            const normalizeMunicipality = (value) => normalize(value).replace(
+                /^(?:gmina miejsko wiejska|gmina miejska|gmina wiejska|gmina|gm|miasto|m) /,
+                ''
+            );
+            const voivodeship = normalize(addr.voivodeship);
+            if (voivodeship && !voivodeship.startsWith('slaskie') && !voivodeship.startsWith('silesian')) return false;
+
+            const serviceMunicipalities = {
+                gliwice: 940000,
+                pyskowice: 942417,
+                rudziniec: 221238,
+                sosnicowice: 221936,
+                zbroslawice: 225302
+            };
+            const city = normalizeMunicipality(addr.cityName);
+            const commune = normalizeMunicipality(addr.commune);
+            const cityId = addr.cityId == null ? null : Number(addr.cityId);
+            const cityIdMatch = Object.entries(serviceMunicipalities)
+                .find(([, id]) => id === cityId)?.[0] || null;
+            const cityMatch = Object.hasOwn(serviceMunicipalities, city) ? city : null;
+            const communeMatch = Object.hasOwn(serviceMunicipalities, commune) ? commune : null;
+
+            if (cityMatch && cityId != null && serviceMunicipalities[cityMatch] !== cityId) return false;
+            if (cityMatch && communeMatch && cityMatch !== communeMatch) return false;
+            if (communeMatch && cityIdMatch && communeMatch !== cityIdMatch) return false;
+            return !!(cityMatch || communeMatch || cityIdMatch);
         },
         torunskie_wodociagi_area: (addr) => {
             if (!addr) return false;
@@ -495,6 +630,7 @@ if (typeof document !== 'undefined') {
         { id: 'mpec_kielce', label: 'MPEC Kielce', category: 'heating', defaultNotify: true, i18nLabel: 'source_mpec_kielce_name', i18nShort: 'source_mpec_kielce_short', region: 'kielce' },
         { id: 'mpec_rzeszow', label: 'MPEC Rzeszów', category: 'heating', defaultNotify: true, i18nLabel: 'source_mpec_rzeszow_name', i18nShort: 'source_mpec_rzeszow_short', region: 'rzeszow' },
         { id: 'opec_gdynia', label: 'OPEC Gdynia', category: 'heating', defaultNotify: true, i18nLabel: 'source_opec_gdynia_name', i18nShort: 'source_opec_gdynia_short', region: 'opec_gdynia_area' },
+        { id: 'pec_gliwice', label: 'PEC Gliwice', category: 'heating', defaultNotify: true, i18nLabel: 'source_pec_gliwice_name', i18nShort: 'source_pec_gliwice_short', region: 'pec_gliwice_area' },
         { id: 'pge_torun_heat', label: 'PGE Toruń', category: 'heating', defaultNotify: true, i18nLabel: 'source_pge_torun_heat_name', i18nShort: 'source_pge_torun_heat_short', region: 'torun' },
         { id: 'sec', label: 'SEC', category: 'heating', defaultNotify: true, i18nLabel: 'source_sec_name', i18nShort: 'source_sec_short', region: 'szczecin' },
         { id: 'tauron_heat', label: 'Tauron Ciepło', category: 'heating', defaultNotify: true, i18nLabel: 'source_tauron_heat_name', i18nShort: 'source_tauron_heat_short' },
@@ -502,8 +638,10 @@ if (typeof document !== 'undefined') {
         { id: 'veolia_poznan', label: 'Veolia Poznań', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_poznan_name', i18nShort: 'source_veolia_poznan_short', region: 'poznan' },
         { id: 'veolia_warszawa', label: 'Veolia Warszawa', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_warszawa_name', i18nShort: 'source_veolia_warszawa_short', region: 'warszawa' },
         // Water
+        { id: 'aqua_bielsko', label: 'AQUA S.A.', category: 'water', defaultNotify: true, i18nLabel: 'source_aqua_bielsko_name', i18nShort: 'source_aqua_bielsko_short', region: 'aqua_bielsko_area' },
         { id: 'aquanet', label: 'Aquanet', category: 'water', defaultNotify: true, i18nLabel: 'source_aquanet_name', i18nShort: 'source_aquanet_short', region: 'poznan' },
         { id: 'bytomskie_wodociagi', label: 'Bytomskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_bytomskie_wodociagi_name', i18nShort: 'source_bytomskie_wodociagi_short', region: 'bytom' },
+        { id: 'dabrowskie_wodociagi', label: 'Dąbrowskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_dabrowskie_wodociagi_name', i18nShort: 'source_dabrowskie_wodociagi_short', region: 'dabrowskie_wodociagi_area' },
         { id: 'gdanskie_wodociagi', label: 'Gdańskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_gdanskie_wodociagi_name', i18nShort: 'source_gdanskie_wodociagi_short', region: 'gdansk' },
         { id: 'katowickie_wodociagi', label: 'Katowickie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_katowickie_wodociagi_name', i18nShort: 'source_katowickie_wodociagi_short', region: 'katowice' },
         { id: 'lpwik_legnica', label: 'LPWiK Legnica', category: 'water', defaultNotify: true, i18nLabel: 'source_lpwik_legnica_name', i18nShort: 'source_lpwik_legnica_short', region: 'lpwik_legnica_area' },
@@ -515,6 +653,8 @@ if (typeof document !== 'undefined') {
         { id: 'pewik_gdynia', label: 'PEWIK Gdynia', category: 'water', defaultNotify: true, i18nLabel: 'source_pewik_gdynia_name', i18nShort: 'source_pewik_gdynia_short', region: 'pewik_gdynia_area' },
         { id: 'puk_rokietnica', label: 'PUK Rokietnica', category: 'water', defaultNotify: true, i18nLabel: 'source_puk_rokietnica_name', i18nShort: 'source_puk_rokietnica_short', region: 'rokietnica' },
         { id: 'pwik_czestochowa', label: 'PWiK Częstochowa', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_czestochowa_name', i18nShort: 'source_pwik_czestochowa_short', region: 'czestochowa' },
+        { id: 'pwik_gliwice', label: 'PWiK Gliwice', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_gliwice_name', i18nShort: 'source_pwik_gliwice_short', region: 'pwik_gliwice_area' },
+        { id: 'pwik_gorzow', label: 'PWiK Gorzów', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_gorzow_name', i18nShort: 'source_pwik_gorzow_short', region: 'pwik_gorzow_area' },
         { id: 'pwik_kalisz', label: 'PWiK Kalisz', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_kalisz_name', i18nShort: 'source_pwik_kalisz_short', region: 'kalisz' },
         { id: 'pwik_olsztyn', label: 'PWiK Olsztyn', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_olsztyn_name', i18nShort: 'source_pwik_olsztyn_short', region: 'pwik_olsztyn_area' },
         { id: 'torunskie_wodociagi', label: 'Toruńskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_torunskie_wodociagi_name', i18nShort: 'source_torunskie_wodociagi_short', region: 'torunskie_wodociagi_area' },
@@ -2612,6 +2752,12 @@ if (typeof document !== 'undefined') {
         if (!addr || addr.isActive === false) return false;
 
         if (alert.source === 'epec_elblag' && !REGION_MATCHERS.elblag(addr)) return false;
+        if (alert.source === 'pec_gliwice' && !REGION_MATCHERS.pec_gliwice_area(addr)) return false;
+        if (alert.source === 'aqua_bielsko' && !REGION_MATCHERS.aqua_bielsko_area(addr)) return false;
+        if (alert.source === 'pwik_gorzow' && !REGION_MATCHERS.pwik_gorzow_area(addr)) return false;
+        if (alert.source === 'pwik_gliwice' && !REGION_MATCHERS.pwik_gliwice_area(addr)) return false;
+        if (alert.source === 'dabrowskie_wodociagi' && !REGION_MATCHERS.dabrowskie_wodociagi_area(addr)) return false;
+        if (['pec_gliwice', 'pwik_gliwice'].includes(alert.source) && !matchesStreetName(alert, addr)) return false;
 
         // Trust backend evaluation if available
         if (alert.isLocal !== undefined && alert.isLocal !== null) {
@@ -2626,9 +2772,61 @@ if (typeof document !== 'undefined') {
     function matchesStreetName(alert, addr) {
         if (!alert.message || !addr) return false;
 
-        const message = ['pwik_olsztyn', 'wik_opole', 'eco_sa'].includes(alert.source) && alert.location
+        let message = ['pwik_olsztyn', 'wik_opole', 'eco_sa', 'dabrowskie_wodociagi'].includes(alert.source) && alert.location
             ? alert.location
             : alert.message;
+        if (alert.source === 'pwik_gliwice') {
+            if (!REGION_MATCHERS.pwik_gliwice_area(addr)) return false;
+            const normalize = (value) => (value || '').toLowerCase()
+                .replace(/ą/g, 'a').replace(/ć/g, 'c').replace(/ę/g, 'e')
+                .replace(/ł/g, 'l').replace(/ń/g, 'n').replace(/ó/g, 'o')
+                .replace(/ś/g, 's').replace(/ź/g, 'z').replace(/ż/g, 'z')
+                .replace(/[^a-z0-9]+/g, ' ').trim();
+            const localityText = normalize(`${alert.location || ''} ${alert.message || ''}`);
+            const normalizeLocality = (value) => normalize(value).replace(
+                /^(?:gmina miejsko wiejska|gmina miejska|gmina wiejska|gmina|gm|miasto|m) /,
+                ''
+            );
+            const localityNames = [addr.cityName, addr.commune]
+                .map(normalizeLocality).filter(Boolean);
+            const aliases = {
+                gliwice: ['gliwice', 'gliwicach', 'gliwic'],
+                pyskowice: ['pyskowice', 'pyskowicach', 'pyskowic'],
+                rudziniec: ['rudziniec', 'rudzincu'],
+                sosnicowice: ['sosnicowice', 'sosnicowicach', 'sosnicowic'],
+                zbroslawice: ['zbroslawice', 'zbroslawicach', 'zbroslawic']
+            };
+            const localityMatches = localityNames.some((name) => {
+                const variants = aliases[name] || [name];
+                return variants.some((variant) => localityText.includes(variant));
+            });
+            if (!localityMatches) return false;
+            message = `${alert.location || ''} ${alert.message || ''}`;
+        }
+        if (alert.source === 'aqua_bielsko') {
+            const normalizeLocality = (value) => (value || '').toLowerCase()
+                .replace(/ą/g, 'a').replace(/ć/g, 'c').replace(/ę/g, 'e')
+                .replace(/ł/g, 'l').replace(/ń/g, 'n').replace(/ó/g, 'o')
+                .replace(/ś/g, 's').replace(/ź/g, 'z').replace(/ż/g, 'z')
+                .replace(/[^a-z0-9]+/g, ' ').trim();
+            const localityNames = [addr.cityName, addr.commune]
+                .filter(Boolean).sort((a, b) => b.length - a.length);
+            const noticeText = alert.location || alert.message || '';
+            let localityMatch = null;
+            for (const locality of localityNames) {
+                const escaped = locality.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                if (!escaped) continue;
+                const matcher = new RegExp(`(^|[^\\p{L}\\p{N}])(${escaped})(?=$|[^\\p{L}\\p{N}])`, 'iu');
+                const match = matcher.exec(noticeText);
+                if (match && (!localityMatch || match.index < localityMatch.index)) localityMatch = match;
+            }
+            if (!localityMatch) return false;
+            const sectionStart = localityMatch.index + localityMatch[0].length;
+            const nextLocality = /,\s*(?:przy\s+)?w\s+/ig;
+            nextLocality.lastIndex = sectionStart;
+            const nextMatch = nextLocality.exec(noticeText);
+            message = noticeText.slice(sectionStart, nextMatch ? nextMatch.index : noticeText.length);
+        }
         const streetName1 = addr.streetName1 || '';
         const streetName2 = addr.streetName2 || null;
         const cityName = addr.cityName || '';
@@ -2636,6 +2834,11 @@ if (typeof document !== 'undefined') {
         const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
         if (alert.source === 'lpwik_legnica' && !REGION_MATCHERS.lpwik_legnica_area(addr)) return false;
+        if (alert.source === 'pec_gliwice' && !REGION_MATCHERS.pec_gliwice_area(addr)) return false;
+        if (alert.source === 'aqua_bielsko' && !REGION_MATCHERS.aqua_bielsko_area(addr)) return false;
+        if (alert.source === 'pwik_gorzow' && !REGION_MATCHERS.pwik_gorzow_area(addr)) return false;
+        if (alert.source === 'pwik_gliwice' && !REGION_MATCHERS.pwik_gliwice_area(addr)) return false;
+        if (alert.source === 'dabrowskie_wodociagi' && !REGION_MATCHERS.dabrowskie_wodociagi_area(addr)) return false;
         if (alert.source === 'bytomskie_wodociagi' && !REGION_MATCHERS.bytom(addr)) return false;
         if (alert.source === 'epec_elblag' && !REGION_MATCHERS.elblag(addr)) return false;
         if (alert.source === 'pewik_gdynia' && !REGION_MATCHERS.pewik_gdynia_area(addr)) return false;

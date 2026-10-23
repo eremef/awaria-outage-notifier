@@ -19,9 +19,14 @@ class AwariaCard extends HTMLElement {
     if (s.includes('mpec_kielce')) return { name: 'MPEC Kielce', icon: '🔥', color: '#f44336' };
     if (s === 'opec_gdynia') return { name: 'OPEC Gdynia', icon: '🔥', color: '#f44336' };
     if (s === 'epec_elblag') return { name: 'EPEC Elbląg', icon: '🔥', color: '#f44336' };
+    if (s === 'pec_gliwice') return { name: 'PEC Gliwice', icon: '🔥', color: '#f44336' };
     if (s === 'torunskie_wodociagi') return { name: 'Toruńskie Wodociągi', icon: '💧', color: '#2196f3' };
+    if (s === 'aqua_bielsko') return { name: 'AQUA S.A.', icon: '💧', color: '#2196f3' };
+    if (s === 'pwik_gorzow') return { name: 'PWiK Gorzów', icon: '💧', color: '#2196f3' };
+    if (s === 'pwik_gliwice') return { name: 'PWiK Gliwice', icon: '💧', color: '#2196f3' };
     if (s === 'lpwik_legnica') return { name: 'LPWiK Legnica', icon: '💧', color: '#2196f3' };
     if (s === 'bytomskie_wodociagi') return { name: 'Bytomskie Wodociągi', icon: '💧', color: '#2196f3' };
+    if (s === 'dabrowskie_wodociagi') return { name: 'Dąbrowskie Wodociągi', icon: '💧', color: '#2196f3' };
     if (s === 'zwik_zielona_gora') return { name: 'ZWiK Zielona Góra', icon: '💧', color: '#2196f3' };
     if (s.includes('pge')) return { name: 'PGE', icon: '⚡', color: '#ffb74d' };
     if (s.includes('energa_cieplo_kaliskie')) return { name: 'Energa Ciepło Kaliskie', icon: '🔥', color: '#f44336' };
@@ -180,12 +185,13 @@ class AwariaCard extends HTMLElement {
         const meta = this.getProviderMeta(alert.source);
         const startDate = alert.startDate || 'Brak danych';
         const endDate = alert.endDate || 'Brak danych';
+        const isAqua = alert.source === 'aqua_bielsko';
         const location = alert.location || 'Brak lokalizacji';
         const message = alert.message || 'Brak szczegółów';
 
         const maxLen = 420;
         let messageHtml = '';
-        if (message.length > maxLen) {
+        if (message.length > maxLen && !isAqua) {
           const visible = message.substring(0, maxLen) + '...';
           // Note: Home Assistant custom cards don't have global toggleMessage readily available without registering it or handling shadow DOM events,
           // but we can add inline script or just provide the truncated text. We will just render it as truncated for now, or add a simple inline handler.
@@ -203,7 +209,7 @@ class AwariaCard extends HTMLElement {
               </span>
             </div>
             <div class="alert-dates">📅 ${startDate} - ${endDate}</div>
-            <div class="alert-location">📍 Miejscowość: ${location}</div>
+            <div class="alert-location">📍 ${isAqua ? '' : 'Miejscowość: '}${location}</div>
             ${messageHtml}
           </div>
         `;

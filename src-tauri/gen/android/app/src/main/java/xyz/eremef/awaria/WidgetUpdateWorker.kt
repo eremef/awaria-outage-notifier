@@ -95,6 +95,14 @@ class WidgetUpdateWorker(
             epecElblagProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        // Update PEC Gliwice widgets
+        val pecGliwiceName = ComponentName(context, PecGliwiceWidgetProvider::class.java)
+        val pecGliwiceIds = appWidgetManager.getAppWidgetIds(pecGliwiceName)
+        val pecGliwiceProvider = PecGliwiceWidgetProvider()
+        for (id in pecGliwiceIds) {
+            pecGliwiceProvider.updateWidget(context, appWidgetManager, id)
+        }
+
         // Update Stoen widgets
         val stoenName = ComponentName(context, StoenWidgetProvider::class.java)
         val stoenIds = appWidgetManager.getAppWidgetIds(stoenName)
@@ -151,6 +159,38 @@ class WidgetUpdateWorker(
         val aquanetProvider = AquanetWidgetProvider()
         for (id in aquanetIds) {
             aquanetProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update AQUA Bielsko widgets
+        val aquaBielskoName = ComponentName(context, AquaBielskoWidgetProvider::class.java)
+        val aquaBielskoIds = appWidgetManager.getAppWidgetIds(aquaBielskoName)
+        val aquaBielskoProvider = AquaBielskoWidgetProvider()
+        for (id in aquaBielskoIds) {
+            aquaBielskoProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update PWiK Gorzów widgets
+        val pwikGorzowName = ComponentName(context, PwikGorzowWidgetProvider::class.java)
+        val pwikGorzowIds = appWidgetManager.getAppWidgetIds(pwikGorzowName)
+        val pwikGorzowProvider = PwikGorzowWidgetProvider()
+        for (id in pwikGorzowIds) {
+            pwikGorzowProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update PWiK Gliwice widgets
+        val pwikGliwiceName = ComponentName(context, PwikGliwiceWidgetProvider::class.java)
+        val pwikGliwiceIds = appWidgetManager.getAppWidgetIds(pwikGliwiceName)
+        val pwikGliwiceProvider = PwikGliwiceWidgetProvider()
+        for (id in pwikGliwiceIds) {
+            pwikGliwiceProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        // Update Dąbrowskie Wodociągi widgets
+        val dabrowskieWodociagiName = ComponentName(context, DabrowskieWodociagiWidgetProvider::class.java)
+        val dabrowskieWodociagiIds = appWidgetManager.getAppWidgetIds(dabrowskieWodociagiName)
+        val dabrowskieWodociagiProvider = DabrowskieWodociagiWidgetProvider()
+        for (id in dabrowskieWodociagiIds) {
+            dabrowskieWodociagiProvider.updateWidget(context, appWidgetManager, id)
         }
 
         // Update Katowickie Wodociagi widgets

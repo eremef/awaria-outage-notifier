@@ -93,8 +93,18 @@ pub enum AlertSource {
     LpwikLegnica,
     #[serde(rename = "bytomskie_wodociagi")]
     BytomskieWodociagi,
+    #[serde(rename = "pwik_gorzow")]
+    PwikGorzow,
+    #[serde(rename = "aqua_bielsko")]
+    AquaBielsko,
     #[serde(rename = "epec_elblag")]
     EpecElblag,
+    #[serde(rename = "pec_gliwice")]
+    PecGliwice,
+    #[serde(rename = "pwik_gliwice")]
+    PwikGliwice,
+    #[serde(rename = "dabrowskie_wodociagi")]
+    DabrowskieWodociagi,
 }
 
 pub enum ServiceLocation {
@@ -202,7 +212,14 @@ impl AlertSource {
             AlertSource::MpecKielce => ServiceLocation::Cities(vec![is_kielce]),
             AlertSource::LpwikLegnica => ServiceLocation::Cities(vec![is_lpwik_legnica]),
             AlertSource::BytomskieWodociagi => ServiceLocation::Cities(vec![is_bytom]),
+            AlertSource::PwikGorzow => ServiceLocation::Cities(vec![is_pwik_gorzow_area]),
+            AlertSource::AquaBielsko => ServiceLocation::Cities(vec![is_aqua_bielsko_area]),
             AlertSource::EpecElblag => ServiceLocation::Cities(vec![is_elblag]),
+            AlertSource::PecGliwice => ServiceLocation::Cities(vec![is_gliwice]),
+            AlertSource::PwikGliwice => ServiceLocation::Cities(vec![is_pwik_gliwice_area]),
+            AlertSource::DabrowskieWodociagi => {
+                ServiceLocation::Cities(vec![is_dabrowskie_wodociagi_area])
+            }
         }
     }
 
@@ -254,7 +271,12 @@ impl AlertSource {
             AlertSource::MpecKielce => "MPEC Kielce",
             AlertSource::LpwikLegnica => "LPWiK Legnica",
             AlertSource::BytomskieWodociagi => "Bytomskie Wodociągi",
+            AlertSource::PwikGorzow => "PWiK Gorzów Wielkopolski",
+            AlertSource::AquaBielsko => "AQUA S.A.",
             AlertSource::EpecElblag => "EPEC Elbląg",
+            AlertSource::PecGliwice => "PEC Gliwice",
+            AlertSource::PwikGliwice => "PWiK Gliwice",
+            AlertSource::DabrowskieWodociagi => "Dąbrowskie Wodociągi",
         }
     }
 }
@@ -446,10 +468,20 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea | AlertSource::Pge | AlertSource::Stoen => {
             if is_pl { "wyłączenie prądu" } else { "power outage" }
         }
-        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::WmRadom | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::ZwikZielonaGora | AlertSource::WodociagiPlockie | AlertSource::WodociagiKieleckie | AlertSource::TorunskieWodociagi | AlertSource::WodociagiBialostockie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa | AlertSource::PwikOlsztyn | AlertSource::WikOpole | AlertSource::PewikGdynia | AlertSource::GdanskieWodociagi | AlertSource::PukRokietnica | AlertSource::MpwikLublin | AlertSource::MpwikRzeszow | AlertSource::MwikBydgoszcz | AlertSource::LpwikLegnica | AlertSource::BytomskieWodociagi => {
+        AlertSource::MpwikWroclaw | AlertSource::MpwikWarszawa | AlertSource::Wmk | AlertSource::WmRadom | AlertSource::Aquanet | AlertSource::KatowickieWodociagi | AlertSource::ZwikLodz | AlertSource::ZwikZielonaGora | AlertSource::WodociagiPlockie | AlertSource::WodociagiKieleckie | AlertSource::TorunskieWodociagi | AlertSource::WodociagiBialostockie | AlertSource::PwikKalisz | AlertSource::PwikCzestochowa | AlertSource::PwikGliwice | AlertSource::PwikOlsztyn | AlertSource::WikOpole | AlertSource::PewikGdynia | AlertSource::GdanskieWodociagi | AlertSource::PukRokietnica | AlertSource::MpwikLublin | AlertSource::MpwikRzeszow | AlertSource::MwikBydgoszcz | AlertSource::LpwikLegnica | AlertSource::BytomskieWodociagi | AlertSource::PwikGorzow => {
             if is_pl { "wyłączenie wody" } else { "water outage" }
         }
-        AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz | AlertSource::Gpec | AlertSource::OpecGdynia | AlertSource::KpecBydgoszcz | AlertSource::EneaCieplo | AlertSource::EnergaCieploKaliskie | AlertSource::EcoSa | AlertSource::Sec | AlertSource::Lpec | AlertSource::MpecRzeszow | AlertSource::MpecKielce | AlertSource::PgeTorunHeat | AlertSource::EpecElblag => {
+        AlertSource::AquaBielsko => {
+            if is_pl { "komunikat AQUA" } else { "AQUA notice" }
+        }
+        AlertSource::DabrowskieWodociagi => {
+            if is_pl {
+                "komunikat o usługach wodociągowych"
+            } else {
+                "water service notice"
+            }
+        }
+        AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz | AlertSource::Gpec | AlertSource::OpecGdynia | AlertSource::KpecBydgoszcz | AlertSource::EneaCieplo | AlertSource::EnergaCieploKaliskie | AlertSource::EcoSa | AlertSource::Sec | AlertSource::Lpec | AlertSource::MpecRzeszow | AlertSource::MpecKielce | AlertSource::PgeTorunHeat | AlertSource::EpecElblag | AlertSource::PecGliwice => {
             if is_pl { "wyłączenie ogrzewania" } else { "heat outage" }
         }
         AlertSource::Psg => {
@@ -590,7 +622,12 @@ impl std::fmt::Display for AlertSource {
             AlertSource::MpecKielce => "mpec_kielce",
             AlertSource::LpwikLegnica => "lpwik_legnica",
             AlertSource::BytomskieWodociagi => "bytomskie_wodociagi",
+            AlertSource::PwikGorzow => "pwik_gorzow",
+            AlertSource::AquaBielsko => "aqua_bielsko",
             AlertSource::EpecElblag => "epec_elblag",
+            AlertSource::PecGliwice => "pec_gliwice",
+            AlertSource::PwikGliwice => "pwik_gliwice",
+            AlertSource::DabrowskieWodociagi => "dabrowskie_wodociagi",
         };
         write!(f, "{}", s)
     }
@@ -705,6 +742,87 @@ fn is_lpwik_legnica(addr: &AddressEntry) -> bool {
         && (voivodeship.trim().is_empty() || voivodeship.trim().starts_with("dolnoslaskie"))
 }
 
+fn is_pwik_gorzow_area(addr: &AddressEntry) -> bool {
+    const SERVICE_COMMUNES: [&str; 5] = [
+        "bogdaniec",
+        "deszczno",
+        "klodawa",
+        "lubiszyn",
+        "santok",
+    ];
+    const SERVICE_LOCALITY_IDS: [u64; 6] = [
+        935_140,  // Gorzów Wielkopolski
+        178_672, // Bogdaniec
+        179_520, // Deszczno
+        181_817, // Kłodawa
+        182_662, // Lubiszyn
+        186_708, // Santok
+    ];
+
+    let city = crate::utils::clean_text(&addr.city_name);
+    let mut commune = crate::utils::clean_text(&addr.commune);
+    for prefix in ["gmina ", "gm "] {
+        if let Some(stripped) = commune.strip_prefix(prefix) {
+            commune = stripped.to_string();
+            break;
+        }
+    }
+    let voivodeship = crate::utils::clean_text(&addr.voivodeship);
+    if !voivodeship.is_empty() && !voivodeship.starts_with("lubuskie") {
+        return false;
+    }
+
+    if SERVICE_LOCALITY_IDS.contains(&addr.city_id.unwrap_or_default()) {
+        return true;
+    }
+
+    if city == "gorzow wielkopolski" || city == "gorzow wlkp" {
+        return true;
+    }
+
+    SERVICE_COMMUNES
+        .iter()
+        .any(|name| commune == *name || city == *name)
+}
+
+fn is_aqua_bielsko_area(addr: &AddressEntry) -> bool {
+    const SERVICE_LOCALITIES: [&str; 12] = [
+        "bielsko-biala", "bestwina", "buczkowice", "chybie", "czechowice-dziedzice",
+        "jasienica", "jaworze", "kozy", "porabka", "szczyrk", "wilamowice", "wilkowice",
+    ];
+    const SERVICE_CITY_IDS: [u64; 13] = [
+        923_584, 212_110, 48_395, 50_765, 939_094, 54_674, 55_290,
+        924_365, 58_028, 64_773, 925_850, 926_996, 76_612,
+    ];
+    let city = crate::utils::clean_text(&addr.city_name).replace('–', "-");
+    let commune = crate::utils::clean_text(&addr.commune).replace('–', "-");
+    let voivodeship = crate::utils::clean_text(&addr.voivodeship);
+    let is_kety = city.starts_with("kety") || commune.starts_with("kety");
+
+    if let Some(city_id) = addr.city_id {
+        if SERVICE_CITY_IDS.contains(&city_id) {
+            let expected = if city_id == 924_365 { "malopolskie" } else { "slaskie" };
+            return voivodeship.is_empty() || voivodeship.starts_with(expected);
+        }
+        // TERYT village IDs are not all in this short list. Their commune is
+        // authoritative; don't accept a matching place name with a conflicting ID.
+        if is_kety {
+            return commune.starts_with("kety")
+                && (voivodeship.is_empty() || voivodeship.starts_with("malopolskie"));
+        }
+        return (voivodeship.is_empty() || voivodeship.starts_with("slaskie"))
+            && SERVICE_LOCALITIES.iter().any(|name| commune.starts_with(name));
+    }
+
+    if is_kety {
+        return voivodeship.is_empty() || voivodeship.starts_with("malopolskie");
+    }
+    (voivodeship.is_empty() || voivodeship.starts_with("slaskie"))
+        && SERVICE_LOCALITIES
+            .iter()
+            .any(|name| city.starts_with(name) || commune.starts_with(name))
+}
+
 fn is_bytom(addr: &AddressEntry) -> bool {
     let voivodeship = crate::utils::clean_text(&addr.voivodeship);
     if !voivodeship.trim().is_empty() && !voivodeship.trim().starts_with("slaskie") {
@@ -717,6 +835,110 @@ fn is_bytom(addr: &AddressEntry) -> bool {
 
     let city = crate::utils::clean_text(&addr.city_name);
     city.trim().starts_with("bytom")
+}
+
+fn is_gliwice(addr: &AddressEntry) -> bool {
+    let voivodeship = crate::utils::clean_text(&addr.voivodeship);
+    if !voivodeship.trim().is_empty() && !voivodeship.starts_with("slaskie") {
+        return false;
+    }
+
+    if let Some(city_id) = addr.city_id {
+        return city_id == 940_000;
+    }
+
+    crate::utils::clean_text(&addr.city_name)
+        .trim()
+        .starts_with("gliwice")
+}
+
+fn is_pwik_gliwice_area(addr: &AddressEntry) -> bool {
+    const SERVICE_MUNICIPALITIES: [(&str, u64); 5] = [
+        ("gliwice", 940_000),
+        ("pyskowice", 942_417),
+        ("rudziniec", 221_238),
+        ("sosnicowice", 221_936),
+        ("zbroslawice", 225_302),
+    ];
+
+    let voivodeship = crate::utils::clean_text(&addr.voivodeship);
+    if !voivodeship.trim().is_empty() && !voivodeship.starts_with("slaskie") {
+        return false;
+    }
+
+    let normalize_municipality = |value: &str| {
+        let mut normalized = crate::utils::clean_text(value.trim());
+        for prefix in [
+            "gmina miejsko-wiejska ",
+            "gmina miejska ",
+            "gmina wiejska ",
+            "gmina ",
+            "gm ",
+            "miasto ",
+            "m. ",
+        ] {
+            if let Some(stripped) = normalized.strip_prefix(prefix) {
+                normalized = stripped.trim().to_string();
+                break;
+            }
+        }
+        normalized
+    };
+
+    let city = normalize_municipality(&addr.city_name);
+    let commune = normalize_municipality(&addr.commune);
+    let city_municipality = SERVICE_MUNICIPALITIES
+        .iter()
+        .find(|(municipality, _)| city == *municipality);
+    let commune_municipality = SERVICE_MUNICIPALITIES
+        .iter()
+        .find(|(municipality, _)| commune == *municipality);
+
+    if let Some(city_id) = addr.city_id {
+        if city_municipality.is_some_and(|(_, expected_id)| city_id != *expected_id) {
+            return false;
+        }
+        if city_municipality.is_some_and(|(_, expected_id)| city_id == *expected_id) {
+            return true;
+        }
+        // TERYT IDs for villages differ from the municipality seat. Their
+        // commune name remains authoritative for service-area eligibility.
+        return commune_municipality.is_some();
+    }
+
+    city_municipality.is_some() || commune_municipality.is_some()
+}
+
+fn is_dabrowskie_wodociagi_area(addr: &AddressEntry) -> bool {
+    const DABROWA_GORNICZA_SIMC_ID: u64 = 939_473;
+
+    let voivodeship = crate::utils::clean_text(&addr.voivodeship);
+    if !voivodeship.trim().is_empty() && !voivodeship.starts_with("slaskie") {
+        return false;
+    }
+
+    let normalize_municipality = |value: &str| {
+        let mut normalized = crate::utils::clean_text(value.trim());
+        for prefix in ["gmina miejska ", "gmina ", "gm ", "miasto ", "m. "] {
+            if let Some(stripped) = normalized.strip_prefix(prefix) {
+                normalized = stripped.trim().to_string();
+                break;
+            }
+        }
+        normalized
+    };
+
+    let city = normalize_municipality(&addr.city_name);
+    let commune = normalize_municipality(&addr.commune);
+    if addr.city_id == Some(DABROWA_GORNICZA_SIMC_ID) {
+        return true;
+    }
+    if addr.city_id.is_some() {
+        // Smaller TERYT localities in the city share the official commune name.
+        return commune == "dabrowa gornicza";
+    }
+
+    city == "dabrowa gornicza" || commune == "dabrowa gornicza"
 }
 
 fn is_elblag(addr: &AddressEntry) -> bool {
@@ -1189,6 +1411,130 @@ pub fn load_settings_from_path(path: &std::path::Path) -> Result<Option<Settings
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn aqua_test_address(city: &str, commune: &str, voivodeship: &str, city_id: Option<u64>) -> AddressEntry {
+        AddressEntry {
+            name: "Home".into(), city_name: city.into(), voivodeship: voivodeship.into(),
+            district: String::new(), commune: commune.into(), street_name: "Testowa".into(),
+            street_name_1: "Testowa".into(), street_name_2: None, house_no: "1".into(),
+            city_id, street_id: None, is_active: true,
+        }
+    }
+
+    #[test]
+    fn aqua_bielsko_source_id_and_service_area_are_explicit() {
+        assert_eq!(AlertSource::AquaBielsko.to_string(), "aqua_bielsko");
+        assert_eq!(AlertSource::AquaBielsko.display_name(), "AQUA S.A.");
+        assert_eq!(serde_json::to_string(&AlertSource::AquaBielsko).unwrap(), "\"aqua_bielsko\"");
+        for (city, commune, woj, id) in [
+            ("Bielsko-Biała", "Bielsko-Biała", "Śląskie", Some(923_584)),
+            ("Bestwina", "Bestwina", "Śląskie", Some(212_110)),
+            ("Jasienica", "Jasienica", "Śląskie", Some(54_674)),
+            ("Kęty", "Kęty", "Małopolskie", Some(924_365)),
+            ("Kęty", "Kęty", "Małopolskie", None),
+        ] {
+            assert!(is_address_applicable_for_provider(&AlertSource::AquaBielsko, &aqua_test_address(city, commune, woj, id)), "{city}");
+        }
+        assert!(is_address_applicable_for_provider(&AlertSource::AquaBielsko, &aqua_test_address("Mazańcowice", "Jasienica", "Śląskie", Some(54_898))));
+        assert!(!is_address_applicable_for_provider(&AlertSource::AquaBielsko, &aqua_test_address("Skoczów", "Skoczów", "Śląskie", None)));
+        assert!(!is_address_applicable_for_provider(&AlertSource::AquaBielsko, &aqua_test_address("Andrychów", "Andrychów", "Małopolskie", None)));
+        assert!(!is_address_applicable_for_provider(&AlertSource::AquaBielsko, &aqua_test_address("Kęty", "Kęty", "Śląskie", None)));
+    }
+
+    #[test]
+    fn pwik_gorzow_source_id_and_service_area_are_explicit() {
+        assert_eq!(AlertSource::PwikGorzow.to_string(), "pwik_gorzow");
+        assert_eq!(AlertSource::PwikGorzow.display_name(), "PWiK Gorzów Wielkopolski");
+        assert_eq!(serde_json::to_string(&AlertSource::PwikGorzow).unwrap(), "\"pwik_gorzow\"");
+
+        for (city, commune, id) in [
+            ("Gorzów Wielkopolski", "Gorzów Wielkopolski", Some(935_140)),
+            ("Wojcieszyce", "Gmina Kłodawa", Some(93_000)),
+            ("Bogdaniec", "Bogdaniec", Some(178_672)),
+            ("Deszczno", "Deszczno", Some(179_520)),
+            ("Lubiszyn", "Lubiszyn", Some(182_662)),
+            ("Santok", "Santok", Some(186_708)),
+        ] {
+            assert!(is_address_applicable_for_provider(
+                &AlertSource::PwikGorzow,
+                &aqua_test_address(city, commune, "Lubuskie", id),
+            ), "{city}, {commune}");
+        }
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::PwikGorzow,
+            &aqua_test_address("Kłodawa", "Kłodawa", "Pomorskie", None),
+        ));
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::PwikGorzow,
+            &aqua_test_address("Zielona Góra", "Zielona Góra", "Lubuskie", None),
+        ));
+    }
+
+    #[test]
+    fn pec_gliwice_source_id_and_service_area_are_explicit() {
+        assert_eq!(AlertSource::PecGliwice.to_string(), "pec_gliwice");
+        assert_eq!(AlertSource::PecGliwice.display_name(), "PEC Gliwice");
+        assert_eq!(
+            serde_json::to_string(&AlertSource::PecGliwice).unwrap(),
+            "\"pec_gliwice\""
+        );
+
+        assert!(is_address_applicable_for_provider(
+            &AlertSource::PecGliwice,
+            &aqua_test_address("Gliwice", "Gliwice", "Śląskie", Some(940_000)),
+        ));
+        assert!(is_address_applicable_for_provider(
+            &AlertSource::PecGliwice,
+            &aqua_test_address("Gliwice", "", "", None),
+        ));
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::PecGliwice,
+            &aqua_test_address("Bytom", "Bytom", "Śląskie", Some(938_670)),
+        ));
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::PecGliwice,
+            &aqua_test_address("Gliwice", "Gliwice", "Małopolskie", Some(938_671)),
+        ));
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::PecGliwice,
+            &aqua_test_address("Gliwice", "Gliwice", "Śląskie", Some(938_670)),
+        ));
+    }
+
+    #[test]
+    fn pwik_gliwice_source_id_and_service_area_are_explicit() {
+        assert_eq!(AlertSource::PwikGliwice.to_string(), "pwik_gliwice");
+        assert_eq!(AlertSource::PwikGliwice.display_name(), "PWiK Gliwice");
+        assert_eq!(
+            serde_json::to_string(&AlertSource::PwikGliwice).unwrap(),
+            "\"pwik_gliwice\""
+        );
+
+        for (city, commune, id) in [
+            ("Gliwice", "Gliwice", Some(940_000)),
+            ("Pyskowice", "Gmina Pyskowice", Some(942_417)),
+            ("Rudziniec", "Rudziniec", Some(221_238)),
+            ("Sośnicowice", "Sośnicowice", Some(221_936)),
+            ("Niewiesze", "Gmina Rudziniec", None),
+            ("Zbrosławice", "Gmina Zbrosławice", Some(225_302)),
+        ] {
+            assert!(
+                is_address_applicable_for_provider(
+                    &AlertSource::PwikGliwice,
+                    &aqua_test_address(city, commune, "Śląskie", id),
+                ),
+                "{city}, {commune}"
+            );
+        }
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::PwikGliwice,
+            &aqua_test_address("Bytom", "Bytom", "Śląskie", Some(938_670)),
+        ));
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::PwikGliwice,
+            &aqua_test_address("Niewiesze", "Gmina Rudziniec", "Opolskie", None),
+        ));
+    }
     use mockall::predicate;
 
     #[test]

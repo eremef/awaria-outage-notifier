@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect } from 'vitest';
-const { filterAlerts, formatDate, matchesStreetName, getSources, getRegionMatchers } = require('../public/script.js');
+const { filterAlerts, formatDate, matchesStreetName, matchesAddress, getSources, getRegionMatchers } = require('../public/script.js');
 const { translations } = require('../public/i18n.js');
 require('../public/awaria-card.js');
 describe('Frontend Logic', () => {
@@ -329,6 +329,44 @@ describe('Frontend Logic', () => {
     });
 
     describe('getSources', () => {
+        it('registers AQUA S.A. in alphabetic water order with localized labels', () => {
+            const sources = getSources();
+            const provider = sources.find(source => source.id === 'aqua_bielsko');
+            const waterIds = sources.filter(source => source.category === 'water').map(source => source.id);
+
+            expect(provider).toMatchObject({
+                label: 'AQUA S.A.',
+                category: 'water',
+                region: 'aqua_bielsko_area',
+                i18nLabel: 'source_aqua_bielsko_name',
+                i18nShort: 'source_aqua_bielsko_short'
+            });
+            expect(waterIds).toEqual([...waterIds].sort());
+            expect(translations.en.source_aqua_bielsko_name).toBe('AQUA S.A.');
+            expect(translations.en.source_aqua_bielsko_short).toBe('AQUA S.A.');
+            expect(translations.pl.source_aqua_bielsko_name).toBe('AQUA S.A.');
+            expect(translations.pl.source_aqua_bielsko_short).toBe('AQUA S.A.');
+
+            const Card = window.customElements.get('awaria-card');
+            const card = new Card();
+            expect(card.getProviderMeta('aqua_bielsko')).toEqual({
+                name: 'AQUA S.A.', icon: '💧', color: '#2196f3'
+            });
+
+            card.setConfig({});
+            card._shadowRoot = card.attachShadow({ mode: 'open' });
+            card.hass = { states: {
+                'sensor.awaria_aqua_bielsko': { attributes: { alerts: [{
+                    source: 'aqua_bielsko', isLocal: true, hash: 'aqua-1',
+                    startDate: '2026-10-23T12:40:00', endDate: '2026-10-23T18:30:00',
+                    location: 'Międzyrzecze Górne; ul. Astrów nr 2, 4',
+                    message: 'Planowane prace: Międzyrzecze Górne, ul. Astrów nr 2, 4'
+                }] } }
+            } };
+            expect(card._shadowRoot.innerHTML).toContain('Międzyrzecze Górne; ul. Astrów nr 2, 4');
+            expect(card._shadowRoot.innerHTML).toContain('Planowane prace: Międzyrzecze Górne, ul. Astrów nr 2, 4');
+        });
+
         it('registers OPEC Gdynia in heating order with its service-area matcher', () => {
             const sources = getSources();
             const provider = sources.find(source => source.id === 'opec_gdynia');
@@ -423,6 +461,31 @@ describe('Frontend Logic', () => {
             expect(translations.pl.source_bytomskie_wodociagi_short).toBe('BW Bytom');
         });
 
+        it('registers Dąbrowskie Wodociągi alphabetically with localized water styling', () => {
+            const sources = getSources();
+            const provider = sources.find(source => source.id === 'dabrowskie_wodociagi');
+            const waterIds = sources.filter(source => source.category === 'water').map(source => source.id);
+
+            expect(provider).toMatchObject({
+                label: 'Dąbrowskie Wodociągi',
+                category: 'water',
+                region: 'dabrowskie_wodociagi_area',
+                i18nLabel: 'source_dabrowskie_wodociagi_name',
+                i18nShort: 'source_dabrowskie_wodociagi_short'
+            });
+            expect(waterIds).toEqual([...waterIds].sort());
+            expect(translations.en.source_dabrowskie_wodociagi_name).toBe('Dąbrowskie Wodociągi');
+            expect(translations.en.source_dabrowskie_wodociagi_short).toBe('DW Dąbrowa');
+            expect(translations.pl.source_dabrowskie_wodociagi_name).toBe('Dąbrowskie Wodociągi');
+            expect(translations.pl.source_dabrowskie_wodociagi_short).toBe('DW Dąbrowa');
+
+            const Card = window.customElements.get('awaria-card');
+            const card = new Card();
+            expect(card.getProviderMeta('dabrowskie_wodociagi')).toEqual({
+                name: 'Dąbrowskie Wodociągi', icon: '💧', color: '#2196f3'
+            });
+        });
+
         it('registers PEWIK Gdynia alphabetically as a water provider', () => {
             const sources = getSources();
             const provider = sources.find(source => source.id === 'pewik_gdynia');
@@ -466,6 +529,154 @@ describe('Frontend Logic', () => {
                 color: '#2196f3'
             });
         });
+
+        it('registers PWiK Gorzów alphabetically with localized labels and generic water styling', () => {
+            const sources = getSources();
+            const provider = sources.find(source => source.id === 'pwik_gorzow');
+            const waterIds = sources.filter(source => source.category === 'water').map(source => source.id);
+
+            expect(provider).toMatchObject({
+                label: 'PWiK Gorzów',
+                category: 'water',
+                region: 'pwik_gorzow_area',
+                i18nLabel: 'source_pwik_gorzow_name',
+                i18nShort: 'source_pwik_gorzow_short'
+            });
+            expect(waterIds).toEqual([...waterIds].sort());
+            expect(translations.en.source_pwik_gorzow_name).toBe('PWiK Gorzów');
+            expect(translations.en.source_pwik_gorzow_short).toBe('PWiK Gorzów');
+            expect(translations.pl.source_pwik_gorzow_name).toBe('PWiK Gorzów');
+            expect(translations.pl.source_pwik_gorzow_short).toBe('PWiK Gorzów');
+
+            const Card = window.customElements.get('awaria-card');
+            const card = new Card();
+            expect(card.getProviderMeta('pwik_gorzow')).toEqual({
+                name: 'PWiK Gorzów', icon: '💧', color: '#2196f3'
+            });
+        });
+
+        it('registers the Gliwice heat and water providers in their sorted categories', () => {
+            const sources = getSources();
+            const pec = sources.find(source => source.id === 'pec_gliwice');
+            const pwik = sources.find(source => source.id === 'pwik_gliwice');
+            const heatingIds = sources.filter(source => source.category === 'heating').map(source => source.id);
+            const waterIds = sources.filter(source => source.category === 'water').map(source => source.id);
+
+            expect(pec).toMatchObject({
+                label: 'PEC Gliwice', category: 'heating', region: 'pec_gliwice_area',
+                i18nLabel: 'source_pec_gliwice_name', i18nShort: 'source_pec_gliwice_short'
+            });
+            expect(pwik).toMatchObject({
+                label: 'PWiK Gliwice', category: 'water', region: 'pwik_gliwice_area',
+                i18nLabel: 'source_pwik_gliwice_name', i18nShort: 'source_pwik_gliwice_short'
+            });
+            expect(heatingIds).toEqual([...heatingIds].sort());
+            expect(waterIds).toEqual([...waterIds].sort());
+            expect(translations.en.source_pec_gliwice_name).toBe('PEC Gliwice');
+            expect(translations.pl.source_pec_gliwice_name).toBe('PEC Gliwice');
+            expect(translations.en.source_pwik_gliwice_short).toBe('PWiK Gliwice');
+            expect(translations.pl.source_pwik_gliwice_short).toBe('PWiK Gliwice');
+
+            const Card = window.customElements.get('awaria-card');
+            const card = new Card();
+            expect(card.getProviderMeta('pec_gliwice')).toEqual({
+                name: 'PEC Gliwice', icon: '🔥', color: '#f44336'
+            });
+            expect(card.getProviderMeta('pwik_gliwice')).toEqual({
+                name: 'PWiK Gliwice', icon: '💧', color: '#2196f3'
+            });
+        });
+    });
+
+    describe('PEC Gliwice service area', () => {
+        const matchesArea = getRegionMatchers().pec_gliwice_area;
+
+        it('accepts only Gliwice with the bundled TERYT identity or a name fallback', () => {
+            expect(matchesArea({ cityName: 'Gliwice', cityId: 940000, voivodeship: 'Śląskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Gliwice', voivodeship: 'Śląskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Gliwice', cityId: '940000', voivodeship: 'Śląskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Gliwice', cityId: 938670, voivodeship: 'Śląskie' })).toBe(false);
+            expect(matchesArea({ cityName: 'Bytom', cityId: 938670, voivodeship: 'Śląskie' })).toBe(false);
+            expect(matchesArea({ cityName: 'Gliwice', cityId: 940000, voivodeship: 'Małopolskie' })).toBe(false);
+        });
+
+        it('applies the region check to fallback street matches and backend-local alerts', () => {
+            const alert = { source: 'pec_gliwice', message: 'Przerwa przy ul. Testowej', location: 'Gliwice; ul. Testowa' };
+            const inside = { cityName: 'Gliwice', cityId: 940000, voivodeship: 'Śląskie', streetName1: 'Testowa' };
+            const outside = { cityName: 'Bytom', cityId: 938670, voivodeship: 'Śląskie', streetName1: 'Testowa' };
+            expect(matchesStreetName(alert, inside)).toBe(true);
+            expect(matchesStreetName(alert, outside)).toBe(false);
+            expect(matchesAddress({ ...alert, isLocal: true, addressIndex: 0 }, [outside], 0)).toBe(false);
+        });
+    });
+
+    describe('PWiK Gliwice service area', () => {
+        const matchesArea = getRegionMatchers().pwik_gliwice_area;
+
+        it('accepts its five municipalities through TERYT IDs or locality/commune names', () => {
+            const seats = [
+                ['Gliwice', 940000], ['Pyskowice', 942417], ['Rudziniec', 221238],
+                ['Sośnicowice', 221936], ['Zbrosławice', 225302]
+            ];
+            seats.forEach(([cityName, cityId]) => {
+                expect(matchesArea({ cityName, cityId, voivodeship: 'Śląskie' })).toBe(true);
+            });
+            expect(matchesArea({ cityName: 'Niewiesze', commune: 'Gmina Rudziniec', cityId: 221240, voivodeship: 'Śląskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Pyskowice', cityId: '942417', voivodeship: 'Śląskie' })).toBe(true);
+        });
+
+        it('rejects conflicting or out-of-area localities and scopes fallback street matching to the notice locality', () => {
+            expect(matchesArea({ cityName: 'Gliwice', commune: 'Gliwice', cityId: 938670, voivodeship: 'Śląskie' })).toBe(false);
+            expect(matchesArea({ cityName: 'Bytom', commune: 'Bytom', cityId: 938670, voivodeship: 'Śląskie' })).toBe(false);
+            expect(matchesArea({ cityName: 'Niewiesze', commune: 'Gmina Rudziniec', voivodeship: 'Opolskie' })).toBe(false);
+
+            const alert = {
+                source: 'pwik_gliwice',
+                message: 'PLANOWANE. Przerwa w dostawie wody w Gliwicach przy ul. Testowej nr 12-16.',
+                location: 'Miejscowość: Gliwice; ul. Testowa 12-16'
+            };
+            const gliwice = { cityName: 'Gliwice', cityId: 940000, commune: 'Gliwice', voivodeship: 'Śląskie', streetName1: 'Testowa' };
+            const pyskowice = { cityName: 'Pyskowice', cityId: 942417, commune: 'Pyskowice', voivodeship: 'Śląskie', streetName1: 'Testowa' };
+            expect(matchesStreetName(alert, gliwice)).toBe(true);
+            expect(matchesStreetName(alert, pyskowice)).toBe(false);
+            expect(matchesAddress({ ...alert, isLocal: true, addressIndex: 0 }, [pyskowice], 0)).toBe(false);
+        });
+    });
+
+    describe('AQUA S.A. service area', () => {
+        const matchesArea = getRegionMatchers().aqua_bielsko_area;
+
+        it('accepts addresses in each published water-supply municipality', () => {
+            const covered = [
+                ['Bielsko-Biała', 'Śląskie'], ['Bestwina', 'Śląskie'],
+                ['Buczkowice', 'Śląskie'], ['Chybie', 'Śląskie'],
+                ['Czechowice-Dziedzice', 'Śląskie'], ['Jasienica', 'Śląskie'],
+                ['Jaworze', 'Śląskie'], ['Kęty', 'Małopolskie'],
+                ['Kozy', 'Śląskie'], ['Porąbka', 'Śląskie'],
+                ['Szczyrk', 'Śląskie'], ['Wilamowice', 'Śląskie'],
+                ['Wilkowice', 'Śląskie']
+            ];
+            covered.forEach(([cityName, voivodeship]) => {
+                expect(matchesArea({ cityName, voivodeship })).toBe(true);
+            });
+        });
+
+        it('accepts a village through its supported commune but rejects nearby and wholesale-only areas', () => {
+            expect(matchesArea({ cityName: 'Międzyrzecze Górne', commune: 'Jasienica', voivodeship: 'Śląskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Skoczów', commune: 'Skoczów', voivodeship: 'Śląskie' })).toBe(false);
+            expect(matchesArea({ cityName: 'Andrychów', commune: 'Andrychów', voivodeship: 'Małopolskie' })).toBe(false);
+            expect(matchesArea({ cityName: 'Bielsko-Biała', voivodeship: 'Małopolskie' })).toBe(false);
+            expect(matchesArea({ cityName: 'Kęty', voivodeship: 'Śląskie' })).toBe(false);
+        });
+
+        it('applies service-area checks to fallback matches and backend-local alerts', () => {
+            const alert = { source: 'aqua_bielsko', message: 'Awaria przy ul. Darniowej', location: 'Międzyrzecze Górne; ul. Darniowa' };
+            const covered = { cityName: 'Międzyrzecze Górne', commune: 'Jasienica', voivodeship: 'Śląskie', streetName1: 'Darniowa' };
+            const outside = { cityName: 'Skoczów', commune: 'Skoczów', voivodeship: 'Śląskie', streetName1: 'Darniowa' };
+            expect(matchesStreetName(alert, covered)).toBe(true);
+            expect(matchesStreetName(alert, outside)).toBe(false);
+            expect(matchesAddress({ ...alert, isLocal: true, addressIndex: 0 }, [outside], 0)).toBe(false);
+        });
     });
 
     describe('ZWiK Zielona Góra service area', () => {
@@ -482,6 +693,53 @@ describe('Frontend Logic', () => {
             expect(matchesArea({ cityName: 'Zielona Góra', cityId: 999001, voivodeship: 'Lubuskie' })).toBe(false);
             expect(matchesArea({ cityName: 'Lubsko', voivodeship: 'Lubuskie' })).toBe(false);
             expect(matchesArea({ cityName: 'Ochla', voivodeship: 'Dolnośląskie' })).toBe(false);
+        });
+    });
+
+    describe('PWiK Gorzów service area', () => {
+        const matchesArea = getRegionMatchers().pwik_gorzow_area;
+
+        it('accepts Gorzów aliases and each supported municipality by city, commune, or TERYT ID', () => {
+            expect(matchesArea({ cityName: 'Gorzów Wielkopolski', cityId: 935140, voivodeship: 'Lubuskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Gorzów Wlkp.', voivodeship: 'Lubuskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Gorzów', commune: 'Gorzów Wielkopolski' })).toBe(true);
+
+            const coveredCommunes = [
+                ['Jenin', 'Bogdaniec', 178672],
+                ['Lubiszyn', 'Lubiszyn', 182662],
+                ['Prądocin', 'Deszczno', 179520],
+                ['Wojcieszyce', 'Kłodawa', 181817],
+                ['Santok', 'Santok', 186708]
+            ];
+            coveredCommunes.forEach(([cityName, commune, cityId]) => {
+                expect(matchesArea({ cityName, commune, voivodeship: 'Lubuskie' })).toBe(true);
+                expect(matchesArea({ cityName: commune, cityId, voivodeship: 'Lubuskie' })).toBe(true);
+            });
+            expect(matchesArea({ cityName: 'Gorzów Wielkopolski', cityId: '0935140', voivodeship: 'Lubuskie' })).toBe(true);
+        });
+
+        it('rejects addresses outside Lubuskie and contradictory locality metadata', () => {
+            expect(matchesArea({ cityName: 'Kłodawa', voivodeship: 'Wielkopolskie' })).toBe(false);
+            expect(matchesArea({ cityName: 'Gorzów Wielkopolski', cityId: 935140, voivodeship: 'Zachodniopomorskie' })).toBe(false);
+            expect(matchesArea({ cityName: 'Gorzów Wielkopolski', cityId: 999999, voivodeship: 'Lubuskie' })).toBe(false);
+            expect(matchesArea({ cityName: 'Santok', commune: 'Bogdaniec', voivodeship: 'Lubuskie' })).toBe(false);
+            expect(matchesArea({ cityName: 'Skwierzyna', commune: 'Skwierzyna', voivodeship: 'Lubuskie' })).toBe(false);
+
+            const alert = {
+                message: 'Awaria wodociągowa przy ul. Słonecznej',
+                location: 'Gorzów Wielkopolski; ul. Słoneczna',
+                source: 'pwik_gorzow'
+            };
+            expect(matchesStreetName(alert, {
+                cityName: 'Gorzów Wielkopolski', cityId: 935140,
+                voivodeship: 'Lubuskie', streetName1: 'Słoneczna'
+            })).toBe(true);
+            expect(matchesStreetName(alert, {
+                cityName: 'Skwierzyna', voivodeship: 'Lubuskie', streetName1: 'Słoneczna'
+            })).toBe(false);
+            expect(matchesAddress({ ...alert, isLocal: true, addressIndex: 0 }, [{
+                cityName: 'Skwierzyna', voivodeship: 'Lubuskie', streetName1: 'Słoneczna'
+            }], 0)).toBe(false);
         });
     });
 
@@ -530,6 +788,51 @@ describe('Frontend Logic', () => {
                 { source: 'bytomskie_wodociagi', message: 'Awaria przy ul. Dworcowej' },
                 { cityName: 'Gliwice', cityId: 938671, streetName1: 'Dworcowa' }
             )).toBe(false);
+        });
+    });
+
+    describe('Dąbrowskie Wodociągi service area', () => {
+        const matchesArea = getRegionMatchers().dabrowskie_wodociagi_area;
+
+        it('accepts Dąbrowa Górnicza by SIMC ID and commune identity', () => {
+            expect(matchesArea({
+                cityName: 'Dąbrowa Górnicza', cityId: 939473, voivodeship: 'Śląskie'
+            })).toBe(true);
+            expect(matchesArea({
+                cityName: 'Gołonóg', cityId: 123456, commune: 'Gmina Dąbrowa Górnicza', voivodeship: 'Śląskie'
+            })).toBe(true);
+        });
+
+        it('rejects other cities and conflicting locality metadata', () => {
+            expect(matchesArea({
+                cityName: 'Katowice', cityId: 937474, commune: 'Katowice', voivodeship: 'Śląskie'
+            })).toBe(false);
+            expect(matchesArea({
+                cityName: 'Dąbrowa Górnicza', cityId: 937474, commune: 'Katowice', voivodeship: 'Śląskie'
+            })).toBe(false);
+            expect(matchesArea({
+                cityName: 'Dąbrowa Górnicza', cityId: 939473, voivodeship: 'Małopolskie'
+            })).toBe(false);
+        });
+
+        it('applies coverage checks to backend-local alerts', () => {
+            const alert = {
+                source: 'dabrowskie_wodociagi',
+                message: 'Przewidywana przerwa w dostawie wody przy ul. Działki',
+                location: 'ul. Działki',
+                isLocal: true,
+                addressIndex: 0
+            };
+            const covered = {
+                cityName: 'Dąbrowa Górnicza', cityId: 939473,
+                voivodeship: 'Śląskie', streetName1: 'Działki'
+            };
+            const outside = {
+                cityName: 'Katowice', cityId: 937474,
+                voivodeship: 'Śląskie', streetName1: 'Działki'
+            };
+            expect(matchesAddress(alert, [covered], 0)).toBe(true);
+            expect(matchesAddress(alert, [outside], 0)).toBe(false);
         });
     });
 

@@ -24,6 +24,9 @@
   <string name="placeholder_dash">–</string>
   <string name="placeholder_time">--:--</string>
   <string name="provider_aquanet">Aquanet</string>
+  <string name="provider_aqua_bielsko">AQUA Bielsko-Biała</string>
+  <string name="provider_pwik_gorzow">PWiK Gorzów Wielkopolski</string>
+  <string name="provider_pwik_gliwice">PWiK Gliwice</string>
   <string name="provider_enea">Enea</string>
   <string name="provider_enea_cieplo">ENEA Ciepło</string>
   <string name="provider_eco_sa">ECO SA</string>
@@ -46,6 +49,7 @@
   <string name="provider_pge">PGE</string>
   <string name="provider_pge_torun_heat">PGE Toruń</string>
   <string name="provider_epec_elblag">EPEC Elbląg</string>
+  <string name="provider_pec_gliwice">PEC Gliwice</string>
   <string name="provider_psg">PSG</string>
   <string name="provider_puk_rokietnica">PUK Rokiet.</string>
   <string name="provider_pwik_czestochowa">PWiK CZW</string>
@@ -70,6 +74,7 @@
   <string name="provider_zwik_zielona_gora">ZWiK ZG</string>
   <string name="widget_label_all">Adres: wszystkie media</string>
   <string name="widget_label_aquanet">Aquanet</string>
+  <string name="widget_label_aqua_bielsko">AQUA Wodociągi Bielsko-Biała</string>
   <string name="widget_label_enea">Enea</string>
   <string name="widget_label_enea_cieplo">ENEA Ciepło</string>
   <string name="widget_label_eco_sa">Energetyka Cieplna Opolszczyzny (ECO SA)</string>
@@ -92,6 +97,7 @@
   <string name="widget_label_pge">PGE</string>
   <string name="widget_label_pge_torun_heat">PGE Toruń</string>
   <string name="widget_label_epec_elblag">EPEC Elbląg</string>
+  <string name="widget_label_pec_gliwice">PEC Gliwice</string>
   <string name="widget_label_psg">PSG</string>
   <string name="widget_label_lpwik_legnica">LPWiK Legnica</string>
   <string name="widget_label_bytomskie_wodociagi">Bytomskie Wodociągi</string>
@@ -99,6 +105,8 @@
   <string name="widget_label_pwik_czestochowa">PWiK Częstochowa</string>
   <string name="widget_label_pwik_kalisz">PWiK Kalisz</string>
   <string name="widget_label_pwik_olsztyn">PWiK Olsztyn</string>
+  <string name="widget_label_pwik_gorzow">PWiK Gorzów Wielkopolski</string>
+  <string name="widget_label_pwik_gliwice">PWiK Gliwice</string>
   <string name="widget_label_sec">SEC Szczecin</string>
   <string name="widget_label_stoen">Stoen</string>
   <string name="widget_label_tauron">Tauron</string>

@@ -338,44 +338,42 @@ fn parse_event_dates(text: &str) -> EventDates {
         }
     }
 
-    if let Some(captures) = full_date_range_regex().captures(text) {
-        if let (Some(start), Some(end)) = (
+    if let Some(captures) = full_date_range_regex().captures(text)
+        && let (Some(start), Some(end)) = (
             date_from_parts(&captures[1], &captures[2], &captures[3]),
             date_from_parts(&captures[4], &captures[5], &captures[6]),
-        ) {
-            if end >= start {
-                return EventDates {
-                    separate_dates: Vec::new(),
-                    continuous_range: Some((start, end)),
-                };
-            }
-        }
+        )
+        && end >= start
+    {
+        return EventDates {
+            separate_dates: Vec::new(),
+            continuous_range: Some((start, end)),
+        };
     }
 
     if let Some(captures) = short_date_range_regex().captures(text) {
         let month = captures.get(3).map(|value| value.as_str());
         let year = captures.get(4).map(|value| value.as_str());
-        if let (Some(month), Some(year)) = (month, year) {
-            if let (Some(start), Some(end)) = (
+        if let (Some(month), Some(year)) = (month, year)
+            && let (Some(start), Some(end)) = (
                 date_from_parts(&captures[1], month, year),
                 date_from_parts(&captures[2], month, year),
-            ) {
-                if end >= start {
-                    return EventDates {
-                        separate_dates: Vec::new(),
-                        continuous_range: Some((start, end)),
-                    };
-                }
-            }
+            )
+            && end >= start
+        {
+            return EventDates {
+                separate_dates: Vec::new(),
+                continuous_range: Some((start, end)),
+            };
         }
     }
 
     let mut dates = Vec::new();
     for captures in full_date_regex().captures_iter(text) {
-        if let Some(date) = date_from_parts(&captures[1], &captures[2], &captures[3]) {
-            if !dates.contains(&date) {
-                dates.push(date);
-            }
+        if let Some(date) = date_from_parts(&captures[1], &captures[2], &captures[3])
+            && !dates.contains(&date)
+        {
+            dates.push(date);
         }
     }
     if dates.is_empty() {

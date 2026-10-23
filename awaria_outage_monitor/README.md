@@ -30,15 +30,19 @@ For each address you want to monitor, add an entry with:
 
 ### Enabled Sources
 
-Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `pge_torun_heat`, `mpec_kielce`, `opec_gdynia`, `eco_sa`, `epec_elblag`, `pewik_gdynia`, `wik_opole`, `wodociagi_kieleckie`, `torunskie_wodociagi`, `wodociagi_bialostockie`, `mwik_bydgoszcz`, `mpwik_warszawa`, `pwik_olsztyn`, `lpwik_legnica`, `bytomskie_wodociagi`, `zwik_zielona_gora`, `enea_cieplo`, `energa_cieplo_kaliskie`).
+Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `pge_torun_heat`, `mpec_kielce`, `opec_gdynia`, `eco_sa`, `epec_elblag`, `pec_gliwice`, `pewik_gdynia`, `wik_opole`, `wodociagi_kieleckie`, `torunskie_wodociagi`, `wodociagi_bialostockie`, `mwik_bydgoszcz`, `mpwik_warszawa`, `pwik_gliwice`, `pwik_gorzow`, `pwik_olsztyn`, `lpwik_legnica`, `bytomskie_wodociagi`, `dabrowskie_wodociagi`, `zwik_zielona_gora`, `aqua_bielsko`, `enea_cieplo`, `energa_cieplo_kaliskie`).
 
 Toruńskie Wodociągi covers Toruń and five neighboring municipalities. Wodociągi Białostockie covers Białystok and the Wasilków municipality.
 PWiK Olsztyn covers Olsztyn and the localities included in the company's outage notices.
 WiK Opole covers water-service areas in Opole, Komprachcice, Prószków, and Turawa. ECO SA publishes heat notices for multiple cities; matching uses the notice locality rather than the company's Opole address.
 ZWiK Zielona Góra covers the combined Zielona Góra municipality, including its constituent localities.
+PWiK Gorzów covers water outage notices for Gorzów Wielkopolski and the municipalities of Kłodawa, Bogdaniec, Lubiszyn, Deszczno, and Santok. Notices marked `Naprawiona` describe resolved outages and are not active alerts.
+Dąbrowskie Wodociągi covers water interruptions and service-disruption notices in Dąbrowa Górnicza.
 LPWiK Legnica publishes water-outage notices for Legnica only.
+AQUA S.A. covers water-supply notices in Bielsko-Biała, Bestwina, Buczkowice, Chybie, Czechowice-Dziedzice, Jasienica, Jaworze, Kęty, Kozy, Porąbka, Szczyrk, Wilamowice, and Wilkowice; it is not a general Silesia-wide source.
 Bytomskie Wodociągi covers Bytom only.
 EPEC Elbląg publishes heat-outage notices for Elbląg only.
+PEC Gliwice publishes district-heat interruption notices for Gliwice only. PWiK Gliwice publishes planned water interruptions for its service municipalities: Gliwice, Pyskowice, Rudziniec, Sośnicowice, and Zbrosławice.
 
 ## Usage
 
