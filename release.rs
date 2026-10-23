@@ -196,7 +196,12 @@ fn update_tauri_conf(version: &str) {
                     .chars()
                     .take_while(|c| c.is_whitespace())
                     .collect::<String>();
-                format!("{}\"version\": \"{}\",", indent, tauri_version)
+                let has_comma = line.trim().ends_with(',');                    
+                if has_comma {
+                    format!("{}\"version\": {},", indent, tauri_version)
+                } else {
+                    format!("{}\"version\": {}", indent, tauri_version)
+                }
             } else if line.contains("\"versionCode\"") {
                 let indent = line
                     .chars()
