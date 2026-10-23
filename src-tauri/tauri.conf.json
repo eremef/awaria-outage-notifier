@@ -48,7 +48,7 @@
     },
     "windows": {
       "wix": {
-        "version": "1.0.75",
+        "version": "1.0.75"
       }
     }
   }
