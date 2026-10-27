@@ -80,6 +80,8 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **ZPWiK Zabrze**: Water failures and planned network-work interruptions in Zabrze.
   - **PWiK Ruda Śląska**: Water failures and planned interruptions in Ruda Śląska.
   - **PWiK Rybnik**: Water failures and planned interruptions in Rybnik, Jejkowice, and Gaszowice.
+  - **RPWiK Tychy**: Water-supply interruption notices in Tychy, Łaziska Górne, Lędziny, Bieruń, Orzesze, Kobiór, Brzeszcze, Bojszowy, and Wyry.
+  - **WPWiK Wałbrzych**: Water outages in Wałbrzych and the WZWiK service municipalities of Boguszów-Gorce, Czarny Bór, Głuszyca, Jedlina-Zdrój, Stare Bogaczowice, Szczawno-Zdrój, and Walim.
 
 ## Android app
 
@@ -218,7 +220,7 @@ For each address you want to monitor, add an entry with:
 
 #### Enabled Sources
 
-Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `epec_elblag`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`, `bytomskie_wodociagi`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
+Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `epec_elblag`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`, `bytomskie_wodociagi`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `rpwik_tychy`, `wpwik_walbrzych`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
 
 ### Usage
 

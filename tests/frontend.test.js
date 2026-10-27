@@ -1271,5 +1271,58 @@ describe('Frontend Logic', () => {
             expect(container.innerHTML).toContain('Legnicka 1');
         });
     });
+
+    describe('WPWiK Wałbrzych and RPWiK Tychy sources', () => {
+        it('registers both water sources and translates their labels', () => {
+            expect(getSources().find(source => source.id === 'rpwik_tychy')).toMatchObject({
+                category: 'water', region: 'rpwik_tychy_area',
+                i18nLabel: 'source_rpwik_tychy_name', i18nShort: 'source_rpwik_tychy_short'
+            });
+            expect(getSources().find(source => source.id === 'wpwik_walbrzych')).toMatchObject({
+                category: 'water', region: 'wpwik_walbrzych_area',
+                i18nLabel: 'source_wpwik_walbrzych_name', i18nShort: 'source_wpwik_walbrzych_short'
+            });
+            for (const language of ['en', 'pl']) {
+                expect(translations[language].source_rpwik_tychy_name).toBe('RPWiK Tychy');
+                expect(translations[language].source_wpwik_walbrzych_name).toBe('WPWiK Wałbrzych');
+            }
+        });
+
+        it('limits WPWiK to its Wałbrzych-area municipalities', () => {
+            const inArea = {
+                name: 'Home', isActive: true, cityName: 'Dziećmorowice',
+                commune: 'Walim', voivodeship: 'Dolnośląskie'
+            };
+            const outside = {
+                name: 'Other', isActive: true, cityName: 'Świdnica',
+                commune: 'Świdnica', voivodeship: 'Dolnośląskie'
+            };
+            const matches = getRegionMatchers().wpwik_walbrzych_area;
+            expect(matches(inArea)).toBe(true);
+            expect(matches(outside)).toBe(false);
+            expect(matchesAddress({ source: 'wpwik_walbrzych', isLocal: true, addressIndex: 0 }, [inArea], 0)).toBe(true);
+            expect(matchesAddress({ source: 'wpwik_walbrzych', isLocal: true, addressIndex: 0 }, [outside], 0)).toBe(false);
+        });
+
+        it('matches RPWiK smaller localities through their service commune', () => {
+            const wyry = {
+                name: 'Home', isActive: true, cityName: 'Gostyń',
+                commune: 'Wyry', voivodeship: 'Śląskie'
+            };
+            const brzeszcze = {
+                name: 'Other', isActive: true, cityName: 'Jawiszowice',
+                commune: 'Brzeszcze', voivodeship: 'Małopolskie'
+            };
+            const outside = {
+                name: 'Outside', isActive: true, cityName: 'Mikołów',
+                commune: 'Mikołów', voivodeship: 'Śląskie'
+            };
+            const matches = getRegionMatchers().rpwik_tychy_area;
+            expect(matches(wyry)).toBe(true);
+            expect(matches(brzeszcze)).toBe(true);
+            expect(matches(outside)).toBe(false);
+            expect(matchesAddress({ source: 'rpwik_tychy', isLocal: true, addressIndex: 0 }, [outside], 0)).toBe(false);
+        });
+    });
 });
 

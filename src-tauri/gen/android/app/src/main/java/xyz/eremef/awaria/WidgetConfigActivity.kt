@@ -139,6 +139,8 @@ class WidgetConfigActivity : ComponentActivity() {
             className.contains("AquanetWidgetProvider") -> AquanetWidgetProvider()
             className.contains("AquaBielskoWidgetProvider") -> AquaBielskoWidgetProvider()
             className.contains("PwikGorzowWidgetProvider") -> PwikGorzowWidgetProvider()
+            className.contains("RpwikTychyWidgetProvider") -> RpwikTychyWidgetProvider()
+            className.contains("WpwikWalbrzychWidgetProvider") -> WpwikWalbrzychWidgetProvider()
             className.contains("PwikGliwiceWidgetProvider") -> PwikGliwiceWidgetProvider()
             className.contains("MwikKoszalinWidgetProvider") -> MwikKoszalinWidgetProvider()
             className.contains("SosnowieckieWodociagiWidgetProvider") -> SosnowieckieWodociagiWidgetProvider()

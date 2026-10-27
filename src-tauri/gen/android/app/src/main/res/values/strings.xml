@@ -26,7 +26,9 @@
   <string name="provider_aquanet">Aquanet</string>
   <string name="provider_aqua_bielsko">AQUA Bielsko-Biała</string>
   <string name="provider_pwik_gorzow">PWiK Gorzów Wielkopolski</string>
+  <string name="provider_rpwik_tychy">RPWiK Tychy</string>
   <string name="provider_pwik_gliwice">PWiK Gliwice</string>
+  <string name="provider_wpwik_walbrzych">WPWiK Wałbrzych</string>
   <string name="provider_enea">Enea</string>
   <string name="provider_enea_cieplo">ENEA Ciepło</string>
   <string name="provider_eco_sa">ECO SA</string>
@@ -116,7 +118,9 @@
   <string name="widget_label_pwik_kalisz">PWiK Kalisz</string>
   <string name="widget_label_pwik_olsztyn">PWiK Olsztyn</string>
   <string name="widget_label_pwik_gorzow">PWiK Gorzów Wielkopolski</string>
+  <string name="widget_label_rpwik_tychy">RPWiK Tychy</string>
   <string name="widget_label_pwik_gliwice">PWiK Gliwice</string>
+  <string name="widget_label_wpwik_walbrzych">WPWiK Wałbrzych</string>
   <string name="widget_label_pwik_ruda_slaska">PWiK Ruda Śląska</string>
   <string name="widget_label_pwik_rybnik">PWiK Rybnik</string>
   <string name="widget_label_sec">SEC Szczecin</string>

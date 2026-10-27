@@ -153,7 +153,9 @@ if (typeof document !== 'undefined') {
         tarnowskie_wodociagi: 'tarnowskie_wodociagi_area',
         zabrzanskie_wodociagi: 'zabrze',
         pwik_ruda_slaska: 'ruda_slaska',
-        pwik_rybnik: 'pwik_rybnik_area'
+        pwik_rybnik: 'pwik_rybnik_area',
+        rpwik_tychy: 'rpwik_tychy_area',
+        wpwik_walbrzych: 'wpwik_walbrzych_area'
     };
 
     const REGION_MATCHERS = {
@@ -558,6 +560,34 @@ if (typeof document !== 'undefined') {
 
             return !!(cityArea || communeArea || idArea);
         },
+        wpwik_walbrzych_area: (addr) => {
+            if (!addr) return false;
+            const voivodeship = normalizeRegionName(addr.voivodeship);
+            if (voivodeship && !voivodeship.startsWith('dolnoslaskie')) return false;
+            const municipalities = [
+                'boguszow gorce', 'czarny bor', 'gluszyca', 'jedlina zdroj',
+                'stare bogaczowice', 'szczawno zdroj', 'walim', 'walbrzych'
+            ];
+            const city = normalizeRegionMunicipality(addr.cityName);
+            const commune = normalizeRegionMunicipality(addr.commune);
+            return municipalities.includes(city) || municipalities.includes(commune);
+        },
+        rpwik_tychy_area: (addr) => {
+            if (!addr) return false;
+            const voivodeship = normalizeRegionName(addr.voivodeship);
+            const city = normalizeRegionMunicipality(addr.cityName);
+            const commune = normalizeRegionMunicipality(addr.commune);
+            const silesianMunicipalities = [
+                'bojszowy', 'bierun', 'kobior', 'laziska gorne', 'ledziny',
+                'orzesze', 'tychy', 'wyry'
+            ];
+            if (voivodeship.startsWith('malopolskie')) {
+                return city === 'brzeszcze' || commune === 'brzeszcze';
+            }
+            if (voivodeship && !voivodeship.startsWith('slaskie')) return false;
+            return silesianMunicipalities.includes(city) || silesianMunicipalities.includes(commune) ||
+                (!voivodeship && (city === 'brzeszcze' || commune === 'brzeszcze'));
+        },
         pec_gliwice_area: (addr) => {
             if (!addr) return false;
             const normalize = (value) => (value || '').trim().toLowerCase()
@@ -754,6 +784,7 @@ if (typeof document !== 'undefined') {
         { id: 'pwik_olsztyn', label: 'PWiK Olsztyn', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_olsztyn_name', i18nShort: 'source_pwik_olsztyn_short', region: 'pwik_olsztyn_area' },
         { id: 'pwik_ruda_slaska', label: 'PWiK Ruda Śląska', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_ruda_slaska_name', i18nShort: 'source_pwik_ruda_slaska_short', region: 'ruda_slaska' },
         { id: 'pwik_rybnik', label: 'PWiK Rybnik', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_rybnik_name', i18nShort: 'source_pwik_rybnik_short', region: 'pwik_rybnik_area' },
+        { id: 'rpwik_tychy', label: 'RPWiK Tychy', category: 'water', defaultNotify: true, i18nLabel: 'source_rpwik_tychy_name', i18nShort: 'source_rpwik_tychy_short', region: 'rpwik_tychy_area' },
         { id: 'sosnowieckie_wodociagi', label: 'Sosnowieckie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_sosnowieckie_wodociagi_name', i18nShort: 'source_sosnowieckie_wodociagi_short', region: 'sosnowiec' },
         { id: 'tarnowskie_wodociagi', label: 'Tarnowskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_tarnowskie_wodociagi_name', i18nShort: 'source_tarnowskie_wodociagi_short', region: 'tarnowskie_wodociagi_area' },
         { id: 'torunskie_wodociagi', label: 'Toruńskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_torunskie_wodociagi_name', i18nShort: 'source_torunskie_wodociagi_short', region: 'torunskie_wodociagi_area' },
@@ -763,6 +794,7 @@ if (typeof document !== 'undefined') {
         { id: 'wodociagi_bialostockie', label: 'Wodociągi Białostockie', category: 'water', defaultNotify: true, i18nLabel: 'source_wodociagi_bialostockie_name', i18nShort: 'source_wodociagi_bialostockie_short', region: 'wodociagi_bialostockie_area' },
         { id: 'wodociagi_kieleckie', label: 'Wodociągi Kieleckie', category: 'water', defaultNotify: true, i18nLabel: 'source_wodociagi_kieleckie_name', i18nShort: 'source_wodociagi_kieleckie_short', region: 'wodociagi_kieleckie_area' },
         { id: 'wodociagi_plockie', label: 'Wodociągi Płockie', category: 'water', defaultNotify: true, i18nLabel: 'source_wodociagi_plockie_name', i18nShort: 'source_wodociagi_plockie_short', region: 'plock' },
+        { id: 'wpwik_walbrzych', label: 'WPWiK Wałbrzych', category: 'water', defaultNotify: true, i18nLabel: 'source_wpwik_walbrzych_name', i18nShort: 'source_wpwik_walbrzych_short', region: 'wpwik_walbrzych_area' },
         { id: 'zabrzanskie_wodociagi', label: 'ZPWiK Zabrze', category: 'water', defaultNotify: true, i18nLabel: 'source_zabrzanskie_wodociagi_name', i18nShort: 'source_zabrzanskie_wodociagi_short', region: 'zabrze' },
         { id: 'zwik_lodz', label: 'ZWIK Łódź', category: 'water', defaultNotify: true, i18nLabel: 'source_zwik_lodz_name', i18nShort: 'source_zwik_lodz_short', region: 'lodz' },
         { id: 'zwik_zielona_gora', label: 'ZWiK Zielona Góra', category: 'water', defaultNotify: true, i18nLabel: 'source_zwik_zielona_gora_name', i18nShort: 'source_zwik_zielona_gora_short', region: 'zwik_zielona_gora_area' },

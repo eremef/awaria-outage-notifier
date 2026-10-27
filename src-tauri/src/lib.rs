@@ -55,6 +55,8 @@ pub mod mpwik_rzeszow;
 pub mod pwik_olsztyn;
 pub mod pwik_gorzow;
 pub mod pwik_gliwice;
+pub mod rpwik_tychy;
+pub mod wpwik_walbrzych;
 pub mod wik_opole;
 pub mod lpwik_legnica;
 pub mod bytomskie_wodociagi;
@@ -606,6 +608,8 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(aqua_bielsko::AquaBielskoProvider),
         Box::new(pwik_gorzow::PwikGorzowProvider),
         Box::new(pwik_gliwice::PwikGliwiceProvider),
+        Box::new(rpwik_tychy::RpwikTychyProvider),
+        Box::new(wpwik_walbrzych::WpwikWalbrzychProvider),
         Box::new(mwik_bydgoszcz::MwikBydgoszczProvider),
         Box::new(mwik_koszalin::MwikKoszalinProvider),
         Box::new(sosnowieckie_wodociagi::SosnowieckieWodociagiProvider),
@@ -894,6 +898,43 @@ fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Setti
                         && pwik_gorzow::location_matches_address(location, address)
                         && (!s.filter_by_house_no
                             || pwik_gorzow::house_number_matches_notice(location, address))
+                });
+                if let Some((index, _)) = matched_address {
+                    alert.address_index = Some(index);
+                    alert.is_local = Some(true);
+                } else {
+                    alert.address_index = None;
+                    alert.is_local = Some(false);
+                }
+                continue;
+            }
+
+            if matches!(
+                alert.source,
+                api_logic::AlertSource::RpwikTychy | api_logic::AlertSource::WpwikWalbrzych
+            ) && alert.is_local == Some(true)
+            {
+                let location = alert.location.as_deref().unwrap_or_default();
+                let matched_address = s.addresses.iter().enumerate().find(|(_, address)| {
+                    if !address.is_active
+                        || !api_logic::is_address_applicable_for_provider(&alert.source, address)
+                    {
+                        return false;
+                    }
+
+                    match alert.source {
+                        api_logic::AlertSource::RpwikTychy => {
+                            rpwik_tychy::location_matches_address(location, address)
+                                && (!s.filter_by_house_no
+                                    || rpwik_tychy::house_number_matches_notice(location, address))
+                        }
+                        api_logic::AlertSource::WpwikWalbrzych => {
+                            wpwik_walbrzych::location_matches_address(location, address)
+                                && (!s.filter_by_house_no
+                                    || wpwik_walbrzych::house_number_matches_notice(location, address))
+                        }
+                        _ => false,
+                    }
                 });
                 if let Some((index, _)) = matched_address {
                     alert.address_index = Some(index);
@@ -2822,6 +2863,102 @@ mod regional_water_provider_registry_tests {
             let mut excluded_number = vec![alert()];
             apply_alert_filtering(&mut excluded_number, &settings("25", true));
             assert_eq!(excluded_number[0].is_local, Some(false), "{source}");
+        }
+    }
+}
+
+#[cfg(test)]
+mod new_water_provider_filter_tests {
+    use super::*;
+
+    fn alert(source: api_logic::AlertSource, location: &str) -> UnifiedAlert {
+        UnifiedAlert {
+            source,
+            message: Some(location.to_string()),
+            location: Some(location.to_string()),
+            address_index: Some(0),
+            is_local: Some(true),
+            ..Default::default()
+        }
+    }
+
+    fn settings(
+        city: &str,
+        commune: &str,
+        voivodeship: &str,
+        street: &str,
+        house_no: &str,
+        filter_by_house_no: bool,
+    ) -> Option<Settings> {
+        Some(Settings {
+            addresses: vec![AddressEntry {
+                name: "Home".into(),
+                city_name: city.into(),
+                commune: commune.into(),
+                voivodeship: voivodeship.into(),
+                street_name: street.into(),
+                street_name_1: street.into(),
+                house_no: house_no.into(),
+                is_active: true,
+                ..Default::default()
+            }],
+            filter_by_house_no,
+            ..Settings::default()
+        })
+    }
+
+    #[test]
+    fn both_new_providers_are_registered() {
+        let sources = get_providers()
+            .into_iter()
+            .map(|provider| provider.source())
+            .collect::<Vec<_>>();
+        assert!(sources.contains(&api_logic::AlertSource::RpwikTychy));
+        assert!(sources.contains(&api_logic::AlertSource::WpwikWalbrzych));
+    }
+
+    #[test]
+    fn house_number_filter_is_central_for_both_new_providers() {
+        let cases = [
+            (
+                api_logic::AlertSource::RpwikTychy,
+                "Tychy – Komunikat dotyczący dostawy wody\nSzanowni mieszkańcy ulic: Testowej 1-8 w Tychach.",
+                "Tychy",
+                "Tychy",
+                "Śląskie",
+                "Testowa",
+            ),
+            (
+                api_logic::AlertSource::WpwikWalbrzych,
+                "Awaria Gmina Wałbrzych; ul. Senatorska 1-8 w Wałbrzychu",
+                "Wałbrzych",
+                "Wałbrzych",
+                "Dolnośląskie",
+                "Senatorska",
+            ),
+        ];
+
+        for (source, location, city, commune, voivodeship, street) in cases {
+            let mut disabled_filter = vec![alert(source, location)];
+            apply_alert_filtering(
+                &mut disabled_filter,
+                &settings(city, commune, voivodeship, street, "20", false),
+            );
+            assert_eq!(disabled_filter[0].is_local, Some(true), "{source}");
+
+            let mut matching_number = vec![alert(source, location)];
+            apply_alert_filtering(
+                &mut matching_number,
+                &settings(city, commune, voivodeship, street, "5", true),
+            );
+            assert_eq!(matching_number[0].is_local, Some(true), "{source}");
+
+            let mut nonmatching_number = vec![alert(source, location)];
+            apply_alert_filtering(
+                &mut nonmatching_number,
+                &settings(city, commune, voivodeship, street, "20", true),
+            );
+            assert_eq!(nonmatching_number[0].is_local, Some(false), "{source}");
         }
     }
 }

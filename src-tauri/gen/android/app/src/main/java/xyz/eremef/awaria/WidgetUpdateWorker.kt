@@ -177,6 +177,20 @@ class WidgetUpdateWorker(
             pwikGorzowProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        val rpwikTychyName = ComponentName(context, RpwikTychyWidgetProvider::class.java)
+        val rpwikTychyIds = appWidgetManager.getAppWidgetIds(rpwikTychyName)
+        val rpwikTychyProvider = RpwikTychyWidgetProvider()
+        for (id in rpwikTychyIds) {
+            rpwikTychyProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        val wpwikWalbrzychName = ComponentName(context, WpwikWalbrzychWidgetProvider::class.java)
+        val wpwikWalbrzychIds = appWidgetManager.getAppWidgetIds(wpwikWalbrzychName)
+        val wpwikWalbrzychProvider = WpwikWalbrzychWidgetProvider()
+        for (id in wpwikWalbrzychIds) {
+            wpwikWalbrzychProvider.updateWidget(context, appWidgetManager, id)
+        }
+
         // Update PWiK Gliwice widgets
         val pwikGliwiceName = ComponentName(context, PwikGliwiceWidgetProvider::class.java)
         val pwikGliwiceIds = appWidgetManager.getAppWidgetIds(pwikGliwiceName)

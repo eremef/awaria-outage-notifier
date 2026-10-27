@@ -80,6 +80,8 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
   - **ZPWiK Zabrze**: Awarie i planowane przerwy w dostawie wody w Zabrzu.
   - **PWiK Ruda Śląska**: Awarie i planowane przerwy w dostawie wody w Rudzie Śląskiej.
   - **PWiK Rybnik**: Awarie i planowane przerwy w dostawie wody w Rybniku, Jejkowicach i Gaszowicach.
+  - **RPWiK Tychy**: Komunikaty o przerwach w dostawie wody w Tychach, Łaziskach Górnych, Lędzinach, Bieruniu, Orzeszu, Kobiórze, Brzeszczach, Bojszowach i Wyrach.
+  - **WPWiK Wałbrzych**: Awarie wodociągowe w Wałbrzychu i gminach WZWiK: Boguszów-Gorce, Czarny Bór, Głuszyca, Jedlina-Zdrój, Stare Bogaczowice, Szczawno-Zdrój i Walim.
 
 ## Aplikacja Android
 
@@ -218,7 +220,7 @@ Dla każdego adresu, który chcesz monitorować, dodaj wpis zawierający:
 
 #### Aktywne źródła (Enabled Sources)
 
-Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `epec_elblag`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`, `bytomskie_wodociagi`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
+Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `epec_elblag`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`, `bytomskie_wodociagi`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `rpwik_tychy`, `wpwik_walbrzych`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
 
 ### Użytkowanie
 

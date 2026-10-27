@@ -30,7 +30,7 @@ Dla każdego adresu, który chcesz monitorować, dodaj wpis zawierający:
 
 ### Aktywne źródła (Enabled Sources)
 
-Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `pge_torun_heat`, `mpec_kielce`, `opec_gdynia`, `eco_sa`, `epec_elblag`, `pec_gliwice`, `pewik_gdynia`, `wik_opole`, `wodociagi_kieleckie`, `torunskie_wodociagi`, `wodociagi_bialostockie`, `mwik_bydgoszcz`, `mpwik_warszawa`, `pwik_gliwice`, `pwik_gorzow`, `pwik_olsztyn`, `lpwik_legnica`, `bytomskie_wodociagi`, `dabrowskie_wodociagi`, `zwik_zielona_gora`, `aqua_bielsko`, `energa_cieplo_kaliskie`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
+Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `pge_torun_heat`, `mpec_kielce`, `opec_gdynia`, `eco_sa`, `epec_elblag`, `pec_gliwice`, `pewik_gdynia`, `wik_opole`, `wodociagi_kieleckie`, `torunskie_wodociagi`, `wodociagi_bialostockie`, `mwik_bydgoszcz`, `mpwik_warszawa`, `pwik_gliwice`, `pwik_gorzow`, `pwik_olsztyn`, `lpwik_legnica`, `bytomskie_wodociagi`, `dabrowskie_wodociagi`, `zwik_zielona_gora`, `aqua_bielsko`, `energa_cieplo_kaliskie`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `rpwik_tychy`, `wpwik_walbrzych`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
 
 Toruńskie Wodociągi obejmują Toruń i pięć sąsiednich gmin. Wodociągi Białostockie obejmują Białystok oraz gminę Wasilków.
 PWiK Olsztyn obejmuje Olsztyn i miejscowości wymienione w komunikatach o awariach.
@@ -44,7 +44,7 @@ Bytomskie Wodociągi obejmuje wyłącznie Bytom.
 MWiK Koszalin i Sosnowieckie Wodociągi obejmują odpowiednio Koszalin i Sosnowiec.
 Tarnowskie Wodociągi korzysta z opublikowanego obszaru działania w Tarnowie, gminie Tarnów, gminie Skrzyszów i wskazanych miejscowościach.
 ZPWiK Zabrze i PWiK Ruda Śląska publikują komunikaty wodociągowe dotyczące odpowiednio Zabrza i Rudy Śląskiej.
-PWiK Rybnik publikuje komunikaty o awariach i planowanych przerwach w Rybniku, Jejkowicach i Gaszowicach.
+PWiK Rybnik publikuje komunikaty o awariach i planowanych przerwach w Rybniku, Jejkowicach i Gaszowicach. RPWiK Tychy publikuje komunikaty o przerwach w dostawie wody w Tychach oraz gminach Łaziska Górne, Lędziny, Bieruń, Orzesze, Kobiór, Brzeszcze, Bojszowy i Wyry. WPWiK Wałbrzych publikuje komunikaty o awariach w Wałbrzychu oraz gminach WZWiK: Boguszów-Gorce, Czarny Bór, Głuszyca, Jedlina-Zdrój, Stare Bogaczowice, Szczawno-Zdrój i Walim.
 EPEC Elbląg publikuje komunikaty o przerwach w dostawie ciepła dotyczące wyłącznie Elbląga.
 PEC Gliwice publikuje komunikaty o przerwach w dostawie ciepła wyłącznie w Gliwicach. PWiK Gliwice publikuje planowane przerwy w dostawie wody na obszarze gmin Gliwice, Pyskowice, Rudziniec, Sośnicowice i Zbrosławice.
 

@@ -95,8 +95,12 @@ pub enum AlertSource {
     BytomskieWodociagi,
     #[serde(rename = "pwik_gorzow")]
     PwikGorzow,
+    #[serde(rename = "rpwik_tychy")]
+    RpwikTychy,
     #[serde(rename = "aqua_bielsko")]
     AquaBielsko,
+    #[serde(rename = "wpwik_walbrzych")]
+    WpwikWalbrzych,
     #[serde(rename = "epec_elblag")]
     EpecElblag,
     #[serde(rename = "pec_gliwice")]
@@ -225,7 +229,9 @@ impl AlertSource {
             AlertSource::LpwikLegnica => ServiceLocation::Cities(vec![is_lpwik_legnica]),
             AlertSource::BytomskieWodociagi => ServiceLocation::Cities(vec![is_bytom]),
             AlertSource::PwikGorzow => ServiceLocation::Cities(vec![is_pwik_gorzow_area]),
+            AlertSource::RpwikTychy => ServiceLocation::Cities(vec![is_rpwik_tychy_area]),
             AlertSource::AquaBielsko => ServiceLocation::Cities(vec![is_aqua_bielsko_area]),
+            AlertSource::WpwikWalbrzych => ServiceLocation::Cities(vec![is_wpwik_walbrzych_area]),
             AlertSource::EpecElblag => ServiceLocation::Cities(vec![is_elblag]),
             AlertSource::PecGliwice => ServiceLocation::Cities(vec![is_gliwice]),
             AlertSource::PwikGliwice => ServiceLocation::Cities(vec![is_pwik_gliwice_area]),
@@ -292,7 +298,9 @@ impl AlertSource {
             AlertSource::LpwikLegnica => "LPWiK Legnica",
             AlertSource::BytomskieWodociagi => "Bytomskie Wodociągi",
             AlertSource::PwikGorzow => "PWiK Gorzów Wielkopolski",
+            AlertSource::RpwikTychy => "RPWiK Tychy",
             AlertSource::AquaBielsko => "AQUA S.A.",
+            AlertSource::WpwikWalbrzych => "WPWiK Wałbrzych",
             AlertSource::EpecElblag => "EPEC Elbląg",
             AlertSource::PecGliwice => "PEC Gliwice",
             AlertSource::PwikGliwice => "PWiK Gliwice",
@@ -520,6 +528,8 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         | AlertSource::LpwikLegnica
         | AlertSource::BytomskieWodociagi
         | AlertSource::PwikGorzow
+        | AlertSource::RpwikTychy
+        | AlertSource::WpwikWalbrzych
         | AlertSource::MwikKoszalin
         | AlertSource::SosnowieckieWodociagi
         | AlertSource::TarnowskieWodociagi
@@ -684,7 +694,9 @@ impl std::fmt::Display for AlertSource {
             AlertSource::LpwikLegnica => "lpwik_legnica",
             AlertSource::BytomskieWodociagi => "bytomskie_wodociagi",
             AlertSource::PwikGorzow => "pwik_gorzow",
+            AlertSource::RpwikTychy => "rpwik_tychy",
             AlertSource::AquaBielsko => "aqua_bielsko",
+            AlertSource::WpwikWalbrzych => "wpwik_walbrzych",
             AlertSource::EpecElblag => "epec_elblag",
             AlertSource::PecGliwice => "pec_gliwice",
             AlertSource::PwikGliwice => "pwik_gliwice",
@@ -974,6 +986,88 @@ fn is_pwik_gliwice_area(addr: &AddressEntry) -> bool {
     }
 
     city_municipality.is_some() || commune_municipality.is_some()
+}
+
+fn normalize_service_municipality(value: &str) -> String {
+    let normalized = crate::utils::clean_text(value.trim());
+    let mut normalized = normalized
+        .split(|character: char| !character.is_alphanumeric())
+        .filter(|word| !word.is_empty())
+        .collect::<Vec<_>>();
+    for prefix in [
+        &["gmina", "miejsko", "wiejska"][..],
+        &["gmina", "miejska"][..],
+        &["gmina", "wiejska"][..],
+        &["gmina"][..],
+        &["gm"][..],
+        &["miasto"][..],
+        &["m"][..],
+    ] {
+        if normalized.starts_with(prefix) {
+            normalized.drain(..prefix.len());
+            break;
+        }
+    }
+    normalized.join(" ")
+}
+
+fn is_wpwik_walbrzych_area(addr: &AddressEntry) -> bool {
+    const SERVICE_MUNICIPALITIES: [&str; 8] = [
+        "boguszow gorce",
+        "czarny bor",
+        "gluszyca",
+        "jedlina zdroj",
+        "stare bogaczowice",
+        "szczawno zdroj",
+        "walim",
+        "walbrzych",
+    ];
+
+    let voivodeship = crate::utils::clean_text(&addr.voivodeship);
+    if !voivodeship.trim().is_empty() && !voivodeship.starts_with("dolnoslaskie") {
+        return false;
+    }
+
+    let city = normalize_service_municipality(&addr.city_name);
+    let commune = normalize_service_municipality(&addr.commune);
+    SERVICE_MUNICIPALITIES
+        .iter()
+        .any(|municipality| city == *municipality || commune == *municipality)
+}
+
+fn is_rpwik_tychy_area(addr: &AddressEntry) -> bool {
+    const SERVICE_SLASKIE_MUNICIPALITIES: [&str; 8] = [
+        "bojszowy",
+        "bierun",
+        "kobior",
+        "laziska gorne",
+        "ledziny",
+        "orzesze",
+        "tychy",
+        "wyry",
+    ];
+    const SERVICE_MALOPOLSKIE_MUNICIPALITIES: [&str; 1] = ["brzeszcze"];
+
+    let city = normalize_service_municipality(&addr.city_name);
+    let commune = normalize_service_municipality(&addr.commune);
+    let voivodeship = crate::utils::clean_text(&addr.voivodeship);
+
+    if voivodeship.starts_with("malopolskie") {
+        return SERVICE_MALOPOLSKIE_MUNICIPALITIES
+            .iter()
+            .any(|municipality| city == *municipality || commune == *municipality);
+    }
+    if !voivodeship.is_empty() && !voivodeship.starts_with("slaskie") {
+        return false;
+    }
+
+    SERVICE_SLASKIE_MUNICIPALITIES
+        .iter()
+        .any(|municipality| city == *municipality || commune == *municipality)
+        || (voivodeship.is_empty()
+            && SERVICE_MALOPOLSKIE_MUNICIPALITIES
+                .iter()
+                .any(|municipality| city == *municipality || commune == *municipality))
 }
 
 fn is_dabrowskie_wodociagi_area(addr: &AddressEntry) -> bool {
@@ -3084,6 +3178,85 @@ mod regional_water_provider_tests {
             &AlertSource::PwikRybnik,
             &katowice
         ));
+    }
+}
+
+#[cfg(test)]
+mod new_water_provider_area_tests {
+    use super::{is_address_applicable_for_provider, AddressEntry, AlertSource};
+
+    fn address(city: &str, commune: &str, voivodeship: &str) -> AddressEntry {
+        AddressEntry {
+            city_name: city.to_string(),
+            commune: commune.to_string(),
+            voivodeship: voivodeship.to_string(),
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn wpwik_is_limited_to_the_eight_walbrzych_area_municipalities() {
+        let walbrzych = address("Wałbrzych", "Wałbrzych", "Dolnośląskie");
+        let gmina_walim = address("Dziećmorowice", "Walim", "Dolnośląskie");
+        let outside = address("Świdnica", "Świdnica", "Dolnośląskie");
+        let wrong_region = address("Wałbrzych", "Wałbrzych", "Mazowieckie");
+
+        assert!(is_address_applicable_for_provider(
+            &AlertSource::WpwikWalbrzych,
+            &walbrzych
+        ));
+        assert!(is_address_applicable_for_provider(
+            &AlertSource::WpwikWalbrzych,
+            &gmina_walim
+        ));
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::WpwikWalbrzych,
+            &outside
+        ));
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::WpwikWalbrzych,
+            &wrong_region
+        ));
+    }
+
+    #[test]
+    fn rpwik_covers_its_silesian_communes_and_brzeszcze() {
+        let tychy = address("Tychy", "Tychy", "Śląskie");
+        let gostyn = address("Gostyń", "Wyry", "Śląskie");
+        let jawiszowice = address("Jawiszowice", "Brzeszcze", "Małopolskie");
+        let outside = address("Mikołów", "Mikołów", "Śląskie");
+        let wrong_brzeszcze_region = address("Brzeszcze", "Brzeszcze", "Śląskie");
+
+        for included in [&tychy, &gostyn, &jawiszowice] {
+            assert!(is_address_applicable_for_provider(
+                &AlertSource::RpwikTychy,
+                included
+            ));
+        }
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::RpwikTychy,
+            &outside
+        ));
+        assert!(!is_address_applicable_for_provider(
+            &AlertSource::RpwikTychy,
+            &wrong_brzeszcze_region
+        ));
+    }
+
+    #[test]
+    fn new_provider_ids_and_display_names_are_stable() {
+        for (source, id, name) in [
+            (AlertSource::RpwikTychy, "rpwik_tychy", "RPWiK Tychy"),
+            (
+                AlertSource::WpwikWalbrzych,
+                "wpwik_walbrzych",
+                "WPWiK Wałbrzych",
+            ),
+        ] {
+            assert_eq!(source.to_string(), id);
+            assert_eq!(source.display_name(), name);
+            assert_eq!(serde_json::to_string(&source).unwrap(), format!("\"{id}\""));
+        }
     }
 }
 

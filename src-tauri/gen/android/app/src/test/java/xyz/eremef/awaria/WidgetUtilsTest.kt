@@ -67,6 +67,26 @@ class WidgetUtilsTest {
         assertEquals(R.drawable.ic_water, provider.iconResId)
     }
 
+    @Test
+    fun testRpwikTychyWidgetUsesWaterSourceAndRefreshAction() {
+        val provider = RpwikTychyWidgetProvider()
+
+        assertEquals("rpwik_tychy", provider.sourceKey)
+        assertEquals("xyz.eremef.awaria.ACTION_REFRESH_RPWIK_TYCHY", provider.refreshAction)
+        assertEquals("outages", provider.labelKey)
+        assertEquals(R.drawable.ic_water, provider.iconResId)
+    }
+
+    @Test
+    fun testWpwikWalbrzychWidgetUsesWaterSourceAndRefreshAction() {
+        val provider = WpwikWalbrzychWidgetProvider()
+
+        assertEquals("wpwik_walbrzych", provider.sourceKey)
+        assertEquals("xyz.eremef.awaria.ACTION_REFRESH_WPWIK_WALBRZYCH", provider.refreshAction)
+        assertEquals("outages", provider.labelKey)
+        assertEquals(R.drawable.ic_water, provider.iconResId)
+    }
+
     private fun createSettings(
         cityName: String = "",
         commune: String = "",

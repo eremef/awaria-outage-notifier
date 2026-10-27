@@ -23,7 +23,9 @@ class AwariaCard extends HTMLElement {
     if (s === 'torunskie_wodociagi') return { name: 'Toruńskie Wodociągi', icon: '💧', color: '#2196f3' };
     if (s === 'aqua_bielsko') return { name: 'AQUA S.A.', icon: '💧', color: '#2196f3' };
     if (s === 'pwik_gorzow') return { name: 'PWiK Gorzów', icon: '💧', color: '#2196f3' };
+    if (s === 'rpwik_tychy') return { name: 'RPWiK Tychy', icon: '💧', color: '#2196f3' };
     if (s === 'pwik_gliwice') return { name: 'PWiK Gliwice', icon: '💧', color: '#2196f3' };
+    if (s === 'wpwik_walbrzych') return { name: 'WPWiK Wałbrzych', icon: '💧', color: '#2196f3' };
     if (s === 'pwik_ruda_slaska') return { name: 'PWiK Ruda Śląska', icon: '💧', color: '#2196f3' };
     if (s === 'pwik_rybnik') return { name: 'PWiK Rybnik', icon: '💧', color: '#2196f3' };
     if (s === 'lpwik_legnica') return { name: 'LPWiK Legnica', icon: '💧', color: '#2196f3' };

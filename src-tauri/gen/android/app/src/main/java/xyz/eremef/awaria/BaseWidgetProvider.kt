@@ -400,7 +400,9 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             "pwik_czestochowa" -> context.getString(R.string.provider_pwik_czestochowa)
             "pwik_olsztyn" -> context.getString(R.string.provider_pwik_olsztyn)
             "pwik_gorzow" -> context.getString(R.string.provider_pwik_gorzow)
+            "rpwik_tychy" -> context.getString(R.string.provider_rpwik_tychy)
             "pwik_gliwice" -> context.getString(R.string.provider_pwik_gliwice)
+            "wpwik_walbrzych" -> context.getString(R.string.provider_wpwik_walbrzych)
             "mwik_koszalin" -> context.getString(R.string.provider_mwik_koszalin)
             "sosnowieckie_wodociagi" -> context.getString(R.string.provider_sosnowieckie_wodociagi)
             "tarnowskie_wodociagi" -> context.getString(R.string.provider_tarnowskie_wodociagi)
@@ -652,7 +654,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             val iconDesc = when (sourceKey) {
                 "tauron", "stoen", "enea", "energa", "pge" -> getTranslation(context, "power")
                 "enea_cieplo", "eco_sa", "energa_cieplo_kaliskie", "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz", "sec", "lpec", "mpec_kielce", "mpec_rzeszow", "opec_gdynia", "pge_torun_heat", "epec_elblag" -> getTranslation(context, "heat")
-                "mpwik_wroclaw", "mpwik_warszawa", "wmk", "wm_radom", "aquanet", "aqua_bielsko", "katowickie_wodociagi", "zwik_lodz", "zwik_zielona_gora", "pwik_kalisz", "wodociagi_plockie", "wodociagi_bialostockie", "wodociagi_kieleckie", "torunskie_wodociagi", "pwik_czestochowa", "pwik_olsztyn", "pwik_gorzow", "pwik_gliwice", "wik_opole", "gdanskie_wodociagi", "puk_rokietnica", "mpwik_lublin", "mpwik_rzeszow", "mwik_bydgoszcz", "mwik_koszalin", "pewik_gdynia", "bytomskie_wodociagi", "dabrowskie_wodociagi", "sosnowieckie_wodociagi", "tarnowskie_wodociagi", "zabrzanskie_wodociagi", "pwik_ruda_slaska", "pwik_rybnik" -> getTranslation(context, "water")
+                "mpwik_wroclaw", "mpwik_warszawa", "wmk", "wm_radom", "aquanet", "aqua_bielsko", "katowickie_wodociagi", "zwik_lodz", "zwik_zielona_gora", "pwik_kalisz", "wodociagi_plockie", "wodociagi_bialostockie", "wodociagi_kieleckie", "torunskie_wodociagi", "pwik_czestochowa", "pwik_olsztyn", "pwik_gorzow", "rpwik_tychy", "pwik_gliwice", "wik_opole", "gdanskie_wodociagi", "puk_rokietnica", "mpwik_lublin", "mpwik_rzeszow", "mwik_bydgoszcz", "mwik_koszalin", "pewik_gdynia", "bytomskie_wodociagi", "dabrowskie_wodociagi", "sosnowieckie_wodociagi", "tarnowskie_wodociagi", "zabrzanskie_wodociagi", "pwik_ruda_slaska", "pwik_rybnik", "wpwik_walbrzych" -> getTranslation(context, "water")
                 "psg" -> getTranslation(context, "gas")
                 else -> getSourceName(context, sourceKey)
             }
