@@ -328,6 +328,90 @@
         </receiver>
 
         <receiver
+            android:name=".MwikKoszalinWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_mwik_koszalin">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_MWIK_KOSZALIN" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_single_info" />
+        </receiver>
+
+        <receiver
+            android:name=".SosnowieckieWodociagiWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_sosnowieckie_wodociagi">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_SOSNOWIECKIE_WODOCIAGI" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_single_info" />
+        </receiver>
+
+        <receiver
+            android:name=".TarnowskieWodociagiWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_tarnowskie_wodociagi">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_TARNOWSKIE_WODOCIAGI" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_single_info" />
+        </receiver>
+
+        <receiver
+            android:name=".ZabrzanskieWodociagiWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_zabrzanskie_wodociagi">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_ZABRZANSKIE_WODOCIAGI" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_single_info" />
+        </receiver>
+
+        <receiver
+            android:name=".PwikRudaSlaskaWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_pwik_ruda_slaska">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_PWIK_RUDA_SLASKA" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_single_info" />
+        </receiver>
+
+        <receiver
+            android:name=".PwikRybnikWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_pwik_rybnik">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_PWIK_RYBNIK" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_single_info" />
+        </receiver>
+
+        <receiver
             android:name=".DabrowskieWodociagiWidgetProvider"
             android:exported="true"
             android:label="@string/widget_label_dabrowskie_wodociagi">

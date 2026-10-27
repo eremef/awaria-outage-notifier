@@ -586,6 +586,65 @@ describe('Frontend Logic', () => {
                 name: 'PWiK Gliwice', icon: '💧', color: '#2196f3'
             });
         });
+
+        it('registers the six approved water sources in sorted order with both translations', () => {
+            const sources = getSources();
+            const waterIds = sources.filter(source => source.category === 'water').map(source => source.id);
+            const expected = [
+                'mwik_koszalin', 'pwik_ruda_slaska', 'pwik_rybnik',
+                'sosnowieckie_wodociagi', 'tarnowskie_wodociagi', 'zabrzanskie_wodociagi'
+            ];
+
+            expect(waterIds).toEqual([...waterIds].sort());
+            for (const id of expected) {
+                const source = sources.find(item => item.id === id);
+                expect(source?.category).toBe('water');
+                expect(translations.en[source?.i18nLabel]).toBeTruthy();
+                expect(translations.en[source?.i18nShort]).toBeTruthy();
+                expect(translations.pl[source?.i18nLabel]).toBeTruthy();
+                expect(translations.pl[source?.i18nShort]).toBeTruthy();
+            }
+
+            const card = new (window.customElements.get('awaria-card'))();
+            expect(card.getProviderMeta('mwik_koszalin')).toMatchObject({ name: 'MWiK Koszalin', icon: '💧' });
+            expect(card.getProviderMeta('pwik_ruda_slaska')).toMatchObject({ name: 'PWiK Ruda Śląska', icon: '💧' });
+            expect(card.getProviderMeta('pwik_rybnik')).toMatchObject({ name: 'PWiK Rybnik', icon: '💧' });
+            expect(card.getProviderMeta('sosnowieckie_wodociagi')).toMatchObject({ name: 'Sosnowieckie Wodociągi', icon: '💧' });
+            expect(card.getProviderMeta('tarnowskie_wodociagi')).toMatchObject({ name: 'Tarnowskie Wodociągi', icon: '💧' });
+            expect(card.getProviderMeta('zabrzanskie_wodociagi')).toMatchObject({ name: 'ZPWiK Zabrze', icon: '💧' });
+        });
+    });
+
+    describe('new water provider service areas', () => {
+        const regions = getRegionMatchers();
+
+        it('limits Koszalin and Sosnowiec to their supported cities and voivodeships', () => {
+            expect(regions.koszalin({ cityName: 'Koszalin', cityId: 949448, voivodeship: 'Zachodniopomorskie' })).toBe(true);
+            expect(regions.koszalin({ cityName: 'Kołobrzeg', cityId: 949445, voivodeship: 'Zachodniopomorskie' })).toBe(false);
+            expect(regions.sosnowiec({ cityName: 'Sosnowiec', cityId: 943428, voivodeship: 'Śląskie' })).toBe(true);
+            expect(regions.sosnowiec({ cityName: 'Sosnowiec', cityId: 13592, voivodeship: 'Lubelskie' })).toBe(false);
+        });
+
+        it('matches Tarnowskie Wodociągi only to the published communes and localities', () => {
+            expect(regions.tarnowskie_wodociagi_area({ cityName: 'Tarnów', cityId: 981570, voivodeship: 'Małopolskie' })).toBe(true);
+            expect(regions.tarnowskie_wodociagi_area({ cityName: 'Zalasowa', cityId: 829276, commune: 'Ryglice', voivodeship: 'Małopolskie' })).toBe(true);
+            expect(regions.tarnowskie_wodociagi_area({ cityName: 'Machowa', cityId: 826220, commune: 'Pilzno', voivodeship: 'Podkarpackie' })).toBe(true);
+            expect(regions.tarnowskie_wodociagi_area({ cityName: 'Pilzno', cityId: 982345, commune: 'Pilzno', voivodeship: 'Podkarpackie' })).toBe(false);
+            expect(regions.tarnowskie_wodociagi_area({ cityName: 'Szczepanowice', cityId: 251877, commune: 'Miechów', voivodeship: 'Małopolskie' })).toBe(false);
+        });
+
+        it('limits Zabrze and Ruda Śląska to their named cities', () => {
+            expect(regions.zabrze({ cityName: 'Zabrze', cityId: 945380, voivodeship: 'Śląskie' })).toBe(true);
+            expect(regions.zabrze({ cityName: 'Gliwice', cityId: 940000, voivodeship: 'Śląskie' })).toBe(false);
+            expect(regions.ruda_slaska({ cityName: 'Ruda Śląska', cityId: 942630, voivodeship: 'Śląskie' })).toBe(true);
+            expect(regions.ruda_slaska({ cityName: 'Ruda Śląska', cityId: 942630, voivodeship: 'Mazowieckie' })).toBe(false);
+        });
+
+        it('matches Rybnik, Jejkowice, and Gaszowice without widening to Śląskie', () => {
+            expect(regions.pwik_rybnik_area({ cityName: 'Rybnik', cityId: 942765, voivodeship: 'Śląskie' })).toBe(true);
+            expect(regions.pwik_rybnik_area({ cityName: 'Czernica', commune: 'Gaszowice', voivodeship: 'Śląskie' })).toBe(true);
+            expect(regions.pwik_rybnik_area({ cityName: 'Katowice', cityId: 938621, voivodeship: 'Śląskie' })).toBe(false);
+        });
     });
 
     describe('PEC Gliwice service area', () => {

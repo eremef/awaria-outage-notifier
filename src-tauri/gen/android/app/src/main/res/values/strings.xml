@@ -44,6 +44,10 @@
   <string name="provider_mpwik_lublin">MPWiK Lublin</string>
   <string name="provider_mpwik_rzeszow">MPWiK Rzeszów</string>
   <string name="provider_mwik_bydgoszcz">MWiK BDG</string>
+  <string name="provider_mwik_koszalin">MWiK Koszalin</string>
+  <string name="provider_sosnowieckie_wodociagi">Sosnowieckie Wodociągi</string>
+  <string name="provider_tarnowskie_wodociagi">Tarnowskie Wodociągi</string>
+  <string name="provider_zabrzanskie_wodociagi">ZPWiK Zabrze</string>
   <string name="provider_mpwik_warszawa">MPWiK WAW</string>
   <string name="provider_mpwik_wroclaw">MPWiK WRO</string>
   <string name="provider_pge">PGE</string>
@@ -55,6 +59,8 @@
   <string name="provider_pwik_czestochowa">PWiK CZW</string>
   <string name="provider_pwik_kalisz">PWiK Kalisz</string>
   <string name="provider_pwik_olsztyn">PWiK Olsztyn</string>
+  <string name="provider_pwik_ruda_slaska">PWiK Ruda Śląska</string>
+  <string name="provider_pwik_rybnik">PWiK Rybnik</string>
   <string name="provider_sec">SEC</string>
   <string name="provider_stoen">Stoen</string>
   <string name="provider_tauron">Tauron</string>
@@ -93,6 +99,10 @@
   <string name="widget_label_mpwik_lublin">MPWiK Lublin</string>
   <string name="widget_label_mpwik_rzeszow">MPWiK Rzeszów</string>
   <string name="widget_label_mwik_bydgoszcz">MWiK Bydgoszcz</string>
+  <string name="widget_label_mwik_koszalin">MWiK Koszalin</string>
+  <string name="widget_label_sosnowieckie_wodociagi">Sosnowieckie Wodociągi</string>
+  <string name="widget_label_tarnowskie_wodociagi">Tarnowskie Wodociągi</string>
+  <string name="widget_label_zabrzanskie_wodociagi">ZPWiK Zabrze</string>
   <string name="widget_label_mpwik_warszawa">MPWiK Warszawa</string>
   <string name="widget_label_pge">PGE</string>
   <string name="widget_label_pge_torun_heat">PGE Toruń</string>
@@ -107,6 +117,8 @@
   <string name="widget_label_pwik_olsztyn">PWiK Olsztyn</string>
   <string name="widget_label_pwik_gorzow">PWiK Gorzów Wielkopolski</string>
   <string name="widget_label_pwik_gliwice">PWiK Gliwice</string>
+  <string name="widget_label_pwik_ruda_slaska">PWiK Ruda Śląska</string>
+  <string name="widget_label_pwik_rybnik">PWiK Rybnik</string>
   <string name="widget_label_sec">SEC Szczecin</string>
   <string name="widget_label_stoen">Stoen</string>
   <string name="widget_label_tauron">Tauron</string>

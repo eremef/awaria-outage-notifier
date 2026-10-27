@@ -60,6 +60,12 @@ pub mod lpwik_legnica;
 pub mod bytomskie_wodociagi;
 pub mod dabrowskie_wodociagi;
 pub mod mwik_bydgoszcz;
+pub mod mwik_koszalin;
+pub mod sosnowieckie_wodociagi;
+pub mod tarnowskie_wodociagi;
+pub mod zabrzanskie_wodociagi;
+pub mod pwik_ruda_slaska;
+pub mod pwik_rybnik;
 pub mod mpec_rzeszow;
 pub mod mpec_kielce;
 pub mod epec_elblag;
@@ -601,6 +607,12 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(pwik_gorzow::PwikGorzowProvider),
         Box::new(pwik_gliwice::PwikGliwiceProvider),
         Box::new(mwik_bydgoszcz::MwikBydgoszczProvider),
+        Box::new(mwik_koszalin::MwikKoszalinProvider),
+        Box::new(sosnowieckie_wodociagi::SosnowieckieWodociagiProvider),
+        Box::new(tarnowskie_wodociagi::TarnowskieWodociagiProvider),
+        Box::new(zabrzanskie_wodociagi::ZabrzanskieWodociagiProvider),
+        Box::new(pwik_ruda_slaska::PwikRudaSlaskaProvider),
+        Box::new(pwik_rybnik::PwikRybnikProvider),
         Box::new(mpec_rzeszow::MpecRzeszowProvider),
         Box::new(mpec_kielce::MpecKielceProvider),
         Box::new(epec_elblag::EpecElblagProvider),
@@ -2711,5 +2723,105 @@ mod gliwice_provider_house_number_filter_tests {
         let mut excluded = vec![pwik_alert()];
         apply_alert_filtering(&mut excluded, &settings(api_logic::AlertSource::PwikGliwice, true, "25"));
         assert_eq!(excluded[0].is_local, Some(false));
+    }
+}
+
+#[cfg(test)]
+mod regional_water_provider_registry_tests {
+    use super::{api_logic::AlertSource, get_providers};
+
+    #[test]
+    fn all_approved_regional_water_providers_are_registered() {
+        let providers = get_providers();
+        for source in [
+            AlertSource::MwikKoszalin,
+            AlertSource::SosnowieckieWodociagi,
+            AlertSource::TarnowskieWodociagi,
+            AlertSource::ZabrzanskieWodociagi,
+            AlertSource::PwikRudaSlaska,
+            AlertSource::PwikRybnik,
+        ] {
+            assert!(providers.iter().any(|provider| provider.source() == source));
+        }
+    }
+
+    #[test]
+    fn shared_house_number_setting_controls_all_new_provider_alerts() {
+        use super::{AddressEntry, Settings, UnifiedAlert, apply_alert_filtering};
+
+        let providers = [
+            (
+                AlertSource::MwikKoszalin,
+                "Koszalin",
+                "Zachodniopomorskie",
+                949_448,
+            ),
+            (
+                AlertSource::SosnowieckieWodociagi,
+                "Sosnowiec",
+                "Śląskie",
+                943_428,
+            ),
+            (
+                AlertSource::TarnowskieWodociagi,
+                "Tarnów",
+                "Małopolskie",
+                981_570,
+            ),
+            (
+                AlertSource::ZabrzanskieWodociagi,
+                "Zabrze",
+                "Śląskie",
+                945_380,
+            ),
+            (
+                AlertSource::PwikRudaSlaska,
+                "Ruda Śląska",
+                "Śląskie",
+                942_630,
+            ),
+            (AlertSource::PwikRybnik, "Rybnik", "Śląskie", 942_765),
+        ];
+
+        for (source, city, voivodeship, city_id) in providers {
+            let alert = || UnifiedAlert {
+                source,
+                message: Some("Planowana przerwa w dostawie wody przy ul. Testowej 12-20".into()),
+                location: Some(format!("{city}; ul. Testowa 12-20")),
+                address_index: Some(0),
+                is_local: Some(true),
+                ..Default::default()
+            };
+            let settings = |house_no: &str, filter_by_house_no| {
+                Some(Settings {
+                    addresses: vec![AddressEntry {
+                        name: "Home".into(),
+                        city_name: city.into(),
+                        commune: city.into(),
+                        voivodeship: voivodeship.into(),
+                        street_name: "Testowa".into(),
+                        street_name_1: "Testowa".into(),
+                        house_no: house_no.into(),
+                        city_id: Some(city_id),
+                        is_active: true,
+                        ..Default::default()
+                    }],
+                    filter_by_house_no,
+                    ..Settings::default()
+                })
+            };
+
+            let mut included_without_filter = vec![alert()];
+            apply_alert_filtering(&mut included_without_filter, &settings("25", false));
+            assert_eq!(included_without_filter[0].is_local, Some(true), "{source}");
+
+            let mut included_number = vec![alert()];
+            apply_alert_filtering(&mut included_number, &settings("14", true));
+            assert_eq!(included_number[0].is_local, Some(true), "{source}");
+
+            let mut excluded_number = vec![alert()];
+            apply_alert_filtering(&mut excluded_number, &settings("25", true));
+            assert_eq!(excluded_number[0].is_local, Some(false), "{source}");
+        }
     }
 }

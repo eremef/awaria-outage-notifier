@@ -185,6 +185,48 @@ class WidgetUpdateWorker(
             pwikGliwiceProvider.updateWidget(context, appWidgetManager, id)
         }
 
+        val mwikKoszalinName = ComponentName(context, MwikKoszalinWidgetProvider::class.java)
+        val mwikKoszalinIds = appWidgetManager.getAppWidgetIds(mwikKoszalinName)
+        val mwikKoszalinProvider = MwikKoszalinWidgetProvider()
+        for (id in mwikKoszalinIds) {
+            mwikKoszalinProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        val sosnowieckieWodociagiName = ComponentName(context, SosnowieckieWodociagiWidgetProvider::class.java)
+        val sosnowieckieWodociagiIds = appWidgetManager.getAppWidgetIds(sosnowieckieWodociagiName)
+        val sosnowieckieWodociagiProvider = SosnowieckieWodociagiWidgetProvider()
+        for (id in sosnowieckieWodociagiIds) {
+            sosnowieckieWodociagiProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        val tarnowskieWodociagiName = ComponentName(context, TarnowskieWodociagiWidgetProvider::class.java)
+        val tarnowskieWodociagiIds = appWidgetManager.getAppWidgetIds(tarnowskieWodociagiName)
+        val tarnowskieWodociagiProvider = TarnowskieWodociagiWidgetProvider()
+        for (id in tarnowskieWodociagiIds) {
+            tarnowskieWodociagiProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        val zabrzanskieWodociagiName = ComponentName(context, ZabrzanskieWodociagiWidgetProvider::class.java)
+        val zabrzanskieWodociagiIds = appWidgetManager.getAppWidgetIds(zabrzanskieWodociagiName)
+        val zabrzanskieWodociagiProvider = ZabrzanskieWodociagiWidgetProvider()
+        for (id in zabrzanskieWodociagiIds) {
+            zabrzanskieWodociagiProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        val pwikRudaSlaskaName = ComponentName(context, PwikRudaSlaskaWidgetProvider::class.java)
+        val pwikRudaSlaskaIds = appWidgetManager.getAppWidgetIds(pwikRudaSlaskaName)
+        val pwikRudaSlaskaProvider = PwikRudaSlaskaWidgetProvider()
+        for (id in pwikRudaSlaskaIds) {
+            pwikRudaSlaskaProvider.updateWidget(context, appWidgetManager, id)
+        }
+
+        val pwikRybnikName = ComponentName(context, PwikRybnikWidgetProvider::class.java)
+        val pwikRybnikIds = appWidgetManager.getAppWidgetIds(pwikRybnikName)
+        val pwikRybnikProvider = PwikRybnikWidgetProvider()
+        for (id in pwikRybnikIds) {
+            pwikRybnikProvider.updateWidget(context, appWidgetManager, id)
+        }
+
         // Update Dąbrowskie Wodociągi widgets
         val dabrowskieWodociagiName = ComponentName(context, DabrowskieWodociagiWidgetProvider::class.java)
         val dabrowskieWodociagiIds = appWidgetManager.getAppWidgetIds(dabrowskieWodociagiName)

@@ -74,6 +74,12 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **Wodociągi Kieleckie**: Water interruptions and failures in Kielce, its service municipalities, and reposted local notices.
   - **Toruńskie Wodociągi**: Water failures and planned water-network work in Toruń, Lubicz, Łysomice, Obrowo, Wielka Nieszawka, and Zławieś Wielka.
   - **ZWiK Zielona Góra**: Water failures and planned interruptions in Zielona Góra and localities within its merged municipality.
+  - **MWiK Koszalin**: Planned and emergency water interruptions in Koszalin.
+  - **Sosnowieckie Wodociągi**: Water failures and planned interruptions in Sosnowiec.
+  - **Tarnowskie Wodociągi**: Water failures and planned interruptions in Tarnów, Gmina Tarnów, Gmina Skrzyszów, and the operator's published service localities.
+  - **ZPWiK Zabrze**: Water failures and planned network-work interruptions in Zabrze.
+  - **PWiK Ruda Śląska**: Water failures and planned interruptions in Ruda Śląska.
+  - **PWiK Rybnik**: Water failures and planned interruptions in Rybnik, Jejkowice, and Gaszowice.
 
 ## Android app
 
@@ -212,7 +218,7 @@ For each address you want to monitor, add an entry with:
 
 #### Enabled Sources
 
-Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `epec_elblag`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`, `bytomskie_wodociagi`).
+Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `epec_elblag`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`, `bytomskie_wodociagi`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
 
 ### Usage
 

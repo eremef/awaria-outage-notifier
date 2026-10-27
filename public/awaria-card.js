@@ -24,10 +24,16 @@ class AwariaCard extends HTMLElement {
     if (s === 'aqua_bielsko') return { name: 'AQUA S.A.', icon: '💧', color: '#2196f3' };
     if (s === 'pwik_gorzow') return { name: 'PWiK Gorzów', icon: '💧', color: '#2196f3' };
     if (s === 'pwik_gliwice') return { name: 'PWiK Gliwice', icon: '💧', color: '#2196f3' };
+    if (s === 'pwik_ruda_slaska') return { name: 'PWiK Ruda Śląska', icon: '💧', color: '#2196f3' };
+    if (s === 'pwik_rybnik') return { name: 'PWiK Rybnik', icon: '💧', color: '#2196f3' };
     if (s === 'lpwik_legnica') return { name: 'LPWiK Legnica', icon: '💧', color: '#2196f3' };
     if (s === 'bytomskie_wodociagi') return { name: 'Bytomskie Wodociągi', icon: '💧', color: '#2196f3' };
     if (s === 'dabrowskie_wodociagi') return { name: 'Dąbrowskie Wodociągi', icon: '💧', color: '#2196f3' };
     if (s === 'zwik_zielona_gora') return { name: 'ZWiK Zielona Góra', icon: '💧', color: '#2196f3' };
+    if (s === 'mwik_koszalin') return { name: 'MWiK Koszalin', icon: '💧', color: '#2196f3' };
+    if (s === 'sosnowieckie_wodociagi') return { name: 'Sosnowieckie Wodociągi', icon: '💧', color: '#2196f3' };
+    if (s === 'tarnowskie_wodociagi') return { name: 'Tarnowskie Wodociągi', icon: '💧', color: '#2196f3' };
+    if (s === 'zabrzanskie_wodociagi') return { name: 'ZPWiK Zabrze', icon: '💧', color: '#2196f3' };
     if (s.includes('pge')) return { name: 'PGE', icon: '⚡', color: '#ffb74d' };
     if (s.includes('energa_cieplo_kaliskie')) return { name: 'Energa Ciepło Kaliskie', icon: '🔥', color: '#f44336' };
     if (s === 'eco_sa') return { name: 'ECO SA', icon: '🔥', color: '#f44336' };

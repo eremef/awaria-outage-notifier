@@ -74,6 +74,12 @@ Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiad
   - **Wodociągi Kieleckie**: Przerwy w dostawie wody i awarie w Kielcach, obsługiwanych gminach oraz publikowanych lokalnych komunikatach.
   - **Toruńskie Wodociągi**: Awarie i planowane prace na sieci wodociągowej w Toruniu, Lubiczu, Łysomicach, Obrowie, Wielkiej Nieszawce i Złej Wsi Wielkiej.
   - **ZWiK Zielona Góra**: Awarie i planowane przerwy w dostawie wody w Zielonej Górze oraz miejscowościach w granicach połączonej gminy.
+  - **MWiK Koszalin**: Awarie i planowane przerwy w dostawie wody w Koszalinie.
+  - **Sosnowieckie Wodociągi**: Awarie i planowane przerwy w dostawie wody w Sosnowcu.
+  - **Tarnowskie Wodociągi**: Awarie i planowane przerwy w Tarnowie, gminie Tarnów, gminie Skrzyszów oraz miejscowościach wskazanych przez operatora.
+  - **ZPWiK Zabrze**: Awarie i planowane przerwy w dostawie wody w Zabrzu.
+  - **PWiK Ruda Śląska**: Awarie i planowane przerwy w dostawie wody w Rudzie Śląskiej.
+  - **PWiK Rybnik**: Awarie i planowane przerwy w dostawie wody w Rybniku, Jejkowicach i Gaszowicach.
 
 ## Aplikacja Android
 
@@ -212,7 +218,7 @@ Dla każdego adresu, który chcesz monitorować, dodaj wpis zawierający:
 
 #### Aktywne źródła (Enabled Sources)
 
-Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `epec_elblag`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`, `bytomskie_wodociagi`).
+Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `epec_elblag`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`, `bytomskie_wodociagi`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
 
 ### Użytkowanie
 

@@ -138,7 +138,101 @@ if (typeof document !== 'undefined') {
     let cityDebounceTimer = null;
     let streetDebounceTimer = null;
     let cityHasNoStreets = false;
+    const normalizeRegionName = (value) => (value || '').trim().toLowerCase()
+        .replace(/ł/g, 'l')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, ' ').trim();
+    const normalizeRegionMunicipality = (value) => normalizeRegionName(value).replace(
+        /^(?:gmina miejsko wiejska|gmina miejska|gmina wiejska|gmina|gm|miasto|m) /,
+        ''
+    );
+
+    const NEW_PROVIDER_REGIONS = {
+        mwik_koszalin: 'koszalin',
+        sosnowieckie_wodociagi: 'sosnowiec',
+        tarnowskie_wodociagi: 'tarnowskie_wodociagi_area',
+        zabrzanskie_wodociagi: 'zabrze',
+        pwik_ruda_slaska: 'ruda_slaska',
+        pwik_rybnik: 'pwik_rybnik_area'
+    };
+
     const REGION_MATCHERS = {
+        koszalin: (addr) => {
+            if (!addr) return false;
+            const city = normalizeRegionName(addr.cityName);
+            const cityId = addr.cityId == null ? null : Number(addr.cityId);
+            const voivodeship = normalizeRegionName(addr.voivodeship);
+            if (voivodeship && !voivodeship.startsWith('zachodniopomorskie')) return false;
+            if (cityId != null && Number.isFinite(cityId)) return cityId === 949448;
+            return city === 'koszalin';
+        },
+        sosnowiec: (addr) => {
+            if (!addr) return false;
+            const city = normalizeRegionName(addr.cityName);
+            const cityId = addr.cityId == null ? null : Number(addr.cityId);
+            const voivodeship = normalizeRegionName(addr.voivodeship);
+            if (voivodeship && !voivodeship.startsWith('slaskie')) return false;
+            if (cityId != null && Number.isFinite(cityId)) return cityId === 943428;
+            return city === 'sosnowiec';
+        },
+        zabrze: (addr) => {
+            if (!addr) return false;
+            const city = normalizeRegionName(addr.cityName);
+            const cityId = addr.cityId == null ? null : Number(addr.cityId);
+            const voivodeship = normalizeRegionName(addr.voivodeship);
+            if (voivodeship && !voivodeship.startsWith('slaskie')) return false;
+            if (cityId != null && Number.isFinite(cityId)) return cityId === 945380;
+            return city === 'zabrze';
+        },
+        ruda_slaska: (addr) => {
+            if (!addr) return false;
+            const city = normalizeRegionName(addr.cityName);
+            const cityId = addr.cityId == null ? null : Number(addr.cityId);
+            const voivodeship = normalizeRegionName(addr.voivodeship);
+            if (voivodeship && !voivodeship.startsWith('slaskie')) return false;
+            if (cityId != null && Number.isFinite(cityId)) return cityId === 942630;
+            return city === 'ruda slaska';
+        },
+        tarnowskie_wodociagi_area: (addr) => {
+            if (!addr) return false;
+            const city = normalizeRegionName(addr.cityName);
+            const commune = normalizeRegionMunicipality(addr.commune);
+            const cityId = addr.cityId == null ? null : Number(addr.cityId);
+            const voivodeship = normalizeRegionName(addr.voivodeship);
+            const mainVoivodeship = !voivodeship || voivodeship.startsWith('malopolskie');
+            const directLocalityIds = [981570, 835443, 827277, 827389, 822736, 826220, 829276, 834580];
+            if (cityId != null && Number.isFinite(cityId)) {
+                if (directLocalityIds.includes(cityId)) return true;
+                return mainVoivodeship && ['tarnow', 'skrzyszow'].includes(commune);
+            }
+            if (city === 'machowa' && commune === 'pilzno') {
+                return !voivodeship || voivodeship.startsWith('podkarpackie');
+            }
+            if (!mainVoivodeship) return false;
+            if (city === 'tarnow' || ['tarnow', 'skrzyszow'].includes(commune)) return true;
+            return [
+                ['kepa bogumilowicka', 'wierzchoslawice'],
+                ['szczepanowice', 'plesna'],
+                ['swiebodzin', 'plesna'],
+                ['stare zukowice', 'lisia gora'],
+                ['zalasowa', 'ryglice'],
+                ['zabledza', 'tuchow']
+            ].some(([place, placeCommune]) => city === place && commune === placeCommune);
+        },
+        pwik_rybnik_area: (addr) => {
+            if (!addr) return false;
+            const city = normalizeRegionName(addr.cityName);
+            const commune = normalizeRegionMunicipality(addr.commune);
+            const cityId = addr.cityId == null ? null : Number(addr.cityId);
+            const voivodeship = normalizeRegionName(addr.voivodeship);
+            if (voivodeship && !voivodeship.startsWith('slaskie')) return false;
+            if (cityId != null && Number.isFinite(cityId)) {
+                if ([942765, 214178, 214155].includes(cityId)) return true;
+                return ['gaszowice', 'jejkowice'].includes(commune);
+            }
+            return ['rybnik', 'jejkowice', 'gaszowice'].includes(city) ||
+                ['jejkowice', 'gaszowice'].includes(commune);
+        },
         aqua_bielsko_area: (addr) => {
             if (!addr) return false;
             const normalize = (value) => (value || '').trim().toLowerCase()
@@ -650,6 +744,7 @@ if (typeof document !== 'undefined') {
         { id: 'mpwik_warszawa', label: 'MPWiK Warszawa', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_warszawa_name', i18nShort: 'source_mpwik_warszawa_short', region: 'mpwik_warszawa_area' },
         { id: 'mpwik_wroclaw', label: 'MPWiK Wrocław', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_wroclaw_name', i18nShort: 'source_mpwik_wroclaw_short', region: 'wroclaw' },
         { id: 'mwik_bydgoszcz', label: 'MWiK Bydgoszcz', category: 'water', defaultNotify: true, i18nLabel: 'source_mwik_bydgoszcz_name', i18nShort: 'source_mwik_bydgoszcz_short', region: 'bydgoszcz' },
+        { id: 'mwik_koszalin', label: 'MWiK Koszalin', category: 'water', defaultNotify: true, i18nLabel: 'source_mwik_koszalin_name', i18nShort: 'source_mwik_koszalin_short', region: 'koszalin' },
         { id: 'pewik_gdynia', label: 'PEWIK Gdynia', category: 'water', defaultNotify: true, i18nLabel: 'source_pewik_gdynia_name', i18nShort: 'source_pewik_gdynia_short', region: 'pewik_gdynia_area' },
         { id: 'puk_rokietnica', label: 'PUK Rokietnica', category: 'water', defaultNotify: true, i18nLabel: 'source_puk_rokietnica_name', i18nShort: 'source_puk_rokietnica_short', region: 'rokietnica' },
         { id: 'pwik_czestochowa', label: 'PWiK Częstochowa', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_czestochowa_name', i18nShort: 'source_pwik_czestochowa_short', region: 'czestochowa' },
@@ -657,6 +752,10 @@ if (typeof document !== 'undefined') {
         { id: 'pwik_gorzow', label: 'PWiK Gorzów', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_gorzow_name', i18nShort: 'source_pwik_gorzow_short', region: 'pwik_gorzow_area' },
         { id: 'pwik_kalisz', label: 'PWiK Kalisz', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_kalisz_name', i18nShort: 'source_pwik_kalisz_short', region: 'kalisz' },
         { id: 'pwik_olsztyn', label: 'PWiK Olsztyn', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_olsztyn_name', i18nShort: 'source_pwik_olsztyn_short', region: 'pwik_olsztyn_area' },
+        { id: 'pwik_ruda_slaska', label: 'PWiK Ruda Śląska', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_ruda_slaska_name', i18nShort: 'source_pwik_ruda_slaska_short', region: 'ruda_slaska' },
+        { id: 'pwik_rybnik', label: 'PWiK Rybnik', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_rybnik_name', i18nShort: 'source_pwik_rybnik_short', region: 'pwik_rybnik_area' },
+        { id: 'sosnowieckie_wodociagi', label: 'Sosnowieckie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_sosnowieckie_wodociagi_name', i18nShort: 'source_sosnowieckie_wodociagi_short', region: 'sosnowiec' },
+        { id: 'tarnowskie_wodociagi', label: 'Tarnowskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_tarnowskie_wodociagi_name', i18nShort: 'source_tarnowskie_wodociagi_short', region: 'tarnowskie_wodociagi_area' },
         { id: 'torunskie_wodociagi', label: 'Toruńskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_torunskie_wodociagi_name', i18nShort: 'source_torunskie_wodociagi_short', region: 'torunskie_wodociagi_area' },
         { id: 'wik_opole', label: 'WiK Opole', category: 'water', defaultNotify: true, i18nLabel: 'source_wik_opole_name', i18nShort: 'source_wik_opole_short', region: 'wik_opole_area' },
         { id: 'wm_radom', label: 'WM Radom', category: 'water', defaultNotify: true, i18nLabel: 'source_wm_radom_name', i18nShort: 'source_wm_radom_short', region: 'wm_radom_area' },
@@ -664,6 +763,7 @@ if (typeof document !== 'undefined') {
         { id: 'wodociagi_bialostockie', label: 'Wodociągi Białostockie', category: 'water', defaultNotify: true, i18nLabel: 'source_wodociagi_bialostockie_name', i18nShort: 'source_wodociagi_bialostockie_short', region: 'wodociagi_bialostockie_area' },
         { id: 'wodociagi_kieleckie', label: 'Wodociągi Kieleckie', category: 'water', defaultNotify: true, i18nLabel: 'source_wodociagi_kieleckie_name', i18nShort: 'source_wodociagi_kieleckie_short', region: 'wodociagi_kieleckie_area' },
         { id: 'wodociagi_plockie', label: 'Wodociągi Płockie', category: 'water', defaultNotify: true, i18nLabel: 'source_wodociagi_plockie_name', i18nShort: 'source_wodociagi_plockie_short', region: 'plock' },
+        { id: 'zabrzanskie_wodociagi', label: 'ZPWiK Zabrze', category: 'water', defaultNotify: true, i18nLabel: 'source_zabrzanskie_wodociagi_name', i18nShort: 'source_zabrzanskie_wodociagi_short', region: 'zabrze' },
         { id: 'zwik_lodz', label: 'ZWIK Łódź', category: 'water', defaultNotify: true, i18nLabel: 'source_zwik_lodz_name', i18nShort: 'source_zwik_lodz_short', region: 'lodz' },
         { id: 'zwik_zielona_gora', label: 'ZWiK Zielona Góra', category: 'water', defaultNotify: true, i18nLabel: 'source_zwik_zielona_gora_name', i18nShort: 'source_zwik_zielona_gora_short', region: 'zwik_zielona_gora_area' },
     ];
@@ -2751,6 +2851,9 @@ if (typeof document !== 'undefined') {
         const addr = addresses[addrIdx];
         if (!addr || addr.isActive === false) return false;
 
+        const providerRegion = NEW_PROVIDER_REGIONS[alert.source];
+        if (providerRegion && !REGION_MATCHERS[providerRegion](addr)) return false;
+
         if (alert.source === 'epec_elblag' && !REGION_MATCHERS.elblag(addr)) return false;
         if (alert.source === 'pec_gliwice' && !REGION_MATCHERS.pec_gliwice_area(addr)) return false;
         if (alert.source === 'aqua_bielsko' && !REGION_MATCHERS.aqua_bielsko_area(addr)) return false;
@@ -2772,7 +2875,10 @@ if (typeof document !== 'undefined') {
     function matchesStreetName(alert, addr) {
         if (!alert.message || !addr) return false;
 
-        let message = ['pwik_olsztyn', 'wik_opole', 'eco_sa', 'dabrowskie_wodociagi'].includes(alert.source) && alert.location
+        const providerRegion = NEW_PROVIDER_REGIONS[alert.source];
+        if (providerRegion && !REGION_MATCHERS[providerRegion](addr)) return false;
+
+        let message = ['pwik_olsztyn', 'wik_opole', 'eco_sa', 'dabrowskie_wodociagi', ...Object.keys(NEW_PROVIDER_REGIONS)].includes(alert.source) && alert.location
             ? alert.location
             : alert.message;
         if (alert.source === 'pwik_gliwice') {
