@@ -6,7 +6,7 @@
   <img height="600" alt="image" src="https://github.com/user-attachments/assets/9e423649-3130-4540-877a-4c621cecb9dd" />
 </p>
 
-Nowoczesna aplikacja desktopowa (Tauri) i mobilna (Android) zapewniające powiadomienia w czasie rzeczywistym o planowanych i awaryjnych przerwach w dostawie mediów. **AWARIA** agreguje dane od wielu dostawców w jeden przejrzysty interfejs.
+Nowoczesna aplikacja desktopowa i mobilna zapewniające powiadomienia w czasie rzeczywistym o planowanych i awaryjnych przerwach w dostawie mediów. **AWARIA** agreguje dane od wielu dostawców w jeden przejrzysty interfejs.
 
 ## Pobieranie
 
