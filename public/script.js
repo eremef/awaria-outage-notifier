@@ -148,6 +148,9 @@ if (typeof document !== 'undefined') {
     );
 
     const NEW_PROVIDER_REGIONS = {
+        chspwik: 'chspwik_area',
+        mec_koszalin: 'mec_koszalin_area',
+        therma_bielsko: 'therma_bielsko',
         mwik_koszalin: 'koszalin',
         sosnowieckie_wodociagi: 'sosnowiec',
         tarnowskie_wodociagi: 'tarnowskie_wodociagi_area',
@@ -159,6 +162,15 @@ if (typeof document !== 'undefined') {
     };
 
     const REGION_MATCHERS = {
+        chspwik_area: (addr) => {
+            if (!addr) return false;
+            const city = normalizeRegionName(addr.cityName);
+            const commune = normalizeRegionMunicipality(addr.commune);
+            const voivodeship = normalizeRegionName(addr.voivodeship);
+            if (voivodeship && !voivodeship.startsWith('slaskie')) return false;
+            return ['chorzow', 'swietochlowice'].includes(city) ||
+                ['chorzow', 'swietochlowice'].includes(commune);
+        },
         koszalin: (addr) => {
             if (!addr) return false;
             const city = normalizeRegionName(addr.cityName);
@@ -167,6 +179,27 @@ if (typeof document !== 'undefined') {
             if (voivodeship && !voivodeship.startsWith('zachodniopomorskie')) return false;
             if (cityId != null && Number.isFinite(cityId)) return cityId === 949448;
             return city === 'koszalin';
+        },
+        mec_koszalin_area: (addr) => {
+            if (!addr) return false;
+            const city = normalizeRegionName(addr.cityName);
+            const commune = normalizeRegionMunicipality(addr.commune);
+            const cityId = addr.cityId == null ? null : Number(addr.cityId);
+            const voivodeship = normalizeRegionName(addr.voivodeship);
+            if (voivodeship && !voivodeship.startsWith('zachodniopomorskie')) return false;
+            if (cityId != null && Number.isFinite(cityId)) {
+                return cityId === 949448 || city === 'sianow' || commune === 'sianow';
+            }
+            return ['koszalin', 'sianow'].includes(city) || ['koszalin', 'sianow'].includes(commune);
+        },
+        therma_bielsko: (addr) => {
+            if (!addr) return false;
+            const city = normalizeRegionName(addr.cityName);
+            const cityId = addr.cityId == null ? null : Number(addr.cityId);
+            const voivodeship = normalizeRegionName(addr.voivodeship);
+            if (voivodeship && !voivodeship.startsWith('slaskie')) return false;
+            if (cityId != null && Number.isFinite(cityId)) return cityId === 923584;
+            return city === 'bielsko biala';
         },
         sosnowiec: (addr) => {
             if (!addr) return false;
@@ -751,6 +784,7 @@ if (typeof document !== 'undefined') {
         { id: 'gpec', label: 'GPEC Gdańsk', category: 'heating', defaultNotify: true, i18nLabel: 'source_gpec_name', i18nShort: 'source_gpec_short', region: 'gdansk' },
         { id: 'kpec_bydgoszcz', label: 'KPEC Bydgoszcz', category: 'heating', defaultNotify: true, i18nLabel: 'source_kpec_bydgoszcz_name', i18nShort: 'source_kpec_bydgoszcz_short', region: 'bydgoszcz' },
         { id: 'lpec', label: 'LPEC', category: 'heating', defaultNotify: true, i18nLabel: 'source_lpec_name', i18nShort: 'source_lpec_short', region: 'lublin' },
+        { id: 'mec_koszalin', label: 'MEC Koszalin', category: 'heating', defaultNotify: true, i18nLabel: 'source_mec_koszalin_name', i18nShort: 'source_mec_koszalin_short', region: 'mec_koszalin_area' },
         { id: 'mpec_kielce', label: 'MPEC Kielce', category: 'heating', defaultNotify: true, i18nLabel: 'source_mpec_kielce_name', i18nShort: 'source_mpec_kielce_short', region: 'kielce' },
         { id: 'mpec_rzeszow', label: 'MPEC Rzeszów', category: 'heating', defaultNotify: true, i18nLabel: 'source_mpec_rzeszow_name', i18nShort: 'source_mpec_rzeszow_short', region: 'rzeszow' },
         { id: 'opec_gdynia', label: 'OPEC Gdynia', category: 'heating', defaultNotify: true, i18nLabel: 'source_opec_gdynia_name', i18nShort: 'source_opec_gdynia_short', region: 'opec_gdynia_area' },
@@ -758,6 +792,7 @@ if (typeof document !== 'undefined') {
         { id: 'pge_torun_heat', label: 'PGE Toruń', category: 'heating', defaultNotify: true, i18nLabel: 'source_pge_torun_heat_name', i18nShort: 'source_pge_torun_heat_short', region: 'torun' },
         { id: 'sec', label: 'SEC', category: 'heating', defaultNotify: true, i18nLabel: 'source_sec_name', i18nShort: 'source_sec_short', region: 'szczecin' },
         { id: 'tauron_heat', label: 'Tauron Ciepło', category: 'heating', defaultNotify: true, i18nLabel: 'source_tauron_heat_name', i18nShort: 'source_tauron_heat_short' },
+        { id: 'therma_bielsko', label: 'Therma Bielsko', category: 'heating', defaultNotify: true, i18nLabel: 'source_therma_bielsko_name', i18nShort: 'source_therma_bielsko_short', region: 'therma_bielsko' },
         { id: 'veolia_lodz', label: 'Veolia Łódź', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_lodz_name', i18nShort: 'source_veolia_lodz_short', region: 'lodz' },
         { id: 'veolia_poznan', label: 'Veolia Poznań', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_poznan_name', i18nShort: 'source_veolia_poznan_short', region: 'poznan' },
         { id: 'veolia_warszawa', label: 'Veolia Warszawa', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_warszawa_name', i18nShort: 'source_veolia_warszawa_short', region: 'warszawa' },
@@ -765,6 +800,7 @@ if (typeof document !== 'undefined') {
         { id: 'aqua_bielsko', label: 'AQUA S.A.', category: 'water', defaultNotify: true, i18nLabel: 'source_aqua_bielsko_name', i18nShort: 'source_aqua_bielsko_short', region: 'aqua_bielsko_area' },
         { id: 'aquanet', label: 'Aquanet', category: 'water', defaultNotify: true, i18nLabel: 'source_aquanet_name', i18nShort: 'source_aquanet_short', region: 'poznan' },
         { id: 'bytomskie_wodociagi', label: 'Bytomskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_bytomskie_wodociagi_name', i18nShort: 'source_bytomskie_wodociagi_short', region: 'bytom' },
+        { id: 'chspwik', label: 'ChŚPWiK', category: 'water', defaultNotify: true, i18nLabel: 'source_chspwik_name', i18nShort: 'source_chspwik_short', region: 'chspwik_area' },
         { id: 'dabrowskie_wodociagi', label: 'Dąbrowskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_dabrowskie_wodociagi_name', i18nShort: 'source_dabrowskie_wodociagi_short', region: 'dabrowskie_wodociagi_area' },
         { id: 'gdanskie_wodociagi', label: 'Gdańskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_gdanskie_wodociagi_name', i18nShort: 'source_gdanskie_wodociagi_short', region: 'gdansk' },
         { id: 'katowickie_wodociagi', label: 'Katowickie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_katowickie_wodociagi_name', i18nShort: 'source_katowickie_wodociagi_short', region: 'katowice' },
@@ -3024,7 +3060,7 @@ if (typeof document !== 'undefined') {
             const singleCityProviders = [
                 'mpwik_wroclaw', 'mpwik_warszawa', 'katowickie_wodociagi',
                 'veolia_warszawa', 'veolia_poznan', 'veolia_lodz', 'zwik_lodz',
-                'epec_elblag', 'lpwik_legnica', 'zwik_zielona_gora',
+                'epec_elblag', 'lpwik_legnica', 'zwik_zielona_gora', 'mec_koszalin', 'therma_bielsko',
                 'wodociagi_plockie', 'wodociagi_kieleckie', 'wodociagi_bialostockie', 'pwik_kalisz', 'pwik_czestochowa', 'pwik_olsztyn', 'pewik_gdynia', 'gdanskie_wodociagi', 'gpec', 'kpec_bydgoszcz', 'mwik_bydgoszcz', 'enea_cieplo', 'energa_cieplo_kaliskie', 'puk_rokietnica', 'sec', 'lpec', 'mpwik_lublin', 'mpwik_rzeszow', 'mpec_kielce', 'mpec_rzeszow', 'opec_gdynia', 'pge_torun_heat', 'torunskie_wodociagi', 'wm_radom'
             ];
             if (singleCityProviders.includes(alert.source)) {
@@ -3110,6 +3146,16 @@ if (typeof document !== 'undefined') {
                 }
                 if (alert.source === 'mpec_rzeszow' &&
                     !(cityLower.startsWith('rzeszów') || cityLower.startsWith('rzeszow') || addr.cityId === 974133)) return false;
+                if (alert.source === 'mec_koszalin' && !REGION_MATCHERS.mec_koszalin_area(addr)) return false;
+                if (alert.source === 'mec_koszalin') {
+                    const location = normalizeRegionName(alert.location);
+                    const normalizedCity = normalizeRegionName(cityName);
+                    const isKoszalin = normalizedCity === 'koszalin' || addr.cityId === 949448;
+                    const isSianow = normalizedCity === 'sianow' || normalizeRegionMunicipality(addr.commune) === 'sianow';
+                    if (location.includes('koszalin') && !isKoszalin) return false;
+                    if (location.includes('sianow') && !isSianow) return false;
+                }
+                if (alert.source === 'therma_bielsko' && !REGION_MATCHERS.therma_bielsko(addr)) return false;
                 if (alert.source === 'mpec_kielce' && !REGION_MATCHERS.kielce(addr)) return false;
                 if (alert.source === 'epec_elblag' && !REGION_MATCHERS.elblag(addr)) return false;
                 if (alert.source === 'pge_torun_heat' &&

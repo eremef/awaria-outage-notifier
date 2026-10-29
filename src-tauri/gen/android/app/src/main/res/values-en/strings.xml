@@ -43,6 +43,8 @@
   <string name="provider_katowickie_wodociagi">KW KTW</string>
   <string name="provider_lpec">LPEC</string>
   <string name="provider_mpec_kielce">MPEC Kielce</string>
+  <string name="provider_mec_koszalin">MEC Koszalin</string>
+  <string name="provider_therma_bielsko">Therma Bielsko</string>
   <string name="provider_mpec_rzeszow">MPEC Rzeszów</string>
   <string name="provider_mpwik_lublin">MPWiK LBL</string>
   <string name="provider_mpwik_rzeszow">MPWiK RZE</string>
@@ -79,6 +81,7 @@
   <string name="provider_torunskie_wodociagi">TW Toruń</string>
   <string name="provider_wik_opole">WiK Opole</string>
   <string name="provider_bytomskie_wodociagi">Bytom Water Utility</string>
+  <string name="provider_chspwik">ChŚPWiK</string>
   <string name="provider_zwik_lodz">ZWIK Łódź</string>
   <string name="provider_zwik_zielona_gora">ZWiK ZG</string>
   <string name="widget_label_all">Address: all utilities</string>
@@ -97,6 +100,8 @@
   <string name="widget_label_katowickiewodociagi">Katowickie Wodociągi</string>
   <string name="widget_label_lpec">LPEC Lublin</string>
   <string name="widget_label_mpec_kielce">MPEC Kielce</string>
+  <string name="widget_label_mec_koszalin">MEC Koszalin</string>
+  <string name="widget_label_therma_bielsko">Therma Bielsko</string>
   <string name="widget_label_mpec_rzeszow">MPEC Rzeszów</string>
   <string name="widget_label_mpwik">MPWiK Wrocław</string>
   <string name="widget_label_mpwik_lublin">MPWiK Lublin</string>
@@ -114,6 +119,7 @@
   <string name="widget_label_psg">PSG</string>
   <string name="widget_label_lpwik_legnica">LPWiK Legnica</string>
   <string name="widget_label_bytomskie_wodociagi">Bytom Water Utility</string>
+  <string name="widget_label_chspwik">ChŚPWiK</string>
   <string name="widget_label_puk_rokietnica">PUK Rokietnica</string>
   <string name="widget_label_pwik_czestochowa">PWiK Częstochowa</string>
   <string name="widget_label_pwik_kalisz">PWiK Kalisz</string>

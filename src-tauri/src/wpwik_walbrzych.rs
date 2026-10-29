@@ -39,15 +39,47 @@ fn date_regex() -> &'static Regex {
     RE.get_or_init(|| Regex::new(r"\b(\d{1,2})\.(\d{1,2})\.(\d{4})\b").unwrap())
 }
 
+fn polish_date_regex() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| {
+        Regex::new(
+            r"\b(\d{1,2})\s+(stycznia|lutego|marca|kwietnia|maja|czerwca|lipca|sierpnia|wrzesnia|pazdziernika|listopada|grudnia)\s+(\d{4})\b",
+        )
+        .unwrap()
+    })
+}
+
 fn time_regex() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
     RE.get_or_init(|| Regex::new(r"\b([01]?\d|2[0-3])[:.]([0-5]\d)\b").unwrap())
 }
 
 fn parse_date(value: &str) -> Option<NaiveDate> {
-    let captures = date_regex().captures(value)?;
+    let normalized = normalize(value);
+    if let Some(captures) = date_regex().captures(&normalized) {
+        let day = captures.get(1)?.as_str().parse::<u32>().ok()?;
+        let month = captures.get(2)?.as_str().parse::<u32>().ok()?;
+        let year = captures.get(3)?.as_str().parse::<i32>().ok()?;
+        return NaiveDate::from_ymd_opt(year, month, day);
+    }
+
+    let captures = polish_date_regex().captures(&normalized)?;
     let day = captures.get(1)?.as_str().parse::<u32>().ok()?;
-    let month = captures.get(2)?.as_str().parse::<u32>().ok()?;
+    let month = match captures.get(2)?.as_str() {
+        "stycznia" => 1,
+        "lutego" => 2,
+        "marca" => 3,
+        "kwietnia" => 4,
+        "maja" => 5,
+        "czerwca" => 6,
+        "lipca" => 7,
+        "sierpnia" => 8,
+        "wrzesnia" => 9,
+        "pazdziernika" => 10,
+        "listopada" => 11,
+        "grudnia" => 12,
+        _ => return None,
+    };
     let year = captures.get(3)?.as_str().parse::<i32>().ok()?;
     NaiveDate::from_ymd_opt(year, month, day)
 }
@@ -60,10 +92,16 @@ fn parse_time(value: &str) -> Option<NaiveTime> {
 }
 
 fn schedule_dates(text: &str) -> Vec<NaiveDate> {
-    date_regex()
-        .captures_iter(text)
-        .filter_map(|captures| parse_date(captures.get(0)?.as_str()))
-        .collect()
+    let normalized = normalize(text);
+    let mut dates = date_regex()
+        .captures_iter(&normalized)
+        .chain(polish_date_regex().captures_iter(&normalized))
+        .filter_map(|captures| {
+            Some((captures.get(0)?.start(), parse_date(captures.get(0)?.as_str())?))
+        })
+        .collect::<Vec<_>>();
+    dates.sort_by_key(|(position, _)| *position);
+    dates.into_iter().map(|(_, date)| date).collect()
 }
 
 fn schedule_times(text: &str) -> Vec<NaiveTime> {
@@ -76,6 +114,32 @@ fn schedule_times(text: &str) -> Vec<NaiveTime> {
         .collect()
 }
 
+fn has_explicit_start_time_interval(text: &str) -> bool {
+    let normalized = normalize(text);
+    let Some(time_match) = time_regex().find(&normalized) else {
+        return false;
+    };
+    let before_time = normalized[..time_match.start()].split_whitespace().collect::<Vec<_>>();
+    let after_time = normalized[time_match.end()..].trim_start();
+    let last_word = before_time.last().copied();
+    let time_word_follows_od = last_word == Some("od")
+        || (before_time.len() >= 2
+            && before_time[before_time.len() - 2] == "od"
+            && matches!(
+                last_word,
+                Some("godz" | "godz." | "godzina" | "godzine" | "godziny" | "godzinach")
+            ));
+    let do_follows_time = after_time
+        .strip_prefix("do")
+        .is_some_and(|rest| {
+            rest.chars()
+                .next()
+                .is_none_or(|character| !character.is_alphanumeric())
+        });
+
+    time_word_follows_od && do_follows_time
+}
+
 fn parse_schedule(text: &str) -> (Option<NaiveDateTime>, Option<NaiveDateTime>) {
     let dates = schedule_dates(text);
     let times = schedule_times(text);
@@ -85,6 +149,12 @@ fn parse_schedule(text: &str) -> (Option<NaiveDateTime>, Option<NaiveDateTime>) 
     };
 
     let normalized_text = normalize(text);
+    let has_explicit_interval = normalized_text
+        .split_whitespace()
+        .any(|word| word == "od")
+        && normalized_text
+            .split_whitespace()
+            .any(|word| word == "do");
     match times.as_slice() {
         [] => (None, None),
         [end_time]
@@ -95,10 +165,11 @@ fn parse_schedule(text: &str) -> (Option<NaiveDateTime>, Option<NaiveDateTime>) 
         {
             (None, Some(last_date.and_time(*end_time)))
         }
+        [start_time] if has_explicit_start_time_interval(text) => {
+            (Some(first_date.and_time(*start_time)), None)
+        }
         [_] => (None, None),
-        [start_time, end_time, ..]
-            if normalized_text.contains(" od ") && normalized_text.contains(" do ") =>
-        {
+        [start_time, end_time, ..] if has_explicit_interval => {
             let start = first_date.and_time(*start_time);
             let mut end = last_date.and_time(*end_time);
             if end <= start && dates.len() == 1 {

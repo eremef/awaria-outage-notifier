@@ -716,6 +716,22 @@
         </receiver>
 
         <receiver
+            android:name=".ChspwikWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_chspwik">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_CHSPWIK" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_single_info" />
+        </receiver>
+
+        <receiver
             android:name=".PwikCzestochowaWidgetProvider"
             android:exported="true"
             android:label="@string/widget_label_pwik_czestochowa">
@@ -938,6 +954,34 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_single_info" />
+        </receiver>
+
+        <receiver
+            android:name=".MecKoszalinWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_mec_koszalin">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_MEC_KOSZALIN" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_single_info" />
+        </receiver>
+
+        <receiver
+            android:name=".ThermaBielskoWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label_therma_bielsko">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="xyz.eremef.awaria.ACTION_REFRESH_THERMA_BIELSKO" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_single_info" />
         </receiver>
 
         <receiver

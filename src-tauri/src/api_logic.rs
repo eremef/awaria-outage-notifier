@@ -93,6 +93,8 @@ pub enum AlertSource {
     LpwikLegnica,
     #[serde(rename = "bytomskie_wodociagi")]
     BytomskieWodociagi,
+    #[serde(rename = "chspwik")]
+    Chspwik,
     #[serde(rename = "pwik_gorzow")]
     PwikGorzow,
     #[serde(rename = "rpwik_tychy")]
@@ -121,6 +123,10 @@ pub enum AlertSource {
     PwikRudaSlaska,
     #[serde(rename = "pwik_rybnik")]
     PwikRybnik,
+    #[serde(rename = "mec_koszalin")]
+    MecKoszalin,
+    #[serde(rename = "therma_bielsko")]
+    ThermaBielsko,
 }
 
 pub enum ServiceLocation {
@@ -228,6 +234,7 @@ impl AlertSource {
             AlertSource::MpecKielce => ServiceLocation::Cities(vec![is_kielce]),
             AlertSource::LpwikLegnica => ServiceLocation::Cities(vec![is_lpwik_legnica]),
             AlertSource::BytomskieWodociagi => ServiceLocation::Cities(vec![is_bytom]),
+            AlertSource::Chspwik => ServiceLocation::Cities(vec![is_chspwik_area]),
             AlertSource::PwikGorzow => ServiceLocation::Cities(vec![is_pwik_gorzow_area]),
             AlertSource::RpwikTychy => ServiceLocation::Cities(vec![is_rpwik_tychy_area]),
             AlertSource::AquaBielsko => ServiceLocation::Cities(vec![is_aqua_bielsko_area]),
@@ -246,6 +253,8 @@ impl AlertSource {
             AlertSource::ZabrzanskieWodociagi => ServiceLocation::Cities(vec![is_zabrze]),
             AlertSource::PwikRudaSlaska => ServiceLocation::Cities(vec![is_ruda_slaska]),
             AlertSource::PwikRybnik => ServiceLocation::Cities(vec![is_pwik_rybnik_area]),
+            AlertSource::MecKoszalin => ServiceLocation::Cities(vec![is_mec_koszalin_area]),
+            AlertSource::ThermaBielsko => ServiceLocation::Cities(vec![is_therma_bielsko]),
         }
     }
 
@@ -297,6 +306,7 @@ impl AlertSource {
             AlertSource::MpecKielce => "MPEC Kielce",
             AlertSource::LpwikLegnica => "LPWiK Legnica",
             AlertSource::BytomskieWodociagi => "Bytomskie Wodociągi",
+            AlertSource::Chspwik => "ChŚPWiK",
             AlertSource::PwikGorzow => "PWiK Gorzów Wielkopolski",
             AlertSource::RpwikTychy => "RPWiK Tychy",
             AlertSource::AquaBielsko => "AQUA S.A.",
@@ -311,6 +321,8 @@ impl AlertSource {
             AlertSource::ZabrzanskieWodociagi => "ZPWiK Zabrze",
             AlertSource::PwikRudaSlaska => "PWiK Ruda Śląska",
             AlertSource::PwikRybnik => "PWiK Rybnik",
+            AlertSource::MecKoszalin => "MEC Koszalin",
+            AlertSource::ThermaBielsko => "Therma Bielsko",
         }
     }
 }
@@ -527,6 +539,7 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         | AlertSource::MwikBydgoszcz
         | AlertSource::LpwikLegnica
         | AlertSource::BytomskieWodociagi
+        | AlertSource::Chspwik
         | AlertSource::PwikGorzow
         | AlertSource::RpwikTychy
         | AlertSource::WpwikWalbrzych
@@ -552,7 +565,7 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
                 "water service notice"
             }
         }
-        AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz | AlertSource::Gpec | AlertSource::OpecGdynia | AlertSource::KpecBydgoszcz | AlertSource::EneaCieplo | AlertSource::EnergaCieploKaliskie | AlertSource::EcoSa | AlertSource::Sec | AlertSource::Lpec | AlertSource::MpecRzeszow | AlertSource::MpecKielce | AlertSource::PgeTorunHeat | AlertSource::EpecElblag | AlertSource::PecGliwice => {
+        AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz | AlertSource::Gpec | AlertSource::OpecGdynia | AlertSource::KpecBydgoszcz | AlertSource::EneaCieplo | AlertSource::EnergaCieploKaliskie | AlertSource::EcoSa | AlertSource::Sec | AlertSource::Lpec | AlertSource::MpecRzeszow | AlertSource::MpecKielce | AlertSource::PgeTorunHeat | AlertSource::EpecElblag | AlertSource::PecGliwice | AlertSource::MecKoszalin | AlertSource::ThermaBielsko => {
             if is_pl { "wyłączenie ogrzewania" } else { "heat outage" }
         }
         AlertSource::Psg => {
@@ -693,6 +706,7 @@ impl std::fmt::Display for AlertSource {
             AlertSource::MpecKielce => "mpec_kielce",
             AlertSource::LpwikLegnica => "lpwik_legnica",
             AlertSource::BytomskieWodociagi => "bytomskie_wodociagi",
+            AlertSource::Chspwik => "chspwik",
             AlertSource::PwikGorzow => "pwik_gorzow",
             AlertSource::RpwikTychy => "rpwik_tychy",
             AlertSource::AquaBielsko => "aqua_bielsko",
@@ -707,6 +721,8 @@ impl std::fmt::Display for AlertSource {
             AlertSource::ZabrzanskieWodociagi => "zabrzanskie_wodociagi",
             AlertSource::PwikRudaSlaska => "pwik_ruda_slaska",
             AlertSource::PwikRybnik => "pwik_rybnik",
+            AlertSource::MecKoszalin => "mec_koszalin",
+            AlertSource::ThermaBielsko => "therma_bielsko",
         };
         write!(f, "{}", s)
     }
@@ -1102,6 +1118,18 @@ fn is_dabrowskie_wodociagi_area(addr: &AddressEntry) -> bool {
     city == "dabrowa gornicza" || commune == "dabrowa gornicza"
 }
 
+fn is_chspwik_area(addr: &AddressEntry) -> bool {
+    let voivodeship = crate::utils::clean_text(&addr.voivodeship);
+    if !voivodeship.is_empty() && !voivodeship.starts_with("slaskie") {
+        return false;
+    }
+
+    ["chorzow", "swietochlowice"].iter().any(|municipality| {
+        normalize_service_municipality(&addr.city_name) == *municipality
+            || normalize_service_municipality(&addr.commune) == *municipality
+    })
+}
+
 fn is_city_in_area(
     addr: &AddressEntry,
     city_id: u64,
@@ -1122,6 +1150,24 @@ fn is_city_in_area(
 
 fn is_koszalin(addr: &AddressEntry) -> bool {
     is_city_in_area(addr, 949_448, "koszalin", "zachodniopomorskie")
+}
+
+fn is_mec_koszalin_area(addr: &AddressEntry) -> bool {
+    let voivodeship = crate::utils::clean_text(&addr.voivodeship);
+    if !voivodeship.is_empty() && !voivodeship.starts_with("zachodniopomorskie") {
+        return false;
+    }
+
+    let city = crate::utils::clean_text(&addr.city_name);
+    match addr.city_id {
+        Some(949_448) => true,
+        Some(_) => city == "sianow",
+        None => matches!(city.as_str(), "koszalin" | "sianow"),
+    }
+}
+
+fn is_therma_bielsko(addr: &AddressEntry) -> bool {
+    is_city_in_area(addr, 923_584, "bielsko biala", "slaskie")
 }
 
 fn is_sosnowiec(addr: &AddressEntry) -> bool {

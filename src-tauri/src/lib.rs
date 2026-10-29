@@ -13,12 +13,14 @@ mod enea;
 mod enea_cieplo;
 mod eco_sa;
 mod energa_cieplo_kaliskie;
+mod mec_koszalin;
 mod energa;
 mod fortum;
 mod mpwik;
 mod mpwik_warsaw;
 mod pge;
 mod pge_torun_heat;
+mod therma_bielsko;
 mod pec_gliwice;
 pub mod network_state;
 mod state_db;
@@ -60,6 +62,7 @@ pub mod wpwik_walbrzych;
 pub mod wik_opole;
 pub mod lpwik_legnica;
 pub mod bytomskie_wodociagi;
+pub mod chspwik;
 pub mod dabrowskie_wodociagi;
 pub mod mwik_bydgoszcz;
 pub mod mwik_koszalin;
@@ -571,8 +574,10 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(enea_cieplo::EneaCieploProvider),
         Box::new(eco_sa::EcoSaProvider),
         Box::new(energa_cieplo_kaliskie::EnergaCieploKaliskieProvider),
+        Box::new(mec_koszalin::MecKoszalinProvider),
         Box::new(pge::PgeProvider),
         Box::new(pge_torun_heat::PgeTorunHeatProvider),
+        Box::new(therma_bielsko::ThermaBielskoProvider),
         Box::new(stoen::StoenProvider),
         Box::new(psg::PsgProvider),
         Box::new(wmk::WmkProvider),
@@ -604,6 +609,7 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(wik_opole::WikOpoleProvider),
         Box::new(lpwik_legnica::LpwikLegnicaProvider),
         Box::new(bytomskie_wodociagi::BytomskieWodociagiProvider),
+        Box::new(chspwik::ChspwikProvider),
         Box::new(dabrowskie_wodociagi::DabrowskieWodociagiProvider),
         Box::new(aqua_bielsko::AquaBielskoProvider),
         Box::new(pwik_gorzow::PwikGorzowProvider),
@@ -1005,6 +1011,29 @@ fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Setti
                     if let Some((locality, _)) = location.split_once(';') {
                         alert.location = Some(locality.to_string());
                     }
+                }
+                continue;
+            }
+
+            if alert.source == api_logic::AlertSource::Chspwik
+                && alert.is_local == Some(true)
+            {
+                let location = alert.location.as_deref().unwrap_or_default();
+                let matched_address = s.addresses.iter().enumerate().find(|(_, address)| {
+                    address.is_active
+                        && api_logic::is_address_applicable_for_provider(
+                            &alert.source,
+                            address,
+                        )
+                        && chspwik::location_matches_address(location, address)
+                        && chspwik::house_number_matches_notice(location, address)
+                });
+                if let Some((index, _)) = matched_address {
+                    alert.address_index = Some(index);
+                    alert.is_local = Some(true);
+                } else {
+                    alert.address_index = None;
+                    alert.is_local = Some(false);
                 }
                 continue;
             }

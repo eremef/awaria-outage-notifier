@@ -2,7 +2,7 @@ name: Awaria Outage Monitor
 version: "1.0.75-beta.8"
 slug: awaria_outage_monitor
 stage: experimental
-description: Headless outage monitor for Polish utility providers (Tauron, PGE, PGE Toruń heat, MPEC Kielce, EPEC Elbląg, Enea, ENEA Ciepło, Energa Ciepło Kaliskie, Energa, MPWiK, LPWiK Legnica, Bytomskie Wodociągi, Stoen, Veolia, ZWiK Zielona Góra, PWiK Gorzów, etc.)
+description: Headless outage monitor for Polish utility providers (Tauron, PGE, PGE Toruń heat, MPEC Kielce, EPEC Elbląg, Enea, ENEA Ciepło, Energa Ciepło Kaliskie, Energa, MPWiK, LPWiK Legnica, Bytomskie Wodociągi, ChŚPWiK, Stoen, Veolia, ZWiK Zielona Góra, PWiK Gorzów, etc.)
 url: https://github.com/eremef/awaria-outage-notifier
 image: "ghcr.io/eremef/awaria-outage-monitor"
 arch:
@@ -41,7 +41,7 @@ schema:
       houseNo: str
       isActive: bool?
   enabled_sources:
-    - list(tauron|mpwik_wroclaw|mpwik_warszawa|mpwik_rzeszow|mwik_bydgoszcz|mwik_koszalin|fortum|energa|enea|enea_cieplo|energa_cieplo_kaliskie|eco_sa|epec_elblag|pec_gliwice|pge|pge_torun_heat|stoen|aqua_bielsko|wmk|wm_radom|tauron_heat|aquanet|bytomskie_wodociagi|dabrowskie_wodociagi|katowickie_wodociagi|veolia_warszawa|veolia_poznan|veolia_lodz|zwik_lodz|zwik_zielona_gora|wodociagi_plockie|wodociagi_kieleckie|wodociagi_bialostockie|torunskie_wodociagi|pwik_czestochowa|pwik_gliwice|pwik_gorzow|pwik_olsztyn|pwik_ruda_slaska|pwik_rybnik|rpwik_tychy|wpwik_walbrzych|sosnowieckie_wodociagi|tarnowskie_wodociagi|zabrzanskie_wodociagi|wik_opole|pewik_gdynia|gdanskie_wodociagi|mpec_kielce|mpec_rzeszow|opec_gdynia|lpwik_legnica)
+    - list(tauron|mpwik_wroclaw|mpwik_warszawa|mpwik_rzeszow|mwik_bydgoszcz|mwik_koszalin|mec_koszalin|fortum|energa|enea|enea_cieplo|energa_cieplo_kaliskie|eco_sa|epec_elblag|pec_gliwice|pge|pge_torun_heat|stoen|aqua_bielsko|wmk|wm_radom|tauron_heat|therma_bielsko|aquanet|bytomskie_wodociagi|chspwik|dabrowskie_wodociagi|katowickie_wodociagi|veolia_warszawa|veolia_poznan|veolia_lodz|zwik_lodz|zwik_zielona_gora|wodociagi_plockie|wodociagi_kieleckie|wodociagi_bialostockie|torunskie_wodociagi|pwik_czestochowa|pwik_gliwice|pwik_gorzow|pwik_olsztyn|pwik_ruda_slaska|pwik_rybnik|rpwik_tychy|wpwik_walbrzych|sosnowieckie_wodociagi|tarnowskie_wodociagi|zabrzanskie_wodociagi|wik_opole|pewik_gdynia|gdanskie_wodociagi|mpec_kielce|mpec_rzeszow|opec_gdynia|lpwik_legnica)
   port: port
   show_other_outages: bool
   check_interval_minutes: int

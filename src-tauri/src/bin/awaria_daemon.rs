@@ -338,6 +338,8 @@ async fn get_calendar_handler(Extension(alerts): Extension<SharedAlerts>) -> imp
             | app_lib::api_logic::AlertSource::KpecBydgoszcz
             | app_lib::api_logic::AlertSource::PgeTorunHeat
             | app_lib::api_logic::AlertSource::EpecElblag
+            | app_lib::api_logic::AlertSource::MecKoszalin
+            | app_lib::api_logic::AlertSource::ThermaBielsko
             | app_lib::api_logic::AlertSource::PecGliwice
             | app_lib::api_logic::AlertSource::EneaCieplo
             | app_lib::api_logic::AlertSource::EnergaCieploKaliskie

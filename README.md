@@ -33,6 +33,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **Energa Ciepło Kaliskie**: Heat outages in Kalisz.
   - **Fortum**: Planned and current heat/hot water outages.
   - **Tauron Ciepło**: Heat outages (Southern Poland).
+  - **Therma Bielsko**: [Planned heat interruptions](https://www.therma.bielsko.pl/przerwy-w-dostawie) in Bielsko-Biała only.
   - **Veolia Warszawa**: Heat outages in Warsaw.
   - **Veolia Poznań**: Heat outages in Poznań.
   - **Veolia Łódź**: Heat outages in Łódź.
@@ -40,6 +41,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **KPEC Bydgoszcz**: Heat outages in Bydgoszcz.
   - **SEC Szczecin**: Heat outages in Szczecin.
   - **LPEC Lublin**: Heat outages in Lublin.
+  - **MEC Koszalin**: [Planned heat interruptions](https://meckoszalin.pl/przerwy-w-dostawie-ciepla/) in Koszalin; Sianów is served, but notices are matched there only when they name it.
   - **MPEC Kielce**: District-heating and hot-water interruptions in Kielce.
   - **MPEC Rzeszów**: Heating and domestic hot-water supply interruptions in Rzeszów.
   - **OPEC Gdynia**: Street-level heat and domestic-hot-water interruption notices for served areas in Gdynia, Rumia, Reda, Kosakowo, and Wejherowo.
@@ -48,6 +50,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
 - **💧 Water**
   - **MPWiK Wrocław**: Water failures and maintenance work in Wrocław.
   - **Bytomskie Wodociągi**: Water outages and planned interruptions in Bytom only.
+  - **ChŚPWiK**: Water-supply interruptions in Chorzów and Świętochłowice.
   - **Dąbrowskie Wodociągi**: Water interruptions, pressure changes, and water-quality notices in Dąbrowa Górnicza only.
   - **MWiK Bydgoszcz**: Planned water shutoffs and network failures in Bydgoszcz.
   - **MPWiK Warszawa**: Water failures and repairs in Warsaw.
@@ -220,7 +223,7 @@ For each address you want to monitor, add an entry with:
 
 #### Enabled Sources
 
-Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `epec_elblag`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`, `bytomskie_wodociagi`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `rpwik_tychy`, `wpwik_walbrzych`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
+Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `epec_elblag`, `mec_koszalin`, `therma_bielsko`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`, `bytomskie_wodociagi`, `chspwik`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `rpwik_tychy`, `wpwik_walbrzych`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
 
 ### Usage
 
