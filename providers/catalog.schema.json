@@ -1,0 +1,182 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://awaria.invalid/schemas/provider-catalog-v1.json",
+  "title": "Awaria provider catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "locales", "providers", "androidLegacyWidgets"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "locales": { "const": ["pl", "en"] },
+    "providers": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/provider" }
+    },
+    "androidLegacyWidgets": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/legacyWidget" }
+    }
+  },
+  "$defs": {
+    "utility": { "enum": ["power", "gas", "heating", "water"] },
+    "order": { "type": "integer", "minimum": 0, "maximum": 65535 },
+    "nullableOrder": { "oneOf": [{ "$ref": "#/$defs/order" }, { "type": "null" }] },
+    "localeNames": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pl", "en"],
+      "properties": {
+        "pl": { "type": "string", "minLength": 1 },
+        "en": { "type": "string", "minLength": 1 }
+      }
+    },
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "utility", "order", "defaultNotify", "labels", "aliases", "bindings", "capabilities", "icsUtility", "android", "card"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "utility": { "$ref": "#/$defs/utility" },
+        "order": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["frontend", "rust", "androidSingle", "addon"],
+          "properties": {
+            "frontend": { "$ref": "#/$defs/order" },
+            "rust": { "$ref": "#/$defs/order" },
+            "androidSingle": { "$ref": "#/$defs/order" },
+            "addon": { "$ref": "#/$defs/nullableOrder" }
+          }
+        },
+        "defaultNotify": { "type": "boolean" },
+        "labels": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["frontend", "rust", "android"],
+          "properties": {
+            "frontend": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["name", "shortName"],
+              "properties": {
+                "name": { "$ref": "#/$defs/localeNames" },
+                "shortName": { "$ref": "#/$defs/localeNames" }
+              }
+            },
+            "rust": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["name"],
+              "properties": {
+                "name": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["pl"],
+                  "properties": { "pl": { "type": "string", "minLength": 1 } }
+                }
+              }
+            },
+            "android": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["shortName", "legacyWidget"],
+              "properties": {
+                "shortName": { "$ref": "#/$defs/localeNames" },
+                "legacyWidget": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["resource", "name"],
+                  "properties": {
+                    "resource": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+                    "name": { "$ref": "#/$defs/localeNames" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "aliases": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }
+        },
+        "bindings": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["rust", "android"],
+          "properties": {
+            "rust": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["enumVariant", "constructor"],
+              "properties": {
+                "enumVariant": { "type": "string", "pattern": "^[A-Z][A-Za-z0-9]*$" },
+                "constructor": { "type": "string", "pattern": "^[a-z][a-z0-9_]*::[A-Z][A-Za-z0-9]*$" }
+              }
+            },
+            "android": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["legacyComponentClass", "legacyLabelResource"],
+              "properties": {
+                "legacyComponentClass": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9]*$" },
+                "legacyLabelResource": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }
+              }
+            }
+          }
+        },
+        "capabilities": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["webviewOnly", "addonAllowed"],
+          "properties": {
+            "webviewOnly": { "type": "boolean" },
+            "addonAllowed": { "type": "boolean" }
+          }
+        },
+        "icsUtility": { "$ref": "#/$defs/utility" },
+        "android": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["singleWidget", "searchAliases", "location", "aggregateUtility", "aggregateOrder"],
+          "properties": {
+            "singleWidget": { "type": "boolean" },
+            "searchAliases": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+            "location": { "type": "string" },
+            "aggregateUtility": { "oneOf": [{ "$ref": "#/$defs/utility" }, { "type": "null" }] },
+            "aggregateOrder": { "$ref": "#/$defs/nullableOrder" }
+          }
+        },
+        "card": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "icon", "color"],
+          "properties": {
+            "name": { "type": "string", "minLength": 1 },
+            "icon": { "type": "string", "minLength": 1 },
+            "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" }
+          }
+        },
+        "frontend": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["regionMatcher"],
+          "properties": {
+            "regionMatcher": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }
+          }
+        }
+      }
+    },
+    "legacyWidget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["componentClass", "resource", "name"],
+      "properties": {
+        "componentClass": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9]*$" },
+        "resource": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "name": { "$ref": "#/$defs/localeNames" }
+      }
+    }
+  }
+}

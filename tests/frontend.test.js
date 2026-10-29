@@ -1,8 +1,20 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect } from 'vitest';
 const { filterAlerts, formatDate, matchesStreetName, matchesAddress, getSources, getRegionMatchers } = require('../public/script.js');
-const { translations } = require('../public/i18n.js');
+const { t: translateProviderKey, getLocaleString, setCurrentLang } = require('../public/i18n.js');
 require('../public/awaria-card.js');
+
+function providerTranslationKey(key, language) {
+    const previousLanguage = getLocaleString().startsWith('pl') ? 'pl' : 'en';
+    setCurrentLang(language);
+    const value = translateProviderKey(key);
+    setCurrentLang(previousLanguage);
+    return value;
+}
+
+function providerTranslation(id, labelType, language) {
+    return providerTranslationKey(`source_${id}_${labelType}`, language);
+}
 describe('Frontend Logic', () => {
     describe('filtering logic', () => {
         const mockAlerts = [
@@ -329,6 +341,26 @@ describe('Frontend Logic', () => {
     });
 
     describe('getSources', () => {
+        it('preserves the original provider order and notification defaults', () => {
+            const sources = getSources();
+            expect(sources.map(source => source.id)).toEqual([
+                'enea', 'energa', 'pge', 'stoen', 'tauron', 'psg',
+                'eco_sa', 'enea_cieplo', 'energa_cieplo_kaliskie', 'epec_elblag', 'fortum', 'gpec',
+                'kpec_bydgoszcz', 'lpec', 'mec_koszalin', 'mpec_kielce', 'mpec_rzeszow', 'opec_gdynia',
+                'pec_gliwice', 'pge_torun_heat', 'sec', 'tauron_heat', 'therma_bielsko', 'veolia_lodz',
+                'veolia_poznan', 'veolia_warszawa', 'aqua_bielsko', 'aquanet', 'bytomskie_wodociagi',
+                'chspwik', 'dabrowskie_wodociagi', 'gdanskie_wodociagi', 'katowickie_wodociagi',
+                'lpwik_legnica', 'mpwik_lublin', 'mpwik_rzeszow', 'mpwik_warszawa', 'mpwik_wroclaw',
+                'mwik_bydgoszcz', 'mwik_koszalin', 'pewik_gdynia', 'puk_rokietnica', 'pwik_czestochowa',
+                'pwik_gliwice', 'pwik_gorzow', 'pwik_kalisz', 'pwik_olsztyn', 'pwik_ruda_slaska',
+                'pwik_rybnik', 'rpwik_tychy', 'sosnowieckie_wodociagi', 'tarnowskie_wodociagi',
+                'torunskie_wodociagi', 'wik_opole', 'wm_radom', 'wmk', 'wodociagi_bialostockie',
+                'wodociagi_kieleckie', 'wodociagi_plockie', 'wpwik_walbrzych', 'zabrzanskie_wodociagi',
+                'zwik_lodz', 'zwik_zielona_gora'
+            ]);
+            expect(sources.every(source => source.defaultNotify === true)).toBe(true);
+        });
+
         it('registers AQUA S.A. in alphabetic water order with localized labels', () => {
             const sources = getSources();
             const provider = sources.find(source => source.id === 'aqua_bielsko');
@@ -342,10 +374,10 @@ describe('Frontend Logic', () => {
                 i18nShort: 'source_aqua_bielsko_short'
             });
             expect(waterIds).toEqual([...waterIds].sort());
-            expect(translations.en.source_aqua_bielsko_name).toBe('AQUA S.A.');
-            expect(translations.en.source_aqua_bielsko_short).toBe('AQUA S.A.');
-            expect(translations.pl.source_aqua_bielsko_name).toBe('AQUA S.A.');
-            expect(translations.pl.source_aqua_bielsko_short).toBe('AQUA S.A.');
+            expect(providerTranslation('aqua_bielsko', 'name', 'en')).toBe('AQUA S.A.');
+            expect(providerTranslation('aqua_bielsko', 'short', 'en')).toBe('AQUA S.A.');
+            expect(providerTranslation('aqua_bielsko', 'name', 'pl')).toBe('AQUA S.A.');
+            expect(providerTranslation('aqua_bielsko', 'short', 'pl')).toBe('AQUA S.A.');
 
             const Card = window.customElements.get('awaria-card');
             const card = new Card();
@@ -455,10 +487,10 @@ describe('Frontend Logic', () => {
                 i18nShort: 'source_bytomskie_wodociagi_short'
             });
             expect(waterIds).toEqual([...waterIds].sort());
-            expect(translations.en.source_bytomskie_wodociagi_name).toBe('Bytomskie Wodociągi');
-            expect(translations.en.source_bytomskie_wodociagi_short).toBe('BW Bytom');
-            expect(translations.pl.source_bytomskie_wodociagi_name).toBe('Bytomskie Wodociągi');
-            expect(translations.pl.source_bytomskie_wodociagi_short).toBe('BW Bytom');
+            expect(providerTranslation('bytomskie_wodociagi', 'name', 'en')).toBe('Bytomskie Wodociągi');
+            expect(providerTranslation('bytomskie_wodociagi', 'short', 'en')).toBe('BW Bytom');
+            expect(providerTranslation('bytomskie_wodociagi', 'name', 'pl')).toBe('Bytomskie Wodociągi');
+            expect(providerTranslation('bytomskie_wodociagi', 'short', 'pl')).toBe('BW Bytom');
         });
 
         it('registers Dąbrowskie Wodociągi alphabetically with localized water styling', () => {
@@ -474,10 +506,10 @@ describe('Frontend Logic', () => {
                 i18nShort: 'source_dabrowskie_wodociagi_short'
             });
             expect(waterIds).toEqual([...waterIds].sort());
-            expect(translations.en.source_dabrowskie_wodociagi_name).toBe('Dąbrowskie Wodociągi');
-            expect(translations.en.source_dabrowskie_wodociagi_short).toBe('DW Dąbrowa');
-            expect(translations.pl.source_dabrowskie_wodociagi_name).toBe('Dąbrowskie Wodociągi');
-            expect(translations.pl.source_dabrowskie_wodociagi_short).toBe('DW Dąbrowa');
+            expect(providerTranslation('dabrowskie_wodociagi', 'name', 'en')).toBe('Dąbrowskie Wodociągi');
+            expect(providerTranslation('dabrowskie_wodociagi', 'short', 'en')).toBe('DW Dąbrowa');
+            expect(providerTranslation('dabrowskie_wodociagi', 'name', 'pl')).toBe('Dąbrowskie Wodociągi');
+            expect(providerTranslation('dabrowskie_wodociagi', 'short', 'pl')).toBe('DW Dąbrowa');
 
             const Card = window.customElements.get('awaria-card');
             const card = new Card();
@@ -543,10 +575,10 @@ describe('Frontend Logic', () => {
                 i18nShort: 'source_pwik_gorzow_short'
             });
             expect(waterIds).toEqual([...waterIds].sort());
-            expect(translations.en.source_pwik_gorzow_name).toBe('PWiK Gorzów');
-            expect(translations.en.source_pwik_gorzow_short).toBe('PWiK Gorzów');
-            expect(translations.pl.source_pwik_gorzow_name).toBe('PWiK Gorzów');
-            expect(translations.pl.source_pwik_gorzow_short).toBe('PWiK Gorzów');
+            expect(providerTranslation('pwik_gorzow', 'name', 'en')).toBe('PWiK Gorzów');
+            expect(providerTranslation('pwik_gorzow', 'short', 'en')).toBe('PWiK Gorzów');
+            expect(providerTranslation('pwik_gorzow', 'name', 'pl')).toBe('PWiK Gorzów');
+            expect(providerTranslation('pwik_gorzow', 'short', 'pl')).toBe('PWiK Gorzów');
 
             const Card = window.customElements.get('awaria-card');
             const card = new Card();
@@ -572,10 +604,10 @@ describe('Frontend Logic', () => {
             });
             expect(heatingIds).toEqual([...heatingIds].sort());
             expect(waterIds).toEqual([...waterIds].sort());
-            expect(translations.en.source_pec_gliwice_name).toBe('PEC Gliwice');
-            expect(translations.pl.source_pec_gliwice_name).toBe('PEC Gliwice');
-            expect(translations.en.source_pwik_gliwice_short).toBe('PWiK Gliwice');
-            expect(translations.pl.source_pwik_gliwice_short).toBe('PWiK Gliwice');
+            expect(providerTranslation('pec_gliwice', 'name', 'en')).toBe('PEC Gliwice');
+            expect(providerTranslation('pec_gliwice', 'name', 'pl')).toBe('PEC Gliwice');
+            expect(providerTranslation('pwik_gliwice', 'short', 'en')).toBe('PWiK Gliwice');
+            expect(providerTranslation('pwik_gliwice', 'short', 'pl')).toBe('PWiK Gliwice');
 
             const Card = window.customElements.get('awaria-card');
             const card = new Card();
@@ -599,10 +631,10 @@ describe('Frontend Logic', () => {
             for (const id of expected) {
                 const source = sources.find(item => item.id === id);
                 expect(source?.category).toBe('water');
-                expect(translations.en[source?.i18nLabel]).toBeTruthy();
-                expect(translations.en[source?.i18nShort]).toBeTruthy();
-                expect(translations.pl[source?.i18nLabel]).toBeTruthy();
-                expect(translations.pl[source?.i18nShort]).toBeTruthy();
+                expect(providerTranslationKey(source?.i18nLabel, 'en')).toBeTruthy();
+                expect(providerTranslationKey(source?.i18nShort, 'en')).toBeTruthy();
+                expect(providerTranslationKey(source?.i18nLabel, 'pl')).toBeTruthy();
+                expect(providerTranslationKey(source?.i18nShort, 'pl')).toBeTruthy();
             }
 
             const card = new (window.customElements.get('awaria-card'))();
@@ -952,6 +984,18 @@ describe('Frontend Logic', () => {
     });
 
     describe('Home Assistant card provider styling', () => {
+        it('uses catalog lookup for case-insensitive IDs and preserves unknown-source fallback', () => {
+            const AwariaCard = customElements.get('awaria-card');
+            const card = new AwariaCard();
+
+            expect(card.getProviderMeta('PGE')).toEqual({
+                name: 'PGE', icon: '⚡', color: '#ffb74d'
+            });
+            expect(card.getProviderMeta('some_new_provider')).toEqual({
+                name: 'SOME_NEW_PROVIDER', icon: '⚠️', color: '#757575'
+            });
+        });
+
         it('uses the OPEC Gdynia name and shared heat styling', () => {
             const AwariaCard = customElements.get('awaria-card');
             const card = new AwariaCard();
@@ -1283,8 +1327,8 @@ describe('Frontend Logic', () => {
                 i18nLabel: 'source_wpwik_walbrzych_name', i18nShort: 'source_wpwik_walbrzych_short'
             });
             for (const language of ['en', 'pl']) {
-                expect(translations[language].source_rpwik_tychy_name).toBe('RPWiK Tychy');
-                expect(translations[language].source_wpwik_walbrzych_name).toBe('WPWiK Wałbrzych');
+                expect(providerTranslation('rpwik_tychy', 'name', language)).toBe('RPWiK Tychy');
+                expect(providerTranslation('wpwik_walbrzych', 'name', language)).toBe('WPWiK Wałbrzych');
             }
         });
 

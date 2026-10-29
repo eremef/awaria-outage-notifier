@@ -766,75 +766,19 @@ if (typeof document !== 'undefined') {
         }
     };
 
-    const SOURCES = [
-        // Power
-        { id: 'enea', label: 'Enea', category: 'power', defaultNotify: true, i18nLabel: 'source_enea_name', i18nShort: 'source_enea_short' },
-        { id: 'energa', label: 'Energa', category: 'power', defaultNotify: true, i18nLabel: 'source_energa_name', i18nShort: 'source_energa_short' },
-        { id: 'pge', label: 'PGE', category: 'power', defaultNotify: true, i18nLabel: 'source_pge_name', i18nShort: 'source_pge_short' },
-        { id: 'stoen', label: 'Stoen', category: 'power', defaultNotify: true, i18nLabel: 'source_stoen_name', i18nShort: 'source_stoen_short', region: 'warszawa' },
-        { id: 'tauron', label: 'Tauron', category: 'power', defaultNotify: true, i18nLabel: 'source_tauron_name', i18nShort: 'source_tauron_short' },
-        // Gas
-        { id: 'psg', label: 'PSG', category: 'gas', defaultNotify: true, i18nLabel: 'source_psg_name', i18nShort: 'source_psg_short' },
-        // Heating
-        { id: 'eco_sa', label: 'ECO SA', category: 'heating', defaultNotify: true, i18nLabel: 'source_eco_sa_name', i18nShort: 'source_eco_sa_short' },
-        { id: 'enea_cieplo', label: 'ENEA Ciepło', category: 'heating', defaultNotify: true, i18nLabel: 'source_enea_cieplo_name', i18nShort: 'source_enea_cieplo_short', region: 'bialystok' },
-        { id: 'energa_cieplo_kaliskie', label: 'Energa Ciepło Kaliskie', category: 'heating', defaultNotify: true, i18nLabel: 'source_energa_cieplo_kaliskie_name', i18nShort: 'source_energa_cieplo_kaliskie_short', region: 'kalisz' },
-        { id: 'epec_elblag', label: 'EPEC Elbląg', category: 'heating', defaultNotify: true, i18nLabel: 'source_epec_elblag_name', i18nShort: 'source_epec_elblag_short', region: 'elblag' },
-        { id: 'fortum', label: 'Fortum', category: 'heating', defaultNotify: true, i18nLabel: 'source_fortum_name', i18nShort: 'source_fortum_short' },
-        { id: 'gpec', label: 'GPEC Gdańsk', category: 'heating', defaultNotify: true, i18nLabel: 'source_gpec_name', i18nShort: 'source_gpec_short', region: 'gdansk' },
-        { id: 'kpec_bydgoszcz', label: 'KPEC Bydgoszcz', category: 'heating', defaultNotify: true, i18nLabel: 'source_kpec_bydgoszcz_name', i18nShort: 'source_kpec_bydgoszcz_short', region: 'bydgoszcz' },
-        { id: 'lpec', label: 'LPEC', category: 'heating', defaultNotify: true, i18nLabel: 'source_lpec_name', i18nShort: 'source_lpec_short', region: 'lublin' },
-        { id: 'mec_koszalin', label: 'MEC Koszalin', category: 'heating', defaultNotify: true, i18nLabel: 'source_mec_koszalin_name', i18nShort: 'source_mec_koszalin_short', region: 'mec_koszalin_area' },
-        { id: 'mpec_kielce', label: 'MPEC Kielce', category: 'heating', defaultNotify: true, i18nLabel: 'source_mpec_kielce_name', i18nShort: 'source_mpec_kielce_short', region: 'kielce' },
-        { id: 'mpec_rzeszow', label: 'MPEC Rzeszów', category: 'heating', defaultNotify: true, i18nLabel: 'source_mpec_rzeszow_name', i18nShort: 'source_mpec_rzeszow_short', region: 'rzeszow' },
-        { id: 'opec_gdynia', label: 'OPEC Gdynia', category: 'heating', defaultNotify: true, i18nLabel: 'source_opec_gdynia_name', i18nShort: 'source_opec_gdynia_short', region: 'opec_gdynia_area' },
-        { id: 'pec_gliwice', label: 'PEC Gliwice', category: 'heating', defaultNotify: true, i18nLabel: 'source_pec_gliwice_name', i18nShort: 'source_pec_gliwice_short', region: 'pec_gliwice_area' },
-        { id: 'pge_torun_heat', label: 'PGE Toruń', category: 'heating', defaultNotify: true, i18nLabel: 'source_pge_torun_heat_name', i18nShort: 'source_pge_torun_heat_short', region: 'torun' },
-        { id: 'sec', label: 'SEC', category: 'heating', defaultNotify: true, i18nLabel: 'source_sec_name', i18nShort: 'source_sec_short', region: 'szczecin' },
-        { id: 'tauron_heat', label: 'Tauron Ciepło', category: 'heating', defaultNotify: true, i18nLabel: 'source_tauron_heat_name', i18nShort: 'source_tauron_heat_short' },
-        { id: 'therma_bielsko', label: 'Therma Bielsko', category: 'heating', defaultNotify: true, i18nLabel: 'source_therma_bielsko_name', i18nShort: 'source_therma_bielsko_short', region: 'therma_bielsko' },
-        { id: 'veolia_lodz', label: 'Veolia Łódź', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_lodz_name', i18nShort: 'source_veolia_lodz_short', region: 'lodz' },
-        { id: 'veolia_poznan', label: 'Veolia Poznań', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_poznan_name', i18nShort: 'source_veolia_poznan_short', region: 'poznan' },
-        { id: 'veolia_warszawa', label: 'Veolia Warszawa', category: 'heating', defaultNotify: true, i18nLabel: 'source_veolia_warszawa_name', i18nShort: 'source_veolia_warszawa_short', region: 'warszawa' },
-        // Water
-        { id: 'aqua_bielsko', label: 'AQUA S.A.', category: 'water', defaultNotify: true, i18nLabel: 'source_aqua_bielsko_name', i18nShort: 'source_aqua_bielsko_short', region: 'aqua_bielsko_area' },
-        { id: 'aquanet', label: 'Aquanet', category: 'water', defaultNotify: true, i18nLabel: 'source_aquanet_name', i18nShort: 'source_aquanet_short', region: 'poznan' },
-        { id: 'bytomskie_wodociagi', label: 'Bytomskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_bytomskie_wodociagi_name', i18nShort: 'source_bytomskie_wodociagi_short', region: 'bytom' },
-        { id: 'chspwik', label: 'ChŚPWiK', category: 'water', defaultNotify: true, i18nLabel: 'source_chspwik_name', i18nShort: 'source_chspwik_short', region: 'chspwik_area' },
-        { id: 'dabrowskie_wodociagi', label: 'Dąbrowskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_dabrowskie_wodociagi_name', i18nShort: 'source_dabrowskie_wodociagi_short', region: 'dabrowskie_wodociagi_area' },
-        { id: 'gdanskie_wodociagi', label: 'Gdańskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_gdanskie_wodociagi_name', i18nShort: 'source_gdanskie_wodociagi_short', region: 'gdansk' },
-        { id: 'katowickie_wodociagi', label: 'Katowickie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_katowickie_wodociagi_name', i18nShort: 'source_katowickie_wodociagi_short', region: 'katowice' },
-        { id: 'lpwik_legnica', label: 'LPWiK Legnica', category: 'water', defaultNotify: true, i18nLabel: 'source_lpwik_legnica_name', i18nShort: 'source_lpwik_legnica_short', region: 'lpwik_legnica_area' },
-        { id: 'mpwik_lublin', label: 'MPWiK Lublin', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_lublin_name', i18nShort: 'source_mpwik_lublin_short', region: 'lublin' },
-        { id: 'mpwik_rzeszow', label: 'MPWiK Rzeszów', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_rzeszow_name', i18nShort: 'source_mpwik_rzeszow_short', region: 'mpwik_rzeszow_area' },
-        { id: 'mpwik_warszawa', label: 'MPWiK Warszawa', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_warszawa_name', i18nShort: 'source_mpwik_warszawa_short', region: 'mpwik_warszawa_area' },
-        { id: 'mpwik_wroclaw', label: 'MPWiK Wrocław', category: 'water', defaultNotify: true, i18nLabel: 'source_mpwik_wroclaw_name', i18nShort: 'source_mpwik_wroclaw_short', region: 'wroclaw' },
-        { id: 'mwik_bydgoszcz', label: 'MWiK Bydgoszcz', category: 'water', defaultNotify: true, i18nLabel: 'source_mwik_bydgoszcz_name', i18nShort: 'source_mwik_bydgoszcz_short', region: 'bydgoszcz' },
-        { id: 'mwik_koszalin', label: 'MWiK Koszalin', category: 'water', defaultNotify: true, i18nLabel: 'source_mwik_koszalin_name', i18nShort: 'source_mwik_koszalin_short', region: 'koszalin' },
-        { id: 'pewik_gdynia', label: 'PEWIK Gdynia', category: 'water', defaultNotify: true, i18nLabel: 'source_pewik_gdynia_name', i18nShort: 'source_pewik_gdynia_short', region: 'pewik_gdynia_area' },
-        { id: 'puk_rokietnica', label: 'PUK Rokietnica', category: 'water', defaultNotify: true, i18nLabel: 'source_puk_rokietnica_name', i18nShort: 'source_puk_rokietnica_short', region: 'rokietnica' },
-        { id: 'pwik_czestochowa', label: 'PWiK Częstochowa', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_czestochowa_name', i18nShort: 'source_pwik_czestochowa_short', region: 'czestochowa' },
-        { id: 'pwik_gliwice', label: 'PWiK Gliwice', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_gliwice_name', i18nShort: 'source_pwik_gliwice_short', region: 'pwik_gliwice_area' },
-        { id: 'pwik_gorzow', label: 'PWiK Gorzów', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_gorzow_name', i18nShort: 'source_pwik_gorzow_short', region: 'pwik_gorzow_area' },
-        { id: 'pwik_kalisz', label: 'PWiK Kalisz', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_kalisz_name', i18nShort: 'source_pwik_kalisz_short', region: 'kalisz' },
-        { id: 'pwik_olsztyn', label: 'PWiK Olsztyn', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_olsztyn_name', i18nShort: 'source_pwik_olsztyn_short', region: 'pwik_olsztyn_area' },
-        { id: 'pwik_ruda_slaska', label: 'PWiK Ruda Śląska', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_ruda_slaska_name', i18nShort: 'source_pwik_ruda_slaska_short', region: 'ruda_slaska' },
-        { id: 'pwik_rybnik', label: 'PWiK Rybnik', category: 'water', defaultNotify: true, i18nLabel: 'source_pwik_rybnik_name', i18nShort: 'source_pwik_rybnik_short', region: 'pwik_rybnik_area' },
-        { id: 'rpwik_tychy', label: 'RPWiK Tychy', category: 'water', defaultNotify: true, i18nLabel: 'source_rpwik_tychy_name', i18nShort: 'source_rpwik_tychy_short', region: 'rpwik_tychy_area' },
-        { id: 'sosnowieckie_wodociagi', label: 'Sosnowieckie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_sosnowieckie_wodociagi_name', i18nShort: 'source_sosnowieckie_wodociagi_short', region: 'sosnowiec' },
-        { id: 'tarnowskie_wodociagi', label: 'Tarnowskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_tarnowskie_wodociagi_name', i18nShort: 'source_tarnowskie_wodociagi_short', region: 'tarnowskie_wodociagi_area' },
-        { id: 'torunskie_wodociagi', label: 'Toruńskie Wodociągi', category: 'water', defaultNotify: true, i18nLabel: 'source_torunskie_wodociagi_name', i18nShort: 'source_torunskie_wodociagi_short', region: 'torunskie_wodociagi_area' },
-        { id: 'wik_opole', label: 'WiK Opole', category: 'water', defaultNotify: true, i18nLabel: 'source_wik_opole_name', i18nShort: 'source_wik_opole_short', region: 'wik_opole_area' },
-        { id: 'wm_radom', label: 'WM Radom', category: 'water', defaultNotify: true, i18nLabel: 'source_wm_radom_name', i18nShort: 'source_wm_radom_short', region: 'wm_radom_area' },
-        { id: 'wmk', label: 'WMK', category: 'water', defaultNotify: true, i18nLabel: 'source_wmk_name', i18nShort: 'source_wmk_short', region: 'krakow' },
-        { id: 'wodociagi_bialostockie', label: 'Wodociągi Białostockie', category: 'water', defaultNotify: true, i18nLabel: 'source_wodociagi_bialostockie_name', i18nShort: 'source_wodociagi_bialostockie_short', region: 'wodociagi_bialostockie_area' },
-        { id: 'wodociagi_kieleckie', label: 'Wodociągi Kieleckie', category: 'water', defaultNotify: true, i18nLabel: 'source_wodociagi_kieleckie_name', i18nShort: 'source_wodociagi_kieleckie_short', region: 'wodociagi_kieleckie_area' },
-        { id: 'wodociagi_plockie', label: 'Wodociągi Płockie', category: 'water', defaultNotify: true, i18nLabel: 'source_wodociagi_plockie_name', i18nShort: 'source_wodociagi_plockie_short', region: 'plock' },
-        { id: 'wpwik_walbrzych', label: 'WPWiK Wałbrzych', category: 'water', defaultNotify: true, i18nLabel: 'source_wpwik_walbrzych_name', i18nShort: 'source_wpwik_walbrzych_short', region: 'wpwik_walbrzych_area' },
-        { id: 'zabrzanskie_wodociagi', label: 'ZPWiK Zabrze', category: 'water', defaultNotify: true, i18nLabel: 'source_zabrzanskie_wodociagi_name', i18nShort: 'source_zabrzanskie_wodociagi_short', region: 'zabrze' },
-        { id: 'zwik_lodz', label: 'ZWIK Łódź', category: 'water', defaultNotify: true, i18nLabel: 'source_zwik_lodz_name', i18nShort: 'source_zwik_lodz_short', region: 'lodz' },
-        { id: 'zwik_zielona_gora', label: 'ZWiK Zielona Góra', category: 'water', defaultNotify: true, i18nLabel: 'source_zwik_zielona_gora_name', i18nShort: 'source_zwik_zielona_gora_short', region: 'zwik_zielona_gora_area' },
-    ];
+    const providerCatalog = (typeof globalThis !== 'undefined' && globalThis.AwariaProviderCatalog)
+        || (typeof module !== 'undefined' && module.exports ? require('./provider-catalog.generated.js') : null);
+    if (!providerCatalog) throw new Error('Provider catalog was not loaded before script.js');
+
+    const SOURCES = providerCatalog.providers
+        .slice()
+        .sort((a, b) => a.frontendOrder - b.frontendOrder)
+        .map(provider => ({
+            ...provider,
+            label: provider.names.en || provider.names.pl,
+            i18nLabel: `source_${provider.id}_name`,
+            i18nShort: `source_${provider.id}_short`
+        }));
 
     const getSourceIcon = (s) => {
         const catClass = s.category ? `${s.category}-icon` : 'power-icon';

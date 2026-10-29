@@ -56,9 +56,22 @@ fn main() {
         std::process::exit(1);
     }
 
+    let npm_cmd = if cfg!(windows) { "npm.cmd" } else { "npm" };
+    println!("Generating provider catalog...");
+    match Command::new(npm_cmd).args(["run", "catalog:generate"]).status() {
+        Ok(status) if status.success() => println!("Provider catalog generated."),
+        Ok(status) => {
+            eprintln!("Error: provider catalog generation failed with exit code: {:?}. Stopping release.", status.code());
+            std::process::exit(1);
+        }
+        Err(error) => {
+            eprintln!("Error: Failed to generate provider catalog: {}. Stopping release.", error);
+            std::process::exit(1);
+        }
+    }
+
     if !fast_track {
         println!("Running tests...");
-        let npm_cmd = if cfg!(windows) { "npm.cmd" } else { "npm" };
         
         let check_commands = [
             ["run", "test"],
@@ -92,7 +105,6 @@ fn main() {
     update_tauri_conf(new_version);
     update_addon_config(new_version);
 
-    let npm_cmd = if cfg!(windows) { "npm.cmd" } else { "npm" };
     run_command(npm_cmd, &["install"], ".");
     run_command("cargo", &["update"], "src-tauri");
     run_command("git", &["add", "."], ".");

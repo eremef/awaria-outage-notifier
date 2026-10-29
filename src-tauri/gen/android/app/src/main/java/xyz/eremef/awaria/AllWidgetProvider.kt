@@ -169,7 +169,7 @@ class AllWidgetProvider : BaseWidgetProvider() {
                             val settingsJson =
                                     WidgetUtils.serializeSettingsForRust(activeSettings, fullJson)
                             val p = async {
-                                val sources = listOf("tauron", "stoen", "energa", "enea", "pge")
+                                val sources = GeneratedProviderCatalog.aggregate("power").map { it.id }
                                         .filter { allEnabledByDefault || it in enabledSources }
                                 sources
                                         .map { source ->
@@ -195,7 +195,7 @@ class AllWidgetProvider : BaseWidgetProvider() {
                                         .sum()
                             }
                             val h = async {
-                                val heatSources = listOf("enea_cieplo", "eco_sa", "energa_cieplo_kaliskie", "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz", "mpec_kielce", "mpec_rzeszow", "opec_gdynia", "pec_gliwice", "pge_torun_heat", "epec_elblag", "sec", "lpec", "mec_koszalin", "therma_bielsko")
+                                val heatSources = GeneratedProviderCatalog.aggregate("heating").map { it.id }
                                         .filter { allEnabledByDefault || it in enabledSources }
                                 heatSources
                                         .map { source ->
@@ -221,7 +221,7 @@ class AllWidgetProvider : BaseWidgetProvider() {
                                         .sum()
                             }
                             val w = async {
-                                val waterSources = listOf("mpwik_wroclaw", "mpwik_warszawa", "mpwik_lublin", "wmk", "wm_radom", "aquanet", "katowickie_wodociagi", "zwik_lodz", "zwik_zielona_gora", "pwik_kalisz", "pwik_czestochowa", "pwik_gliwice", "pwik_olsztyn", "wik_opole", "wodociagi_bialostockie", "wodociagi_kieleckie", "wodociagi_plockie", "torunskie_wodociagi", "gdanskie_wodociagi", "puk_rokietnica", "mpwik_rzeszow", "mwik_bydgoszcz", "mwik_koszalin", "pewik_gdynia", "lpwik_legnica", "bytomskie_wodociagi", "chspwik", "dabrowskie_wodociagi", "aqua_bielsko", "pwik_gorzow", "rpwik_tychy", "pwik_ruda_slaska", "pwik_rybnik", "wpwik_walbrzych", "sosnowieckie_wodociagi", "tarnowskie_wodociagi", "zabrzanskie_wodociagi")
+                                val waterSources = GeneratedProviderCatalog.aggregate("water").map { it.id }
                                         .filter { allEnabledByDefault || it in enabledSources }
                                 waterSources
                                     .map { source ->
@@ -247,7 +247,7 @@ class AllWidgetProvider : BaseWidgetProvider() {
                                         .sum()
                             }
                             val g = async {
-                                if (allEnabledByDefault || "psg" in enabledSources) {
+                                if (allEnabledByDefault || GeneratedProviderCatalog.aggregate("gas").any { it.id in enabledSources }) {
                                     try {
                                         ProviderCache.getOrFetch("psg", hash) {
                                             PsgWebViewFetcher.fetchCount(context, activeSettings)
@@ -342,16 +342,10 @@ class AllWidgetProvider : BaseWidgetProvider() {
                     refreshPending
                 }
 
-        val powerEnabled =
-                allEnabledByDefault ||
-                        listOf("tauron", "stoen", "energa", "enea", "pge").any {
-                            it in enabledSources
-                        }
-        val heatEnabled =
-                allEnabledByDefault || listOf("enea_cieplo", "eco_sa", "energa_cieplo_kaliskie", "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz", "mpec_kielce", "mpec_rzeszow", "opec_gdynia", "pec_gliwice", "pge_torun_heat", "epec_elblag", "sec", "lpec", "mec_koszalin", "therma_bielsko").any { it in enabledSources }
-        val waterEnabled =
-                allEnabledByDefault || listOf("mpwik_wroclaw", "mpwik_warszawa", "mpwik_lublin", "wmk", "wm_radom", "aquanet", "katowickie_wodociagi", "zwik_lodz", "zwik_zielona_gora", "pwik_kalisz", "pwik_czestochowa", "pwik_gliwice", "pwik_olsztyn", "wik_opole", "wodociagi_bialostockie", "wodociagi_kieleckie", "wodociagi_plockie", "torunskie_wodociagi", "gdanskie_wodociagi", "puk_rokietnica", "mpwik_rzeszow", "mwik_bydgoszcz", "mwik_koszalin", "pewik_gdynia", "lpwik_legnica", "bytomskie_wodociagi", "chspwik", "dabrowskie_wodociagi", "aqua_bielsko", "pwik_gorzow", "rpwik_tychy", "pwik_ruda_slaska", "pwik_rybnik", "wpwik_walbrzych", "sosnowieckie_wodociagi", "tarnowskie_wodociagi", "zabrzanskie_wodociagi").any { it in enabledSources }
-        val gasEnabled = allEnabledByDefault || listOf("psg").any { it in enabledSources }
+        val powerEnabled = allEnabledByDefault || GeneratedProviderCatalog.aggregate("power").any { it.id in enabledSources }
+        val heatEnabled = allEnabledByDefault || GeneratedProviderCatalog.aggregate("heating").any { it.id in enabledSources }
+        val waterEnabled = allEnabledByDefault || GeneratedProviderCatalog.aggregate("water").any { it.id in enabledSources }
+        val gasEnabled = allEnabledByDefault || GeneratedProviderCatalog.aggregate("gas").any { it.id in enabledSources }
 
         updateResponsiveWidget(context, appWidgetManager, appWidgetId) { views, _ ->
             views.setOnClickPendingIntent(R.id.widget_root, refreshPending)

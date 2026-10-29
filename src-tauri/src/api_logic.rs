@@ -259,72 +259,22 @@ impl AlertSource {
     }
 
     pub fn display_name(&self) -> &'static str {
-        match self {
-            AlertSource::Tauron => "Tauron",
-            AlertSource::MpwikWroclaw => "MPWiK Wrocław",
-            AlertSource::MpwikWarszawa => "MPWiK Warszawa",
-            AlertSource::Fortum => "Fortum",
-            AlertSource::Energa => "Energa",
-            AlertSource::Enea => "Enea",
-            AlertSource::Pge => "PGE",
-            AlertSource::PgeTorunHeat => "PGE Toruń",
-            AlertSource::Stoen => "Stoen",
-            AlertSource::Psg => "PSG",
-            AlertSource::Wmk => "WMK Kraków",
-            AlertSource::WmRadom => "WM Radom",
-            AlertSource::TauronHeat => "Tauron Ciepło",
-            AlertSource::Aquanet => "Aquanet",
-            AlertSource::KatowickieWodociagi => "Katowickie Wodociągi",
-            AlertSource::VeoliaWarszawa => "Veolia Warszawa",
-            AlertSource::VeoliaPoznan => "Veolia Poznań",
-            AlertSource::VeoliaLodz => "Veolia Łódź",
-            AlertSource::ZwikLodz => "ZWiK Łódź",
-            AlertSource::ZwikZielonaGora => "ZWiK Zielona Góra",
-            AlertSource::WodociagiPlockie => "Wodociągi Płockie",
-            AlertSource::WodociagiKieleckie => "Wodociągi Kieleckie",
-            AlertSource::TorunskieWodociagi => "Toruńskie Wodociągi",
-            AlertSource::WodociagiBialostockie => "Wodociągi Białostockie",
-            AlertSource::PwikKalisz => "PWiK Kalisz",
-            AlertSource::PwikCzestochowa => "PWiK Częstochowa",
-            AlertSource::PwikOlsztyn => "PWiK Olsztyn",
-            AlertSource::WikOpole => "WiK Opole",
-            AlertSource::PewikGdynia => "PEWIK Gdynia",
-            AlertSource::GdanskieWodociagi => "Gdańskie Wodociągi",
-            AlertSource::Gpec => "GPEC Gdańsk",
-            AlertSource::OpecGdynia => "OPEC Gdynia",
-            AlertSource::KpecBydgoszcz => "KPEC Bydgoszcz",
-            AlertSource::EneaCieplo => "ENEA Ciepło Białystok",
-            AlertSource::EnergaCieploKaliskie => "Energa Ciepło Kaliskie",
-            AlertSource::EcoSa => "ECO SA",
-            AlertSource::Sec => "SEC Szczecin",
-            AlertSource::Lpec => "LPEC Lublin",
-            AlertSource::PukRokietnica => "PUK Rokietnica",
-            AlertSource::MpwikLublin => "MPWiK Lublin",
-            AlertSource::MpwikRzeszow => "MPWiK Rzeszów",
-            AlertSource::MwikBydgoszcz => "MWiK Bydgoszcz",
-            AlertSource::MpecRzeszow => "MPEC Rzeszów",
-            AlertSource::MpecKielce => "MPEC Kielce",
-            AlertSource::LpwikLegnica => "LPWiK Legnica",
-            AlertSource::BytomskieWodociagi => "Bytomskie Wodociągi",
-            AlertSource::Chspwik => "ChŚPWiK",
-            AlertSource::PwikGorzow => "PWiK Gorzów Wielkopolski",
-            AlertSource::RpwikTychy => "RPWiK Tychy",
-            AlertSource::AquaBielsko => "AQUA S.A.",
-            AlertSource::WpwikWalbrzych => "WPWiK Wałbrzych",
-            AlertSource::EpecElblag => "EPEC Elbląg",
-            AlertSource::PecGliwice => "PEC Gliwice",
-            AlertSource::PwikGliwice => "PWiK Gliwice",
-            AlertSource::DabrowskieWodociagi => "Dąbrowskie Wodociągi",
-            AlertSource::MwikKoszalin => "MWiK Koszalin",
-            AlertSource::SosnowieckieWodociagi => "Sosnowieckie Wodociągi",
-            AlertSource::TarnowskieWodociagi => "Tarnowskie Wodociągi",
-            AlertSource::ZabrzanskieWodociagi => "ZPWiK Zabrze",
-            AlertSource::PwikRudaSlaska => "PWiK Ruda Śląska",
-            AlertSource::PwikRybnik => "PWiK Rybnik",
-            AlertSource::MecKoszalin => "MEC Koszalin",
-            AlertSource::ThermaBielsko => "Therma Bielsko",
-        }
+        provider_metadata(*self).rust_display_name_pl
     }
+}
+
+/// Shared catalog metadata for the stable serialized provider identity.
+///
+/// AlertSource remains the typed, behavior-bearing enum. The generated catalog
+/// supplies provider labels and shared utility/capability metadata only.
+pub fn provider_metadata(
+    source: AlertSource,
+) -> &'static crate::provider_catalog::ProviderMetadata {
+    let id = source.to_string();
+    crate::provider_catalog::PROVIDERS
+        .iter()
+        .find(|provider| provider.id == id.as_str())
+        .unwrap_or_else(|| panic!("AlertSource {source:?} ({id}) is missing from provider catalog"))
 }
 
 #[cfg_attr(test, automock)]
@@ -510,66 +460,18 @@ pub fn format_notification_title(alert: &UnifiedAlert, settings: &Settings, is_u
         }
     };
     
-    let label = match alert.source {
-        AlertSource::Tauron | AlertSource::Energa | AlertSource::Enea | AlertSource::Pge | AlertSource::Stoen => {
+    let label = match provider_metadata(alert.source).utility {
+        crate::provider_catalog::CatalogUtility::Power => {
             if is_pl { "wyłączenie prądu" } else { "power outage" }
         }
-        AlertSource::MpwikWroclaw
-        | AlertSource::MpwikWarszawa
-        | AlertSource::Wmk
-        | AlertSource::WmRadom
-        | AlertSource::Aquanet
-        | AlertSource::KatowickieWodociagi
-        | AlertSource::ZwikLodz
-        | AlertSource::ZwikZielonaGora
-        | AlertSource::WodociagiPlockie
-        | AlertSource::WodociagiKieleckie
-        | AlertSource::TorunskieWodociagi
-        | AlertSource::WodociagiBialostockie
-        | AlertSource::PwikKalisz
-        | AlertSource::PwikCzestochowa
-        | AlertSource::PwikGliwice
-        | AlertSource::PwikOlsztyn
-        | AlertSource::WikOpole
-        | AlertSource::PewikGdynia
-        | AlertSource::GdanskieWodociagi
-        | AlertSource::PukRokietnica
-        | AlertSource::MpwikLublin
-        | AlertSource::MpwikRzeszow
-        | AlertSource::MwikBydgoszcz
-        | AlertSource::LpwikLegnica
-        | AlertSource::BytomskieWodociagi
-        | AlertSource::Chspwik
-        | AlertSource::PwikGorzow
-        | AlertSource::RpwikTychy
-        | AlertSource::WpwikWalbrzych
-        | AlertSource::MwikKoszalin
-        | AlertSource::SosnowieckieWodociagi
-        | AlertSource::TarnowskieWodociagi
-        | AlertSource::ZabrzanskieWodociagi
-        | AlertSource::PwikRudaSlaska
-        | AlertSource::PwikRybnik => {
-            if is_pl {
-                "wyłączenie wody"
-            } else {
-                "water outage"
-            }
+        crate::provider_catalog::CatalogUtility::Gas => {
+            if is_pl { "wyłączenie gazu" } else { "gas outage" }
         }
-        AlertSource::AquaBielsko => {
-            if is_pl { "komunikat AQUA" } else { "AQUA notice" }
-        }
-        AlertSource::DabrowskieWodociagi => {
-            if is_pl {
-                "komunikat o usługach wodociągowych"
-            } else {
-                "water service notice"
-            }
-        }
-        AlertSource::Fortum | AlertSource::TauronHeat | AlertSource::VeoliaWarszawa | AlertSource::VeoliaPoznan | AlertSource::VeoliaLodz | AlertSource::Gpec | AlertSource::OpecGdynia | AlertSource::KpecBydgoszcz | AlertSource::EneaCieplo | AlertSource::EnergaCieploKaliskie | AlertSource::EcoSa | AlertSource::Sec | AlertSource::Lpec | AlertSource::MpecRzeszow | AlertSource::MpecKielce | AlertSource::PgeTorunHeat | AlertSource::EpecElblag | AlertSource::PecGliwice | AlertSource::MecKoszalin | AlertSource::ThermaBielsko => {
+        crate::provider_catalog::CatalogUtility::Heating => {
             if is_pl { "wyłączenie ogrzewania" } else { "heat outage" }
         }
-        AlertSource::Psg => {
-            if is_pl { "wyłączenie gazu" } else { "gas outage" }
+        crate::provider_catalog::CatalogUtility::Water => {
+            if is_pl { "wyłączenie wody" } else { "water outage" }
         }
     };
     

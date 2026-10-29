@@ -448,75 +448,10 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
     }
 
     protected fun getSourceName(context: Context, key: String): String {
-        SingleProviderCatalog.find(key)?.let { return it.displayName(context) }
-        return when (key) {
-            "tauron" -> context.getString(R.string.provider_tauron)
-            "tauron_heat" -> context.getString(R.string.provider_tauron_heat)
-            "stoen" -> context.getString(R.string.provider_stoen)
-            "enea" -> context.getString(R.string.provider_enea)
-            "eco_sa" -> context.getString(R.string.provider_eco_sa)
-            "energa" -> context.getString(R.string.provider_energa)
-            "pge" -> context.getString(R.string.provider_pge)
-            "pge_torun_heat" -> context.getString(R.string.provider_pge_torun_heat)
-            "epec_elblag" -> context.getString(R.string.provider_epec_elblag)
-            "pec_gliwice" -> context.getString(R.string.provider_pec_gliwice)
-            "fortum" -> context.getString(R.string.provider_fortum)
-            "mpwik_wroclaw" -> context.getString(R.string.provider_mpwik_wroclaw)
-            "mpwik_warszawa" -> context.getString(R.string.provider_mpwik_warszawa)
-            "psg" -> context.getString(R.string.provider_psg)
-            "wmk" -> context.getString(R.string.provider_wmk)
-            "wm_radom" -> context.getString(R.string.provider_wm_radom)
-            "aquanet" -> context.getString(R.string.provider_aquanet)
-            "aqua_bielsko" -> context.getString(R.string.provider_aqua_bielsko)
-            "katowickie_wodociagi" -> context.getString(R.string.provider_katowickie_wodociagi)
-            "veolia_warszawa" -> context.getString(R.string.provider_veolia_warszawa)
-            "veolia_poznan" -> context.getString(R.string.provider_veolia_poznan)
-            "veolia_lodz" -> context.getString(R.string.provider_veolia_lodz)
-            "zwik_lodz" -> context.getString(R.string.provider_zwik_lodz)
-            "zwik_zielona_gora" -> context.getString(R.string.provider_zwik_zielona_gora)
-            "pwik_kalisz" -> context.getString(R.string.provider_pwik_kalisz)
-            "wodociagi_plockie" -> context.getString(R.string.provider_wodociagi_plockie)
-            "wodociagi_bialostockie" -> context.getString(R.string.provider_wodociagi_bialostockie)
-            "wodociagi_kieleckie" -> context.getString(R.string.provider_wodociagi_kieleckie)
-            "torunskie_wodociagi" -> context.getString(R.string.provider_torunskie_wodociagi)
-            "pwik_czestochowa" -> context.getString(R.string.provider_pwik_czestochowa)
-            "pwik_olsztyn" -> context.getString(R.string.provider_pwik_olsztyn)
-            "pwik_gorzow" -> context.getString(R.string.provider_pwik_gorzow)
-            "rpwik_tychy" -> context.getString(R.string.provider_rpwik_tychy)
-            "pwik_gliwice" -> context.getString(R.string.provider_pwik_gliwice)
-            "wpwik_walbrzych" -> context.getString(R.string.provider_wpwik_walbrzych)
-            "mwik_koszalin" -> context.getString(R.string.provider_mwik_koszalin)
-            "sosnowieckie_wodociagi" -> context.getString(R.string.provider_sosnowieckie_wodociagi)
-            "tarnowskie_wodociagi" -> context.getString(R.string.provider_tarnowskie_wodociagi)
-            "zabrzanskie_wodociagi" -> context.getString(R.string.provider_zabrzanskie_wodociagi)
-            "pwik_ruda_slaska" -> context.getString(R.string.provider_pwik_ruda_slaska)
-            "pwik_rybnik" -> context.getString(R.string.provider_pwik_rybnik)
-            "wik_opole" -> context.getString(R.string.provider_wik_opole)
-            "bytomskie_wodociagi" -> context.getString(R.string.provider_bytomskie_wodociagi)
-            "chspwik" -> context.getString(R.string.provider_chspwik)
-            "dabrowskie_wodociagi" -> context.getString(R.string.provider_dabrowskie_wodociagi)
-            "gdanskie_wodociagi" -> context.getString(R.string.provider_gdanskie_wodociagi)
-            "gpec" -> context.getString(R.string.provider_gpec)
-            "opec_gdynia" -> context.getString(R.string.provider_opec_gdynia)
-            "kpec_bydgoszcz" -> context.getString(R.string.provider_kpec_bydgoszcz)
-            "enea_cieplo" -> context.getString(R.string.provider_enea_cieplo)
-            "energa_cieplo_kaliskie" -> context.getString(R.string.provider_energa_cieplo_kaliskie)
-            "puk_rokietnica" -> context.getString(R.string.provider_puk_rokietnica)
-            "sec" -> context.getString(R.string.provider_sec)
-            "lpec" -> context.getString(R.string.provider_lpec)
-            "mpec_kielce" -> context.getString(R.string.provider_mpec_kielce)
-            "mec_koszalin" -> context.getString(R.string.provider_mec_koszalin)
-            "therma_bielsko" -> context.getString(R.string.provider_therma_bielsko)
-            "mpec_rzeszow" -> context.getString(R.string.provider_mpec_rzeszow)
-            "mpwik_lublin" -> context.getString(R.string.provider_mpwik_lublin)
-            "mpwik_rzeszow" -> context.getString(R.string.provider_mpwik_rzeszow)
-            "mwik_bydgoszcz" -> context.getString(R.string.provider_mwik_bydgoszcz)
-            "pewik_gdynia" -> context.getString(R.string.provider_pewik_gdynia)
-            else ->
-                    key.replaceFirstChar {
-                        if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-                    }
-        }
+        return GeneratedProviderCatalog.find(key)?.displayName(context)
+            ?: key.replaceFirstChar {
+                if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+            }
     }
 
     protected fun getTranslation(context: Context, key: String): String {
@@ -644,17 +579,17 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             return
         }
 
-        val layoutId = when (sourceKey) {
-            "tauron", "stoen", "enea", "energa", "pge" -> R.layout.widget_outage_power
-            "enea_cieplo", "eco_sa", "energa_cieplo_kaliskie", "fortum", "tauron_heat", "therma_bielsko", "mec_koszalin", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz", "mpec_kielce", "opec_gdynia", "sec", "lpec", "pge_torun_heat", "epec_elblag", "pec_gliwice" -> R.layout.widget_outage_heat
-            "psg" -> R.layout.widget_outage_gas
+        val layoutId = when (GeneratedProviderCatalog.find(sourceKey)?.utility) {
+            "power" -> R.layout.widget_outage_power
+            "heating" -> R.layout.widget_outage_heat
+            "gas" -> R.layout.widget_outage_gas
             else -> R.layout.widget_outage_water
         }
         
-        val layoutSmallId = when (sourceKey) {
-            "tauron", "stoen", "enea", "energa", "pge" -> R.layout.widget_outage_power_small
-            "enea_cieplo", "eco_sa", "energa_cieplo_kaliskie", "fortum", "tauron_heat", "therma_bielsko", "mec_koszalin", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz", "mpec_kielce", "opec_gdynia", "sec", "lpec", "pge_torun_heat", "epec_elblag", "pec_gliwice" -> R.layout.widget_outage_heat_small
-            "psg" -> R.layout.widget_outage_gas_small
+        val layoutSmallId = when (GeneratedProviderCatalog.find(sourceKey)?.utility) {
+            "power" -> R.layout.widget_outage_power_small
+            "heating" -> R.layout.widget_outage_heat_small
+            "gas" -> R.layout.widget_outage_gas_small
             else -> R.layout.widget_outage_water_small
         }
 
@@ -767,11 +702,11 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             iconTintResource?.let {
                 views.setInt(R.id.widget_icon, "setColorFilter", context.getColor(it))
             }
-            val iconDesc = when (sourceId) {
-                "tauron", "stoen", "enea", "energa", "pge" -> getTranslation(context, "power")
-                "enea_cieplo", "eco_sa", "energa_cieplo_kaliskie", "fortum", "tauron_heat", "therma_bielsko", "mec_koszalin", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz", "sec", "lpec", "mpec_kielce", "mpec_rzeszow", "opec_gdynia", "pge_torun_heat", "epec_elblag" -> getTranslation(context, "heat")
-                "mpwik_wroclaw", "mpwik_warszawa", "wmk", "wm_radom", "aquanet", "aqua_bielsko", "katowickie_wodociagi", "zwik_lodz", "zwik_zielona_gora", "pwik_kalisz", "wodociagi_plockie", "wodociagi_bialostockie", "wodociagi_kieleckie", "torunskie_wodociagi", "pwik_czestochowa", "pwik_olsztyn", "pwik_gorzow", "rpwik_tychy", "pwik_gliwice", "wik_opole", "gdanskie_wodociagi", "puk_rokietnica", "mpwik_lublin", "mpwik_rzeszow", "mwik_bydgoszcz", "mwik_koszalin", "pewik_gdynia", "bytomskie_wodociagi", "chspwik", "dabrowskie_wodociagi", "sosnowieckie_wodociagi", "tarnowskie_wodociagi", "zabrzanskie_wodociagi", "pwik_ruda_slaska", "pwik_rybnik", "wpwik_walbrzych" -> getTranslation(context, "water")
-                "psg" -> getTranslation(context, "gas")
+            val iconDesc = when (GeneratedProviderCatalog.find(sourceKey)?.utility) {
+                "power" -> getTranslation(context, "power")
+                "heating" -> getTranslation(context, "heat")
+                "water" -> getTranslation(context, "water")
+                "gas" -> getTranslation(context, "gas")
                 else -> getSourceName(context, sourceKey)
             }
             views.setContentDescription(R.id.widget_icon, iconDesc)

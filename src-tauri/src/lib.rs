@@ -7,6 +7,8 @@
 unsafe extern "C" {}
 
 pub mod api_logic;
+#[path = "provider_catalog.generated.rs"]
+pub mod provider_catalog;
 mod aquanet;
 mod aqua_bielsko;
 mod enea;
@@ -629,6 +631,128 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(pec_gliwice::PecGliwiceProvider),
         Box::new(wm_radom::WmRadomProvider),
     ]
+}
+
+#[cfg(test)]
+mod provider_catalog_parity_tests {
+    use super::*;
+    use std::collections::HashSet;
+
+    #[test]
+    fn generated_catalog_matches_typed_sources_and_registered_providers() {
+        let providers = get_providers();
+        let mut catalog_entries = provider_catalog::PROVIDERS.iter().collect::<Vec<_>>();
+        catalog_entries.sort_by_key(|entry| entry.rust_order);
+
+        assert_eq!(providers.len(), catalog_entries.len());
+
+        let mut ids = HashSet::new();
+        let mut variants = HashSet::new();
+        let mut constructors = HashSet::new();
+        for (provider, metadata) in providers.iter().zip(catalog_entries) {
+            let source = provider.source();
+            let id = provider.id();
+
+            assert_eq!(id, metadata.id, "provider ID mismatch at rust_order {}", metadata.rust_order);
+            assert_eq!(source.to_string(), metadata.id);
+            assert_eq!(format!("{source:?}"), metadata.enum_variant);
+            assert_eq!(source.display_name(), metadata.rust_display_name_pl);
+            assert!(!metadata.constructor.is_empty(), "empty constructor binding for {}", metadata.id);
+            assert!(ids.insert(metadata.id), "duplicate catalog ID {}", metadata.id);
+            assert!(variants.insert(metadata.enum_variant), "duplicate enum variant {}", metadata.enum_variant);
+            assert!(constructors.insert(metadata.constructor), "duplicate constructor {}", metadata.constructor);
+        }
+
+        let webview_only = provider_catalog::PROVIDERS
+            .iter()
+            .filter(|entry| entry.webview_only)
+            .map(|entry| entry.id)
+            .collect::<HashSet<_>>();
+        assert_eq!(webview_only, HashSet::from(["psg", "gpec", "pwik_kalisz"]));
+    }
+
+    #[test]
+    fn catalog_utility_types_preserve_existing_notification_categories() {
+        use provider_catalog::CatalogUtility::{Gas, Heating, Power, Water};
+
+        const POWER_IDS: &[&str] = &["tauron", "energa", "enea", "pge", "stoen"];
+        const GAS_IDS: &[&str] = &["psg"];
+        const HEATING_IDS: &[&str] = &[
+            "fortum",
+            "tauron_heat",
+            "veolia_warszawa",
+            "veolia_poznan",
+            "veolia_lodz",
+            "gpec",
+            "opec_gdynia",
+            "kpec_bydgoszcz",
+            "enea_cieplo",
+            "energa_cieplo_kaliskie",
+            "eco_sa",
+            "sec",
+            "lpec",
+            "mpec_rzeszow",
+            "mpec_kielce",
+            "pge_torun_heat",
+            "epec_elblag",
+            "pec_gliwice",
+            "mec_koszalin",
+            "therma_bielsko",
+        ];
+        const ICS_HEATING_IDS: &[&str] = &[
+            "fortum",
+            "tauron_heat",
+            "veolia_warszawa",
+            "veolia_poznan",
+            "veolia_lodz",
+            "gpec",
+            "opec_gdynia",
+            "kpec_bydgoszcz",
+            "pge_torun_heat",
+            "epec_elblag",
+            "mec_koszalin",
+            "therma_bielsko",
+            "pec_gliwice",
+            "enea_cieplo",
+            "energa_cieplo_kaliskie",
+            "eco_sa",
+            "mpec_rzeszow",
+            "mpec_kielce",
+        ];
+
+        for entry in provider_catalog::PROVIDERS {
+            let expected = if POWER_IDS.contains(&entry.id) {
+                Power
+            } else if GAS_IDS.contains(&entry.id) {
+                Gas
+            } else if HEATING_IDS.contains(&entry.id) {
+                Heating
+            } else {
+                Water
+            };
+            assert_eq!(entry.utility, expected, "utility classification changed for {}", entry.id);
+
+            let expected_ics = if POWER_IDS.contains(&entry.id) {
+                Power
+            } else if GAS_IDS.contains(&entry.id) {
+                Gas
+            } else if ICS_HEATING_IDS.contains(&entry.id) {
+                Heating
+            } else {
+                Water
+            };
+            assert_eq!(entry.ics_utility, expected_ics, "ICS classification changed for {}", entry.id);
+        }
+    }
+
+    #[test]
+    fn alert_source_default_and_serialized_id_remain_stable() {
+        assert_eq!(api_logic::AlertSource::default(), api_logic::AlertSource::Tauron);
+        assert_eq!(
+            serde_json::to_string(&api_logic::AlertSource::default()).unwrap(),
+            "\"tauron\""
+        );
+    }
 }
 
 fn torunskie_street_segment(location: &str, street: &str) -> Option<String> {
@@ -1440,7 +1564,7 @@ async fn fetch_all_alerts_internal(
             }
 
             let s_p = Arc::clone(&s_arc);
-            let is_webview = provider.id() == "psg" || provider.id() == "gpec" || provider.id() == "pwik_kalisz";
+            let is_webview = api_logic::provider_metadata(provider.source()).webview_only;
             let sem = if is_webview {
                 webview_semaphore.clone()
             } else {

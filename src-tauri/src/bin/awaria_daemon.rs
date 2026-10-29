@@ -322,42 +322,11 @@ async fn get_calendar_handler(Extension(alerts): Extension<SharedAlerts>) -> imp
         ics.push_str(&format!("DTSTART:{}\r\n", start_ics.unwrap()));
         ics.push_str(&format!("DTEND:{}\r\n", end_ics.unwrap()));
 
-        let summary = match alert.source {
-            app_lib::api_logic::AlertSource::Tauron 
-            | app_lib::api_logic::AlertSource::Energa 
-            | app_lib::api_logic::AlertSource::Enea 
-            | app_lib::api_logic::AlertSource::Pge 
-            | app_lib::api_logic::AlertSource::Stoen => "Awaria prądu",
-            app_lib::api_logic::AlertSource::Fortum 
-            | app_lib::api_logic::AlertSource::TauronHeat 
-            | app_lib::api_logic::AlertSource::VeoliaWarszawa 
-            | app_lib::api_logic::AlertSource::VeoliaPoznan 
-            | app_lib::api_logic::AlertSource::VeoliaLodz 
-            | app_lib::api_logic::AlertSource::Gpec
-            | app_lib::api_logic::AlertSource::OpecGdynia
-            | app_lib::api_logic::AlertSource::KpecBydgoszcz
-            | app_lib::api_logic::AlertSource::PgeTorunHeat
-            | app_lib::api_logic::AlertSource::EpecElblag
-            | app_lib::api_logic::AlertSource::MecKoszalin
-            | app_lib::api_logic::AlertSource::ThermaBielsko
-            | app_lib::api_logic::AlertSource::PecGliwice
-            | app_lib::api_logic::AlertSource::EneaCieplo
-            | app_lib::api_logic::AlertSource::EnergaCieploKaliskie
-            | app_lib::api_logic::AlertSource::EcoSa
-            | app_lib::api_logic::AlertSource::MpecRzeszow
-            | app_lib::api_logic::AlertSource::MpecKielce => "Awaria ogrzewania",
-            app_lib::api_logic::AlertSource::Psg => "Awaria gazu",
-            app_lib::api_logic::AlertSource::MwikBydgoszcz
-            | app_lib::api_logic::AlertSource::PewikGdynia
-            | app_lib::api_logic::AlertSource::WodociagiKieleckie
-            | app_lib::api_logic::AlertSource::TorunskieWodociagi
-            | app_lib::api_logic::AlertSource::WodociagiBialostockie
-            | app_lib::api_logic::AlertSource::PwikOlsztyn
-            | app_lib::api_logic::AlertSource::PwikGliwice
-            | app_lib::api_logic::AlertSource::ZwikZielonaGora
-            | app_lib::api_logic::AlertSource::LpwikLegnica => "Awaria wody",
-            app_lib::api_logic::AlertSource::WikOpole => "Awaria wody",
-            _ => "Awaria wody",
+        let summary = match app_lib::api_logic::provider_metadata(alert.source).ics_utility {
+            app_lib::provider_catalog::CatalogUtility::Power => "Awaria prądu",
+            app_lib::provider_catalog::CatalogUtility::Gas => "Awaria gazu",
+            app_lib::provider_catalog::CatalogUtility::Heating => "Awaria ogrzewania",
+            app_lib::provider_catalog::CatalogUtility::Water => "Awaria wody",
         };
 
         let provider_name = alert.source.to_string().to_uppercase();
@@ -473,7 +442,7 @@ async fn fetch_alerts(settings: &Settings) -> Result<Vec<UnifiedAlert>, String> 
         }
 
         // Webview-only providers are skipped on headless environment
-        let is_webview = provider.id() == "psg" || provider.id() == "gpec" || provider.id() == "pwik_kalisz";
+        let is_webview = app_lib::api_logic::provider_metadata(provider.source()).webview_only;
         if is_webview {
             log::warn!("WebView-only provider '{}' is not supported in headless mode and will be skipped.", provider.id());
             continue;

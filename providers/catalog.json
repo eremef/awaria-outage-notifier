@@ -1,0 +1,4739 @@
+{
+  "schemaVersion": 1,
+  "locales": [
+    "pl",
+    "en"
+  ],
+  "providers": [
+    {
+      "id": "enea",
+      "utility": "power",
+      "order": {
+        "frontend": 0,
+        "rust": 5,
+        "androidSingle": 2,
+        "addon": 9
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "Enea",
+            "en": "Enea"
+          },
+          "shortName": {
+            "pl": "Enea",
+            "en": "Enea"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "Enea"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "Enea",
+            "en": "Enea"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_enea",
+            "name": {
+              "pl": "Enea",
+              "en": "Enea"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "Enea",
+          "constructor": "enea::EneaProvider"
+        },
+        "android": {
+          "legacyComponentClass": "EneaWidgetProvider",
+          "legacyLabelResource": "widget_label_enea"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "power",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "ENEA",
+          "Polska"
+        ],
+        "location": "Polska",
+        "aggregateUtility": "power",
+        "aggregateOrder": 3
+      },
+      "card": {
+        "name": "Enea",
+        "icon": "⚡",
+        "color": "#fb8c00"
+      }
+    },
+    {
+      "id": "energa",
+      "utility": "power",
+      "order": {
+        "frontend": 1,
+        "rust": 4,
+        "androidSingle": 3,
+        "addon": 8
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "Energa",
+            "en": "Energa"
+          },
+          "shortName": {
+            "pl": "Energa",
+            "en": "Energa"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "Energa"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "Energa",
+            "en": "Energa"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_energa",
+            "name": {
+              "pl": "Energa",
+              "en": "Energa"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "Energa",
+          "constructor": "energa::EnergaProvider"
+        },
+        "android": {
+          "legacyComponentClass": "EnergaWidgetProvider",
+          "legacyLabelResource": "widget_label_energa"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "power",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "ENERGA",
+          "Polska"
+        ],
+        "location": "Polska",
+        "aggregateUtility": "power",
+        "aggregateOrder": 2
+      },
+      "card": {
+        "name": "Energa",
+        "icon": "⚡",
+        "color": "#ffa726"
+      }
+    },
+    {
+      "id": "pge",
+      "utility": "power",
+      "order": {
+        "frontend": 2,
+        "rust": 10,
+        "androidSingle": 4,
+        "addon": 15
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "PGE",
+            "en": "PGE"
+          },
+          "shortName": {
+            "pl": "PGE",
+            "en": "PGE"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "PGE"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "PGE",
+            "en": "PGE"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_pge",
+            "name": {
+              "pl": "PGE",
+              "en": "PGE"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "Pge",
+          "constructor": "pge::PgeProvider"
+        },
+        "android": {
+          "legacyComponentClass": "PgeWidgetProvider",
+          "legacyLabelResource": "widget_label_pge"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "power",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "PGE",
+          "Polska"
+        ],
+        "location": "Polska",
+        "aggregateUtility": "power",
+        "aggregateOrder": 4
+      },
+      "card": {
+        "name": "PGE",
+        "icon": "⚡",
+        "color": "#ffb74d"
+      }
+    },
+    {
+      "id": "stoen",
+      "utility": "power",
+      "order": {
+        "frontend": 3,
+        "rust": 13,
+        "androidSingle": 1,
+        "addon": 17
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "Stoen",
+            "en": "Stoen"
+          },
+          "shortName": {
+            "pl": "Stoen",
+            "en": "Stoen"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "Stoen"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "Stoen",
+            "en": "Stoen"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_stoen",
+            "name": {
+              "pl": "Stoen",
+              "en": "Stoen"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "Stoen",
+          "constructor": "stoen::StoenProvider"
+        },
+        "android": {
+          "legacyComponentClass": "StoenWidgetProvider",
+          "legacyLabelResource": "widget_label_stoen"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "power",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "E.ON",
+          "Warszawa"
+        ],
+        "location": "Warszawa",
+        "aggregateUtility": "power",
+        "aggregateOrder": 1
+      },
+      "card": {
+        "name": "Stoen",
+        "icon": "⚡",
+        "color": "#f57c00"
+      },
+      "frontend": {
+        "regionMatcher": "warszawa"
+      }
+    },
+    {
+      "id": "tauron",
+      "utility": "power",
+      "order": {
+        "frontend": 4,
+        "rust": 0,
+        "androidSingle": 0,
+        "addon": 0
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "Tauron",
+            "en": "Tauron"
+          },
+          "shortName": {
+            "pl": "Tauron",
+            "en": "Tauron"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "Tauron"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "Tauron",
+            "en": "Tauron"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_tauron",
+            "name": {
+              "pl": "Tauron",
+              "en": "Tauron"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "Tauron",
+          "constructor": "tauron::TauronProvider"
+        },
+        "android": {
+          "legacyComponentClass": "TauronWidgetProvider",
+          "legacyLabelResource": "widget_label_tauron"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "power",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "TAURON",
+          "Polska"
+        ],
+        "location": "Polska",
+        "aggregateUtility": "power",
+        "aggregateOrder": 0
+      },
+      "card": {
+        "name": "Tauron",
+        "icon": "⚡",
+        "color": "#ff9800"
+      }
+    },
+    {
+      "id": "psg",
+      "utility": "gas",
+      "order": {
+        "frontend": 5,
+        "rust": 14,
+        "androidSingle": 62,
+        "addon": null
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "PSG",
+            "en": "PSG"
+          },
+          "shortName": {
+            "pl": "PSG",
+            "en": "PSG"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "PSG"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "PSG",
+            "en": "PSG"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_psg",
+            "name": {
+              "pl": "PSG",
+              "en": "PSG"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "Psg",
+          "constructor": "psg::PsgProvider"
+        },
+        "android": {
+          "legacyComponentClass": "PsgWidgetProvider",
+          "legacyLabelResource": "widget_label_psg"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": true,
+        "addonAllowed": false
+      },
+      "icsUtility": "gas",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "Polska Spółka Gazownictwa",
+          "Polska"
+        ],
+        "location": "Polska",
+        "aggregateUtility": "gas",
+        "aggregateOrder": 0
+      },
+      "card": {
+        "name": "PSG Gaz",
+        "icon": "💨",
+        "color": "#4caf50"
+      }
+    },
+    {
+      "id": "eco_sa",
+      "utility": "heating",
+      "order": {
+        "frontend": 6,
+        "rust": 7,
+        "androidSingle": 6,
+        "addon": 12
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "ECO SA",
+            "en": "ECO SA"
+          },
+          "shortName": {
+            "pl": "ECO SA",
+            "en": "ECO SA"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "ECO SA"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "ECO SA",
+            "en": "ECO SA"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_eco_sa",
+            "name": {
+              "pl": "Energetyka Cieplna Opolszczyzny (ECO SA)",
+              "en": "ECO heat network"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "EcoSa",
+          "constructor": "eco_sa::EcoSaProvider"
+        },
+        "android": {
+          "legacyComponentClass": "EcoSaWidgetProvider",
+          "legacyLabelResource": "widget_label_eco_sa"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "heating",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "ECO",
+          "Opole"
+        ],
+        "location": "Opole",
+        "aggregateUtility": "heating",
+        "aggregateOrder": 1
+      },
+      "card": {
+        "name": "ECO SA",
+        "icon": "🔥",
+        "color": "#f44336"
+      }
+    },
+    {
+      "id": "enea_cieplo",
+      "utility": "heating",
+      "order": {
+        "frontend": 7,
+        "rust": 6,
+        "androidSingle": 5,
+        "addon": 10
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "ENEA Ciepło Białystok",
+            "en": "ENEA Ciepło Białystok"
+          },
+          "shortName": {
+            "pl": "ENEA Ciepło",
+            "en": "ENEA Ciepło"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "ENEA Ciepło Białystok"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "ENEA Ciepło",
+            "en": "ENEA Ciepło"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_enea_cieplo",
+            "name": {
+              "pl": "ENEA Ciepło",
+              "en": "ENEA Ciepło"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "EneaCieplo",
+          "constructor": "enea_cieplo::EneaCieploProvider"
+        },
+        "android": {
+          "legacyComponentClass": "EneaCieploWidgetProvider",
+          "legacyLabelResource": "widget_label_enea_cieplo"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "heating",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "ENEA Ciepło",
+          "Bydgoszcz"
+        ],
+        "location": "Bydgoszcz",
+        "aggregateUtility": "heating",
+        "aggregateOrder": 0
+      },
+      "card": {
+        "name": "Enea",
+        "icon": "⚡",
+        "color": "#fb8c00"
+      },
+      "frontend": {
+        "regionMatcher": "bialystok"
+      }
+    },
+    {
+      "id": "energa_cieplo_kaliskie",
+      "utility": "heating",
+      "order": {
+        "frontend": 8,
+        "rust": 8,
+        "androidSingle": 7,
+        "addon": 11
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "Energa Ciepło Kaliskie",
+            "en": "Energa Ciepło Kaliskie"
+          },
+          "shortName": {
+            "pl": "Energa Kalisz",
+            "en": "Energa Kalisz"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "Energa Ciepło Kaliskie"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "Energa Ciepło Kalisz",
+            "en": "Energa Ciepło Kalisz"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_energa_cieplo_kaliskie",
+            "name": {
+              "pl": "Energa Ciepło Kaliskie",
+              "en": "Energa Ciepło Kaliskie"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "EnergaCieploKaliskie",
+          "constructor": "energa_cieplo_kaliskie::EnergaCieploKaliskieProvider"
+        },
+        "android": {
+          "legacyComponentClass": "EnergaCieploKaliskieWidgetProvider",
+          "legacyLabelResource": "widget_label_energa_cieplo_kaliskie"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "heating",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "Energa Ciepło",
+          "Kalisz"
+        ],
+        "location": "Kalisz",
+        "aggregateUtility": "heating",
+        "aggregateOrder": 2
+      },
+      "card": {
+        "name": "Energa Ciepło Kaliskie",
+        "icon": "🔥",
+        "color": "#f44336"
+      },
+      "frontend": {
+        "regionMatcher": "kalisz"
+      }
+    },
+    {
+      "id": "epec_elblag",
+      "utility": "heating",
+      "order": {
+        "frontend": 9,
+        "rust": 60,
+        "androidSingle": 22,
+        "addon": 13
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "EPEC Elbląg",
+            "en": "EPEC Elbląg"
+          },
+          "shortName": {
+            "pl": "EPEC Elbląg",
+            "en": "EPEC Elbląg"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "EPEC Elbląg"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "EPEC Elbląg",
+            "en": "EPEC Elbląg"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_epec_elblag",
+            "name": {
+              "pl": "EPEC Elbląg",
+              "en": "EPEC Elbląg"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "EpecElblag",
+          "constructor": "epec_elblag::EpecElblagProvider"
+        },
+        "android": {
+          "legacyComponentClass": "EpecElblagWidgetProvider",
+          "legacyLabelResource": "widget_label_epec_elblag"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "heating",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "EPEC",
+          "Elbląg"
+        ],
+        "location": "Elbląg",
+        "aggregateUtility": "heating",
+        "aggregateOrder": 15
+      },
+      "card": {
+        "name": "EPEC Elbląg",
+        "icon": "🔥",
+        "color": "#f44336"
+      },
+      "frontend": {
+        "regionMatcher": "elblag"
+      }
+    },
+    {
+      "id": "fortum",
+      "utility": "heating",
+      "order": {
+        "frontend": 10,
+        "rust": 3,
+        "androidSingle": 8,
+        "addon": 7
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "Fortum",
+            "en": "Fortum"
+          },
+          "shortName": {
+            "pl": "Fortum",
+            "en": "Fortum"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "Fortum"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "Fortum",
+            "en": "Fortum"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_fortum",
+            "name": {
+              "pl": "Fortum",
+              "en": "Fortum"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "Fortum",
+          "constructor": "fortum::FortumProvider"
+        },
+        "android": {
+          "legacyComponentClass": "FortumWidgetProvider",
+          "legacyLabelResource": "widget_label_fortum"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "heating",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "Fortum",
+          "Polska"
+        ],
+        "location": "Polska",
+        "aggregateUtility": "heating",
+        "aggregateOrder": 3
+      },
+      "card": {
+        "name": "FORTUM",
+        "icon": "🔥",
+        "color": "#f44336"
+      }
+    },
+    {
+      "id": "gpec",
+      "utility": "heating",
+      "order": {
+        "frontend": 11,
+        "rust": 32,
+        "androidSingle": 14,
+        "addon": null
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "GPEC Gdańsk",
+            "en": "GPEC Gdańsk"
+          },
+          "shortName": {
+            "pl": "GPEC",
+            "en": "GPEC"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "GPEC Gdańsk"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "GPEC GDA",
+            "en": "GPEC GDA"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_gpec",
+            "name": {
+              "pl": "GPEC Gdańsk",
+              "en": "GPEC Gdańsk"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "Gpec",
+          "constructor": "gpec::GpecProvider"
+        },
+        "android": {
+          "legacyComponentClass": "GpecWidgetProvider",
+          "legacyLabelResource": "widget_label_gpec"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": true,
+        "addonAllowed": false
+      },
+      "icsUtility": "heating",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "GPEC",
+          "Gdańsk"
+        ],
+        "location": "Gdańsk",
+        "aggregateUtility": "heating",
+        "aggregateOrder": 8
+      },
+      "card": {
+        "name": "GPEC",
+        "icon": "🔥",
+        "color": "#f44336"
+      },
+      "frontend": {
+        "regionMatcher": "gdansk"
+      }
+    },
+    {
+      "id": "kpec_bydgoszcz",
+      "utility": "heating",
+      "order": {
+        "frontend": 12,
+        "rust": 34,
+        "androidSingle": 15,
+        "addon": null
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "KPEC Bydgoszcz",
+            "en": "KPEC Bydgoszcz"
+          },
+          "shortName": {
+            "pl": "KPEC",
+            "en": "KPEC"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "KPEC Bydgoszcz"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "KPEC BDG",
+            "en": "KPEC BDG"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_kpec_bydgoszcz",
+            "name": {
+              "pl": "KPEC Bydgoszcz",
+              "en": "KPEC Bydgoszcz"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "KpecBydgoszcz",
+          "constructor": "kpec_bydgoszcz::KpecBydgoszczProvider"
+        },
+        "android": {
+          "legacyComponentClass": "KpecBydgoszczWidgetProvider",
+          "legacyLabelResource": "widget_label_kpec_bydgoszcz"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": false
+      },
+      "icsUtility": "heating",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "KPEC",
+          "Bydgoszcz"
+        ],
+        "location": "Bydgoszcz",
+        "aggregateUtility": "heating",
+        "aggregateOrder": 9
+      },
+      "card": {
+        "name": "KPEC_BYDGOSZCZ",
+        "icon": "⚠️",
+        "color": "#757575"
+      },
+      "frontend": {
+        "regionMatcher": "bydgoszcz"
+      }
+    },
+    {
+      "id": "lpec",
+      "utility": "heating",
+      "order": {
+        "frontend": 13,
+        "rust": 37,
+        "androidSingle": 24,
+        "addon": null
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "LPEC Lublin",
+            "en": "LPEC Lublin"
+          },
+          "shortName": {
+            "pl": "LPEC",
+            "en": "LPEC"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "LPEC Lublin"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "LPEC",
+            "en": "LPEC"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_lpec",
+            "name": {
+              "pl": "LPEC Lublin",
+              "en": "LPEC Lublin"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "Lpec",
+          "constructor": "lpec::LpecProvider"
+        },
+        "android": {
+          "legacyComponentClass": "LpecWidgetProvider",
+          "legacyLabelResource": "widget_label_lpec"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": false
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "LPEC",
+          "Lublin"
+        ],
+        "location": "Lublin",
+        "aggregateUtility": "heating",
+        "aggregateOrder": 17
+      },
+      "card": {
+        "name": "LPEC",
+        "icon": "⚠️",
+        "color": "#757575"
+      },
+      "frontend": {
+        "regionMatcher": "lublin"
+      }
+    },
+    {
+      "id": "mec_koszalin",
+      "utility": "heating",
+      "order": {
+        "frontend": 14,
+        "rust": 9,
+        "androidSingle": 17,
+        "addon": 6
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "MEC Koszalin",
+            "en": "MEC Koszalin"
+          },
+          "shortName": {
+            "pl": "MEC Koszalin",
+            "en": "MEC Koszalin"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "MEC Koszalin"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "MEC Koszalin",
+            "en": "MEC Koszalin"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_mec_koszalin",
+            "name": {
+              "pl": "MEC Koszalin",
+              "en": "MEC Koszalin"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "MecKoszalin",
+          "constructor": "mec_koszalin::MecKoszalinProvider"
+        },
+        "android": {
+          "legacyComponentClass": "MecKoszalinWidgetProvider",
+          "legacyLabelResource": "widget_label_mec_koszalin"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "heating",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "MEC",
+          "Koszalin"
+        ],
+        "location": "Koszalin",
+        "aggregateUtility": "heating",
+        "aggregateOrder": 18
+      },
+      "card": {
+        "name": "MEC Koszalin",
+        "icon": "🔥",
+        "color": "#f44336"
+      },
+      "frontend": {
+        "regionMatcher": "mec_koszalin_area"
+      }
+    },
+    {
+      "id": "mpec_kielce",
+      "utility": "heating",
+      "order": {
+        "frontend": 15,
+        "rust": 59,
+        "androidSingle": 16,
+        "addon": 51
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "MPEC Kielce",
+            "en": "MPEC Kielce"
+          },
+          "shortName": {
+            "pl": "MPEC KIE",
+            "en": "MPEC KIE"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "MPEC Kielce"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "MPEC Kielce",
+            "en": "MPEC Kielce"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_mpec_kielce",
+            "name": {
+              "pl": "MPEC Kielce",
+              "en": "MPEC Kielce"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "MpecKielce",
+          "constructor": "mpec_kielce::MpecKielceProvider"
+        },
+        "android": {
+          "legacyComponentClass": "MpecKielceWidgetProvider",
+          "legacyLabelResource": "widget_label_mpec_kielce"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "heating",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "MPEC",
+          "Kielce"
+        ],
+        "location": "Kielce",
+        "aggregateUtility": "heating",
+        "aggregateOrder": 10
+      },
+      "card": {
+        "name": "MPEC Kielce",
+        "icon": "🔥",
+        "color": "#f44336"
+      },
+      "frontend": {
+        "regionMatcher": "kielce"
+      }
+    },
+    {
+      "id": "mpec_rzeszow",
+      "utility": "heating",
+      "order": {
+        "frontend": 16,
+        "rust": 58,
+        "androidSingle": 18,
+        "addon": 52
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "MPEC Rzeszów",
+            "en": "MPEC Rzeszów"
+          },
+          "shortName": {
+            "pl": "MPEC RZE",
+            "en": "MPEC RZE"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "MPEC Rzeszów"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "MPEC Rzeszów",
+            "en": "MPEC Rzeszów"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_mpec_rzeszow",
+            "name": {
+              "pl": "MPEC Rzeszów",
+              "en": "MPEC Rzeszów"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "MpecRzeszow",
+          "constructor": "mpec_rzeszow::MpecRzeszowProvider"
+        },
+        "android": {
+          "legacyComponentClass": "MpecRzeszowWidgetProvider",
+          "legacyLabelResource": "widget_label_mpec_rzeszow"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "heating",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "MPEC",
+          "Rzeszów"
+        ],
+        "location": "Rzeszów",
+        "aggregateUtility": "heating",
+        "aggregateOrder": 11
+      },
+      "card": {
+        "name": "MPEC_RZESZOW",
+        "icon": "⚠️",
+        "color": "#757575"
+      },
+      "frontend": {
+        "regionMatcher": "rzeszow"
+      }
+    },
+    {
+      "id": "opec_gdynia",
+      "utility": "heating",
+      "order": {
+        "frontend": 17,
+        "rust": 33,
+        "androidSingle": 19,
+        "addon": 53
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "OPEC Gdynia",
+            "en": "OPEC Gdynia"
+          },
+          "shortName": {
+            "pl": "OPEC",
+            "en": "OPEC"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "OPEC Gdynia"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "OPEC GDY",
+            "en": "OPEC GDY"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_opec_gdynia",
+            "name": {
+              "pl": "OPEC Gdynia",
+              "en": "OPEC Gdynia"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "OpecGdynia",
+          "constructor": "opec_gdynia::OpecGdyniaProvider"
+        },
+        "android": {
+          "legacyComponentClass": "OpecGdyniaWidgetProvider",
+          "legacyLabelResource": "widget_label_opec_gdynia"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "heating",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "OPEC",
+          "Gdynia"
+        ],
+        "location": "Gdynia",
+        "aggregateUtility": "heating",
+        "aggregateOrder": 12
+      },
+      "card": {
+        "name": "OPEC Gdynia",
+        "icon": "🔥",
+        "color": "#f44336"
+      },
+      "frontend": {
+        "regionMatcher": "opec_gdynia_area"
+      }
+    },
+    {
+      "id": "pec_gliwice",
+      "utility": "heating",
+      "order": {
+        "frontend": 18,
+        "rust": 61,
+        "androidSingle": 20,
+        "addon": 14
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "PEC Gliwice",
+            "en": "PEC Gliwice"
+          },
+          "shortName": {
+            "pl": "PEC Gliwice",
+            "en": "PEC Gliwice"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "PEC Gliwice"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "PEC Gliwice",
+            "en": "PEC Gliwice"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_pec_gliwice",
+            "name": {
+              "pl": "PEC Gliwice",
+              "en": "PEC Gliwice"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "PecGliwice",
+          "constructor": "pec_gliwice::PecGliwiceProvider"
+        },
+        "android": {
+          "legacyComponentClass": "PecGliwiceWidgetProvider",
+          "legacyLabelResource": "widget_label_pec_gliwice"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "heating",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "PEC",
+          "Gliwice"
+        ],
+        "location": "Gliwice",
+        "aggregateUtility": "heating",
+        "aggregateOrder": 13
+      },
+      "card": {
+        "name": "PEC Gliwice",
+        "icon": "🔥",
+        "color": "#f44336"
+      },
+      "frontend": {
+        "regionMatcher": "pec_gliwice_area"
+      }
+    },
+    {
+      "id": "pge_torun_heat",
+      "utility": "heating",
+      "order": {
+        "frontend": 19,
+        "rust": 11,
+        "androidSingle": 21,
+        "addon": 16
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "PGE Toruń",
+            "en": "PGE Toruń"
+          },
+          "shortName": {
+            "pl": "PGE Toruń",
+            "en": "PGE Toruń"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "PGE Toruń"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "PGE Toruń",
+            "en": "PGE Toruń"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_pge_torun_heat",
+            "name": {
+              "pl": "PGE Toruń",
+              "en": "PGE Toruń"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "PgeTorunHeat",
+          "constructor": "pge_torun_heat::PgeTorunHeatProvider"
+        },
+        "android": {
+          "legacyComponentClass": "PgeTorunHeatWidgetProvider",
+          "legacyLabelResource": "widget_label_pge_torun_heat"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "heating",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "PGE Ciepło",
+          "Toruń"
+        ],
+        "location": "Toruń",
+        "aggregateUtility": "heating",
+        "aggregateOrder": 14
+      },
+      "card": {
+        "name": "PGE Toruń",
+        "icon": "🔥",
+        "color": "#f44336"
+      },
+      "frontend": {
+        "regionMatcher": "torun"
+      }
+    },
+    {
+      "id": "sec",
+      "utility": "heating",
+      "order": {
+        "frontend": 20,
+        "rust": 36,
+        "androidSingle": 23,
+        "addon": null
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "SEC Szczecin",
+            "en": "SEC Szczecin"
+          },
+          "shortName": {
+            "pl": "SEC",
+            "en": "SEC"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "SEC Szczecin"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "SEC",
+            "en": "SEC"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_sec",
+            "name": {
+              "pl": "SEC Szczecin",
+              "en": "SEC Szczecin"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "Sec",
+          "constructor": "sec::SecProvider"
+        },
+        "android": {
+          "legacyComponentClass": "SecWidgetProvider",
+          "legacyLabelResource": "widget_label_sec"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": false
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "SEC",
+          "Szczecin"
+        ],
+        "location": "Szczecin",
+        "aggregateUtility": "heating",
+        "aggregateOrder": 16
+      },
+      "card": {
+        "name": "SEC",
+        "icon": "⚠️",
+        "color": "#757575"
+      },
+      "frontend": {
+        "regionMatcher": "szczecin"
+      }
+    },
+    {
+      "id": "tauron_heat",
+      "utility": "heating",
+      "order": {
+        "frontend": 21,
+        "rust": 16,
+        "androidSingle": 9,
+        "addon": 21
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "Tauron Ciepło",
+            "en": "Tauron Ciepło"
+          },
+          "shortName": {
+            "pl": "Tauron Ciepło",
+            "en": "Tauron Heat"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "Tauron Ciepło"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "Tauron Ciepło",
+            "en": "Tauron Ciepło"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_tauron_heat",
+            "name": {
+              "pl": "Tauron Ciepło",
+              "en": "Tauron Ciepło"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "TauronHeat",
+          "constructor": "tauron_heat::TauronHeatProvider"
+        },
+        "android": {
+          "legacyComponentClass": "TauronHeatWidgetProvider",
+          "legacyLabelResource": "widget_label_tauron_heat"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "heating",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "Tauron Ciepło",
+          "Polska"
+        ],
+        "location": "Polska",
+        "aggregateUtility": "heating",
+        "aggregateOrder": 4
+      },
+      "card": {
+        "name": "Tauron Ciepło",
+        "icon": "🔥",
+        "color": "#ff5722"
+      }
+    },
+    {
+      "id": "therma_bielsko",
+      "utility": "heating",
+      "order": {
+        "frontend": 22,
+        "rust": 12,
+        "androidSingle": 10,
+        "addon": 22
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "Therma Bielsko",
+            "en": "Therma Bielsko"
+          },
+          "shortName": {
+            "pl": "Therma Bielsko",
+            "en": "Therma Bielsko"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "Therma Bielsko"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "Therma Bielsko",
+            "en": "Therma Bielsko"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_therma_bielsko",
+            "name": {
+              "pl": "Therma Bielsko",
+              "en": "Therma Bielsko"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "ThermaBielsko",
+          "constructor": "therma_bielsko::ThermaBielskoProvider"
+        },
+        "android": {
+          "legacyComponentClass": "ThermaBielskoWidgetProvider",
+          "legacyLabelResource": "widget_label_therma_bielsko"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "heating",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "Therma",
+          "Bielsko-Biała"
+        ],
+        "location": "Bielsko-Biała",
+        "aggregateUtility": "heating",
+        "aggregateOrder": 19
+      },
+      "card": {
+        "name": "Therma Bielsko",
+        "icon": "🔥",
+        "color": "#f44336"
+      },
+      "frontend": {
+        "regionMatcher": "therma_bielsko"
+      }
+    },
+    {
+      "id": "veolia_lodz",
+      "utility": "heating",
+      "order": {
+        "frontend": 23,
+        "rust": 21,
+        "androidSingle": 13,
+        "addon": 30
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "Veolia Łódź",
+            "en": "Veolia Łódź"
+          },
+          "shortName": {
+            "pl": "Veolia Łódź",
+            "en": "Veolia Łódź"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "Veolia Łódź"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "Veolia LDZ",
+            "en": "Veolia LDZ"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_veolia_lodz",
+            "name": {
+              "pl": "Veolia Łódź",
+              "en": "Veolia Łódź"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "VeoliaLodz",
+          "constructor": "veolia_lodz::VeoliaLodzProvider"
+        },
+        "android": {
+          "legacyComponentClass": "VeoliaLodzWidgetProvider",
+          "legacyLabelResource": "widget_label_veolia_lodz"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "heating",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "Veolia",
+          "Łódź"
+        ],
+        "location": "Łódź",
+        "aggregateUtility": "heating",
+        "aggregateOrder": 7
+      },
+      "card": {
+        "name": "VEOLIA LODZ",
+        "icon": "🔥",
+        "color": "#f44336"
+      },
+      "frontend": {
+        "regionMatcher": "lodz"
+      }
+    },
+    {
+      "id": "veolia_poznan",
+      "utility": "heating",
+      "order": {
+        "frontend": 24,
+        "rust": 20,
+        "androidSingle": 12,
+        "addon": 29
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "Veolia Poznań",
+            "en": "Veolia Poznań"
+          },
+          "shortName": {
+            "pl": "Veolia Poznań",
+            "en": "Veolia Poznań"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "Veolia Poznań"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "Veolia POZ",
+            "en": "Veolia POZ"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_veolia_poznan",
+            "name": {
+              "pl": "Veolia Poznań",
+              "en": "Veolia Poznań"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "VeoliaPoznan",
+          "constructor": "veolia_poznan::VeoliaPoznanProvider"
+        },
+        "android": {
+          "legacyComponentClass": "VeoliaPoznanWidgetProvider",
+          "legacyLabelResource": "widget_label_veolia_poznan"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "heating",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "Veolia",
+          "Poznań"
+        ],
+        "location": "Poznań",
+        "aggregateUtility": "heating",
+        "aggregateOrder": 6
+      },
+      "card": {
+        "name": "VEOLIA POZNAN",
+        "icon": "🔥",
+        "color": "#f44336"
+      },
+      "frontend": {
+        "regionMatcher": "poznan"
+      }
+    },
+    {
+      "id": "veolia_warszawa",
+      "utility": "heating",
+      "order": {
+        "frontend": 25,
+        "rust": 19,
+        "androidSingle": 11,
+        "addon": 28
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "Veolia Warszawa",
+            "en": "Veolia Warszawa"
+          },
+          "shortName": {
+            "pl": "Veolia Warszawa",
+            "en": "Veolia Warszawa"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "Veolia Warszawa"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "Veolia WAW",
+            "en": "Veolia WAW"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_veolia",
+            "name": {
+              "pl": "Veolia Warszawa",
+              "en": "Veolia Warszawa"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "VeoliaWarszawa",
+          "constructor": "veolia_warszawa::VeoliaWarszawaProvider"
+        },
+        "android": {
+          "legacyComponentClass": "VeoliaWidgetProvider",
+          "legacyLabelResource": "widget_label_veolia"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "heating",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "Veolia",
+          "Warszawa"
+        ],
+        "location": "Warszawa",
+        "aggregateUtility": "heating",
+        "aggregateOrder": 5
+      },
+      "card": {
+        "name": "VEOLIA WARSZAWA",
+        "icon": "🔥",
+        "color": "#f44336"
+      },
+      "frontend": {
+        "regionMatcher": "warszawa"
+      }
+    },
+    {
+      "id": "aqua_bielsko",
+      "utility": "water",
+      "order": {
+        "frontend": 26,
+        "rust": 46,
+        "androidSingle": 30,
+        "addon": 18
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "AQUA S.A.",
+            "en": "AQUA S.A."
+          },
+          "shortName": {
+            "pl": "AQUA S.A.",
+            "en": "AQUA S.A."
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "AQUA S.A."
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "AQUA Bielsko-Biała",
+            "en": "AQUA Bielsko-Biała"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_aqua_bielsko",
+            "name": {
+              "pl": "AQUA Wodociągi Bielsko-Biała",
+              "en": "AQUA Water Utility Bielsko-Biała"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "AquaBielsko",
+          "constructor": "aqua_bielsko::AquaBielskoProvider"
+        },
+        "android": {
+          "legacyComponentClass": "AquaBielskoWidgetProvider",
+          "legacyLabelResource": "widget_label_aqua_bielsko"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "AQUA",
+          "Bielsko-Biała"
+        ],
+        "location": "Bielsko-Biała",
+        "aggregateUtility": "water",
+        "aggregateOrder": 28
+      },
+      "card": {
+        "name": "AQUA S.A.",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "aqua_bielsko_area"
+      }
+    },
+    {
+      "id": "aquanet",
+      "utility": "water",
+      "order": {
+        "frontend": 27,
+        "rust": 17,
+        "androidSingle": 29,
+        "addon": 23
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "Aquanet",
+            "en": "Aquanet"
+          },
+          "shortName": {
+            "pl": "Aquanet",
+            "en": "Aquanet"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "Aquanet"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "Aquanet",
+            "en": "Aquanet"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_aquanet",
+            "name": {
+              "pl": "Aquanet",
+              "en": "Aquanet"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "Aquanet",
+          "constructor": "aquanet::AquanetProvider"
+        },
+        "android": {
+          "legacyComponentClass": "AquanetWidgetProvider",
+          "legacyLabelResource": "widget_label_aquanet"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "Aquanet",
+          "Poznań"
+        ],
+        "location": "Poznań",
+        "aggregateUtility": "water",
+        "aggregateOrder": 5
+      },
+      "card": {
+        "name": "AQUANET",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "poznan"
+      }
+    },
+    {
+      "id": "bytomskie_wodociagi",
+      "utility": "water",
+      "order": {
+        "frontend": 28,
+        "rust": 43,
+        "androidSingle": 52,
+        "addon": 24
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "Bytomskie Wodociągi",
+            "en": "Bytomskie Wodociągi"
+          },
+          "shortName": {
+            "pl": "BW Bytom",
+            "en": "BW Bytom"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "Bytomskie Wodociągi"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "Bytomskie Wodociągi",
+            "en": "Bytom Water Utility"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_bytomskie_wodociagi",
+            "name": {
+              "pl": "Bytomskie Wodociągi",
+              "en": "Bytom Water Utility"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "BytomskieWodociagi",
+          "constructor": "bytomskie_wodociagi::BytomskieWodociagiProvider"
+        },
+        "android": {
+          "legacyComponentClass": "BytomskieWodociagiWidgetProvider",
+          "legacyLabelResource": "widget_label_bytomskie_wodociagi"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "Wodociągi",
+          "Bytom"
+        ],
+        "location": "Bytom",
+        "aggregateUtility": "water",
+        "aggregateOrder": 25
+      },
+      "card": {
+        "name": "Bytomskie Wodociągi",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "bytom"
+      }
+    },
+    {
+      "id": "chspwik",
+      "utility": "water",
+      "order": {
+        "frontend": 29,
+        "rust": 44,
+        "androidSingle": 53,
+        "addon": 25
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "ChŚPWiK",
+            "en": "ChŚPWiK"
+          },
+          "shortName": {
+            "pl": "ChŚPWiK",
+            "en": "ChŚPWiK"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "ChŚPWiK"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "ChŚPWiK",
+            "en": "ChŚPWiK"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_chspwik",
+            "name": {
+              "pl": "ChŚPWiK",
+              "en": "ChŚPWiK"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "Chspwik",
+          "constructor": "chspwik::ChspwikProvider"
+        },
+        "android": {
+          "legacyComponentClass": "ChspwikWidgetProvider",
+          "legacyLabelResource": "widget_label_chspwik"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "Chorzowsko-Świętochłowickie Przedsiębiorstwo Wodociągów i Kanalizacji",
+          "ChŚPWiK",
+          "Chorzów",
+          "Świętochłowice",
+          "Chorzów, Świętochłowice"
+        ],
+        "location": "Chorzów, Świętochłowice",
+        "aggregateUtility": "water",
+        "aggregateOrder": 26
+      },
+      "card": {
+        "name": "CHSPWIK",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "chspwik_area"
+      }
+    },
+    {
+      "id": "dabrowskie_wodociagi",
+      "utility": "water",
+      "order": {
+        "frontend": 30,
+        "rust": 45,
+        "androidSingle": 54,
+        "addon": 26
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "Dąbrowskie Wodociągi",
+            "en": "Dąbrowskie Wodociągi"
+          },
+          "shortName": {
+            "pl": "DW Dąbrowa",
+            "en": "DW Dąbrowa"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "Dąbrowskie Wodociągi"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "Dąbrowskie Wodociągi",
+            "en": "Dąbrowskie Waterworks"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_dabrowskie_wodociagi",
+            "name": {
+              "pl": "Dąbrowskie Wodociągi",
+              "en": "Dąbrowskie Waterworks"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "DabrowskieWodociagi",
+          "constructor": "dabrowskie_wodociagi::DabrowskieWodociagiProvider"
+        },
+        "android": {
+          "legacyComponentClass": "DabrowskieWodociagiWidgetProvider",
+          "legacyLabelResource": "widget_label_dabrowskie_wodociagi"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "Wodociągi",
+          "Dąbrowa Górnicza"
+        ],
+        "location": "Dąbrowa Górnicza",
+        "aggregateUtility": "water",
+        "aggregateOrder": 27
+      },
+      "card": {
+        "name": "Dąbrowskie Wodociągi",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "dabrowskie_wodociagi_area"
+      }
+    },
+    {
+      "id": "gdanskie_wodociagi",
+      "utility": "water",
+      "order": {
+        "frontend": 31,
+        "rust": 31,
+        "androidSingle": 55,
+        "addon": 50
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "Gdańskie Wodociągi",
+            "en": "Gdańskie Wodociągi"
+          },
+          "shortName": {
+            "pl": "Gdańsk Woda",
+            "en": "Gdańsk Water"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "Gdańskie Wodociągi"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "GW GDA",
+            "en": "GW GDA"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_gdanskie_wodociagi",
+            "name": {
+              "pl": "Gdańskie Wodociągi",
+              "en": "Gdańskie Wodociągi"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "GdanskieWodociagi",
+          "constructor": "gdanskie_wodociagi::GdanskieWodociagiProvider"
+        },
+        "android": {
+          "legacyComponentClass": "GdanskieWodociagiWidgetProvider",
+          "legacyLabelResource": "widget_label_gdanskie_wodociagi"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "Wodociągi",
+          "Gdańsk"
+        ],
+        "location": "Gdańsk",
+        "aggregateUtility": "water",
+        "aggregateOrder": 18
+      },
+      "card": {
+        "name": "GDANSKIE WODOCIAGI",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "gdansk"
+      }
+    },
+    {
+      "id": "katowickie_wodociagi",
+      "utility": "water",
+      "order": {
+        "frontend": 32,
+        "rust": 18,
+        "androidSingle": 31,
+        "addon": 27
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "Katowickie Wodociągi",
+            "en": "Katowickie Wodociągi"
+          },
+          "shortName": {
+            "pl": "Kat. Wodociągi",
+            "en": "Kat. Wodociągi"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "Katowickie Wodociągi"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "KW KTW",
+            "en": "KW KTW"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_katowickiewodociagi",
+            "name": {
+              "pl": "Katowickie Wodociągi",
+              "en": "Katowickie Wodociągi"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "KatowickieWodociagi",
+          "constructor": "katowickie_wodociagi::KatowickieWodociagiProvider"
+        },
+        "android": {
+          "legacyComponentClass": "KatowickieWodociagiWidgetProvider",
+          "legacyLabelResource": "widget_label_katowickiewodociagi"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "KW",
+          "Katowice"
+        ],
+        "location": "Katowice",
+        "aggregateUtility": "water",
+        "aggregateOrder": 6
+      },
+      "card": {
+        "name": "KATOWICKIE WODOCIAGI",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "katowice"
+      }
+    },
+    {
+      "id": "lpwik_legnica",
+      "utility": "water",
+      "order": {
+        "frontend": 33,
+        "rust": 42,
+        "androidSingle": 61,
+        "addon": 54
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "LPWiK Legnica",
+            "en": "LPWiK Legnica"
+          },
+          "shortName": {
+            "pl": "LPWiK",
+            "en": "LPWiK"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "LPWiK Legnica"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "LPWiK Legnica",
+            "en": "LPWiK Legnica"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_lpwik_legnica",
+            "name": {
+              "pl": "LPWiK Legnica",
+              "en": "LPWiK Legnica"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "LpwikLegnica",
+          "constructor": "lpwik_legnica::LpwikLegnicaProvider"
+        },
+        "android": {
+          "legacyComponentClass": "LpwikLegnicaWidgetProvider",
+          "legacyLabelResource": "widget_label_lpwik_legnica"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "LPWiK",
+          "Legnica"
+        ],
+        "location": "Legnica",
+        "aggregateUtility": "water",
+        "aggregateOrder": 24
+      },
+      "card": {
+        "name": "LPWiK Legnica",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "lpwik_legnica_area"
+      }
+    },
+    {
+      "id": "mpwik_lublin",
+      "utility": "water",
+      "order": {
+        "frontend": 34,
+        "rust": 38,
+        "androidSingle": 57,
+        "addon": null
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "MPWiK Lublin",
+            "en": "MPWiK Lublin"
+          },
+          "shortName": {
+            "pl": "MPWiK LUB",
+            "en": "MPWiK LUB"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "MPWiK Lublin"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "MPWiK Lublin",
+            "en": "MPWiK LBL"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_mpwik_lublin",
+            "name": {
+              "pl": "MPWiK Lublin",
+              "en": "MPWiK Lublin"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "MpwikLublin",
+          "constructor": "mpwik_lublin::MpwikLublinProvider"
+        },
+        "android": {
+          "legacyComponentClass": "MpwikLublinWidgetProvider",
+          "legacyLabelResource": "widget_label_mpwik_lublin"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": false
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "MPWiK",
+          "Lublin"
+        ],
+        "location": "Lublin",
+        "aggregateUtility": "water",
+        "aggregateOrder": 2
+      },
+      "card": {
+        "name": "MPWIK LUBLIN",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "lublin"
+      }
+    },
+    {
+      "id": "mpwik_rzeszow",
+      "utility": "water",
+      "order": {
+        "frontend": 35,
+        "rust": 39,
+        "androidSingle": 58,
+        "addon": 3
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "MPWiK Rzeszów",
+            "en": "MPWiK Rzeszów"
+          },
+          "shortName": {
+            "pl": "MPWiK RZE",
+            "en": "MPWiK RZE"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "MPWiK Rzeszów"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "MPWiK Rzeszów",
+            "en": "MPWiK RZE"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_mpwik_rzeszow",
+            "name": {
+              "pl": "MPWiK Rzeszów",
+              "en": "MPWiK Rzeszów"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "MpwikRzeszow",
+          "constructor": "mpwik_rzeszow::MpwikRzeszowProvider"
+        },
+        "android": {
+          "legacyComponentClass": "MpwikRzeszowWidgetProvider",
+          "legacyLabelResource": "widget_label_mpwik_rzeszow"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "MPWiK",
+          "Rzeszów"
+        ],
+        "location": "Rzeszów",
+        "aggregateUtility": "water",
+        "aggregateOrder": 20
+      },
+      "card": {
+        "name": "MPWIK RZESZOW",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "mpwik_rzeszow_area"
+      }
+    },
+    {
+      "id": "mpwik_warszawa",
+      "utility": "water",
+      "order": {
+        "frontend": 36,
+        "rust": 2,
+        "androidSingle": 26,
+        "addon": 2
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "MPWiK Warszawa",
+            "en": "MPWiK Warszawa"
+          },
+          "shortName": {
+            "pl": "MPWiK WAW",
+            "en": "MPWiK WAW"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "MPWiK Warszawa"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "MPWiK WAW",
+            "en": "MPWiK WAW"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_mpwik_warszawa",
+            "name": {
+              "pl": "MPWiK Warszawa",
+              "en": "MPWiK Warszawa"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "MpwikWarszawa",
+          "constructor": "mpwik_warsaw::MpwikWarszawaProvider"
+        },
+        "android": {
+          "legacyComponentClass": "MpwikWarszawaWidgetProvider",
+          "legacyLabelResource": "widget_label_mpwik_warszawa"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "MPWiK",
+          "Warszawa"
+        ],
+        "location": "Warszawa",
+        "aggregateUtility": "water",
+        "aggregateOrder": 1
+      },
+      "card": {
+        "name": "MPWIK WARSZAWA",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "mpwik_warszawa_area"
+      }
+    },
+    {
+      "id": "mpwik_wroclaw",
+      "utility": "water",
+      "order": {
+        "frontend": 37,
+        "rust": 1,
+        "androidSingle": 25,
+        "addon": 1
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "MPWiK Wrocław",
+            "en": "MPWiK Wrocław"
+          },
+          "shortName": {
+            "pl": "MPWiK WRO",
+            "en": "MPWiK WRO"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "MPWiK Wrocław"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "MPWiK WRO",
+            "en": "MPWiK WRO"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_mpwik",
+            "name": {
+              "pl": "MPWiK Wrocław",
+              "en": "MPWiK Wrocław"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "MpwikWroclaw",
+          "constructor": "mpwik::MpwikProvider"
+        },
+        "android": {
+          "legacyComponentClass": "MpwikWidgetProvider",
+          "legacyLabelResource": "widget_label_mpwik"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "MPWiK",
+          "Wrocław"
+        ],
+        "location": "Wrocław",
+        "aggregateUtility": "water",
+        "aggregateOrder": 0
+      },
+      "card": {
+        "name": "MPWIK WROCLAW",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "wroclaw"
+      }
+    },
+    {
+      "id": "mwik_bydgoszcz",
+      "utility": "water",
+      "order": {
+        "frontend": 38,
+        "rust": 51,
+        "androidSingle": 59,
+        "addon": 4
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "MWiK Bydgoszcz",
+            "en": "MWiK Bydgoszcz"
+          },
+          "shortName": {
+            "pl": "MWiK BDG",
+            "en": "MWiK BDG"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "MWiK Bydgoszcz"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "MWiK BDG",
+            "en": "MWiK BDG"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_mwik_bydgoszcz",
+            "name": {
+              "pl": "MWiK Bydgoszcz",
+              "en": "MWiK Bydgoszcz"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "MwikBydgoszcz",
+          "constructor": "mwik_bydgoszcz::MwikBydgoszczProvider"
+        },
+        "android": {
+          "legacyComponentClass": "MwikBydgoszczWidgetProvider",
+          "legacyLabelResource": "widget_label_mwik_bydgoszcz"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "MWiK",
+          "Bydgoszcz"
+        ],
+        "location": "Bydgoszcz",
+        "aggregateUtility": "water",
+        "aggregateOrder": 21
+      },
+      "card": {
+        "name": "MWiK Bydgoszcz",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "bydgoszcz"
+      }
+    },
+    {
+      "id": "mwik_koszalin",
+      "utility": "water",
+      "order": {
+        "frontend": 39,
+        "rust": 52,
+        "androidSingle": 45,
+        "addon": 5
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "MWiK Koszalin",
+            "en": "MWiK Koszalin"
+          },
+          "shortName": {
+            "pl": "MWiK Koszalin",
+            "en": "MWiK Koszalin"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "MWiK Koszalin"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "MWiK Koszalin",
+            "en": "MWiK Koszalin"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_mwik_koszalin",
+            "name": {
+              "pl": "MWiK Koszalin",
+              "en": "MWiK Koszalin"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "MwikKoszalin",
+          "constructor": "mwik_koszalin::MwikKoszalinProvider"
+        },
+        "android": {
+          "legacyComponentClass": "MwikKoszalinWidgetProvider",
+          "legacyLabelResource": "widget_label_mwik_koszalin"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "MWiK",
+          "Koszalin"
+        ],
+        "location": "Koszalin",
+        "aggregateUtility": "water",
+        "aggregateOrder": 22
+      },
+      "card": {
+        "name": "MWiK Koszalin",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "koszalin"
+      }
+    },
+    {
+      "id": "pewik_gdynia",
+      "utility": "water",
+      "order": {
+        "frontend": 40,
+        "rust": 25,
+        "androidSingle": 60,
+        "addon": 49
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "PEWIK Gdynia",
+            "en": "PEWIK Gdynia"
+          },
+          "shortName": {
+            "pl": "PEWIK GDY",
+            "en": "PEWIK GDY"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "PEWIK Gdynia"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "PEWIK GDY",
+            "en": "PEWIK GDY"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_pewik_gdynia",
+            "name": {
+              "pl": "PEWIK Gdynia",
+              "en": "PEWIK Gdynia"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "PewikGdynia",
+          "constructor": "pewik_gdynia::PewikGdyniaProvider"
+        },
+        "android": {
+          "legacyComponentClass": "PewikGdyniaWidgetProvider",
+          "legacyLabelResource": "widget_label_pewik_gdynia"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "PEWIK",
+          "Gdynia"
+        ],
+        "location": "Gdynia",
+        "aggregateUtility": "water",
+        "aggregateOrder": 23
+      },
+      "card": {
+        "name": "PEWIK Gdynia",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "pewik_gdynia_area"
+      }
+    },
+    {
+      "id": "puk_rokietnica",
+      "utility": "water",
+      "order": {
+        "frontend": 41,
+        "rust": 35,
+        "androidSingle": 56,
+        "addon": null
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "PUK Rokietnica",
+            "en": "PUK Rokietnica"
+          },
+          "shortName": {
+            "pl": "PUK Rokietnica",
+            "en": "PUK Rokietnica"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "PUK Rokietnica"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "PUK Rokiet.",
+            "en": "PUK Rokietnica"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_puk_rokietnica",
+            "name": {
+              "pl": "PUK Rokietnica",
+              "en": "PUK Rokietnica"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "PukRokietnica",
+          "constructor": "puk_rokietnica::PukRokietnicaProvider"
+        },
+        "android": {
+          "legacyComponentClass": "PukRokietnicaWidgetProvider",
+          "legacyLabelResource": "widget_label_puk_rokietnica"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": false
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "PUK",
+          "Rokietnica"
+        ],
+        "location": "Rokietnica",
+        "aggregateUtility": "water",
+        "aggregateOrder": 19
+      },
+      "card": {
+        "name": "PUK_ROKIETNICA",
+        "icon": "⚠️",
+        "color": "#757575"
+      },
+      "frontend": {
+        "regionMatcher": "rokietnica"
+      }
+    },
+    {
+      "id": "pwik_czestochowa",
+      "utility": "water",
+      "order": {
+        "frontend": 42,
+        "rust": 30,
+        "androidSingle": 39,
+        "addon": 37
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "PWiK Częstochowa",
+            "en": "PWiK Częstochowa"
+          },
+          "shortName": {
+            "pl": "PWiK Częstochowa",
+            "en": "PWiK Częstochowa"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "PWiK Częstochowa"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "PWiK CZW",
+            "en": "PWiK CZW"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_pwik_czestochowa",
+            "name": {
+              "pl": "PWiK Częstochowa",
+              "en": "PWiK Częstochowa"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "PwikCzestochowa",
+          "constructor": "pwik_czestochowa::PwikCzestochowaProvider"
+        },
+        "android": {
+          "legacyComponentClass": "PwikCzestochowaWidgetProvider",
+          "legacyLabelResource": "widget_label_pwik_czestochowa"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "PWiK",
+          "Częstochowa"
+        ],
+        "location": "Częstochowa",
+        "aggregateUtility": "water",
+        "aggregateOrder": 10
+      },
+      "card": {
+        "name": "PWIK CZESTOCHOWA",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "czestochowa"
+      }
+    },
+    {
+      "id": "pwik_gliwice",
+      "utility": "water",
+      "order": {
+        "frontend": 43,
+        "rust": 48,
+        "androidSingle": 43,
+        "addon": 38
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "PWiK Gliwice",
+            "en": "PWiK Gliwice"
+          },
+          "shortName": {
+            "pl": "PWiK Gliwice",
+            "en": "PWiK Gliwice"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "PWiK Gliwice"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "PWiK Gliwice",
+            "en": "PWiK Gliwice"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_pwik_gliwice",
+            "name": {
+              "pl": "PWiK Gliwice",
+              "en": "PWiK Gliwice"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "PwikGliwice",
+          "constructor": "pwik_gliwice::PwikGliwiceProvider"
+        },
+        "android": {
+          "legacyComponentClass": "PwikGliwiceWidgetProvider",
+          "legacyLabelResource": "widget_label_pwik_gliwice"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "PWiK",
+          "Gliwice"
+        ],
+        "location": "Gliwice",
+        "aggregateUtility": "water",
+        "aggregateOrder": 11
+      },
+      "card": {
+        "name": "PWiK Gliwice",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "pwik_gliwice_area"
+      }
+    },
+    {
+      "id": "pwik_gorzow",
+      "utility": "water",
+      "order": {
+        "frontend": 44,
+        "rust": 47,
+        "androidSingle": 41,
+        "addon": 39
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "PWiK Gorzów",
+            "en": "PWiK Gorzów"
+          },
+          "shortName": {
+            "pl": "PWiK Gorzów",
+            "en": "PWiK Gorzów"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "PWiK Gorzów Wielkopolski"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "PWiK Gorzów Wielkopolski",
+            "en": "PWiK Gorzów Wielkopolski"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_pwik_gorzow",
+            "name": {
+              "pl": "PWiK Gorzów Wielkopolski",
+              "en": "PWiK Gorzów Wielkopolski"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "PwikGorzow",
+          "constructor": "pwik_gorzow::PwikGorzowProvider"
+        },
+        "android": {
+          "legacyComponentClass": "PwikGorzowWidgetProvider",
+          "legacyLabelResource": "widget_label_pwik_gorzow"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "PWiK",
+          "Gorzów Wielkopolski"
+        ],
+        "location": "Gorzów Wielkopolski",
+        "aggregateUtility": "water",
+        "aggregateOrder": 29
+      },
+      "card": {
+        "name": "PWiK Gorzów",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "pwik_gorzow_area"
+      }
+    },
+    {
+      "id": "pwik_kalisz",
+      "utility": "water",
+      "order": {
+        "frontend": 45,
+        "rust": 29,
+        "androidSingle": 34,
+        "addon": null
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "PWiK Kalisz",
+            "en": "PWiK Kalisz"
+          },
+          "shortName": {
+            "pl": "PWiK Kalisz",
+            "en": "PWiK Kalisz"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "PWiK Kalisz"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "PWiK Kalisz",
+            "en": "PWiK Kalisz"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_pwik_kalisz",
+            "name": {
+              "pl": "PWiK Kalisz",
+              "en": "PWiK Kalisz"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "PwikKalisz",
+          "constructor": "pwik_kalisz::PwikKaliszProvider"
+        },
+        "android": {
+          "legacyComponentClass": "PwikKaliszWidgetProvider",
+          "legacyLabelResource": "widget_label_pwik_kalisz"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": true,
+        "addonAllowed": false
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "PWiK",
+          "Kalisz"
+        ],
+        "location": "Kalisz",
+        "aggregateUtility": "water",
+        "aggregateOrder": 9
+      },
+      "card": {
+        "name": "PWIK KALISZ",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "kalisz"
+      }
+    },
+    {
+      "id": "pwik_olsztyn",
+      "utility": "water",
+      "order": {
+        "frontend": 46,
+        "rust": 40,
+        "androidSingle": 40,
+        "addon": 40
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "PWiK Olsztyn",
+            "en": "PWiK Olsztyn"
+          },
+          "shortName": {
+            "pl": "PWiK Olsztyn",
+            "en": "PWiK Olsztyn"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "PWiK Olsztyn"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "PWiK Olsztyn",
+            "en": "PWiK Olsztyn"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_pwik_olsztyn",
+            "name": {
+              "pl": "PWiK Olsztyn",
+              "en": "PWiK Olsztyn"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "PwikOlsztyn",
+          "constructor": "pwik_olsztyn::PwikOlsztynProvider"
+        },
+        "android": {
+          "legacyComponentClass": "PwikOlsztynWidgetProvider",
+          "legacyLabelResource": "widget_label_pwik_olsztyn"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "PWiK",
+          "Olsztyn"
+        ],
+        "location": "Olsztyn",
+        "aggregateUtility": "water",
+        "aggregateOrder": 12
+      },
+      "card": {
+        "name": "PWiK Olsztyn",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "pwik_olsztyn_area"
+      }
+    },
+    {
+      "id": "pwik_ruda_slaska",
+      "utility": "water",
+      "order": {
+        "frontend": 47,
+        "rust": 56,
+        "androidSingle": 49,
+        "addon": 41
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "PWiK Ruda Śląska",
+            "en": "PWiK Ruda Śląska"
+          },
+          "shortName": {
+            "pl": "PWiK Ruda Śl.",
+            "en": "PWiK Ruda Śl."
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "PWiK Ruda Śląska"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "PWiK Ruda Śląska",
+            "en": "PWiK Ruda Śląska"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_pwik_ruda_slaska",
+            "name": {
+              "pl": "PWiK Ruda Śląska",
+              "en": "PWiK Ruda Śląska"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "PwikRudaSlaska",
+          "constructor": "pwik_ruda_slaska::PwikRudaSlaskaProvider"
+        },
+        "android": {
+          "legacyComponentClass": "PwikRudaSlaskaWidgetProvider",
+          "legacyLabelResource": "widget_label_pwik_ruda_slaska"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "PWiK",
+          "Ruda Śląska"
+        ],
+        "location": "Ruda Śląska",
+        "aggregateUtility": "water",
+        "aggregateOrder": 31
+      },
+      "card": {
+        "name": "PWiK Ruda Śląska",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "ruda_slaska"
+      }
+    },
+    {
+      "id": "pwik_rybnik",
+      "utility": "water",
+      "order": {
+        "frontend": 48,
+        "rust": 57,
+        "androidSingle": 50,
+        "addon": 42
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "PWiK Rybnik",
+            "en": "PWiK Rybnik"
+          },
+          "shortName": {
+            "pl": "PWiK Rybnik",
+            "en": "PWiK Rybnik"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "PWiK Rybnik"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "PWiK Rybnik",
+            "en": "PWiK Rybnik"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_pwik_rybnik",
+            "name": {
+              "pl": "PWiK Rybnik",
+              "en": "PWiK Rybnik"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "PwikRybnik",
+          "constructor": "pwik_rybnik::PwikRybnikProvider"
+        },
+        "android": {
+          "legacyComponentClass": "PwikRybnikWidgetProvider",
+          "legacyLabelResource": "widget_label_pwik_rybnik"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "PWiK",
+          "Rybnik"
+        ],
+        "location": "Rybnik",
+        "aggregateUtility": "water",
+        "aggregateOrder": 32
+      },
+      "card": {
+        "name": "PWiK Rybnik",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "pwik_rybnik_area"
+      }
+    },
+    {
+      "id": "rpwik_tychy",
+      "utility": "water",
+      "order": {
+        "frontend": 49,
+        "rust": 49,
+        "androidSingle": 42,
+        "addon": 43
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "RPWiK Tychy",
+            "en": "RPWiK Tychy"
+          },
+          "shortName": {
+            "pl": "RPWiK Tychy",
+            "en": "RPWiK Tychy"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "RPWiK Tychy"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "RPWiK Tychy",
+            "en": "RPWiK Tychy"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_rpwik_tychy",
+            "name": {
+              "pl": "RPWiK Tychy",
+              "en": "RPWiK Tychy"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "RpwikTychy",
+          "constructor": "rpwik_tychy::RpwikTychyProvider"
+        },
+        "android": {
+          "legacyComponentClass": "RpwikTychyWidgetProvider",
+          "legacyLabelResource": "widget_label_rpwik_tychy"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "RPWiK",
+          "Tychy"
+        ],
+        "location": "Tychy",
+        "aggregateUtility": "water",
+        "aggregateOrder": 30
+      },
+      "card": {
+        "name": "RPWiK Tychy",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "rpwik_tychy_area"
+      }
+    },
+    {
+      "id": "sosnowieckie_wodociagi",
+      "utility": "water",
+      "order": {
+        "frontend": 50,
+        "rust": 53,
+        "androidSingle": 46,
+        "addon": 45
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "Sosnowieckie Wodociągi",
+            "en": "Sosnowieckie Wodociągi"
+          },
+          "shortName": {
+            "pl": "Wodociągi Sosnowiec",
+            "en": "Sosnowiec Water"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "Sosnowieckie Wodociągi"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "Sosnowieckie Wodociągi",
+            "en": "Sosnowieckie Wodociągi"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_sosnowieckie_wodociagi",
+            "name": {
+              "pl": "Sosnowieckie Wodociągi",
+              "en": "Sosnowieckie Wodociągi"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "SosnowieckieWodociagi",
+          "constructor": "sosnowieckie_wodociagi::SosnowieckieWodociagiProvider"
+        },
+        "android": {
+          "legacyComponentClass": "SosnowieckieWodociagiWidgetProvider",
+          "legacyLabelResource": "widget_label_sosnowieckie_wodociagi"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "Wodociągi",
+          "Sosnowiec"
+        ],
+        "location": "Sosnowiec",
+        "aggregateUtility": "water",
+        "aggregateOrder": 34
+      },
+      "card": {
+        "name": "Sosnowieckie Wodociągi",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "sosnowiec"
+      }
+    },
+    {
+      "id": "tarnowskie_wodociagi",
+      "utility": "water",
+      "order": {
+        "frontend": 51,
+        "rust": 54,
+        "androidSingle": 47,
+        "addon": 46
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "Tarnowskie Wodociągi",
+            "en": "Tarnowskie Wodociągi"
+          },
+          "shortName": {
+            "pl": "TW Tarnów",
+            "en": "TW Tarnów"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "Tarnowskie Wodociągi"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "Tarnowskie Wodociągi",
+            "en": "Tarnowskie Wodociągi"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_tarnowskie_wodociagi",
+            "name": {
+              "pl": "Tarnowskie Wodociągi",
+              "en": "Tarnowskie Wodociągi"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "TarnowskieWodociagi",
+          "constructor": "tarnowskie_wodociagi::TarnowskieWodociagiProvider"
+        },
+        "android": {
+          "legacyComponentClass": "TarnowskieWodociagiWidgetProvider",
+          "legacyLabelResource": "widget_label_tarnowskie_wodociagi"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "Wodociągi",
+          "Tarnów"
+        ],
+        "location": "Tarnów",
+        "aggregateUtility": "water",
+        "aggregateOrder": 35
+      },
+      "card": {
+        "name": "Tarnowskie Wodociągi",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "tarnowskie_wodociagi_area"
+      }
+    },
+    {
+      "id": "torunskie_wodociagi",
+      "utility": "water",
+      "order": {
+        "frontend": 52,
+        "rust": 27,
+        "androidSingle": 38,
+        "addon": 36
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "Toruńskie Wodociągi",
+            "en": "Toruńskie Wodociągi"
+          },
+          "shortName": {
+            "pl": "Toruńskie Wodociągi",
+            "en": "Toruńskie Wodociągi"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "Toruńskie Wodociągi"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "TW Toruń",
+            "en": "TW Toruń"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_torunskie_wodociagi",
+            "name": {
+              "pl": "Toruńskie Wodociągi",
+              "en": "Toruńskie Wodociągi"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "TorunskieWodociagi",
+          "constructor": "torunskie_wodociagi::TorunskieWodociagiProvider"
+        },
+        "android": {
+          "legacyComponentClass": "TorunskieWodociagiWidgetProvider",
+          "legacyLabelResource": "widget_label_torunskie_wodociagi"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "Toruńskie Wodociągi",
+          "Toruń"
+        ],
+        "location": "Toruń",
+        "aggregateUtility": "water",
+        "aggregateOrder": 17
+      },
+      "card": {
+        "name": "Toruńskie Wodociągi",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "torunskie_wodociagi_area"
+      }
+    },
+    {
+      "id": "wik_opole",
+      "utility": "water",
+      "order": {
+        "frontend": 53,
+        "rust": 41,
+        "androidSingle": 51,
+        "addon": 48
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "WiK Opole",
+            "en": "WiK Opole"
+          },
+          "shortName": {
+            "pl": "WiK Opole",
+            "en": "WiK Opole"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "WiK Opole"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "WiK Opole",
+            "en": "WiK Opole"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_wik_opole",
+            "name": {
+              "pl": "Wodociągi i Kanalizacja w Opolu",
+              "en": "Opole Water and Sewerage"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "WikOpole",
+          "constructor": "wik_opole::WikOpoleProvider"
+        },
+        "android": {
+          "legacyComponentClass": "WikOpoleWidgetProvider",
+          "legacyLabelResource": "widget_label_wik_opole"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "WiK",
+          "Opole"
+        ],
+        "location": "Opole",
+        "aggregateUtility": "water",
+        "aggregateOrder": 13
+      },
+      "card": {
+        "name": "WiK Opole",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "wik_opole_area"
+      }
+    },
+    {
+      "id": "wm_radom",
+      "utility": "water",
+      "order": {
+        "frontend": 54,
+        "rust": 62,
+        "androidSingle": 28,
+        "addon": 20
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "WM Radom",
+            "en": "WM Radom"
+          },
+          "shortName": {
+            "pl": "WM Radom",
+            "en": "WM Radom"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "WM Radom"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "WM Radom",
+            "en": "WM Radom"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_wm_radom",
+            "name": {
+              "pl": "WM Radom",
+              "en": "WM Radom"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "WmRadom",
+          "constructor": "wm_radom::WmRadomProvider"
+        },
+        "android": {
+          "legacyComponentClass": "WmRadomWidgetProvider",
+          "legacyLabelResource": "widget_label_wm_radom"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "Wodociągi",
+          "Radom"
+        ],
+        "location": "Radom",
+        "aggregateUtility": "water",
+        "aggregateOrder": 4
+      },
+      "card": {
+        "name": "WM_RADOM",
+        "icon": "⚠️",
+        "color": "#757575"
+      },
+      "frontend": {
+        "regionMatcher": "wm_radom_area"
+      }
+    },
+    {
+      "id": "wmk",
+      "utility": "water",
+      "order": {
+        "frontend": 55,
+        "rust": 15,
+        "androidSingle": 27,
+        "addon": 19
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "WMK Kraków",
+            "en": "WMK Kraków"
+          },
+          "shortName": {
+            "pl": "WMK",
+            "en": "WMK"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "WMK Kraków"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "WMK",
+            "en": "WMK"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_wmk",
+            "name": {
+              "pl": "Wodociągi Miasta Krakowa",
+              "en": "Wodociągi Miasta Krakowa"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "Wmk",
+          "constructor": "wmk::WmkProvider"
+        },
+        "android": {
+          "legacyComponentClass": "WmkWidgetProvider",
+          "legacyLabelResource": "widget_label_wmk"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "Wodociągi Miasta Krakowa",
+          "Kraków"
+        ],
+        "location": "Kraków",
+        "aggregateUtility": "water",
+        "aggregateOrder": 3
+      },
+      "card": {
+        "name": "WMK",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "krakow"
+      }
+    },
+    {
+      "id": "wodociagi_bialostockie",
+      "utility": "water",
+      "order": {
+        "frontend": 56,
+        "rust": 28,
+        "androidSingle": 36,
+        "addon": 35
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "Wodociągi Białostockie",
+            "en": "Wodociągi Białostockie"
+          },
+          "shortName": {
+            "pl": "WOBI Białystok",
+            "en": "WOBI Białystok"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "Wodociągi Białostockie"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "WOBI BST",
+            "en": "WOBI BST"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_wodociagi_bialostockie",
+            "name": {
+              "pl": "Wodociągi Białostockie",
+              "en": "Wodociągi Białostockie"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "WodociagiBialostockie",
+          "constructor": "wodociagi_bialostockie::WodociagiBialostockieProvider"
+        },
+        "android": {
+          "legacyComponentClass": "WodociagiBialostockieWidgetProvider",
+          "legacyLabelResource": "widget_label_wodociagi_bialostockie"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "WOBI",
+          "Białystok"
+        ],
+        "location": "Białystok",
+        "aggregateUtility": "water",
+        "aggregateOrder": 14
+      },
+      "card": {
+        "name": "Wodociągi Białostockie",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "wodociagi_bialostockie_area"
+      }
+    },
+    {
+      "id": "wodociagi_kieleckie",
+      "utility": "water",
+      "order": {
+        "frontend": 57,
+        "rust": 26,
+        "androidSingle": 37,
+        "addon": 34
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "Wodociągi Kieleckie",
+            "en": "Wodociągi Kieleckie"
+          },
+          "shortName": {
+            "pl": "WK Kielce",
+            "en": "WK Kielce"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "Wodociągi Kieleckie"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "WK Kielce",
+            "en": "WK Kielce"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_wodociagi_kieleckie",
+            "name": {
+              "pl": "Wodociągi Kieleckie",
+              "en": "Wodociągi Kieleckie"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "WodociagiKieleckie",
+          "constructor": "wodociagi_kieleckie::WodociagiKieleckieProvider"
+        },
+        "android": {
+          "legacyComponentClass": "WodociagiKieleckieWidgetProvider",
+          "legacyLabelResource": "widget_label_wodociagi_kieleckie"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "Wodociągi",
+          "Kielce"
+        ],
+        "location": "Kielce",
+        "aggregateUtility": "water",
+        "aggregateOrder": 15
+      },
+      "card": {
+        "name": "Wodociągi Kieleckie",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "wodociagi_kieleckie_area"
+      }
+    },
+    {
+      "id": "wodociagi_plockie",
+      "utility": "water",
+      "order": {
+        "frontend": 58,
+        "rust": 24,
+        "androidSingle": 35,
+        "addon": 33
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "Wodociągi Płockie",
+            "en": "Wodociągi Płockie"
+          },
+          "shortName": {
+            "pl": "Wodociągi Płockie",
+            "en": "Wodociągi Płockie"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "Wodociągi Płockie"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "WP Płock",
+            "en": "WP Płock"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_wodociagi_plockie",
+            "name": {
+              "pl": "Wodociągi Płockie",
+              "en": "Wodociągi Płockie"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "WodociagiPlockie",
+          "constructor": "wodociagi_plockie::WodociagiPlockieProvider"
+        },
+        "android": {
+          "legacyComponentClass": "WodociagiPlockieWidgetProvider",
+          "legacyLabelResource": "widget_label_wodociagi_plockie"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "Wodociągi",
+          "Płock"
+        ],
+        "location": "Płock",
+        "aggregateUtility": "water",
+        "aggregateOrder": 16
+      },
+      "card": {
+        "name": "WODOCIAGI PLOCKIE",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "plock"
+      }
+    },
+    {
+      "id": "wpwik_walbrzych",
+      "utility": "water",
+      "order": {
+        "frontend": 59,
+        "rust": 50,
+        "androidSingle": 44,
+        "addon": 44
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "WPWiK Wałbrzych",
+            "en": "WPWiK Wałbrzych"
+          },
+          "shortName": {
+            "pl": "WPWiK Wałbrzych",
+            "en": "WPWiK Wałbrzych"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "WPWiK Wałbrzych"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "WPWiK Wałbrzych",
+            "en": "WPWiK Wałbrzych"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_wpwik_walbrzych",
+            "name": {
+              "pl": "WPWiK Wałbrzych",
+              "en": "WPWiK Wałbrzych"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "WpwikWalbrzych",
+          "constructor": "wpwik_walbrzych::WpwikWalbrzychProvider"
+        },
+        "android": {
+          "legacyComponentClass": "WpwikWalbrzychWidgetProvider",
+          "legacyLabelResource": "widget_label_wpwik_walbrzych"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "WPWiK",
+          "Wałbrzych"
+        ],
+        "location": "Wałbrzych",
+        "aggregateUtility": "water",
+        "aggregateOrder": 33
+      },
+      "card": {
+        "name": "WPWiK Wałbrzych",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "wpwik_walbrzych_area"
+      }
+    },
+    {
+      "id": "zabrzanskie_wodociagi",
+      "utility": "water",
+      "order": {
+        "frontend": 60,
+        "rust": 55,
+        "androidSingle": 48,
+        "addon": 47
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "ZPWiK Zabrze",
+            "en": "ZPWiK Zabrze"
+          },
+          "shortName": {
+            "pl": "ZPWiK Zabrze",
+            "en": "ZPWiK Zabrze"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "ZPWiK Zabrze"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "ZPWiK Zabrze",
+            "en": "ZPWiK Zabrze"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_zabrzanskie_wodociagi",
+            "name": {
+              "pl": "ZPWiK Zabrze",
+              "en": "ZPWiK Zabrze"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "ZabrzanskieWodociagi",
+          "constructor": "zabrzanskie_wodociagi::ZabrzanskieWodociagiProvider"
+        },
+        "android": {
+          "legacyComponentClass": "ZabrzanskieWodociagiWidgetProvider",
+          "legacyLabelResource": "widget_label_zabrzanskie_wodociagi"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "ZPWiK",
+          "Zabrze"
+        ],
+        "location": "Zabrze",
+        "aggregateUtility": "water",
+        "aggregateOrder": 36
+      },
+      "card": {
+        "name": "ZPWiK Zabrze",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "zabrze"
+      }
+    },
+    {
+      "id": "zwik_lodz",
+      "utility": "water",
+      "order": {
+        "frontend": 61,
+        "rust": 22,
+        "androidSingle": 32,
+        "addon": 31
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "ZWIK Łódź",
+            "en": "ZWiK Łódź"
+          },
+          "shortName": {
+            "pl": "ZWIK Łódź",
+            "en": "ZWiK Łódź"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "ZWiK Łódź"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "ZWIK Łódź",
+            "en": "ZWIK Łódź"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_zwik_lodz",
+            "name": {
+              "pl": "ZWIK Łódź",
+              "en": "ZWiK Łódź"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "ZwikLodz",
+          "constructor": "zwik_lodz::ZwikLodzProvider"
+        },
+        "android": {
+          "legacyComponentClass": "ZwikLodzWidgetProvider",
+          "legacyLabelResource": "widget_label_zwik_lodz"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "ZWiK",
+          "Łódź"
+        ],
+        "location": "Łódź",
+        "aggregateUtility": "water",
+        "aggregateOrder": 7
+      },
+      "card": {
+        "name": "ZWIK LODZ",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "lodz"
+      }
+    },
+    {
+      "id": "zwik_zielona_gora",
+      "utility": "water",
+      "order": {
+        "frontend": 62,
+        "rust": 23,
+        "androidSingle": 33,
+        "addon": 32
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "ZWiK Zielona Góra",
+            "en": "ZWiK Zielona Góra"
+          },
+          "shortName": {
+            "pl": "ZWiK Zielona Góra",
+            "en": "ZWiK Zielona Góra"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "ZWiK Zielona Góra"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "ZWiK ZG",
+            "en": "ZWiK ZG"
+          },
+          "legacyWidget": {
+            "resource": "widget_label_zwik_zielona_gora",
+            "name": {
+              "pl": "ZWiK Zielona Góra",
+              "en": "ZWiK Zielona Góra"
+            }
+          }
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "ZwikZielonaGora",
+          "constructor": "zwik_zielona_gora::ZwikZielonaGoraProvider"
+        },
+        "android": {
+          "legacyComponentClass": "ZwikZielonaGoraWidgetProvider",
+          "legacyLabelResource": "widget_label_zwik_zielona_gora"
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "water",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "ZWiK",
+          "Zielona Góra"
+        ],
+        "location": "Zielona Góra",
+        "aggregateUtility": "water",
+        "aggregateOrder": 8
+      },
+      "card": {
+        "name": "ZWiK Zielona Góra",
+        "icon": "💧",
+        "color": "#2196f3"
+      },
+      "frontend": {
+        "regionMatcher": "zwik_zielona_gora_area"
+      }
+    }
+  ],
+  "androidLegacyWidgets": [
+    {
+      "componentClass": "SingleWidgetProvider",
+      "resource": "widget_single_provider_label",
+      "name": {
+        "pl": "Pojedynczy dostawca",
+        "en": "Single provider"
+      }
+    },
+    {
+      "componentClass": "TriWidgetProvider",
+      "resource": "widget_label_tri",
+      "name": {
+        "pl": "Adres: prąd, ciepło, woda",
+        "en": "Address: power, heat, water"
+      }
+    },
+    {
+      "componentClass": "AllWidgetProvider",
+      "resource": "widget_label_all",
+      "name": {
+        "pl": "Adres: wszystkie media",
+        "en": "Address: all utilities"
+      }
+    }
+  ]
+}
