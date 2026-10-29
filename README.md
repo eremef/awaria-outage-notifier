@@ -105,10 +105,10 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **Responsive Dark/Light mode**: Native transition support.
 - **Accessibility**: Built with WCAG 2.2 AAA partial compliance in mind. Features a dedicated High-Contrast mode with fully visible custom checkboxes and dynamically colored scalable SVG icons for superior readability.
 - **Android Widgets**:
-  - **Individual Source Widgets**: Separate widgets for all providers.
-  - **Optimized Layout**: Compact 1x1 design showing alert counts for your specific street.
-  - **One-tap refresh**: Tap the widget to trigger an immediate update.
-  - **Shared configuration**: Settings sync automatically from the main app.
+  - **Single provider**: Search the provider list, filter by utility type, and choose one provider per widget. Providers enabled in the app appear first; disabled providers can be selected and show an inactive state until enabled.
+  - **Independent addresses**: Each new single-provider widget can follow the primary address or use an active saved address. The three- and four-utility widgets retain their address selection.
+  - **Compact layouts and refresh**: Widgets adapt to their size and refresh through background work.
+  - **Existing widgets**: Previously placed provider-specific widgets keep their receiver identities and update behavior. Android 9+ launchers may hide their picker entries using the system's `hide_from_picker` hint; launchers can ignore the hint, and Android 8.0–8.1 does not support it. Reconfiguration availability also depends on the launcher.
 - **Privacy First**: No cloud accounts. Your location and settings stay on your device.
 
 ## Prerequisites
@@ -169,7 +169,7 @@ The APK will be located at:
 
 - **Frontend**: Vanilla HTML/JS/CSS in `public/`. Indigo design system with custom HSL tokens.
 - **Backend (Rust)**: `src-tauri/src/lib.rs` orchestrates asynchronous fetching from multiple APIs and converts them to a `UnifiedAlert` format.
-- **Android Widgets**: Native implementation utilizing a `BaseWidgetProvider` with specific providers for each utility (e.g. `TauronWidgetProvider`, `StoenWidgetProvider`). Includes a `WorkManager` background worker for periodic updates.
+- **Android Widgets**: New single-provider instances use `SingleWidgetProvider` and the explicit `SingleProviderCatalog`; existing provider-specific receiver components remain for compatibility. Tri- and four-utility widgets retain their dedicated providers. `WidgetUpdateWorker` updates generic instances by their saved provider and address, plus legacy and aggregate instances.
 
 ## Settings
 

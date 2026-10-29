@@ -13,507 +13,63 @@ class WidgetUpdateWorker(
 ) : CoroutineWorker(context, workerParams) {
 
     override suspend fun doWork(): Result {
-        // CRITICAL: Initialize TLS verifier for Rust network requests.
         WidgetUtils.initVerifier(context)
-        
-        val appWidgetManager = AppWidgetManager.getInstance(context)
-        
-        // Update Tauron widgets
-        val tauronName = ComponentName(context, TauronWidgetProvider::class.java)
-        val tauronIds = appWidgetManager.getAppWidgetIds(tauronName)
-        val tauronProvider = TauronWidgetProvider()
-        Log.d("WidgetWorker", "Updating ${tauronIds.size} Tauron widgets")
-        for (id in tauronIds) {
+        val manager = AppWidgetManager.getInstance(context)
+        var failedWidgets = 0
+
+        // The generic receiver owns new single-provider widgets; configuration is resolved by ID.
+        failedWidgets += updateProvider(manager, SingleWidgetProvider::class.java, SingleWidgetProvider())
+
+        // Compare the explicit catalog with packaged receivers, then update both sets so a catalog
+        // omission is logged without stranding a legacy widget placed by an earlier app release.
+        SingleProviderCatalog.manifestParityIssues(context).forEach { issue ->
+            Log.e(TAG, issue)
+        }
+        val legacyComponents = SingleProviderCatalog.entries.map { it.legacyComponentClass }
+            .toSet() + SingleProviderCatalog.legacyManifestComponents(context)
+        legacyComponents.sorted().forEach { className ->
             try {
-                tauronProvider.updateWidget(context, appWidgetManager, id)
-            } catch (e: Exception) {
-                Log.e("WidgetWorker", "Failed to update Tauron widget $id", e)
+                val providerClass = Class.forName("${context.packageName}.$className")
+                    .asSubclass(BaseWidgetProvider::class.java)
+                val provider = providerClass.getDeclaredConstructor().newInstance()
+                failedWidgets += updateProvider(manager, providerClass, provider)
+            } catch (error: Exception) {
+                Log.e(TAG, "Could not update legacy widget component $className", error)
             }
         }
 
-        // Update MPWiK widgets
-        val mpwikName = ComponentName(context, MpwikWidgetProvider::class.java)
-        val mpwikIds = appWidgetManager.getAppWidgetIds(mpwikName)
-        val mpwikProvider = MpwikWidgetProvider()
-        for (id in mpwikIds) {
-            mpwikProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update MPWiK Warszawa widgets
-        val mpwikWarszawaName = ComponentName(context, MpwikWarszawaWidgetProvider::class.java)
-        val mpwikWarszawaIds = appWidgetManager.getAppWidgetIds(mpwikWarszawaName)
-        val mpwikWarszawaProvider = MpwikWarszawaWidgetProvider()
-        for (id in mpwikWarszawaIds) {
-            mpwikWarszawaProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update Energa widgets
-        val energaName = ComponentName(context, EnergaWidgetProvider::class.java)
-        val energaIds = appWidgetManager.getAppWidgetIds(energaName)
-        val energaProvider = EnergaWidgetProvider()
-        for (id in energaIds) {
-            energaProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update Fortum widgets
-        val fortumName = ComponentName(context, FortumWidgetProvider::class.java)
-        val fortumIds = appWidgetManager.getAppWidgetIds(fortumName)
-        val fortumProvider = FortumWidgetProvider()
-        for (id in fortumIds) {
-            fortumProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update Enea widgets
-        val eneaName = ComponentName(context, EneaWidgetProvider::class.java)
-        val eneaIds = appWidgetManager.getAppWidgetIds(eneaName)
-        val eneaProvider = EneaWidgetProvider()
-        for (id in eneaIds) {
-            eneaProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update PGE widgets
-        val pgeName = ComponentName(context, PgeWidgetProvider::class.java)
-        val pgeIds = appWidgetManager.getAppWidgetIds(pgeName)
-        val pgeProvider = PgeWidgetProvider()
-        for (id in pgeIds) {
-            pgeProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update PGE Toruń heat widgets
-        val pgeTorunHeatName = ComponentName(context, PgeTorunHeatWidgetProvider::class.java)
-        val pgeTorunHeatIds = appWidgetManager.getAppWidgetIds(pgeTorunHeatName)
-        val pgeTorunHeatProvider = PgeTorunHeatWidgetProvider()
-        for (id in pgeTorunHeatIds) {
-            pgeTorunHeatProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update EPEC Elbląg widgets
-        val epecElblagName = ComponentName(context, EpecElblagWidgetProvider::class.java)
-        val epecElblagIds = appWidgetManager.getAppWidgetIds(epecElblagName)
-        val epecElblagProvider = EpecElblagWidgetProvider()
-        for (id in epecElblagIds) {
-            epecElblagProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update PEC Gliwice widgets
-        val pecGliwiceName = ComponentName(context, PecGliwiceWidgetProvider::class.java)
-        val pecGliwiceIds = appWidgetManager.getAppWidgetIds(pecGliwiceName)
-        val pecGliwiceProvider = PecGliwiceWidgetProvider()
-        for (id in pecGliwiceIds) {
-            pecGliwiceProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update Stoen widgets
-        val stoenName = ComponentName(context, StoenWidgetProvider::class.java)
-        val stoenIds = appWidgetManager.getAppWidgetIds(stoenName)
-        val stoenProvider = StoenWidgetProvider()
-        for (id in stoenIds) {
-            stoenProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update Tri-Status widgets
-        val triName = ComponentName(context, TriWidgetProvider::class.java)
-        val triIds = appWidgetManager.getAppWidgetIds(triName)
-        val triProvider = TriWidgetProvider()
-        Log.d("WidgetWorker", "Updating ${triIds.size} Tri-Status widgets")
-        for (id in triIds) {
-            try {
-                triProvider.updateWidget(context, appWidgetManager, id)
-            } catch (e: Exception) {
-                Log.e("WidgetWorker", "Failed to update Tri-Status widget $id", e)
-            }
-        }
-
-        // Update All-Status widgets
-        val allName = ComponentName(context, AllWidgetProvider::class.java)
-        val allIds = appWidgetManager.getAppWidgetIds(allName)
-        val allProvider = AllWidgetProvider()
-        Log.d("WidgetWorker", "Updating ${allIds.size} All-Status widgets")
-        for (id in allIds) {
-            try {
-                allProvider.updateWidget(context, appWidgetManager, id)
-            } catch (e: Exception) {
-                Log.e("WidgetWorker", "Failed to update All-Status widget $id", e)
-            }
-        }
-
-        // Update PSG widgets
-        val psgName = ComponentName(context, PsgWidgetProvider::class.java)
-        val psgIds = appWidgetManager.getAppWidgetIds(psgName)
-        val psgProvider = PsgWidgetProvider()
-        for (id in psgIds) {
-            psgProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update WMK widgets
-        val wmkName = ComponentName(context, WmkWidgetProvider::class.java)
-        val wmkIds = appWidgetManager.getAppWidgetIds(wmkName)
-        val wmkProvider = WmkWidgetProvider()
-        for (id in wmkIds) {
-            wmkProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update Aquanet widgets
-        val aquanetName = ComponentName(context, AquanetWidgetProvider::class.java)
-        val aquanetIds = appWidgetManager.getAppWidgetIds(aquanetName)
-        val aquanetProvider = AquanetWidgetProvider()
-        for (id in aquanetIds) {
-            aquanetProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update AQUA Bielsko widgets
-        val aquaBielskoName = ComponentName(context, AquaBielskoWidgetProvider::class.java)
-        val aquaBielskoIds = appWidgetManager.getAppWidgetIds(aquaBielskoName)
-        val aquaBielskoProvider = AquaBielskoWidgetProvider()
-        for (id in aquaBielskoIds) {
-            aquaBielskoProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update PWiK Gorzów widgets
-        val pwikGorzowName = ComponentName(context, PwikGorzowWidgetProvider::class.java)
-        val pwikGorzowIds = appWidgetManager.getAppWidgetIds(pwikGorzowName)
-        val pwikGorzowProvider = PwikGorzowWidgetProvider()
-        for (id in pwikGorzowIds) {
-            pwikGorzowProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        val rpwikTychyName = ComponentName(context, RpwikTychyWidgetProvider::class.java)
-        val rpwikTychyIds = appWidgetManager.getAppWidgetIds(rpwikTychyName)
-        val rpwikTychyProvider = RpwikTychyWidgetProvider()
-        for (id in rpwikTychyIds) {
-            rpwikTychyProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        val wpwikWalbrzychName = ComponentName(context, WpwikWalbrzychWidgetProvider::class.java)
-        val wpwikWalbrzychIds = appWidgetManager.getAppWidgetIds(wpwikWalbrzychName)
-        val wpwikWalbrzychProvider = WpwikWalbrzychWidgetProvider()
-        for (id in wpwikWalbrzychIds) {
-            wpwikWalbrzychProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update PWiK Gliwice widgets
-        val pwikGliwiceName = ComponentName(context, PwikGliwiceWidgetProvider::class.java)
-        val pwikGliwiceIds = appWidgetManager.getAppWidgetIds(pwikGliwiceName)
-        val pwikGliwiceProvider = PwikGliwiceWidgetProvider()
-        for (id in pwikGliwiceIds) {
-            pwikGliwiceProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        val mwikKoszalinName = ComponentName(context, MwikKoszalinWidgetProvider::class.java)
-        val mwikKoszalinIds = appWidgetManager.getAppWidgetIds(mwikKoszalinName)
-        val mwikKoszalinProvider = MwikKoszalinWidgetProvider()
-        for (id in mwikKoszalinIds) {
-            mwikKoszalinProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        val sosnowieckieWodociagiName = ComponentName(context, SosnowieckieWodociagiWidgetProvider::class.java)
-        val sosnowieckieWodociagiIds = appWidgetManager.getAppWidgetIds(sosnowieckieWodociagiName)
-        val sosnowieckieWodociagiProvider = SosnowieckieWodociagiWidgetProvider()
-        for (id in sosnowieckieWodociagiIds) {
-            sosnowieckieWodociagiProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        val tarnowskieWodociagiName = ComponentName(context, TarnowskieWodociagiWidgetProvider::class.java)
-        val tarnowskieWodociagiIds = appWidgetManager.getAppWidgetIds(tarnowskieWodociagiName)
-        val tarnowskieWodociagiProvider = TarnowskieWodociagiWidgetProvider()
-        for (id in tarnowskieWodociagiIds) {
-            tarnowskieWodociagiProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        val zabrzanskieWodociagiName = ComponentName(context, ZabrzanskieWodociagiWidgetProvider::class.java)
-        val zabrzanskieWodociagiIds = appWidgetManager.getAppWidgetIds(zabrzanskieWodociagiName)
-        val zabrzanskieWodociagiProvider = ZabrzanskieWodociagiWidgetProvider()
-        for (id in zabrzanskieWodociagiIds) {
-            zabrzanskieWodociagiProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        val pwikRudaSlaskaName = ComponentName(context, PwikRudaSlaskaWidgetProvider::class.java)
-        val pwikRudaSlaskaIds = appWidgetManager.getAppWidgetIds(pwikRudaSlaskaName)
-        val pwikRudaSlaskaProvider = PwikRudaSlaskaWidgetProvider()
-        for (id in pwikRudaSlaskaIds) {
-            pwikRudaSlaskaProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        val pwikRybnikName = ComponentName(context, PwikRybnikWidgetProvider::class.java)
-        val pwikRybnikIds = appWidgetManager.getAppWidgetIds(pwikRybnikName)
-        val pwikRybnikProvider = PwikRybnikWidgetProvider()
-        for (id in pwikRybnikIds) {
-            pwikRybnikProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update Dąbrowskie Wodociągi widgets
-        val dabrowskieWodociagiName = ComponentName(context, DabrowskieWodociagiWidgetProvider::class.java)
-        val dabrowskieWodociagiIds = appWidgetManager.getAppWidgetIds(dabrowskieWodociagiName)
-        val dabrowskieWodociagiProvider = DabrowskieWodociagiWidgetProvider()
-        for (id in dabrowskieWodociagiIds) {
-            dabrowskieWodociagiProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update Katowickie Wodociagi widgets
-        val katowickieWodociagiName = ComponentName(context, KatowickieWodociagiWidgetProvider::class.java)
-        val katowickieWodociagiIds = appWidgetManager.getAppWidgetIds(katowickieWodociagiName)
-        val katowickieWodociagiProvider = KatowickieWodociagiWidgetProvider()
-        for (id in katowickieWodociagiIds) {
-            katowickieWodociagiProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update Veolia widgets
-        val veoliaName = ComponentName(context, VeoliaWidgetProvider::class.java)
-        val veoliaIds = appWidgetManager.getAppWidgetIds(veoliaName)
-        val veoliaProvider = VeoliaWidgetProvider()
-        for (id in veoliaIds) {
-            veoliaProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update Veolia Poznan widgets
-        val veoliaPoznanName = ComponentName(context, VeoliaPoznanWidgetProvider::class.java)
-        val veoliaPoznanIds = appWidgetManager.getAppWidgetIds(veoliaPoznanName)
-        val veoliaPoznanProvider = VeoliaPoznanWidgetProvider()
-        for (id in veoliaPoznanIds) {
-            veoliaPoznanProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update Veolia Lodz widgets
-        val veoliaLodzName = ComponentName(context, VeoliaLodzWidgetProvider::class.java)
-        val veoliaLodzIds = appWidgetManager.getAppWidgetIds(veoliaLodzName)
-        val veoliaLodzProvider = VeoliaLodzWidgetProvider()
-        for (id in veoliaLodzIds) {
-            veoliaLodzProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update ZWIK Lodz widgets
-        val zwikLodzName = ComponentName(context, ZwikLodzWidgetProvider::class.java)
-        val zwikLodzIds = appWidgetManager.getAppWidgetIds(zwikLodzName)
-        val zwikLodzProvider = ZwikLodzWidgetProvider()
-        for (id in zwikLodzIds) {
-            zwikLodzProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update ZWiK Zielona Góra widgets
-        val zwikZielonaGoraName = ComponentName(context, ZwikZielonaGoraWidgetProvider::class.java)
-        val zwikZielonaGoraIds = appWidgetManager.getAppWidgetIds(zwikZielonaGoraName)
-        val zwikZielonaGoraProvider = ZwikZielonaGoraWidgetProvider()
-        for (id in zwikZielonaGoraIds) {
-            zwikZielonaGoraProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update PWiK Kalisz widgets
-        val pwikKaliszName = ComponentName(context, PwikKaliszWidgetProvider::class.java)
-        val pwikKaliszIds = appWidgetManager.getAppWidgetIds(pwikKaliszName)
-        val pwikKaliszProvider = PwikKaliszWidgetProvider()
-        for (id in pwikKaliszIds) {
-            pwikKaliszProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update Wodociągi Płockie widgets
-        val wodociagiPlockieName = ComponentName(context, WodociagiPlockieWidgetProvider::class.java)
-        val wodociagiPlockieIds = appWidgetManager.getAppWidgetIds(wodociagiPlockieName)
-        val wodociagiPlockieProvider = WodociagiPlockieWidgetProvider()
-        for (id in wodociagiPlockieIds) {
-            wodociagiPlockieProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update PWiK Częstochowa widgets
-        val pwikCzestochowaName = ComponentName(context, PwikCzestochowaWidgetProvider::class.java)
-        val pwikCzestochowaIds = appWidgetManager.getAppWidgetIds(pwikCzestochowaName)
-        val pwikCzestochowaProvider = PwikCzestochowaWidgetProvider()
-        for (id in pwikCzestochowaIds) {
-            pwikCzestochowaProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update PWiK Olsztyn widgets
-        val pwikOlsztynName = ComponentName(context, PwikOlsztynWidgetProvider::class.java)
-        val pwikOlsztynIds = appWidgetManager.getAppWidgetIds(pwikOlsztynName)
-        val pwikOlsztynProvider = PwikOlsztynWidgetProvider()
-        for (id in pwikOlsztynIds) {
-            pwikOlsztynProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update Gdańskie Wodociągi widgets
-        val gdanskieWodociagiName = ComponentName(context, GdanskieWodociagiWidgetProvider::class.java)
-        val gdanskieWodociagiIds = appWidgetManager.getAppWidgetIds(gdanskieWodociagiName)
-        val gdanskieWodociagiProvider = GdanskieWodociagiWidgetProvider()
-        for (id in gdanskieWodociagiIds) {
-            gdanskieWodociagiProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update GPEC widgets
-        val gpecName = ComponentName(context, GpecWidgetProvider::class.java)
-        val gpecIds = appWidgetManager.getAppWidgetIds(gpecName)
-        val gpecProvider = GpecWidgetProvider()
-        for (id in gpecIds) {
-            gpecProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update ECO SA widgets
-        val ecoSaName = ComponentName(context, EcoSaWidgetProvider::class.java)
-        val ecoSaIds = appWidgetManager.getAppWidgetIds(ecoSaName)
-        val ecoSaProvider = EcoSaWidgetProvider()
-        for (id in ecoSaIds) {
-            ecoSaProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update OPEC Gdynia widgets
-        val opecGdyniaName = ComponentName(context, OpecGdyniaWidgetProvider::class.java)
-        val opecGdyniaIds = appWidgetManager.getAppWidgetIds(opecGdyniaName)
-        val opecGdyniaProvider = OpecGdyniaWidgetProvider()
-        for (id in opecGdyniaIds) {
-            opecGdyniaProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update KPEC Bydgoszcz widgets
-        val kpecBydgoszczName = ComponentName(context, KpecBydgoszczWidgetProvider::class.java)
-        val kpecBydgoszczIds = appWidgetManager.getAppWidgetIds(kpecBydgoszczName)
-        val kpecBydgoszczProvider = KpecBydgoszczWidgetProvider()
-        for (id in kpecBydgoszczIds) {
-            kpecBydgoszczProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update ENEA Ciepło widgets
-        val eneaCieploName = ComponentName(context, EneaCieploWidgetProvider::class.java)
-        val eneaCieploIds = appWidgetManager.getAppWidgetIds(eneaCieploName)
-        val eneaCieploProvider = EneaCieploWidgetProvider()
-        for (id in eneaCieploIds) {
-            eneaCieploProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update Energa Ciepło Kaliskie widgets
-        val energaCieploKaliskieName = ComponentName(context, EnergaCieploKaliskieWidgetProvider::class.java)
-        val energaCieploKaliskieIds = appWidgetManager.getAppWidgetIds(energaCieploKaliskieName)
-        val energaCieploKaliskieProvider = EnergaCieploKaliskieWidgetProvider()
-        for (id in energaCieploKaliskieIds) {
-            energaCieploKaliskieProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update PUK Rokietnica widgets
-        val pukRokietnicaName = ComponentName(context, PukRokietnicaWidgetProvider::class.java)
-        val pukRokietnicaIds = appWidgetManager.getAppWidgetIds(pukRokietnicaName)
-        val pukRokietnicaProvider = PukRokietnicaWidgetProvider()
-        for (id in pukRokietnicaIds) {
-            pukRokietnicaProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update SEC widgets
-        val secName = ComponentName(context, SecWidgetProvider::class.java)
-        val secIds = appWidgetManager.getAppWidgetIds(secName)
-        val secProvider = SecWidgetProvider()
-        for (id in secIds) {
-            secProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update LPEC widgets
-        val lpecName = ComponentName(context, LpecWidgetProvider::class.java)
-        val lpecIds = appWidgetManager.getAppWidgetIds(lpecName)
-        val lpecProvider = LpecWidgetProvider()
-        for (id in lpecIds) {
-            lpecProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update MPEC Rzeszów widgets
-        val mpecRzeszowName = ComponentName(context, MpecRzeszowWidgetProvider::class.java)
-        val mpecRzeszowIds = appWidgetManager.getAppWidgetIds(mpecRzeszowName)
-        val mpecRzeszowProvider = MpecRzeszowWidgetProvider()
-        for (id in mpecRzeszowIds) {
-            mpecRzeszowProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update MPEC Kielce widgets
-        val mpecKielceName = ComponentName(context, MpecKielceWidgetProvider::class.java)
-        val mpecKielceIds = appWidgetManager.getAppWidgetIds(mpecKielceName)
-        val mpecKielceProvider = MpecKielceWidgetProvider()
-        for (id in mpecKielceIds) {
-            mpecKielceProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update MPWiK Lublin widgets
-        val mpwikLublinName = ComponentName(context, MpwikLublinWidgetProvider::class.java)
-        val mpwikLublinIds = appWidgetManager.getAppWidgetIds(mpwikLublinName)
-        val mpwikLublinProvider = MpwikLublinWidgetProvider()
-        for (id in mpwikLublinIds) {
-            mpwikLublinProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update MPWiK Rzeszów widgets
-        val mpwikRzeszowName = ComponentName(context, MpwikRzeszowWidgetProvider::class.java)
-        val mpwikRzeszowIds = appWidgetManager.getAppWidgetIds(mpwikRzeszowName)
-        val mpwikRzeszowProvider = MpwikRzeszowWidgetProvider()
-        for (id in mpwikRzeszowIds) {
-            mpwikRzeszowProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update MWiK Bydgoszcz widgets
-        val mwikBydgoszczName = ComponentName(context, MwikBydgoszczWidgetProvider::class.java)
-        val mwikBydgoszczIds = appWidgetManager.getAppWidgetIds(mwikBydgoszczName)
-        val mwikBydgoszczProvider = MwikBydgoszczWidgetProvider()
-        for (id in mwikBydgoszczIds) {
-            mwikBydgoszczProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update PEWIK Gdynia widgets
-        val pewikGdyniaName = ComponentName(context, PewikGdyniaWidgetProvider::class.java)
-        val pewikGdyniaIds = appWidgetManager.getAppWidgetIds(pewikGdyniaName)
-        val pewikGdyniaProvider = PewikGdyniaWidgetProvider()
-        for (id in pewikGdyniaIds) {
-            pewikGdyniaProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update Wodociągi Kieleckie widgets
-        val wodociagiKieleckieName = ComponentName(context, WodociagiKieleckieWidgetProvider::class.java)
-        val wodociagiKieleckieIds = appWidgetManager.getAppWidgetIds(wodociagiKieleckieName)
-        val wodociagiKieleckieProvider = WodociagiKieleckieWidgetProvider()
-        for (id in wodociagiKieleckieIds) {
-            wodociagiKieleckieProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update WiK Opole widgets
-        val wikOpoleName = ComponentName(context, WikOpoleWidgetProvider::class.java)
-        val wikOpoleIds = appWidgetManager.getAppWidgetIds(wikOpoleName)
-        val wikOpoleProvider = WikOpoleWidgetProvider()
-        for (id in wikOpoleIds) {
-            wikOpoleProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update Toruńskie Wodociągi widgets
-        val torunskieWodociagiName = ComponentName(context, TorunskieWodociagiWidgetProvider::class.java)
-        val torunskieWodociagiIds = appWidgetManager.getAppWidgetIds(torunskieWodociagiName)
-        val torunskieWodociagiProvider = TorunskieWodociagiWidgetProvider()
-        for (id in torunskieWodociagiIds) {
-            torunskieWodociagiProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update Wodociągi Białostockie widgets
-        val wodociagiBialostockieName = ComponentName(context, WodociagiBialostockieWidgetProvider::class.java)
-        val wodociagiBialostockieIds = appWidgetManager.getAppWidgetIds(wodociagiBialostockieName)
-        val wodociagiBialostockieProvider = WodociagiBialostockieWidgetProvider()
-        for (id in wodociagiBialostockieIds) {
-            wodociagiBialostockieProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update LPWiK Legnica widgets
-        val lpwikLegnicaName = ComponentName(context, LpwikLegnicaWidgetProvider::class.java)
-        val lpwikLegnicaIds = appWidgetManager.getAppWidgetIds(lpwikLegnicaName)
-        val lpwikLegnicaProvider = LpwikLegnicaWidgetProvider()
-        for (id in lpwikLegnicaIds) {
-            lpwikLegnicaProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update Bytomskie Wodociągi widgets
-        val bytomskieWodociagiName = ComponentName(context, BytomskieWodociagiWidgetProvider::class.java)
-        val bytomskieWodociagiIds = appWidgetManager.getAppWidgetIds(bytomskieWodociagiName)
-        val bytomskieWodociagiProvider = BytomskieWodociagiWidgetProvider()
-        for (id in bytomskieWodociagiIds) {
-            bytomskieWodociagiProvider.updateWidget(context, appWidgetManager, id)
-        }
-
-        // Update WM Radom widgets
-        val wmRadomName = ComponentName(context, WmRadomWidgetProvider::class.java)
-        val wmRadomIds = appWidgetManager.getAppWidgetIds(wmRadomName)
-        val wmRadomProvider = WmRadomWidgetProvider()
-        for (id in wmRadomIds) {
-            wmRadomProvider.updateWidget(context, appWidgetManager, id)
-        }
-
+        failedWidgets += updateProvider(manager, TriWidgetProvider::class.java, TriWidgetProvider())
+        failedWidgets += updateProvider(manager, AllWidgetProvider::class.java, AllWidgetProvider())
+        Log.d(TAG, "Widget update finished; failed widget instances: $failedWidgets")
+        // Per-widget failures do not stop updates for other instances or providers.
         return Result.success()
     }
-}
 
+    private suspend fun updateProvider(
+        manager: AppWidgetManager,
+        providerClass: Class<out BaseWidgetProvider>,
+        provider: BaseWidgetProvider
+    ): Int {
+        val component = ComponentName(context, providerClass)
+        val ids = try {
+            manager.getAppWidgetIds(component)
+        } catch (error: Exception) {
+            Log.e(TAG, "Could not enumerate ${providerClass.simpleName}", error)
+            return 0
+        }
+        var failed = 0
+        ids.forEach { id ->
+            try {
+                provider.updateWidget(context, manager, id)
+            } catch (error: Exception) {
+                failed += 1
+                Log.e(TAG, "Failed to update ${providerClass.simpleName} widget $id", error)
+            }
+        }
+        return failed
+    }
+
+    companion object {
+        private const val TAG = "WidgetWorker"
+    }
+}

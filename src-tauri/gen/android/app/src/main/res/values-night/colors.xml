@@ -6,6 +6,7 @@
   <color name="widget_text_label">#B0B0B0</color>
   <color name="widget_text_updated">#B0B0B0</color>
   <color name="widget_border">#333333</color>
+  <color name="widget_selection">#D0BCFF</color>
 
   <!-- Utility Specific Colors (Dark - General) -->
   <color name="utility_power">#F8C32D</color>

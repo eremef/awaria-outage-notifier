@@ -5,7 +5,7 @@
   <dimen name="address_widget_icon_height">16dp</dimen>
   
   <!-- Single Provider Widget Dimensions -->
-  <dimen name="widget_padding">4dp</dimen>
+  <dimen name="widget_padding">6dp</dimen>
   <dimen name="widget_source_text_size">16sp</dimen>
   <dimen name="widget_icon_size">20dp</dimen>
   <dimen name="widget_count_text_size">32sp</dimen>
@@ -17,4 +17,25 @@
   <dimen name="widget_small_count_padding_horizontal">4dp</dimen>
   <dimen name="widget_small_count_text_size">17sp</dimen>
   <dimen name="widget_small_updated_text_size">8sp</dimen>
+
+  <!-- Shape-aware configurable single-provider widget layouts -->
+  <dimen name="widget_single_compact_padding">2dp</dimen>
+  <dimen name="widget_single_compact_source_text_size">10sp</dimen>
+  <dimen name="widget_single_compact_count_text_size">18sp</dimen>
+  <dimen name="widget_single_compact_updated_text_size">10sp</dimen>
+  <dimen name="widget_single_wide_padding">6dp</dimen>
+  <dimen name="widget_single_wide_icon_size">20dp</dimen>
+  <dimen name="widget_single_wide_source_text_size">10sp</dimen>
+  <dimen name="widget_single_wide_count_text_size">20sp</dimen>
+  <dimen name="widget_single_wide_updated_text_size">10sp</dimen>
+  <dimen name="widget_single_tall_padding">6dp</dimen>
+  <dimen name="widget_single_tall_icon_size">14dp</dimen>
+  <dimen name="widget_single_tall_source_text_size">11sp</dimen>
+  <dimen name="widget_single_tall_count_text_size">22sp</dimen>
+  <dimen name="widget_single_tall_updated_text_size">10sp</dimen>
+  <dimen name="widget_single_expanded_padding">6dp</dimen>
+  <dimen name="widget_single_expanded_icon_size">20dp</dimen>
+  <dimen name="widget_single_expanded_source_text_size">12sp</dimen>
+  <dimen name="widget_single_expanded_count_text_size">30sp</dimen>
+  <dimen name="widget_single_expanded_updated_text_size">10sp</dimen>
 </resources>

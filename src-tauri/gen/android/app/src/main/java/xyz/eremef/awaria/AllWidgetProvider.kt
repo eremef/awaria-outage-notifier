@@ -4,7 +4,10 @@ import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.util.Log
+import android.util.SizeF
+import android.view.View
 import android.widget.RemoteViews
 import java.text.SimpleDateFormat
 import java.util.*
@@ -24,7 +27,6 @@ class AllWidgetProvider : BaseWidgetProvider() {
             appWidgetManager: AppWidgetManager,
             appWidgetId: Int
     ) {
-        val views = RemoteViews(context.packageName, R.layout.widget_all_outage)
         val refreshIntent =
                 Intent(context, this::class.java).apply {
                     action = refreshAction
@@ -37,18 +39,48 @@ class AllWidgetProvider : BaseWidgetProvider() {
                         refreshIntent,
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
-        views.setOnClickPendingIntent(R.id.widget_root, pending)
-        views.setTextViewText(R.id.count_power, "–")
-        views.setTextViewText(R.id.count_heat, "–")
-        views.setTextViewText(R.id.count_water, "–")
-        views.setTextViewText(R.id.count_gas, "–")
-        views.setTextViewText(R.id.widget_updated, context.getString(R.string.msg_updating))
-        views.setTextViewText(R.id.widget_address_name, "")
-        // views.setTextViewText(R.id.label_power, context.getString(R.string.label_power))
-        // views.setTextViewText(R.id.label_heat, context.getString(R.string.label_heat))
-        // views.setTextViewText(R.id.label_water, context.getString(R.string.label_water))
-        // views.setTextViewText(R.id.label_gas, context.getString(R.string.label_gas))
-        appWidgetManager.updateAppWidget(appWidgetId, views)
+        val updating = context.getString(R.string.msg_updating)
+        val pendingAddress = context.getString(R.string.widget_accessibility_address_pending)
+        updateResponsiveWidget(context, appWidgetManager, appWidgetId) { views, _ ->
+            views.setOnClickPendingIntent(R.id.widget_root, pending)
+            views.setContentDescription(
+                    R.id.widget_root,
+                    context.getString(R.string.widget_accessibility_refresh)
+            )
+            listOf(R.id.section_power, R.id.section_heat, R.id.section_water, R.id.section_gas).forEach {
+                views.setOnClickPendingIntent(it, pending)
+            }
+            listOf(R.id.count_power, R.id.count_heat, R.id.count_water, R.id.count_gas).forEach {
+                views.setOnClickPendingIntent(it, pending)
+            }
+            views.setTextViewText(R.id.count_power, "–")
+            views.setTextViewText(R.id.count_heat, "–")
+            views.setTextViewText(R.id.count_water, "–")
+            views.setTextViewText(R.id.count_gas, "–")
+            views.setContentDescription(
+                    R.id.count_power,
+                    context.getString(R.string.widget_accessibility_count_loading, context.getString(R.string.label_power), pendingAddress)
+            )
+            views.setContentDescription(
+                    R.id.count_heat,
+                    context.getString(R.string.widget_accessibility_count_loading, context.getString(R.string.label_heat), pendingAddress)
+            )
+            views.setContentDescription(
+                    R.id.count_water,
+                    context.getString(R.string.widget_accessibility_count_loading, context.getString(R.string.label_water), pendingAddress)
+            )
+            views.setContentDescription(
+                    R.id.count_gas,
+                    context.getString(R.string.widget_accessibility_count_loading, context.getString(R.string.label_gas), pendingAddress)
+            )
+            views.setTextViewText(R.id.widget_updated, updating)
+            views.setContentDescription(
+                    R.id.widget_updated,
+                    context.getString(R.string.widget_accessibility_updated, updating)
+            )
+            views.setViewVisibility(R.id.widget_updated, View.VISIBLE)
+            views.setTextViewText(R.id.widget_address_name, "")
+        }
     }
 
     override fun onUpdate(
@@ -163,7 +195,7 @@ class AllWidgetProvider : BaseWidgetProvider() {
                                         .sum()
                             }
                             val h = async {
-                                val heatSources = listOf("enea_cieplo", "eco_sa", "energa_cieplo_kaliskie", "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz", "mpec_kielce", "mpec_rzeszow", "opec_gdynia", "pec_gliwice", "pge_torun_heat", "epec_elblag")
+                                val heatSources = listOf("enea_cieplo", "eco_sa", "energa_cieplo_kaliskie", "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz", "mpec_kielce", "mpec_rzeszow", "opec_gdynia", "pec_gliwice", "pge_torun_heat", "epec_elblag", "sec", "lpec")
                                         .filter { allEnabledByDefault || it in enabledSources }
                                 heatSources
                                         .map { source ->
@@ -189,7 +221,7 @@ class AllWidgetProvider : BaseWidgetProvider() {
                                         .sum()
                             }
                             val w = async {
-                                val waterSources = listOf("mpwik_wroclaw", "mpwik_warszawa", "wmk", "wm_radom", "aquanet", "katowickie_wodociagi", "zwik_lodz", "zwik_zielona_gora", "pwik_kalisz", "pwik_czestochowa", "pwik_gliwice", "pwik_olsztyn", "wik_opole", "wodociagi_bialostockie", "wodociagi_kieleckie", "wodociagi_plockie", "torunskie_wodociagi", "gdanskie_wodociagi", "puk_rokietnica", "mpwik_rzeszow", "mwik_bydgoszcz", "mwik_koszalin", "pewik_gdynia", "lpwik_legnica", "bytomskie_wodociagi", "dabrowskie_wodociagi", "aqua_bielsko", "pwik_gorzow", "rpwik_tychy", "pwik_ruda_slaska", "pwik_rybnik", "wpwik_walbrzych", "sosnowieckie_wodociagi", "tarnowskie_wodociagi", "zabrzanskie_wodociagi")
+                                val waterSources = listOf("mpwik_wroclaw", "mpwik_warszawa", "mpwik_lublin", "wmk", "wm_radom", "aquanet", "katowickie_wodociagi", "zwik_lodz", "zwik_zielona_gora", "pwik_kalisz", "pwik_czestochowa", "pwik_gliwice", "pwik_olsztyn", "wik_opole", "wodociagi_bialostockie", "wodociagi_kieleckie", "wodociagi_plockie", "torunskie_wodociagi", "gdanskie_wodociagi", "puk_rokietnica", "mpwik_rzeszow", "mwik_bydgoszcz", "mwik_koszalin", "pewik_gdynia", "lpwik_legnica", "bytomskie_wodociagi", "dabrowskie_wodociagi", "aqua_bielsko", "pwik_gorzow", "rpwik_tychy", "pwik_ruda_slaska", "pwik_rybnik", "wpwik_walbrzych", "sosnowieckie_wodociagi", "tarnowskie_wodociagi", "zabrzanskie_wodociagi")
                                         .filter { allEnabledByDefault || it in enabledSources }
                                 waterSources
                                     .map { source ->
@@ -275,9 +307,6 @@ class AllWidgetProvider : BaseWidgetProvider() {
                     getTranslation(context, "no_address")
                 }
 
-        val views = RemoteViews(context.packageName, R.layout.widget_all_outage)
-
-        // Clicks
         val refreshIntent =
                 Intent(context, this::class.java).apply {
                     action = refreshAction
@@ -313,50 +342,116 @@ class AllWidgetProvider : BaseWidgetProvider() {
                     refreshPending
                 }
 
-        views.setOnClickPendingIntent(R.id.widget_root, refreshPending)
-        views.setOnClickPendingIntent(R.id.section_power, clickPending)
-        views.setOnClickPendingIntent(R.id.section_heat, clickPending)
-        views.setOnClickPendingIntent(R.id.section_water, clickPending)
-        views.setOnClickPendingIntent(R.id.section_gas, clickPending)
-
-        // Texts
-        views.setTextViewText(R.id.widget_address_name, addressName)
-        views.setTextViewText(R.id.widget_updated, updatedAt)
-        views.setTextViewText(R.id.count_power, powerCount)
-        views.setTextViewText(R.id.count_heat, heatCount)
-        views.setTextViewText(R.id.count_water, waterCount)
-        views.setTextViewText(R.id.count_gas, gasCount)
-
-        // Labels
-        // views.setTextViewText(R.id.label_power, getTranslation(context, "power"))
-        // views.setTextViewText(R.id.label_heat, getTranslation(context, "heat"))
-        // views.setTextViewText(R.id.label_water, getTranslation(context, "water"))
-        // views.setTextViewText(R.id.label_gas, getTranslation(context, "gas"))
-
-        // Check enabled utilities
-
-
         val powerEnabled =
                 allEnabledByDefault ||
                         listOf("tauron", "stoen", "energa", "enea", "pge").any {
                             it in enabledSources
                         }
         val heatEnabled =
-                allEnabledByDefault || listOf("enea_cieplo", "eco_sa", "energa_cieplo_kaliskie", "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz", "mpec_kielce", "mpec_rzeszow", "opec_gdynia", "pec_gliwice", "pge_torun_heat", "epec_elblag").any { it in enabledSources }
+                allEnabledByDefault || listOf("enea_cieplo", "eco_sa", "energa_cieplo_kaliskie", "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz", "mpec_kielce", "mpec_rzeszow", "opec_gdynia", "pec_gliwice", "pge_torun_heat", "epec_elblag", "sec", "lpec").any { it in enabledSources }
         val waterEnabled =
-                allEnabledByDefault || listOf("mpwik_wroclaw", "mpwik_warszawa", "wmk", "wm_radom", "aquanet", "katowickie_wodociagi", "zwik_lodz", "zwik_zielona_gora", "pwik_kalisz", "pwik_czestochowa", "pwik_gliwice", "pwik_olsztyn", "wik_opole", "wodociagi_bialostockie", "wodociagi_kieleckie", "wodociagi_plockie", "torunskie_wodociagi", "gdanskie_wodociagi", "puk_rokietnica", "mpwik_rzeszow", "mwik_bydgoszcz", "mwik_koszalin", "pewik_gdynia", "lpwik_legnica", "bytomskie_wodociagi", "dabrowskie_wodociagi", "aqua_bielsko", "pwik_gorzow", "rpwik_tychy", "pwik_ruda_slaska", "pwik_rybnik", "wpwik_walbrzych", "sosnowieckie_wodociagi", "tarnowskie_wodociagi", "zabrzanskie_wodociagi").any { it in enabledSources }
+                allEnabledByDefault || listOf("mpwik_wroclaw", "mpwik_warszawa", "mpwik_lublin", "wmk", "wm_radom", "aquanet", "katowickie_wodociagi", "zwik_lodz", "zwik_zielona_gora", "pwik_kalisz", "pwik_czestochowa", "pwik_gliwice", "pwik_olsztyn", "wik_opole", "wodociagi_bialostockie", "wodociagi_kieleckie", "wodociagi_plockie", "torunskie_wodociagi", "gdanskie_wodociagi", "puk_rokietnica", "mpwik_rzeszow", "mwik_bydgoszcz", "mwik_koszalin", "pewik_gdynia", "lpwik_legnica", "bytomskie_wodociagi", "dabrowskie_wodociagi", "aqua_bielsko", "pwik_gorzow", "rpwik_tychy", "pwik_ruda_slaska", "pwik_rybnik", "wpwik_walbrzych", "sosnowieckie_wodociagi", "tarnowskie_wodociagi", "zabrzanskie_wodociagi").any { it in enabledSources }
         val gasEnabled = allEnabledByDefault || listOf("psg").any { it in enabledSources }
 
-        // Theme
-        applyAllTheme(
-                views,
-                powerEnabled,
-                heatEnabled,
-                waterEnabled,
-                gasEnabled
-        )
+        updateResponsiveWidget(context, appWidgetManager, appWidgetId) { views, _ ->
+            views.setOnClickPendingIntent(R.id.widget_root, refreshPending)
+            views.setContentDescription(
+                    R.id.widget_root,
+                    context.getString(R.string.widget_accessibility_refresh)
+            )
+            views.setOnClickPendingIntent(R.id.section_power, clickPending)
+            views.setOnClickPendingIntent(R.id.section_heat, clickPending)
+            views.setOnClickPendingIntent(R.id.section_water, clickPending)
+            views.setOnClickPendingIntent(R.id.section_gas, clickPending)
+            views.setOnClickPendingIntent(R.id.count_power, clickPending)
+            views.setOnClickPendingIntent(R.id.count_heat, clickPending)
+            views.setOnClickPendingIntent(R.id.count_water, clickPending)
+            views.setOnClickPendingIntent(R.id.count_gas, clickPending)
 
+            views.setTextViewText(R.id.widget_address_name, addressName)
+            views.setContentDescription(
+                    R.id.widget_address_name,
+                    context.getString(R.string.widget_accessibility_address, addressName)
+            )
+            views.setTextViewText(R.id.widget_updated, updatedAt)
+            views.setContentDescription(
+                    R.id.widget_updated,
+                    context.getString(R.string.widget_accessibility_updated, updatedAt)
+            )
+            views.setViewVisibility(R.id.widget_updated, View.VISIBLE)
+
+            views.setTextViewText(R.id.count_power, powerCount)
+            views.setTextViewText(R.id.count_heat, heatCount)
+            views.setTextViewText(R.id.count_water, waterCount)
+            views.setTextViewText(R.id.count_gas, gasCount)
+            // Quiet zero counts while retaining utility colors for active outages and status markers.
+            views.setTextColor(R.id.count_power, context.getColor(if (powerCount == "0") R.color.widget_text_label else R.color.utility_power))
+            views.setTextColor(R.id.count_heat, context.getColor(if (heatCount == "0") R.color.widget_text_label else R.color.utility_heat))
+            views.setTextColor(R.id.count_water, context.getColor(if (waterCount == "0") R.color.widget_text_label else R.color.utility_water))
+            views.setTextColor(R.id.count_gas, context.getColor(if (gasCount == "0") R.color.widget_text_label else R.color.utility_gas))
+            setCountAccessibility(context, views, R.id.count_power, R.string.label_power, powerCount, addressName, updatedAt, powerEnabled)
+            setCountAccessibility(context, views, R.id.count_heat, R.string.label_heat, heatCount, addressName, updatedAt, heatEnabled)
+            setCountAccessibility(context, views, R.id.count_water, R.string.label_water, waterCount, addressName, updatedAt, waterEnabled)
+            setCountAccessibility(context, views, R.id.count_gas, R.string.label_gas, gasCount, addressName, updatedAt, gasEnabled)
+            applyAllTheme(views, powerEnabled, heatEnabled, waterEnabled, gasEnabled)
+        }
+    }
+
+    private fun updateResponsiveWidget(
+            context: Context,
+            appWidgetManager: AppWidgetManager,
+            appWidgetId: Int,
+            render: (RemoteViews, Boolean) -> Unit
+    ) {
+        // Provisional thresholds: the roomier four-item row needs about 56dp per utility.
+        val compactWidthDp = 110f
+        val roomyWidthDp = 230f
+        val widgetHeightDp = 48f
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val compact = RemoteViews(context.packageName, R.layout.widget_all_outage)
+            val roomy = RemoteViews(context.packageName, R.layout.widget_all_outage_roomy)
+            render(compact, false)
+            render(roomy, true)
+            appWidgetManager.updateAppWidget(
+                    appWidgetId,
+                    RemoteViews(mapOf(
+                            SizeF(compactWidthDp, widgetHeightDp) to compact,
+                            SizeF(roomyWidthDp, widgetHeightDp) to roomy
+                    ))
+            )
+            return
+        }
+
+        // Use the minimum reported width so a portrait width range cannot select a clipped row.
+        val options = appWidgetManager.getAppWidgetOptions(appWidgetId)
+        val minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, compactWidthDp.toInt())
+        val roomy = minWidth >= roomyWidthDp.toInt()
+        val layoutId = if (roomy) R.layout.widget_all_outage_roomy else R.layout.widget_all_outage
+        val views = RemoteViews(context.packageName, layoutId)
+        render(views, roomy)
         appWidgetManager.updateAppWidget(appWidgetId, views)
+    }
+
+    private fun setCountAccessibility(
+            context: Context,
+            views: RemoteViews,
+            countViewId: Int,
+            labelResId: Int,
+            count: String,
+            addressName: String,
+            updatedAt: String,
+            enabled: Boolean
+    ) {
+        val label = context.getString(labelResId)
+        val description = when {
+            addressName == context.getString(R.string.msg_no_address) ->
+                context.getString(R.string.widget_accessibility_count_no_address, label)
+            !enabled -> context.getString(R.string.widget_accessibility_count_disabled, label, addressName)
+            count == "–" -> context.getString(R.string.widget_accessibility_count_loading, label, addressName)
+            count == "!" -> context.getString(R.string.widget_accessibility_count_unavailable, label, addressName, updatedAt)
+            else -> context.getString(R.string.widget_accessibility_count, label, count, addressName, updatedAt)
+        }
+        views.setContentDescription(countViewId, description)
     }
 
     private fun applyAllTheme(

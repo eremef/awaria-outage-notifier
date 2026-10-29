@@ -81,6 +81,20 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         private const val PREF_PREFIX_KEY = "address_"
         private const val PREF_COUNT_PREFIX = "count_"
         private const val PREF_UPDATED_PREFIX = "updated_"
+        private const val PREF_CONFIGURED_PREFIX = "configured_"
+
+        internal fun hasWidgetConfiguration(context: Context, appWidgetId: Int): Boolean {
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            return prefs.getBoolean(PREF_CONFIGURED_PREFIX + appWidgetId, false) ||
+                    prefs.contains("tri_updated_$appWidgetId") ||
+                    prefs.contains("all_updated_$appWidgetId")
+        }
+
+        internal fun markWidgetConfigured(context: Context, appWidgetId: Int) {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit {
+                putBoolean(PREF_CONFIGURED_PREFIX + appWidgetId, true)
+            }
+        }
 
         internal fun saveAddressId(context: Context, appWidgetId: Int, addressId: String) {
             context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit {
@@ -264,7 +278,14 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         val pendingResult = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                updateWidget(context, appWidgetManager, appWidgetId)
+                // Resizing only changes presentation. Re-render from the last known value and
+                // leave a neutral state when there is no cache; a resize should not start I/O.
+                if ((sourceKey == "tri_status" && getTriWidgetData(context, appWidgetId) == null) ||
+                        (sourceKey == "all_status" && getAllWidgetData(context, appWidgetId) == null)) {
+                    showLoadingPlaceholder(context, appWidgetManager, appWidgetId)
+                } else {
+                    updateWidget(context, appWidgetManager, appWidgetId, useCacheOnly = true)
+                }
             } finally {
                 pendingResult.finish()
             }
@@ -273,8 +294,65 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         super.onDeleted(context, appWidgetIds)
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         for (appWidgetId in appWidgetIds) {
             deleteAddressId(context, appWidgetId)
+            prefs.edit {
+                remove(PREF_CONFIGURED_PREFIX + appWidgetId)
+                remove(PREF_COUNT_PREFIX + appWidgetId)
+                remove(PREF_UPDATED_PREFIX + appWidgetId)
+                remove("tri_power_$appWidgetId")
+                remove("tri_heat_$appWidgetId")
+                remove("tri_water_$appWidgetId")
+                remove("tri_updated_$appWidgetId")
+                remove("all_power_$appWidgetId")
+                remove("all_heat_$appWidgetId")
+                remove("all_water_$appWidgetId")
+                remove("all_gas_$appWidgetId")
+                remove("all_updated_$appWidgetId")
+            }
+        }
+    }
+
+    override fun onRestored(context: Context, oldWidgetIds: IntArray, newWidgetIds: IntArray) {
+        super.onRestored(context, oldWidgetIds, newWidgetIds)
+        if (oldWidgetIds.isEmpty() || oldWidgetIds.size != newWidgetIds.size) return
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val fields = listOf(
+                PREF_PREFIX_KEY,
+                PREF_COUNT_PREFIX,
+                PREF_UPDATED_PREFIX,
+                PREF_CONFIGURED_PREFIX,
+                "tri_power_", "tri_heat_", "tri_water_", "tri_updated_",
+                "all_power_", "all_heat_", "all_water_", "all_gas_", "all_updated_"
+        )
+        val oldIds = oldWidgetIds.toSet()
+        val pairs = oldWidgetIds.indices.map { oldWidgetIds[it] to newWidgetIds[it] }
+                .filter { (oldId, newId) -> oldId != newId }
+        if (pairs.any { (_, newId) ->
+                    newId !in oldIds && fields.any { prefs.contains(it + newId) }
+                }) return
+        val snapshots = pairs.map { (oldId, newId) ->
+            Triple(oldId, newId, fields.mapNotNull { prefix ->
+                val key = prefix + oldId
+                if (prefs.contains(key)) key to prefs.all[key] else null
+            })
+        }
+        prefs.edit {
+            snapshots.forEach { (oldId, _, values) -> values.forEach { (key, _) -> remove(key) } }
+            snapshots.forEach { (_, newId, values) ->
+                values.forEach { (key, value) ->
+                    val newKey = key.substringBeforeLast('_') + "_" + newId
+                    when (value) {
+                        is String -> putString(newKey, value)
+                        is Boolean -> putBoolean(newKey, value)
+                        is Int -> putInt(newKey, value)
+                        is Long -> putLong(newKey, value)
+                        is Float -> putFloat(newKey, value)
+                        is Set<*> -> putStringSet(newKey, value.filterIsInstance<String>().toSet())
+                    }
+                }
+            }
         }
     }
 
@@ -306,7 +384,10 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         return candidates.firstOrNull { it.exists() && it.canRead() }
     }
 
-    internal fun loadSettings(context: Context): Pair<List<WidgetSettings>, JSONObject?>? {
+    internal fun loadSettings(
+            context: Context,
+            sourceId: String = sourceKey
+    ): Pair<List<WidgetSettings>, JSONObject?>? {
         val settingsFile = findSettingsFile(context) ?: return null
         return try {
             val jsonString = settingsFile.readText(Charsets.UTF_8)
@@ -320,7 +401,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                     if (enabledSources != null) {
                         var found = false
                         for (i in 0 until enabledSources.length()) {
-                            if (enabledSources.getString(i) == sourceKey) {
+                            if (enabledSources.getString(i) == sourceId) {
                                 found = true
                                 break
                             }
@@ -366,7 +447,8 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    private fun getSourceName(context: Context, key: String): String {
+    protected fun getSourceName(context: Context, key: String): String {
+        SingleProviderCatalog.find(key)?.let { return it.displayName(context) }
         return when (key) {
             "tauron" -> context.getString(R.string.provider_tauron)
             "tauron_heat" -> context.getString(R.string.provider_tauron_heat)
@@ -477,12 +559,17 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
 
         val cachedData = getWidgetData(context, appWidgetId)
 
-        if (useCacheOnly && cachedData != null) {
-            count = cachedData.first
-            statusMessage = if (count == "–") getTranslation(context, "inactive")
-                            else if (count == "?") getTranslation(context, "setup")
-                            else if (count == "!") getTranslation(context, "offline")
-                            else null
+        if (useCacheOnly) {
+            if (cachedData != null) {
+                count = cachedData.first
+                statusMessage = if (count == "–") getTranslation(context, "inactive")
+                                else if (count == "?") getTranslation(context, "setup")
+                                else if (count == "!") getTranslation(context, "offline")
+                                else null
+            } else {
+                count = "–"
+                statusMessage = context.getString(R.string.widget_no_cached_data)
+            }
         } else {
             if (!sourceEnabled) {
                 count = "–"
@@ -540,6 +627,20 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             saveWidgetData(context, appWidgetId, count, updatedAt)
         }
 
+        val catalogEntry = SingleProviderCatalog.find(sourceKey)
+        if (catalogEntry != null) {
+            renderCatalogWidget(
+                context,
+                appWidgetManager,
+                appWidgetId,
+                catalogEntry,
+                count,
+                updatedAt,
+                refreshAction
+            )
+            return
+        }
+
         val layoutId = when (sourceKey) {
             "tauron", "stoen", "enea", "energa", "pge" -> R.layout.widget_outage_power
             "enea_cieplo", "eco_sa", "energa_cieplo_kaliskie", "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz", "mpec_kielce", "opec_gdynia", "sec", "lpec", "pge_torun_heat", "epec_elblag", "pec_gliwice" -> R.layout.widget_outage_heat
@@ -594,17 +695,23 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
     }
-    private fun createRemoteViews(
+    protected fun createRemoteViews(
             context: Context,
             appWidgetId: Int,
             layoutId: Int,
             count: String,
-            updatedAt: String
+            updatedAt: String,
+            sourceId: String = sourceKey,
+            action: String = refreshAction,
+            includeIcon: Boolean? = null,
+            iconResource: Int? = null,
+            iconTintResource: Int? = null,
+            countTintResource: Int? = null
     ): RemoteViews {
         val views = RemoteViews(context.packageName, layoutId)
         val refreshIntent =
                 Intent(context, this::class.java).apply {
-                    action = refreshAction
+                    this.action = action
                     putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
                 }
         val refreshPending =
@@ -642,16 +749,22 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                       layoutId == R.layout.widget_outage_water_small || 
                       layoutId == R.layout.widget_outage_gas_small
 
-        if (!isSmall) {
+        val hasIcon = includeIcon ?: !isSmall
+        if (hasIcon) {
             views.setOnClickPendingIntent(R.id.widget_icon, clickPending)
         }
 
-        views.setTextViewText(R.id.widget_source, getSourceName(context, sourceKey))
+        views.setTextViewText(R.id.widget_source, getSourceName(context, sourceId))
         views.setTextViewText(R.id.widget_count, count)
         views.setTextViewText(R.id.widget_updated, updatedAt)
+        countTintResource?.let { views.setTextColor(R.id.widget_count, context.getColor(it)) }
 
-        if (!isSmall) {
-            val iconDesc = when (sourceKey) {
+        if (hasIcon) {
+            iconResource?.let { views.setImageViewResource(R.id.widget_icon, it) }
+            iconTintResource?.let {
+                views.setInt(R.id.widget_icon, "setColorFilter", context.getColor(it))
+            }
+            val iconDesc = when (sourceId) {
                 "tauron", "stoen", "enea", "energa", "pge" -> getTranslation(context, "power")
                 "enea_cieplo", "eco_sa", "energa_cieplo_kaliskie", "fortum", "tauron_heat", "veolia_warszawa", "veolia_poznan", "veolia_lodz", "gpec", "kpec_bydgoszcz", "sec", "lpec", "mpec_kielce", "mpec_rzeszow", "opec_gdynia", "pge_torun_heat", "epec_elblag" -> getTranslation(context, "heat")
                 "mpwik_wroclaw", "mpwik_warszawa", "wmk", "wm_radom", "aquanet", "aqua_bielsko", "katowickie_wodociagi", "zwik_lodz", "zwik_zielona_gora", "pwik_kalisz", "wodociagi_plockie", "wodociagi_bialostockie", "wodociagi_kieleckie", "torunskie_wodociagi", "pwik_czestochowa", "pwik_olsztyn", "pwik_gorzow", "rpwik_tychy", "pwik_gliwice", "wik_opole", "gdanskie_wodociagi", "puk_rokietnica", "mpwik_lublin", "mpwik_rzeszow", "mwik_bydgoszcz", "mwik_koszalin", "pewik_gdynia", "bytomskie_wodociagi", "dabrowskie_wodociagi", "sosnowieckie_wodociagi", "tarnowskie_wodociagi", "zabrzanskie_wodociagi", "pwik_ruda_slaska", "pwik_rybnik", "wpwik_walbrzych" -> getTranslation(context, "water")
@@ -662,5 +775,74 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         }
 
         return views
+    }
+
+    /** Render the shared responsive single-provider layouts for an arbitrary catalog entry. */
+    protected fun renderCatalogWidget(
+            context: Context,
+            appWidgetManager: AppWidgetManager,
+            appWidgetId: Int,
+            entry: SingleProviderEntry,
+            count: String,
+            updatedAt: String,
+            action: String,
+            configurePending: PendingIntent? = null
+    ) {
+        val compactLayout = R.layout.widget_single_compact
+        val wideLayout = R.layout.widget_single_wide
+        val tallLayout = R.layout.widget_single_tall
+        val expandedLayout = R.layout.widget_single_expanded
+        val iconTint = when (entry.utility) {
+            WidgetUtility.ELECTRICITY -> R.color.utility_power
+            WidgetUtility.HEAT -> R.color.utility_heat
+            WidgetUtility.WATER -> R.color.utility_water
+            WidgetUtility.GAS -> R.color.utility_gas
+        }
+        fun sizedViews(layoutId: Int, hasIcon: Boolean) = createRemoteViews(
+            context,
+            appWidgetId,
+            layoutId,
+            count,
+            updatedAt,
+            entry.sourceId,
+            action,
+            includeIcon = hasIcon,
+            iconResource = if (hasIcon) entry.utility.iconRes else null,
+            iconTintResource = if (hasIcon) iconTint else null,
+            countTintResource = if (count == "0") R.color.widget_text_label else iconTint
+        ).also { views ->
+            if (hasIcon) {
+                views.setContentDescription(R.id.widget_icon, context.getString(entry.utility.labelRes))
+            }
+            configurePending?.let {
+                views.setOnClickPendingIntent(R.id.widget_root, it)
+                views.setOnClickPendingIntent(R.id.widget_count, it)
+                if (hasIcon) views.setOnClickPendingIntent(R.id.widget_icon, it)
+            }
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // The map keys are the smallest supported size for each shape. Android selects
+            // the largest matching layout for the host's current widget dimensions.
+            val viewMapping = mapOf(
+                SizeF(40f, 40f) to sizedViews(compactLayout, hasIcon = false),
+                SizeF(100f, 40f) to sizedViews(wideLayout, hasIcon = true),
+                SizeF(40f, 100f) to sizedViews(tallLayout, hasIcon = true),
+                SizeF(100f, 100f) to sizedViews(expandedLayout, hasIcon = true)
+            )
+            appWidgetManager.updateAppWidget(appWidgetId, RemoteViews(viewMapping))
+        } else {
+            val options = appWidgetManager.getAppWidgetOptions(appWidgetId)
+            val minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
+            val minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT)
+            val (chosenLayout, hasIcon) = when {
+                minWidth >= 100 && minHeight >= 100 -> expandedLayout to true
+                minWidth >= 100 -> wideLayout to true
+                minHeight >= 100 -> tallLayout to true
+                else -> compactLayout to false
+            }
+            val views = sizedViews(chosenLayout, hasIcon)
+            appWidgetManager.updateAppWidget(appWidgetId, views)
+        }
     }
 }
