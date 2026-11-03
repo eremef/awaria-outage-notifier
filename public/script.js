@@ -151,6 +151,7 @@ if (typeof document !== 'undefined') {
         chspwik: 'chspwik_area',
         mec_koszalin: 'mec_koszalin_area',
         radpec_radom: 'radpec_radom',
+        wpec_legnica: 'wpec_legnica_area',
         therma_bielsko: 'therma_bielsko',
         mwik_koszalin: 'koszalin',
         sosnowieckie_wodociagi: 'sosnowiec',
@@ -201,6 +202,13 @@ if (typeof document !== 'undefined') {
             if (voivodeship && !voivodeship.startsWith('mazowieckie')) return false;
             if (cityId != null && Number.isFinite(cityId)) return cityId === 972750;
             return city === 'radom';
+        },
+        wpec_legnica_area: (addr) => {
+            if (!addr) return false;
+            const voivodeship = normalizeRegionName(addr.voivodeship);
+            if (voivodeship && !voivodeship.startsWith('dolnoslaskie')) return false;
+            return ['legnica', 'lubin', 'glogow', 'zlotoryja', 'chojnow', 'chocianow', 'scinawa']
+                .includes(normalizeRegionName(addr.cityName));
         },
         therma_bielsko: (addr) => {
             if (!addr) return false;
@@ -2869,8 +2877,8 @@ if (typeof document !== 'undefined') {
         });
     }
 
-    function matchesRadpecAddress(alert, addr, filterByHouseNo) {
-        if (!REGION_MATCHERS.radpec_radom(addr) || !alert.location) return false;
+    function matchesRadpecAddress(alert, addr, filterByHouseNo, regionMatcher = REGION_MATCHERS.radpec_radom) {
+        if (!regionMatcher(addr) || !alert.location) return false;
         const normalize = value => (value || '').toLowerCase().replace(/ł/g, 'l')
             .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
         const stripPrefix = value => value.replace(/^(?:(?:ulica|ul|plac|pl|aleja|al|osiedle|os|rondo|skwer)\s+|(?:ul|pl|al|os)\.\s*)/i, '');
@@ -2914,6 +2922,15 @@ if (typeof document !== 'undefined') {
         if (alert.source === 'radpec_radom' && alert.location) {
             if (alert.isLocal === false) return false;
             return matchesRadpecAddress(alert, addr, !!settings?.filterByHouseNo);
+        }
+
+        if (alert.source === 'wpec_legnica' && alert.location) {
+            if (alert.isLocal === false) return false;
+            const parts = alert.location.split(';');
+            const city = normalizeRegionName(parts[0].replace(/^Miejscowość:\s*/i, ''));
+            if (city !== normalizeRegionName(addr.cityName)) return false;
+            if (parts.length === 1) return alert.isLocal === true;
+            return matchesRadpecAddress(alert, addr, !!settings?.filterByHouseNo, REGION_MATCHERS.wpec_legnica_area);
         }
 
         if (alert.source === 'epec_elblag' && !REGION_MATCHERS.elblag(addr)) return false;

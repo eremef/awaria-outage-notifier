@@ -22,7 +22,7 @@ Nowoczesna aplikacja desktopowa i mobilna zapewniające powiadomienia w czasie r
 - **⚡ Prąd**
   - **Tauron**: Planowane konserwacje i awaryjne wyłączenia prądu.
   - **Energa**: Planowane wyłączenia prądu (Północna Polska).
-  - **Enea**: [Planowane wyłączenia prądu](https://wylaczenia.operator.enea.pl/) i [bieżące awarie](https://wylaczenia.operator.enea.pl/awarie/) (Zachodnia Polska).
+  - **Enea**: Planowane wyłączenia i bieżące awarie prądu (Zachodnia Polska).
   - **PGE**: Planowane wyłączenia prądu (Wschodnia i Centralna Polska).
   - **Stoen**: Planowane wyłączenia prądu (Warszawa i okolice).
 - **🔥 Gaz - PSG**: Planowane i bieżące wyłączenia gazu.
@@ -33,7 +33,9 @@ Nowoczesna aplikacja desktopowa i mobilna zapewniające powiadomienia w czasie r
   - **Energa Ciepło Kaliskie**: Przerwy w dostawie ciepła w Kaliszu.
   - **Fortum**: Planowane i bieżące wyłączenia ogrzewania oraz ciepłej wody.
   - **Tauron Ciepło**: Przerwy w dostawie ciepła (Południowa Polska).
-  - **Therma Bielsko**: [Planowane przerwy w dostawie ciepła](https://www.therma.bielsko.pl/przerwy-w-dostawie) wyłącznie w Bielsku-Białej.
+  - **RADPEC Radom**: Przerwy w dostawie ciepła w Radomiu; czas przywrócenia dostaw jest podawany tylko wtedy, gdy dostawca go określił.
+  - **WPEC Legnica**: Remonty i awarie sieci ciepłowniczej w Legnicy, Lubinie, Głogowie, Złotoryi, Chojnowie, Chocianowie i Ścinawie.
+  - **Therma Bielsko**: Planowane przerwy w dostawie ciepła wyłącznie w Bielsku-Białej.
   - **Veolia Warszawa**: Przerwy w dostawie ciepła w Warszawie.
   - **Veolia Poznań**: Przerwy w dostawie ciepła w Poznaniu.
   - **Veolia Łódź**: Przerwy w dostawie ciepła w Łodzi.
@@ -41,7 +43,7 @@ Nowoczesna aplikacja desktopowa i mobilna zapewniające powiadomienia w czasie r
   - **KPEC Bydgoszcz**: Przerwy w dostawie ciepła w Bydgoszczy.
   - **SEC Szczecin**: Przerwy w dostawie ciepła w Szczecinie.
   - **LPEC Lublin**: Przerwy w dostawie ciepła w Lublinie.
-  - **MEC Koszalin**: [Planowane przerwy w dostawie ciepła](https://meckoszalin.pl/przerwy-w-dostawie-ciepla/) w Koszalinie; MEC obsługuje też Sianów, ale komunikat jest tam dopasowywany tylko wtedy, gdy wymienia Sianów.
+  - **MEC Koszalin**: Planowane przerwy w dostawie ciepła w Koszalinie.
   - **MPEC Kielce**: Przerwy w dostawie ciepła i ciepłej wody w Kielcach.
   - **MPEC Rzeszów**: Przerwy w dostawie ciepła i ciepłej wody użytkowej w Rzeszowie.
   - **OPEC Gdynia**: Uliczne komunikaty o przerwach w dostawie ciepła i ciepłej wody w obsługiwanych rejonach Gdyni, Rumi, Redy, Kosakowa i Wejherowa.
@@ -223,7 +225,7 @@ Dla każdego adresu, który chcesz monitorować, dodaj wpis zawierający:
 
 #### Aktywne źródła (Enabled Sources)
 
-Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `epec_elblag`, `mec_koszalin`, `therma_bielsko`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`, `bytomskie_wodociagi`, `chspwik`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `rpwik_tychy`, `wpwik_walbrzych`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
+Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `epec_elblag`, `mec_koszalin`, `therma_bielsko`, `radpec_radom`, `wpec_legnica`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`, `bytomskie_wodociagi`, `chspwik`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `rpwik_tychy`, `wpwik_walbrzych`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
 
 ### Użytkowanie
 

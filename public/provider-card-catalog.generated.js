@@ -196,6 +196,13 @@
         "color": "#f44336"
     },
     {
+        "id": "wpec_legnica",
+        "aliases": [],
+        "name": "WPEC Legnica",
+        "icon": "🔥",
+        "color": "#f44336"
+    },
+    {
         "id": "aqua_bielsko",
         "aliases": [],
         "name": "AQUA S.A.",

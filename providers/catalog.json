@@ -2001,10 +2001,85 @@
       }
     },
     {
+      "id": "wpec_legnica",
+      "utility": "heating",
+      "order": {
+        "frontend": 27,
+        "rust": 64,
+        "androidSingle": 64,
+        "addon": 56
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "WPEC Legnica",
+            "en": "WPEC Legnica"
+          },
+          "shortName": {
+            "pl": "WPEC Legnica",
+            "en": "WPEC Legnica"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "WPEC Legnica"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "WPEC Legnica",
+            "en": "WPEC Legnica"
+          },
+          "legacyWidget": null
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "WpecLegnica",
+          "constructor": "wpec_legnica::WpecLegnicaProvider"
+        },
+        "android": {
+          "legacyComponentClass": null,
+          "legacyLabelResource": null
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "heating",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "WPEC",
+          "Legnica",
+          "Lubin",
+          "Głogów",
+          "Złotoryja",
+          "Chojnów",
+          "Chocianów",
+          "Ścinawa"
+        ],
+        "location": "Legnica, Lubin, Głogów, Złotoryja, Chojnów, Chocianów, Ścinawa",
+        "aggregateUtility": "heating",
+        "aggregateOrder": 21
+      },
+      "card": {
+        "name": "WPEC Legnica",
+        "icon": "🔥",
+        "color": "#f44336"
+      },
+      "frontend": {
+        "regionMatcher": "wpec_legnica_area"
+      }
+    },
+    {
       "id": "aqua_bielsko",
       "utility": "water",
       "order": {
-        "frontend": 27,
+        "frontend": 28,
         "rust": 46,
         "androidSingle": 30,
         "addon": 18
@@ -2079,7 +2154,7 @@
       "id": "aquanet",
       "utility": "water",
       "order": {
-        "frontend": 28,
+        "frontend": 29,
         "rust": 17,
         "androidSingle": 29,
         "addon": 23
@@ -2154,7 +2229,7 @@
       "id": "bytomskie_wodociagi",
       "utility": "water",
       "order": {
-        "frontend": 29,
+        "frontend": 30,
         "rust": 43,
         "androidSingle": 52,
         "addon": 24
@@ -2229,7 +2304,7 @@
       "id": "chspwik",
       "utility": "water",
       "order": {
-        "frontend": 30,
+        "frontend": 31,
         "rust": 44,
         "androidSingle": 53,
         "addon": 25
@@ -2307,7 +2382,7 @@
       "id": "dabrowskie_wodociagi",
       "utility": "water",
       "order": {
-        "frontend": 31,
+        "frontend": 32,
         "rust": 45,
         "androidSingle": 54,
         "addon": 26
@@ -2382,7 +2457,7 @@
       "id": "gdanskie_wodociagi",
       "utility": "water",
       "order": {
-        "frontend": 32,
+        "frontend": 33,
         "rust": 31,
         "androidSingle": 55,
         "addon": 50
@@ -2457,7 +2532,7 @@
       "id": "katowickie_wodociagi",
       "utility": "water",
       "order": {
-        "frontend": 33,
+        "frontend": 34,
         "rust": 18,
         "androidSingle": 31,
         "addon": 27
@@ -2532,7 +2607,7 @@
       "id": "lpwik_legnica",
       "utility": "water",
       "order": {
-        "frontend": 34,
+        "frontend": 35,
         "rust": 42,
         "androidSingle": 61,
         "addon": 54
@@ -2607,7 +2682,7 @@
       "id": "mpwik_lublin",
       "utility": "water",
       "order": {
-        "frontend": 35,
+        "frontend": 36,
         "rust": 38,
         "androidSingle": 57,
         "addon": null
@@ -2682,7 +2757,7 @@
       "id": "mpwik_rzeszow",
       "utility": "water",
       "order": {
-        "frontend": 36,
+        "frontend": 37,
         "rust": 39,
         "androidSingle": 58,
         "addon": 3
@@ -2757,7 +2832,7 @@
       "id": "mpwik_warszawa",
       "utility": "water",
       "order": {
-        "frontend": 37,
+        "frontend": 38,
         "rust": 2,
         "androidSingle": 26,
         "addon": 2
@@ -2832,7 +2907,7 @@
       "id": "mpwik_wroclaw",
       "utility": "water",
       "order": {
-        "frontend": 38,
+        "frontend": 39,
         "rust": 1,
         "androidSingle": 25,
         "addon": 1
@@ -2907,7 +2982,7 @@
       "id": "mwik_bydgoszcz",
       "utility": "water",
       "order": {
-        "frontend": 39,
+        "frontend": 40,
         "rust": 51,
         "androidSingle": 59,
         "addon": 4
@@ -2982,7 +3057,7 @@
       "id": "mwik_koszalin",
       "utility": "water",
       "order": {
-        "frontend": 40,
+        "frontend": 41,
         "rust": 52,
         "androidSingle": 45,
         "addon": 5
@@ -3057,7 +3132,7 @@
       "id": "pewik_gdynia",
       "utility": "water",
       "order": {
-        "frontend": 41,
+        "frontend": 42,
         "rust": 25,
         "androidSingle": 60,
         "addon": 49
@@ -3132,7 +3207,7 @@
       "id": "puk_rokietnica",
       "utility": "water",
       "order": {
-        "frontend": 42,
+        "frontend": 43,
         "rust": 35,
         "androidSingle": 56,
         "addon": null
@@ -3207,7 +3282,7 @@
       "id": "pwik_czestochowa",
       "utility": "water",
       "order": {
-        "frontend": 43,
+        "frontend": 44,
         "rust": 30,
         "androidSingle": 39,
         "addon": 37
@@ -3282,7 +3357,7 @@
       "id": "pwik_gliwice",
       "utility": "water",
       "order": {
-        "frontend": 44,
+        "frontend": 45,
         "rust": 48,
         "androidSingle": 43,
         "addon": 38
@@ -3357,7 +3432,7 @@
       "id": "pwik_gorzow",
       "utility": "water",
       "order": {
-        "frontend": 45,
+        "frontend": 46,
         "rust": 47,
         "androidSingle": 41,
         "addon": 39
@@ -3432,7 +3507,7 @@
       "id": "pwik_kalisz",
       "utility": "water",
       "order": {
-        "frontend": 46,
+        "frontend": 47,
         "rust": 29,
         "androidSingle": 34,
         "addon": null
@@ -3507,7 +3582,7 @@
       "id": "pwik_olsztyn",
       "utility": "water",
       "order": {
-        "frontend": 47,
+        "frontend": 48,
         "rust": 40,
         "androidSingle": 40,
         "addon": 40
@@ -3582,7 +3657,7 @@
       "id": "pwik_ruda_slaska",
       "utility": "water",
       "order": {
-        "frontend": 48,
+        "frontend": 49,
         "rust": 56,
         "androidSingle": 49,
         "addon": 41
@@ -3657,7 +3732,7 @@
       "id": "pwik_rybnik",
       "utility": "water",
       "order": {
-        "frontend": 49,
+        "frontend": 50,
         "rust": 57,
         "androidSingle": 50,
         "addon": 42
@@ -3732,7 +3807,7 @@
       "id": "rpwik_tychy",
       "utility": "water",
       "order": {
-        "frontend": 50,
+        "frontend": 51,
         "rust": 49,
         "androidSingle": 42,
         "addon": 43
@@ -3807,7 +3882,7 @@
       "id": "sosnowieckie_wodociagi",
       "utility": "water",
       "order": {
-        "frontend": 51,
+        "frontend": 52,
         "rust": 53,
         "androidSingle": 46,
         "addon": 45
@@ -3882,7 +3957,7 @@
       "id": "tarnowskie_wodociagi",
       "utility": "water",
       "order": {
-        "frontend": 52,
+        "frontend": 53,
         "rust": 54,
         "androidSingle": 47,
         "addon": 46
@@ -3957,7 +4032,7 @@
       "id": "torunskie_wodociagi",
       "utility": "water",
       "order": {
-        "frontend": 53,
+        "frontend": 54,
         "rust": 27,
         "androidSingle": 38,
         "addon": 36
@@ -4032,7 +4107,7 @@
       "id": "wik_opole",
       "utility": "water",
       "order": {
-        "frontend": 54,
+        "frontend": 55,
         "rust": 41,
         "androidSingle": 51,
         "addon": 48
@@ -4107,7 +4182,7 @@
       "id": "wm_radom",
       "utility": "water",
       "order": {
-        "frontend": 55,
+        "frontend": 56,
         "rust": 62,
         "androidSingle": 28,
         "addon": 20
@@ -4182,7 +4257,7 @@
       "id": "wmk",
       "utility": "water",
       "order": {
-        "frontend": 56,
+        "frontend": 57,
         "rust": 15,
         "androidSingle": 27,
         "addon": 19
@@ -4257,7 +4332,7 @@
       "id": "wodociagi_bialostockie",
       "utility": "water",
       "order": {
-        "frontend": 57,
+        "frontend": 58,
         "rust": 28,
         "androidSingle": 36,
         "addon": 35
@@ -4332,7 +4407,7 @@
       "id": "wodociagi_kieleckie",
       "utility": "water",
       "order": {
-        "frontend": 58,
+        "frontend": 59,
         "rust": 26,
         "androidSingle": 37,
         "addon": 34
@@ -4407,7 +4482,7 @@
       "id": "wodociagi_plockie",
       "utility": "water",
       "order": {
-        "frontend": 59,
+        "frontend": 60,
         "rust": 24,
         "androidSingle": 35,
         "addon": 33
@@ -4482,7 +4557,7 @@
       "id": "wpwik_walbrzych",
       "utility": "water",
       "order": {
-        "frontend": 60,
+        "frontend": 61,
         "rust": 50,
         "androidSingle": 44,
         "addon": 44
@@ -4557,7 +4632,7 @@
       "id": "zabrzanskie_wodociagi",
       "utility": "water",
       "order": {
-        "frontend": 61,
+        "frontend": 62,
         "rust": 55,
         "androidSingle": 48,
         "addon": 47
@@ -4632,7 +4707,7 @@
       "id": "zwik_lodz",
       "utility": "water",
       "order": {
-        "frontend": 62,
+        "frontend": 63,
         "rust": 22,
         "androidSingle": 32,
         "addon": 31
@@ -4707,7 +4782,7 @@
       "id": "zwik_zielona_gora",
       "utility": "water",
       "order": {
-        "frontend": 63,
+        "frontend": 64,
         "rust": 23,
         "androidSingle": 33,
         "addon": 32

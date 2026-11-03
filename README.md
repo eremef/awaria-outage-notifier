@@ -22,7 +22,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
 - **⚡ Power**
   - **Tauron**: Planned maintenance and emergency power outages.
   - **Energa**: Planned power outages (Northern Poland).
-  - **Enea**: [Planned power outages](https://wylaczenia.operator.enea.pl/) and [current failures](https://wylaczenia.operator.enea.pl/awarie/) (Western Poland).
+  - **Enea**: Planned power outages and current failures (Western Poland).
   - **PGE**: Planned power outages (Eastern/Central Poland).
   - **Stoen**: Planned power outages (Warsaw area).
 - **🔥 Gas - PSG**: Planned and current gas outages.
@@ -33,8 +33,9 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **Energa Ciepło Kaliskie**: Heat outages in Kalisz.
   - **Fortum**: Planned and current heat/hot water outages.
   - **Tauron Ciepło**: Heat outages (Southern Poland).
-  - **RADPEC Radom**: [Heat interruptions](https://radpec.com.pl/przerwy-w-dostawach.html) in Radom; restoration times are shown only when supplied.
-  - **Therma Bielsko**: [Planned heat interruptions](https://www.therma.bielsko.pl/przerwy-w-dostawie) in Bielsko-Biała only.
+  - **RADPEC Radom**: Heat interruptions in Radom; restoration times are shown only when supplied.
+  - **WPEC Legnica**: Heating network repairs and failures in Legnica, Lubin, Głogów, Złotoryja, Chojnów, Chocianów and Ścinawa.
+  - **Therma Bielsko**: Planned heat interruptions in Bielsko-Biała only.
   - **Veolia Warszawa**: Heat outages in Warsaw.
   - **Veolia Poznań**: Heat outages in Poznań.
   - **Veolia Łódź**: Heat outages in Łódź.
@@ -42,7 +43,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **KPEC Bydgoszcz**: Heat outages in Bydgoszcz.
   - **SEC Szczecin**: Heat outages in Szczecin.
   - **LPEC Lublin**: Heat outages in Lublin.
-  - **MEC Koszalin**: [Planned heat interruptions](https://meckoszalin.pl/przerwy-w-dostawie-ciepla/) in Koszalin; Sianów is served, but notices are matched there only when they name it.
+  - **MEC Koszalin**: Planned heat interruptions in Koszalin.
   - **MPEC Kielce**: District-heating and hot-water interruptions in Kielce.
   - **MPEC Rzeszów**: Heating and domestic hot-water supply interruptions in Rzeszów.
   - **OPEC Gdynia**: Street-level heat and domestic-hot-water interruption notices for served areas in Gdynia, Rumia, Reda, Kosakowo, and Wejherowo.
@@ -224,7 +225,7 @@ For each address you want to monitor, add an entry with:
 
 #### Enabled Sources
 
-Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `epec_elblag`, `mec_koszalin`, `therma_bielsko`, `radpec_radom`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`, `bytomskie_wodociagi`, `chspwik`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `rpwik_tychy`, `wpwik_walbrzych`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
+Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `epec_elblag`, `mec_koszalin`, `therma_bielsko`, `radpec_radom`, `wpec_legnica`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`, `bytomskie_wodociagi`, `chspwik`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `rpwik_tychy`, `wpwik_walbrzych`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
 
 ### Usage
 

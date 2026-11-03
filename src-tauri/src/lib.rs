@@ -24,6 +24,7 @@ mod pge;
 mod pge_torun_heat;
 mod therma_bielsko;
 mod radpec_radom;
+mod wpec_legnica;
 mod pec_gliwice;
 pub mod network_state;
 mod state_db;
@@ -632,6 +633,7 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(pec_gliwice::PecGliwiceProvider),
         Box::new(wm_radom::WmRadomProvider),
         Box::new(radpec_radom::RadpecRadomProvider),
+        Box::new(wpec_legnica::WpecLegnicaProvider),
     ]
 }
 
@@ -972,6 +974,15 @@ fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Setti
 
     if s.filter_by_house_no {
         for alert in alerts.iter_mut() {
+            if alert.source == api_logic::AlertSource::WpecLegnica {
+                let location = alert.location.as_deref().unwrap_or_default();
+                let matched = s.addresses.iter().enumerate().find(|(_, address)| {
+                    address.is_active && wpec_legnica::location_matches_address(location, address, true)
+                });
+                alert.address_index = matched.map(|(index, _)| index);
+                alert.is_local = Some(matched.is_some());
+                continue;
+            }
             if alert.source == api_logic::AlertSource::RadpecRadom && alert.is_local == Some(true) {
                 let location = alert.location.as_deref().unwrap_or_default();
                 let matched = s.addresses.iter().enumerate().find(|(_, address)| {

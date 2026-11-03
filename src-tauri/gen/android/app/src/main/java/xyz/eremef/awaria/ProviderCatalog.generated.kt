@@ -1108,6 +1108,23 @@ object GeneratedProviderCatalog {
             aggregateOrder = 20,
             addonAllowed = true,
             webviewOnly = false
+        ),
+        GeneratedProviderMetadata(
+            id = "wpec_legnica",
+            utility = "heating",
+            displayNamePl = "WPEC Legnica",
+            displayNameEn = "WPEC Legnica",
+            shortNamePl = "WPEC Legnica",
+            shortNameEn = "WPEC Legnica",
+            androidOrder = 64,
+            singleWidget = true,
+            legacyComponentClass = null,
+            searchAliases = listOf("WPEC", "Legnica", "Lubin", "Głogów", "Złotoryja", "Chojnów", "Chocianów", "Ścinawa"),
+            location = "Legnica, Lubin, Głogów, Złotoryja, Chojnów, Chocianów, Ścinawa",
+            aggregateUtility = "heating",
+            aggregateOrder = 21,
+            addonAllowed = true,
+            webviewOnly = false
         )
     )
 
