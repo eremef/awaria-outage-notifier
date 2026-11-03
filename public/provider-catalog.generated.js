@@ -237,8 +237,8 @@
                 "pl": "Energa Ciepło Kaliskie"
             },
             "android": {
-                "pl": "Energa Ciepło Kalisz",
-                "en": "Energa Ciepło Kalisz"
+                "pl": "EC KLA",
+                "en": "EC KLA"
             }
         },
         "region": "kalisz"
@@ -398,8 +398,8 @@
                 "pl": "MEC Koszalin"
             },
             "android": {
-                "pl": "MEC Koszalin",
-                "en": "MEC Koszalin"
+                "pl": "MEC KSL",
+                "en": "MEC KSL"
             }
         },
         "region": "mec_koszalin_area"
@@ -416,8 +416,8 @@
             "en": "MPEC Kielce"
         },
         "shortNames": {
-            "pl": "MPEC KIE",
-            "en": "MPEC KIE"
+            "pl": "MPEC Kielce",
+            "en": "MPEC Kielce"
         },
         "aliases": [],
         "surfaceNames": {
@@ -425,8 +425,8 @@
                 "pl": "MPEC Kielce"
             },
             "android": {
-                "pl": "MPEC Kielce",
-                "en": "MPEC Kielce"
+                "pl": "MPEC KLC",
+                "en": "MPEC KLC"
             }
         },
         "region": "kielce"
@@ -443,8 +443,8 @@
             "en": "MPEC Rzeszów"
         },
         "shortNames": {
-            "pl": "MPEC RZE",
-            "en": "MPEC RZE"
+            "pl": "MPEC Rzeszów",
+            "en": "MPEC Rzeszów"
         },
         "aliases": [],
         "surfaceNames": {
@@ -452,8 +452,8 @@
                 "pl": "MPEC Rzeszów"
             },
             "android": {
-                "pl": "MPEC Rzeszów",
-                "en": "MPEC Rzeszów"
+                "pl": "MPEC RZE",
+                "en": "MPEC RZE"
             }
         },
         "region": "rzeszow"
@@ -470,8 +470,8 @@
             "en": "OPEC Gdynia"
         },
         "shortNames": {
-            "pl": "OPEC",
-            "en": "OPEC"
+            "pl": "OPEC Gdynia",
+            "en": "OPEC Gdynia"
         },
         "aliases": [],
         "surfaceNames": {
@@ -506,8 +506,8 @@
                 "pl": "PEC Gliwice"
             },
             "android": {
-                "pl": "PEC Gliwice",
-                "en": "PEC Gliwice"
+                "pl": "PEC GWC",
+                "en": "PEC GWC"
             }
         },
         "region": "pec_gliwice_area"
@@ -540,11 +540,38 @@
         "region": "torun"
     },
     {
-        "id": "sec",
+        "id": "radpec_radom",
         "utility": "heating",
         "category": "heating",
         "defaultNotify": true,
         "frontendOrder": 20,
+        "label": "RADPEC Radom",
+        "names": {
+            "pl": "RADPEC Radom",
+            "en": "RADPEC Radom"
+        },
+        "shortNames": {
+            "pl": "RADPEC Radom",
+            "en": "RADPEC Radom"
+        },
+        "aliases": [],
+        "surfaceNames": {
+            "rust": {
+                "pl": "RADPEC Radom"
+            },
+            "android": {
+                "pl": "RADPEC Radom",
+                "en": "RADPEC Radom"
+            }
+        },
+        "region": "radpec_radom"
+    },
+    {
+        "id": "sec",
+        "utility": "heating",
+        "category": "heating",
+        "defaultNotify": true,
+        "frontendOrder": 21,
         "label": "SEC Szczecin",
         "names": {
             "pl": "SEC Szczecin",
@@ -571,7 +598,7 @@
         "utility": "heating",
         "category": "heating",
         "defaultNotify": true,
-        "frontendOrder": 21,
+        "frontendOrder": 22,
         "label": "Tauron Ciepło",
         "names": {
             "pl": "Tauron Ciepło",
@@ -597,7 +624,7 @@
         "utility": "heating",
         "category": "heating",
         "defaultNotify": true,
-        "frontendOrder": 22,
+        "frontendOrder": 23,
         "label": "Therma Bielsko",
         "names": {
             "pl": "Therma Bielsko",
@@ -624,7 +651,7 @@
         "utility": "heating",
         "category": "heating",
         "defaultNotify": true,
-        "frontendOrder": 23,
+        "frontendOrder": 24,
         "label": "Veolia Łódź",
         "names": {
             "pl": "Veolia Łódź",
@@ -651,7 +678,7 @@
         "utility": "heating",
         "category": "heating",
         "defaultNotify": true,
-        "frontendOrder": 24,
+        "frontendOrder": 25,
         "label": "Veolia Poznań",
         "names": {
             "pl": "Veolia Poznań",
@@ -678,7 +705,7 @@
         "utility": "heating",
         "category": "heating",
         "defaultNotify": true,
-        "frontendOrder": 25,
+        "frontendOrder": 26,
         "label": "Veolia Warszawa",
         "names": {
             "pl": "Veolia Warszawa",
@@ -705,7 +732,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 26,
+        "frontendOrder": 27,
         "label": "AQUA S.A.",
         "names": {
             "pl": "AQUA S.A.",
@@ -721,8 +748,8 @@
                 "pl": "AQUA S.A."
             },
             "android": {
-                "pl": "AQUA Bielsko-Biała",
-                "en": "AQUA Bielsko-Biała"
+                "pl": "AQUA S.A.",
+                "en": "AQUA S.A."
             }
         },
         "region": "aqua_bielsko_area"
@@ -732,7 +759,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 27,
+        "frontendOrder": 28,
         "label": "Aquanet",
         "names": {
             "pl": "Aquanet",
@@ -759,15 +786,15 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 28,
+        "frontendOrder": 29,
         "label": "Bytomskie Wodociągi",
         "names": {
             "pl": "Bytomskie Wodociągi",
             "en": "Bytomskie Wodociągi"
         },
         "shortNames": {
-            "pl": "BW Bytom",
-            "en": "BW Bytom"
+            "pl": "Bytomskie Wodociągi",
+            "en": "Bytomskie Wodociągi"
         },
         "aliases": [],
         "surfaceNames": {
@@ -775,8 +802,8 @@
                 "pl": "Bytomskie Wodociągi"
             },
             "android": {
-                "pl": "Bytomskie Wodociągi",
-                "en": "Bytom Water Utility"
+                "pl": "BW Bytom",
+                "en": "BW Bytom"
             }
         },
         "region": "bytom"
@@ -786,7 +813,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 29,
+        "frontendOrder": 30,
         "label": "ChŚPWiK",
         "names": {
             "pl": "ChŚPWiK",
@@ -813,15 +840,15 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 30,
+        "frontendOrder": 31,
         "label": "Dąbrowskie Wodociągi",
         "names": {
             "pl": "Dąbrowskie Wodociągi",
             "en": "Dąbrowskie Wodociągi"
         },
         "shortNames": {
-            "pl": "DW Dąbrowa",
-            "en": "DW Dąbrowa"
+            "pl": "Dąbrowskie Wodociągi",
+            "en": "Dąbrowskie Wodociągi"
         },
         "aliases": [],
         "surfaceNames": {
@@ -829,8 +856,8 @@
                 "pl": "Dąbrowskie Wodociągi"
             },
             "android": {
-                "pl": "Dąbrowskie Wodociągi",
-                "en": "Dąbrowskie Waterworks"
+                "pl": "DW Dąbrowa",
+                "en": "DW Dąbrowa"
             }
         },
         "region": "dabrowskie_wodociagi_area"
@@ -840,7 +867,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 31,
+        "frontendOrder": 32,
         "label": "Gdańskie Wodociągi",
         "names": {
             "pl": "Gdańskie Wodociągi",
@@ -867,7 +894,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 32,
+        "frontendOrder": 33,
         "label": "Katowickie Wodociągi",
         "names": {
             "pl": "Katowickie Wodociągi",
@@ -894,7 +921,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 33,
+        "frontendOrder": 34,
         "label": "LPWiK Legnica",
         "names": {
             "pl": "LPWiK Legnica",
@@ -921,15 +948,15 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 34,
+        "frontendOrder": 35,
         "label": "MPWiK Lublin",
         "names": {
             "pl": "MPWiK Lublin",
             "en": "MPWiK Lublin"
         },
         "shortNames": {
-            "pl": "MPWiK LUB",
-            "en": "MPWiK LUB"
+            "pl": "MPWiK Lublin",
+            "en": "MPWiK Lublin"
         },
         "aliases": [],
         "surfaceNames": {
@@ -937,7 +964,7 @@
                 "pl": "MPWiK Lublin"
             },
             "android": {
-                "pl": "MPWiK Lublin",
+                "pl": "MPWiK LBL",
                 "en": "MPWiK LBL"
             }
         },
@@ -948,15 +975,15 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 35,
+        "frontendOrder": 36,
         "label": "MPWiK Rzeszów",
         "names": {
             "pl": "MPWiK Rzeszów",
             "en": "MPWiK Rzeszów"
         },
         "shortNames": {
-            "pl": "MPWiK RZE",
-            "en": "MPWiK RZE"
+            "pl": "MPWiK Rzeszów",
+            "en": "MPWiK Rzeszów"
         },
         "aliases": [],
         "surfaceNames": {
@@ -964,7 +991,7 @@
                 "pl": "MPWiK Rzeszów"
             },
             "android": {
-                "pl": "MPWiK Rzeszów",
+                "pl": "MPWiK RZE",
                 "en": "MPWiK RZE"
             }
         },
@@ -975,15 +1002,15 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 36,
+        "frontendOrder": 37,
         "label": "MPWiK Warszawa",
         "names": {
             "pl": "MPWiK Warszawa",
             "en": "MPWiK Warszawa"
         },
         "shortNames": {
-            "pl": "MPWiK WAW",
-            "en": "MPWiK WAW"
+            "pl": "MPWiK Warszawa",
+            "en": "MPWiK Warszawa"
         },
         "aliases": [],
         "surfaceNames": {
@@ -1002,15 +1029,15 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 37,
+        "frontendOrder": 38,
         "label": "MPWiK Wrocław",
         "names": {
             "pl": "MPWiK Wrocław",
             "en": "MPWiK Wrocław"
         },
         "shortNames": {
-            "pl": "MPWiK WRO",
-            "en": "MPWiK WRO"
+            "pl": "MPWiK Wrocław",
+            "en": "MPWiK Wrocław"
         },
         "aliases": [],
         "surfaceNames": {
@@ -1029,15 +1056,15 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 38,
+        "frontendOrder": 39,
         "label": "MWiK Bydgoszcz",
         "names": {
             "pl": "MWiK Bydgoszcz",
             "en": "MWiK Bydgoszcz"
         },
         "shortNames": {
-            "pl": "MWiK BDG",
-            "en": "MWiK BDG"
+            "pl": "MWiK Bydgoszcz",
+            "en": "MWiK Bydgoszcz"
         },
         "aliases": [],
         "surfaceNames": {
@@ -1056,7 +1083,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 39,
+        "frontendOrder": 40,
         "label": "MWiK Koszalin",
         "names": {
             "pl": "MWiK Koszalin",
@@ -1072,8 +1099,8 @@
                 "pl": "MWiK Koszalin"
             },
             "android": {
-                "pl": "MWiK Koszalin",
-                "en": "MWiK Koszalin"
+                "pl": "MWiK KSL",
+                "en": "MWiK KSL"
             }
         },
         "region": "koszalin"
@@ -1083,24 +1110,24 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 40,
-        "label": "PEWIK Gdynia",
+        "frontendOrder": 41,
+        "label": "PEWiK Gdynia",
         "names": {
-            "pl": "PEWIK Gdynia",
-            "en": "PEWIK Gdynia"
+            "pl": "PEWiK Gdynia",
+            "en": "PEWiK Gdynia"
         },
         "shortNames": {
-            "pl": "PEWIK GDY",
-            "en": "PEWIK GDY"
+            "pl": "PEWiK Gdynia",
+            "en": "PEWiK Gdynia"
         },
         "aliases": [],
         "surfaceNames": {
             "rust": {
-                "pl": "PEWIK Gdynia"
+                "pl": "PEWiK Gdynia"
             },
             "android": {
-                "pl": "PEWIK GDY",
-                "en": "PEWIK GDY"
+                "pl": "PEWiK GDY",
+                "en": "PEWiK GDY"
             }
         },
         "region": "pewik_gdynia_area"
@@ -1110,7 +1137,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 41,
+        "frontendOrder": 42,
         "label": "PUK Rokietnica",
         "names": {
             "pl": "PUK Rokietnica",
@@ -1127,7 +1154,7 @@
             },
             "android": {
                 "pl": "PUK Rokiet.",
-                "en": "PUK Rokietnica"
+                "en": "PUK Rokiet."
             }
         },
         "region": "rokietnica"
@@ -1137,7 +1164,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 42,
+        "frontendOrder": 43,
         "label": "PWiK Częstochowa",
         "names": {
             "pl": "PWiK Częstochowa",
@@ -1164,7 +1191,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 43,
+        "frontendOrder": 44,
         "label": "PWiK Gliwice",
         "names": {
             "pl": "PWiK Gliwice",
@@ -1191,7 +1218,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 44,
+        "frontendOrder": 45,
         "label": "PWiK Gorzów",
         "names": {
             "pl": "PWiK Gorzów",
@@ -1207,8 +1234,8 @@
                 "pl": "PWiK Gorzów Wielkopolski"
             },
             "android": {
-                "pl": "PWiK Gorzów Wielkopolski",
-                "en": "PWiK Gorzów Wielkopolski"
+                "pl": "PWiK GW",
+                "en": "PWiK GW"
             }
         },
         "region": "pwik_gorzow_area"
@@ -1218,7 +1245,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 45,
+        "frontendOrder": 46,
         "label": "PWiK Kalisz",
         "names": {
             "pl": "PWiK Kalisz",
@@ -1234,8 +1261,8 @@
                 "pl": "PWiK Kalisz"
             },
             "android": {
-                "pl": "PWiK Kalisz",
-                "en": "PWiK Kalisz"
+                "pl": "PWiK KLA",
+                "en": "PWiK KLA"
             }
         },
         "region": "kalisz"
@@ -1245,7 +1272,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 46,
+        "frontendOrder": 47,
         "label": "PWiK Olsztyn",
         "names": {
             "pl": "PWiK Olsztyn",
@@ -1272,7 +1299,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 47,
+        "frontendOrder": 48,
         "label": "PWiK Ruda Śląska",
         "names": {
             "pl": "PWiK Ruda Śląska",
@@ -1288,8 +1315,8 @@
                 "pl": "PWiK Ruda Śląska"
             },
             "android": {
-                "pl": "PWiK Ruda Śląska",
-                "en": "PWiK Ruda Śląska"
+                "pl": "PWiK RŚ",
+                "en": "PWiK RŚ"
             }
         },
         "region": "ruda_slaska"
@@ -1299,7 +1326,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 48,
+        "frontendOrder": 49,
         "label": "PWiK Rybnik",
         "names": {
             "pl": "PWiK Rybnik",
@@ -1326,7 +1353,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 49,
+        "frontendOrder": 50,
         "label": "RPWiK Tychy",
         "names": {
             "pl": "RPWiK Tychy",
@@ -1353,15 +1380,15 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 50,
+        "frontendOrder": 51,
         "label": "Sosnowieckie Wodociągi",
         "names": {
             "pl": "Sosnowieckie Wodociągi",
             "en": "Sosnowieckie Wodociągi"
         },
         "shortNames": {
-            "pl": "Wodociągi Sosnowiec",
-            "en": "Sosnowiec Water"
+            "pl": "Sosnowieckie Wodociągi",
+            "en": "Sosnowieckie Wodociągi"
         },
         "aliases": [],
         "surfaceNames": {
@@ -1369,8 +1396,8 @@
                 "pl": "Sosnowieckie Wodociągi"
             },
             "android": {
-                "pl": "Sosnowieckie Wodociągi",
-                "en": "Sosnowieckie Wodociągi"
+                "pl": "SW SSW",
+                "en": "SW SSW"
             }
         },
         "region": "sosnowiec"
@@ -1380,15 +1407,15 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 51,
+        "frontendOrder": 52,
         "label": "Tarnowskie Wodociągi",
         "names": {
             "pl": "Tarnowskie Wodociągi",
             "en": "Tarnowskie Wodociągi"
         },
         "shortNames": {
-            "pl": "TW Tarnów",
-            "en": "TW Tarnów"
+            "pl": "Tarnowskie Wodociągi",
+            "en": "Tarnowskie Wodociągi"
         },
         "aliases": [],
         "surfaceNames": {
@@ -1396,8 +1423,8 @@
                 "pl": "Tarnowskie Wodociągi"
             },
             "android": {
-                "pl": "Tarnowskie Wodociągi",
-                "en": "Tarnowskie Wodociągi"
+                "pl": "TW Tarnów",
+                "en": "TW Tarnów"
             }
         },
         "region": "tarnowskie_wodociagi_area"
@@ -1407,7 +1434,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 52,
+        "frontendOrder": 53,
         "label": "Toruńskie Wodociągi",
         "names": {
             "pl": "Toruńskie Wodociągi",
@@ -1434,7 +1461,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 53,
+        "frontendOrder": 54,
         "label": "WiK Opole",
         "names": {
             "pl": "WiK Opole",
@@ -1461,7 +1488,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 54,
+        "frontendOrder": 55,
         "label": "WM Radom",
         "names": {
             "pl": "WM Radom",
@@ -1488,7 +1515,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 55,
+        "frontendOrder": 56,
         "label": "WMK Kraków",
         "names": {
             "pl": "WMK Kraków",
@@ -1515,7 +1542,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 56,
+        "frontendOrder": 57,
         "label": "Wodociągi Białostockie",
         "names": {
             "pl": "Wodociągi Białostockie",
@@ -1542,7 +1569,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 57,
+        "frontendOrder": 58,
         "label": "Wodociągi Kieleckie",
         "names": {
             "pl": "Wodociągi Kieleckie",
@@ -1569,7 +1596,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 58,
+        "frontendOrder": 59,
         "label": "Wodociągi Płockie",
         "names": {
             "pl": "Wodociągi Płockie",
@@ -1596,7 +1623,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 59,
+        "frontendOrder": 60,
         "label": "WPWiK Wałbrzych",
         "names": {
             "pl": "WPWiK Wałbrzych",
@@ -1612,8 +1639,8 @@
                 "pl": "WPWiK Wałbrzych"
             },
             "android": {
-                "pl": "WPWiK Wałbrzych",
-                "en": "WPWiK Wałbrzych"
+                "pl": "WPWiK WŁB",
+                "en": "WPWiK WŁB"
             }
         },
         "region": "wpwik_walbrzych_area"
@@ -1623,7 +1650,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 60,
+        "frontendOrder": 61,
         "label": "ZPWiK Zabrze",
         "names": {
             "pl": "ZPWiK Zabrze",
@@ -1650,7 +1677,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 61,
+        "frontendOrder": 62,
         "label": "ZWIK Łódź",
         "names": {
             "pl": "ZWIK Łódź",
@@ -1677,7 +1704,7 @@
         "utility": "water",
         "category": "water",
         "defaultNotify": true,
-        "frontendOrder": 62,
+        "frontendOrder": 63,
         "label": "ZWiK Zielona Góra",
         "names": {
             "pl": "ZWiK Zielona Góra",

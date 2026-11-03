@@ -615,8 +615,8 @@
         },
         "android": {
           "shortName": {
-            "pl": "Energa Ciepło Kalisz",
-            "en": "Energa Ciepło Kalisz"
+            "pl": "EC KLA",
+            "en": "EC KLA"
           },
           "legacyWidget": {
             "resource": "widget_label_energa_cieplo_kaliskie",
@@ -1062,8 +1062,8 @@
         },
         "android": {
           "shortName": {
-            "pl": "MEC Koszalin",
-            "en": "MEC Koszalin"
+            "pl": "MEC KSL",
+            "en": "MEC KSL"
           },
           "legacyWidget": {
             "resource": "widget_label_mec_koszalin",
@@ -1126,8 +1126,8 @@
             "en": "MPEC Kielce"
           },
           "shortName": {
-            "pl": "MPEC KIE",
-            "en": "MPEC KIE"
+            "pl": "MPEC Kielce",
+            "en": "MPEC Kielce"
           }
         },
         "rust": {
@@ -1137,8 +1137,8 @@
         },
         "android": {
           "shortName": {
-            "pl": "MPEC Kielce",
-            "en": "MPEC Kielce"
+            "pl": "MPEC KLC",
+            "en": "MPEC KLC"
           },
           "legacyWidget": {
             "resource": "widget_label_mpec_kielce",
@@ -1201,8 +1201,8 @@
             "en": "MPEC Rzeszów"
           },
           "shortName": {
-            "pl": "MPEC RZE",
-            "en": "MPEC RZE"
+            "pl": "MPEC Rzeszów",
+            "en": "MPEC Rzeszów"
           }
         },
         "rust": {
@@ -1212,8 +1212,8 @@
         },
         "android": {
           "shortName": {
-            "pl": "MPEC Rzeszów",
-            "en": "MPEC Rzeszów"
+            "pl": "MPEC RZE",
+            "en": "MPEC RZE"
           },
           "legacyWidget": {
             "resource": "widget_label_mpec_rzeszow",
@@ -1276,8 +1276,8 @@
             "en": "OPEC Gdynia"
           },
           "shortName": {
-            "pl": "OPEC",
-            "en": "OPEC"
+            "pl": "OPEC Gdynia",
+            "en": "OPEC Gdynia"
           }
         },
         "rust": {
@@ -1362,8 +1362,8 @@
         },
         "android": {
           "shortName": {
-            "pl": "PEC Gliwice",
-            "en": "PEC Gliwice"
+            "pl": "PEC GWC",
+            "en": "PEC GWC"
           },
           "legacyWidget": {
             "resource": "widget_label_pec_gliwice",
@@ -1485,10 +1485,79 @@
       }
     },
     {
-      "id": "sec",
+      "id": "radpec_radom",
       "utility": "heating",
       "order": {
         "frontend": 20,
+        "rust": 63,
+        "androidSingle": 63,
+        "addon": 55
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "RADPEC Radom",
+            "en": "RADPEC Radom"
+          },
+          "shortName": {
+            "pl": "RADPEC Radom",
+            "en": "RADPEC Radom"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "RADPEC Radom"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "RADPEC Radom",
+            "en": "RADPEC Radom"
+          },
+          "legacyWidget": null
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "RadpecRadom",
+          "constructor": "radpec_radom::RadpecRadomProvider"
+        },
+        "android": {
+          "legacyComponentClass": null,
+          "legacyLabelResource": null
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "heating",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "RADPEC",
+          "Radom"
+        ],
+        "location": "Radom",
+        "aggregateUtility": "heating",
+        "aggregateOrder": 20
+      },
+      "card": {
+        "name": "RADPEC Radom",
+        "icon": "🔥",
+        "color": "#f44336"
+      },
+      "frontend": {
+        "regionMatcher": "radpec_radom"
+      }
+    },
+    {
+      "id": "sec",
+      "utility": "heating",
+      "order": {
+        "frontend": 21,
         "rust": 36,
         "androidSingle": 23,
         "addon": null
@@ -1563,7 +1632,7 @@
       "id": "tauron_heat",
       "utility": "heating",
       "order": {
-        "frontend": 21,
+        "frontend": 22,
         "rust": 16,
         "androidSingle": 9,
         "addon": 21
@@ -1635,7 +1704,7 @@
       "id": "therma_bielsko",
       "utility": "heating",
       "order": {
-        "frontend": 22,
+        "frontend": 23,
         "rust": 12,
         "androidSingle": 10,
         "addon": 22
@@ -1710,7 +1779,7 @@
       "id": "veolia_lodz",
       "utility": "heating",
       "order": {
-        "frontend": 23,
+        "frontend": 24,
         "rust": 21,
         "androidSingle": 13,
         "addon": 30
@@ -1785,7 +1854,7 @@
       "id": "veolia_poznan",
       "utility": "heating",
       "order": {
-        "frontend": 24,
+        "frontend": 25,
         "rust": 20,
         "androidSingle": 12,
         "addon": 29
@@ -1860,7 +1929,7 @@
       "id": "veolia_warszawa",
       "utility": "heating",
       "order": {
-        "frontend": 25,
+        "frontend": 26,
         "rust": 19,
         "androidSingle": 11,
         "addon": 28
@@ -1935,7 +2004,7 @@
       "id": "aqua_bielsko",
       "utility": "water",
       "order": {
-        "frontend": 26,
+        "frontend": 27,
         "rust": 46,
         "androidSingle": 30,
         "addon": 18
@@ -1959,8 +2028,8 @@
         },
         "android": {
           "shortName": {
-            "pl": "AQUA Bielsko-Biała",
-            "en": "AQUA Bielsko-Biała"
+            "pl": "AQUA S.A.",
+            "en": "AQUA S.A."
           },
           "legacyWidget": {
             "resource": "widget_label_aqua_bielsko",
@@ -2010,7 +2079,7 @@
       "id": "aquanet",
       "utility": "water",
       "order": {
-        "frontend": 27,
+        "frontend": 28,
         "rust": 17,
         "androidSingle": 29,
         "addon": 23
@@ -2085,7 +2154,7 @@
       "id": "bytomskie_wodociagi",
       "utility": "water",
       "order": {
-        "frontend": 28,
+        "frontend": 29,
         "rust": 43,
         "androidSingle": 52,
         "addon": 24
@@ -2098,8 +2167,8 @@
             "en": "Bytomskie Wodociągi"
           },
           "shortName": {
-            "pl": "BW Bytom",
-            "en": "BW Bytom"
+            "pl": "Bytomskie Wodociągi",
+            "en": "Bytomskie Wodociągi"
           }
         },
         "rust": {
@@ -2109,8 +2178,8 @@
         },
         "android": {
           "shortName": {
-            "pl": "Bytomskie Wodociągi",
-            "en": "Bytom Water Utility"
+            "pl": "BW Bytom",
+            "en": "BW Bytom"
           },
           "legacyWidget": {
             "resource": "widget_label_bytomskie_wodociagi",
@@ -2160,7 +2229,7 @@
       "id": "chspwik",
       "utility": "water",
       "order": {
-        "frontend": 29,
+        "frontend": 30,
         "rust": 44,
         "androidSingle": 53,
         "addon": 25
@@ -2238,7 +2307,7 @@
       "id": "dabrowskie_wodociagi",
       "utility": "water",
       "order": {
-        "frontend": 30,
+        "frontend": 31,
         "rust": 45,
         "androidSingle": 54,
         "addon": 26
@@ -2251,8 +2320,8 @@
             "en": "Dąbrowskie Wodociągi"
           },
           "shortName": {
-            "pl": "DW Dąbrowa",
-            "en": "DW Dąbrowa"
+            "pl": "Dąbrowskie Wodociągi",
+            "en": "Dąbrowskie Wodociągi"
           }
         },
         "rust": {
@@ -2262,8 +2331,8 @@
         },
         "android": {
           "shortName": {
-            "pl": "Dąbrowskie Wodociągi",
-            "en": "Dąbrowskie Waterworks"
+            "pl": "DW Dąbrowa",
+            "en": "DW Dąbrowa"
           },
           "legacyWidget": {
             "resource": "widget_label_dabrowskie_wodociagi",
@@ -2313,7 +2382,7 @@
       "id": "gdanskie_wodociagi",
       "utility": "water",
       "order": {
-        "frontend": 31,
+        "frontend": 32,
         "rust": 31,
         "androidSingle": 55,
         "addon": 50
@@ -2388,7 +2457,7 @@
       "id": "katowickie_wodociagi",
       "utility": "water",
       "order": {
-        "frontend": 32,
+        "frontend": 33,
         "rust": 18,
         "androidSingle": 31,
         "addon": 27
@@ -2463,7 +2532,7 @@
       "id": "lpwik_legnica",
       "utility": "water",
       "order": {
-        "frontend": 33,
+        "frontend": 34,
         "rust": 42,
         "androidSingle": 61,
         "addon": 54
@@ -2538,7 +2607,7 @@
       "id": "mpwik_lublin",
       "utility": "water",
       "order": {
-        "frontend": 34,
+        "frontend": 35,
         "rust": 38,
         "androidSingle": 57,
         "addon": null
@@ -2551,8 +2620,8 @@
             "en": "MPWiK Lublin"
           },
           "shortName": {
-            "pl": "MPWiK LUB",
-            "en": "MPWiK LUB"
+            "pl": "MPWiK Lublin",
+            "en": "MPWiK Lublin"
           }
         },
         "rust": {
@@ -2562,7 +2631,7 @@
         },
         "android": {
           "shortName": {
-            "pl": "MPWiK Lublin",
+            "pl": "MPWiK LBL",
             "en": "MPWiK LBL"
           },
           "legacyWidget": {
@@ -2613,7 +2682,7 @@
       "id": "mpwik_rzeszow",
       "utility": "water",
       "order": {
-        "frontend": 35,
+        "frontend": 36,
         "rust": 39,
         "androidSingle": 58,
         "addon": 3
@@ -2626,8 +2695,8 @@
             "en": "MPWiK Rzeszów"
           },
           "shortName": {
-            "pl": "MPWiK RZE",
-            "en": "MPWiK RZE"
+            "pl": "MPWiK Rzeszów",
+            "en": "MPWiK Rzeszów"
           }
         },
         "rust": {
@@ -2637,7 +2706,7 @@
         },
         "android": {
           "shortName": {
-            "pl": "MPWiK Rzeszów",
+            "pl": "MPWiK RZE",
             "en": "MPWiK RZE"
           },
           "legacyWidget": {
@@ -2688,7 +2757,7 @@
       "id": "mpwik_warszawa",
       "utility": "water",
       "order": {
-        "frontend": 36,
+        "frontend": 37,
         "rust": 2,
         "androidSingle": 26,
         "addon": 2
@@ -2701,8 +2770,8 @@
             "en": "MPWiK Warszawa"
           },
           "shortName": {
-            "pl": "MPWiK WAW",
-            "en": "MPWiK WAW"
+            "pl": "MPWiK Warszawa",
+            "en": "MPWiK Warszawa"
           }
         },
         "rust": {
@@ -2763,7 +2832,7 @@
       "id": "mpwik_wroclaw",
       "utility": "water",
       "order": {
-        "frontend": 37,
+        "frontend": 38,
         "rust": 1,
         "androidSingle": 25,
         "addon": 1
@@ -2776,8 +2845,8 @@
             "en": "MPWiK Wrocław"
           },
           "shortName": {
-            "pl": "MPWiK WRO",
-            "en": "MPWiK WRO"
+            "pl": "MPWiK Wrocław",
+            "en": "MPWiK Wrocław"
           }
         },
         "rust": {
@@ -2838,7 +2907,7 @@
       "id": "mwik_bydgoszcz",
       "utility": "water",
       "order": {
-        "frontend": 38,
+        "frontend": 39,
         "rust": 51,
         "androidSingle": 59,
         "addon": 4
@@ -2851,8 +2920,8 @@
             "en": "MWiK Bydgoszcz"
           },
           "shortName": {
-            "pl": "MWiK BDG",
-            "en": "MWiK BDG"
+            "pl": "MWiK Bydgoszcz",
+            "en": "MWiK Bydgoszcz"
           }
         },
         "rust": {
@@ -2913,7 +2982,7 @@
       "id": "mwik_koszalin",
       "utility": "water",
       "order": {
-        "frontend": 39,
+        "frontend": 40,
         "rust": 52,
         "androidSingle": 45,
         "addon": 5
@@ -2937,8 +3006,8 @@
         },
         "android": {
           "shortName": {
-            "pl": "MWiK Koszalin",
-            "en": "MWiK Koszalin"
+            "pl": "MWiK KSL",
+            "en": "MWiK KSL"
           },
           "legacyWidget": {
             "resource": "widget_label_mwik_koszalin",
@@ -2988,7 +3057,7 @@
       "id": "pewik_gdynia",
       "utility": "water",
       "order": {
-        "frontend": 40,
+        "frontend": 41,
         "rust": 25,
         "androidSingle": 60,
         "addon": 49
@@ -2997,29 +3066,29 @@
       "labels": {
         "frontend": {
           "name": {
-            "pl": "PEWIK Gdynia",
-            "en": "PEWIK Gdynia"
+            "pl": "PEWiK Gdynia",
+            "en": "PEWiK Gdynia"
           },
           "shortName": {
-            "pl": "PEWIK GDY",
-            "en": "PEWIK GDY"
+            "pl": "PEWiK Gdynia",
+            "en": "PEWiK Gdynia"
           }
         },
         "rust": {
           "name": {
-            "pl": "PEWIK Gdynia"
+            "pl": "PEWiK Gdynia"
           }
         },
         "android": {
           "shortName": {
-            "pl": "PEWIK GDY",
-            "en": "PEWIK GDY"
+            "pl": "PEWiK GDY",
+            "en": "PEWiK GDY"
           },
           "legacyWidget": {
             "resource": "widget_label_pewik_gdynia",
             "name": {
-              "pl": "PEWIK Gdynia",
-              "en": "PEWIK Gdynia"
+              "pl": "PEWiK Gdynia",
+              "en": "PEWiK Gdynia"
             }
           }
         }
@@ -3043,7 +3112,7 @@
       "android": {
         "singleWidget": true,
         "searchAliases": [
-          "PEWIK",
+          "PEWiK",
           "Gdynia"
         ],
         "location": "Gdynia",
@@ -3051,7 +3120,7 @@
         "aggregateOrder": 23
       },
       "card": {
-        "name": "PEWIK Gdynia",
+        "name": "PEWiK Gdynia",
         "icon": "💧",
         "color": "#2196f3"
       },
@@ -3063,7 +3132,7 @@
       "id": "puk_rokietnica",
       "utility": "water",
       "order": {
-        "frontend": 41,
+        "frontend": 42,
         "rust": 35,
         "androidSingle": 56,
         "addon": null
@@ -3088,7 +3157,7 @@
         "android": {
           "shortName": {
             "pl": "PUK Rokiet.",
-            "en": "PUK Rokietnica"
+            "en": "PUK Rokiet."
           },
           "legacyWidget": {
             "resource": "widget_label_puk_rokietnica",
@@ -3138,7 +3207,7 @@
       "id": "pwik_czestochowa",
       "utility": "water",
       "order": {
-        "frontend": 42,
+        "frontend": 43,
         "rust": 30,
         "androidSingle": 39,
         "addon": 37
@@ -3213,7 +3282,7 @@
       "id": "pwik_gliwice",
       "utility": "water",
       "order": {
-        "frontend": 43,
+        "frontend": 44,
         "rust": 48,
         "androidSingle": 43,
         "addon": 38
@@ -3288,7 +3357,7 @@
       "id": "pwik_gorzow",
       "utility": "water",
       "order": {
-        "frontend": 44,
+        "frontend": 45,
         "rust": 47,
         "androidSingle": 41,
         "addon": 39
@@ -3312,8 +3381,8 @@
         },
         "android": {
           "shortName": {
-            "pl": "PWiK Gorzów Wielkopolski",
-            "en": "PWiK Gorzów Wielkopolski"
+            "pl": "PWiK GW",
+            "en": "PWiK GW"
           },
           "legacyWidget": {
             "resource": "widget_label_pwik_gorzow",
@@ -3363,7 +3432,7 @@
       "id": "pwik_kalisz",
       "utility": "water",
       "order": {
-        "frontend": 45,
+        "frontend": 46,
         "rust": 29,
         "androidSingle": 34,
         "addon": null
@@ -3387,8 +3456,8 @@
         },
         "android": {
           "shortName": {
-            "pl": "PWiK Kalisz",
-            "en": "PWiK Kalisz"
+            "pl": "PWiK KLA",
+            "en": "PWiK KLA"
           },
           "legacyWidget": {
             "resource": "widget_label_pwik_kalisz",
@@ -3438,7 +3507,7 @@
       "id": "pwik_olsztyn",
       "utility": "water",
       "order": {
-        "frontend": 46,
+        "frontend": 47,
         "rust": 40,
         "androidSingle": 40,
         "addon": 40
@@ -3513,7 +3582,7 @@
       "id": "pwik_ruda_slaska",
       "utility": "water",
       "order": {
-        "frontend": 47,
+        "frontend": 48,
         "rust": 56,
         "androidSingle": 49,
         "addon": 41
@@ -3537,8 +3606,8 @@
         },
         "android": {
           "shortName": {
-            "pl": "PWiK Ruda Śląska",
-            "en": "PWiK Ruda Śląska"
+            "pl": "PWiK RŚ",
+            "en": "PWiK RŚ"
           },
           "legacyWidget": {
             "resource": "widget_label_pwik_ruda_slaska",
@@ -3588,7 +3657,7 @@
       "id": "pwik_rybnik",
       "utility": "water",
       "order": {
-        "frontend": 48,
+        "frontend": 49,
         "rust": 57,
         "androidSingle": 50,
         "addon": 42
@@ -3663,7 +3732,7 @@
       "id": "rpwik_tychy",
       "utility": "water",
       "order": {
-        "frontend": 49,
+        "frontend": 50,
         "rust": 49,
         "androidSingle": 42,
         "addon": 43
@@ -3738,7 +3807,7 @@
       "id": "sosnowieckie_wodociagi",
       "utility": "water",
       "order": {
-        "frontend": 50,
+        "frontend": 51,
         "rust": 53,
         "androidSingle": 46,
         "addon": 45
@@ -3751,8 +3820,8 @@
             "en": "Sosnowieckie Wodociągi"
           },
           "shortName": {
-            "pl": "Wodociągi Sosnowiec",
-            "en": "Sosnowiec Water"
+            "pl": "Sosnowieckie Wodociągi",
+            "en": "Sosnowieckie Wodociągi"
           }
         },
         "rust": {
@@ -3762,8 +3831,8 @@
         },
         "android": {
           "shortName": {
-            "pl": "Sosnowieckie Wodociągi",
-            "en": "Sosnowieckie Wodociągi"
+            "pl": "SW SSW",
+            "en": "SW SSW"
           },
           "legacyWidget": {
             "resource": "widget_label_sosnowieckie_wodociagi",
@@ -3813,7 +3882,7 @@
       "id": "tarnowskie_wodociagi",
       "utility": "water",
       "order": {
-        "frontend": 51,
+        "frontend": 52,
         "rust": 54,
         "androidSingle": 47,
         "addon": 46
@@ -3826,8 +3895,8 @@
             "en": "Tarnowskie Wodociągi"
           },
           "shortName": {
-            "pl": "TW Tarnów",
-            "en": "TW Tarnów"
+            "pl": "Tarnowskie Wodociągi",
+            "en": "Tarnowskie Wodociągi"
           }
         },
         "rust": {
@@ -3837,8 +3906,8 @@
         },
         "android": {
           "shortName": {
-            "pl": "Tarnowskie Wodociągi",
-            "en": "Tarnowskie Wodociągi"
+            "pl": "TW Tarnów",
+            "en": "TW Tarnów"
           },
           "legacyWidget": {
             "resource": "widget_label_tarnowskie_wodociagi",
@@ -3888,7 +3957,7 @@
       "id": "torunskie_wodociagi",
       "utility": "water",
       "order": {
-        "frontend": 52,
+        "frontend": 53,
         "rust": 27,
         "androidSingle": 38,
         "addon": 36
@@ -3963,7 +4032,7 @@
       "id": "wik_opole",
       "utility": "water",
       "order": {
-        "frontend": 53,
+        "frontend": 54,
         "rust": 41,
         "androidSingle": 51,
         "addon": 48
@@ -4038,7 +4107,7 @@
       "id": "wm_radom",
       "utility": "water",
       "order": {
-        "frontend": 54,
+        "frontend": 55,
         "rust": 62,
         "androidSingle": 28,
         "addon": 20
@@ -4113,7 +4182,7 @@
       "id": "wmk",
       "utility": "water",
       "order": {
-        "frontend": 55,
+        "frontend": 56,
         "rust": 15,
         "androidSingle": 27,
         "addon": 19
@@ -4188,7 +4257,7 @@
       "id": "wodociagi_bialostockie",
       "utility": "water",
       "order": {
-        "frontend": 56,
+        "frontend": 57,
         "rust": 28,
         "androidSingle": 36,
         "addon": 35
@@ -4263,7 +4332,7 @@
       "id": "wodociagi_kieleckie",
       "utility": "water",
       "order": {
-        "frontend": 57,
+        "frontend": 58,
         "rust": 26,
         "androidSingle": 37,
         "addon": 34
@@ -4338,7 +4407,7 @@
       "id": "wodociagi_plockie",
       "utility": "water",
       "order": {
-        "frontend": 58,
+        "frontend": 59,
         "rust": 24,
         "androidSingle": 35,
         "addon": 33
@@ -4413,7 +4482,7 @@
       "id": "wpwik_walbrzych",
       "utility": "water",
       "order": {
-        "frontend": 59,
+        "frontend": 60,
         "rust": 50,
         "androidSingle": 44,
         "addon": 44
@@ -4437,8 +4506,8 @@
         },
         "android": {
           "shortName": {
-            "pl": "WPWiK Wałbrzych",
-            "en": "WPWiK Wałbrzych"
+            "pl": "WPWiK WŁB",
+            "en": "WPWiK WŁB"
           },
           "legacyWidget": {
             "resource": "widget_label_wpwik_walbrzych",
@@ -4488,7 +4557,7 @@
       "id": "zabrzanskie_wodociagi",
       "utility": "water",
       "order": {
-        "frontend": 60,
+        "frontend": 61,
         "rust": 55,
         "androidSingle": 48,
         "addon": 47
@@ -4563,7 +4632,7 @@
       "id": "zwik_lodz",
       "utility": "water",
       "order": {
-        "frontend": 61,
+        "frontend": 62,
         "rust": 22,
         "androidSingle": 32,
         "addon": 31
@@ -4638,7 +4707,7 @@
       "id": "zwik_zielona_gora",
       "utility": "water",
       "order": {
-        "frontend": 62,
+        "frontend": 63,
         "rust": 23,
         "androidSingle": 33,
         "addon": 32

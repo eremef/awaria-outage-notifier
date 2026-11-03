@@ -133,9 +133,11 @@ function validateCatalog(catalog) {
         assertLocaleMap(provider.labels.rust.name, `${where}.labels.rust.name`, ['pl']);
         assertObject(provider.labels.android, `${where}.labels.android`, ['shortName', 'legacyWidget']);
         assertLocaleMap(provider.labels.android.shortName, `${where}.labels.android.shortName`);
-        assertObject(provider.labels.android.legacyWidget, `${where}.labels.android.legacyWidget`, ['resource', 'name']);
-        assertString(provider.labels.android.legacyWidget.resource, `${where}.labels.android.legacyWidget.resource`, { pattern: /^[a-z][a-z0-9_]*$/ });
-        assertLocaleMap(provider.labels.android.legacyWidget.name, `${where}.labels.android.legacyWidget.name`);
+        if (provider.labels.android.legacyWidget !== null) {
+            assertObject(provider.labels.android.legacyWidget, `${where}.labels.android.legacyWidget`, ['resource', 'name']);
+            assertString(provider.labels.android.legacyWidget.resource, `${where}.labels.android.legacyWidget.resource`, { pattern: /^[a-z][a-z0-9_]*$/ });
+            assertLocaleMap(provider.labels.android.legacyWidget.name, `${where}.labels.android.legacyWidget.name`);
+        }
 
         assertStringArray(provider.aliases, `${where}.aliases`, /^[a-z][a-z0-9_]*$/);
         for (const alias of provider.aliases) {
@@ -149,10 +151,18 @@ function validateCatalog(catalog) {
         assertString(provider.bindings.rust.enumVariant, `${where}.bindings.rust.enumVariant`, { pattern: /^[A-Z][A-Za-z0-9]*$/ });
         assertString(provider.bindings.rust.constructor, `${where}.bindings.rust.constructor`, { pattern: /^[a-z][a-z0-9_]*::[A-Z][A-Za-z0-9]*$/ });
         assertObject(provider.bindings.android, `${where}.bindings.android`, ['legacyComponentClass', 'legacyLabelResource']);
-        assertString(provider.bindings.android.legacyComponentClass, `${where}.bindings.android.legacyComponentClass`, { pattern: /^[A-Za-z][A-Za-z0-9]*$/ });
-        assertString(provider.bindings.android.legacyLabelResource, `${where}.bindings.android.legacyLabelResource`, { pattern: /^[a-z][a-z0-9_]*$/ });
-        if (androidComponents.has(provider.bindings.android.legacyComponentClass)) fail(`${where}.bindings.android.legacyComponentClass`, 'duplicate Android component binding');
-        androidComponents.add(provider.bindings.android.legacyComponentClass);
+        const component = provider.bindings.android.legacyComponentClass;
+        const label = provider.bindings.android.legacyLabelResource;
+        const legacyWidget = provider.labels.android.legacyWidget;
+        if ((component === null) !== (label === null) || (component === null) !== (legacyWidget === null)) {
+            fail(`${where}.bindings.android`, 'legacy component, label and widget metadata must all be present or all be null');
+        }
+        if (component !== null) {
+            assertString(component, `${where}.bindings.android.legacyComponentClass`, { pattern: /^[A-Za-z][A-Za-z0-9]*$/ });
+            assertString(label, `${where}.bindings.android.legacyLabelResource`, { pattern: /^[a-z][a-z0-9_]*$/ });
+            if (androidComponents.has(component)) fail(`${where}.bindings.android.legacyComponentClass`, 'duplicate Android component binding');
+            androidComponents.add(component);
+        }
 
         assertObject(provider.capabilities, `${where}.capabilities`, ['webviewOnly', 'addonAllowed']);
         assertBoolean(provider.capabilities.webviewOnly, `${where}.capabilities.webviewOnly`);
@@ -185,10 +195,12 @@ function validateCatalog(catalog) {
         assertString(provider.card.icon, `${where}.card.icon`);
         assertString(provider.card.color, `${where}.card.color`, { pattern: /^#[0-9a-fA-F]{6}$/ });
 
-        const legacyResource = provider.labels.android.legacyWidget.resource;
-        if (legacyResource !== provider.bindings.android.legacyLabelResource) fail(`${where}.bindings.android.legacyLabelResource`, 'must match labels.android.legacyWidget.resource');
-        if (androidResources.has(legacyResource)) fail(`${where}.labels.android.legacyWidget.resource`, 'duplicate Android string resource');
-        androidResources.add(legacyResource);
+        const legacyResource = provider.labels.android.legacyWidget?.resource;
+        if (legacyResource !== undefined) {
+            if (legacyResource !== provider.bindings.android.legacyLabelResource) fail(`${where}.bindings.android.legacyLabelResource`, 'must match labels.android.legacyWidget.resource');
+            if (androidResources.has(legacyResource)) fail(`${where}.labels.android.legacyWidget.resource`, 'duplicate Android string resource');
+            androidResources.add(legacyResource);
+        }
     });
 
     const assertDense = (rows, label) => {
@@ -260,7 +272,7 @@ function validateBindingsAgainstCode(catalog, catalogComponents) {
     if (manifestComponents.size !== catalogComponents.size) fail('bindings.android', `manifest has ${manifestComponents.size} labeled components; catalog has ${catalogComponents.size}`);
     for (const provider of catalog.providers) {
         const component = provider.bindings.android.legacyComponentClass;
-        if (manifestComponents.get(component) !== provider.bindings.android.legacyLabelResource) fail(`providers.${provider.id}.bindings.android`, `manifest resource for ${component} does not match catalog`);
+        if (component !== null && manifestComponents.get(component) !== provider.bindings.android.legacyLabelResource) fail(`providers.${provider.id}.bindings.android`, `manifest resource for ${component} does not match catalog`);
     }
     for (const widget of catalog.androidLegacyWidgets) {
         if (manifestComponents.get(widget.componentClass) !== widget.resource) fail(`androidLegacyWidgets.${widget.componentClass}`, 'manifest label resource does not match catalog');
@@ -269,6 +281,7 @@ function validateBindingsAgainstCode(catalog, catalogComponents) {
 
 function runValidationSelfTests(catalog) {
     const cases = [
+        ['partial legacy binding', (copy) => { copy.providers[0].bindings.android.legacyComponentClass = null; }, 'legacy component, label and widget metadata'],
         ['unknown field', (copy) => { copy.unrecognized = true; }, 'catalog.unrecognized'],
         ['duplicate ID', (copy) => { copy.providers[1].id = copy.providers[0].id; }, 'duplicate canonical ID'],
         ['missing translation', (copy) => { delete copy.providers[0].labels.frontend.name.en; }, 'labels.frontend.name.en'],
@@ -478,7 +491,10 @@ function xmlEscape(value) {
 
 function renderAndroidStrings(catalog, locale) {
     const labels = [];
-    for (const provider of catalog.providers) labels.push([provider.labels.android.legacyWidget.resource, provider.labels.android.legacyWidget.name[locale]]);
+    for (const provider of catalog.providers) {
+        const widget = provider.labels.android.legacyWidget;
+        if (widget !== null) labels.push([widget.resource, widget.name[locale]]);
+    }
     for (const widget of catalog.androidLegacyWidgets) {
         if (widget.resource.startsWith('widget_label_')) labels.push([widget.resource, widget.name[locale]]);
     }

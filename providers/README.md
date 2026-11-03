@@ -11,7 +11,7 @@
 - `android.aggregateUtility` and `android.aggregateOrder` are set together only when the source is included in All/Tri widgets. The aggregate order is independent of the single-provider order. Do not infer aggregate inclusion from `utility`.
 - `icsUtility` preserves the daemon calendar's current summary category. It may differ from `utility` where historical behavior requires it.
 - `bindings.rust` names the existing `AlertSource` variant and registered constructor. These references are checked against Rust source; the catalog cannot define or execute Rust behavior.
-- `bindings.android` names the existing legacy receiver and manifest label resource. Android aggregate and generic widget labels not tied to provider IDs are recorded in `androidLegacyWidgets`.
+- `bindings.android` names the existing legacy receiver and manifest label resource. For a new generic-widget-only provider, set both binding fields and `labels.android.legacyWidget` to null. Existing legacy receiver bindings stay explicit and are checked against the manifest. Android aggregate and generic widget labels not tied to provider IDs are recorded in `androidLegacyWidgets`.
 - `android.searchAliases` and `android.location` are Android search metadata. `aliases` is reserved for historical source IDs; do not put ordinary search terms there.
 - `card` stores the current standalone card name, icon, and color for each canonical ID. Its fallback behavior for unknown IDs remains in the card code.
 

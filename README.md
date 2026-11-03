@@ -33,6 +33,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **Energa Ciepło Kaliskie**: Heat outages in Kalisz.
   - **Fortum**: Planned and current heat/hot water outages.
   - **Tauron Ciepło**: Heat outages (Southern Poland).
+  - **RADPEC Radom**: [Heat interruptions](https://radpec.com.pl/przerwy-w-dostawach.html) in Radom; restoration times are shown only when supplied.
   - **Therma Bielsko**: [Planned heat interruptions](https://www.therma.bielsko.pl/przerwy-w-dostawie) in Bielsko-Biała only.
   - **Veolia Warszawa**: Heat outages in Warsaw.
   - **Veolia Poznań**: Heat outages in Poznań.
@@ -223,7 +224,7 @@ For each address you want to monitor, add an entry with:
 
 #### Enabled Sources
 
-Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `epec_elblag`, `mec_koszalin`, `therma_bielsko`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`, `bytomskie_wodociagi`, `chspwik`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `rpwik_tychy`, `wpwik_walbrzych`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
+Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `epec_elblag`, `mec_koszalin`, `therma_bielsko`, `radpec_radom`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`, `bytomskie_wodociagi`, `chspwik`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `rpwik_tychy`, `wpwik_walbrzych`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
 
 ### Usage
 

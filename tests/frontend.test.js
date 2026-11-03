@@ -347,7 +347,7 @@ describe('Frontend Logic', () => {
                 'enea', 'energa', 'pge', 'stoen', 'tauron', 'psg',
                 'eco_sa', 'enea_cieplo', 'energa_cieplo_kaliskie', 'epec_elblag', 'fortum', 'gpec',
                 'kpec_bydgoszcz', 'lpec', 'mec_koszalin', 'mpec_kielce', 'mpec_rzeszow', 'opec_gdynia',
-                'pec_gliwice', 'pge_torun_heat', 'sec', 'tauron_heat', 'therma_bielsko', 'veolia_lodz',
+                'pec_gliwice', 'pge_torun_heat', 'radpec_radom', 'sec', 'tauron_heat', 'therma_bielsko', 'veolia_lodz',
                 'veolia_poznan', 'veolia_warszawa', 'aqua_bielsko', 'aquanet', 'bytomskie_wodociagi',
                 'chspwik', 'dabrowskie_wodociagi', 'gdanskie_wodociagi', 'katowickie_wodociagi',
                 'lpwik_legnica', 'mpwik_lublin', 'mpwik_rzeszow', 'mpwik_warszawa', 'mpwik_wroclaw',
@@ -676,6 +676,47 @@ describe('Frontend Logic', () => {
             expect(regions.pwik_rybnik_area({ cityName: 'Rybnik', cityId: 942765, voivodeship: 'Śląskie' })).toBe(true);
             expect(regions.pwik_rybnik_area({ cityName: 'Czernica', commune: 'Gaszowice', voivodeship: 'Śląskie' })).toBe(true);
             expect(regions.pwik_rybnik_area({ cityName: 'Katowice', cityId: 938621, voivodeship: 'Śląskie' })).toBe(false);
+        });
+    });
+
+    describe('RADPEC Radom service area', () => {
+        const matchesArea = getRegionMatchers().radpec_radom;
+
+        it('accepts Radom by TERYT ID or exact name and rejects conflicting locations', () => {
+            expect(matchesArea({ cityName: 'Radom', cityId: 972750, voivodeship: 'Mazowieckie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Radom', cityId: '972750' })).toBe(true);
+            expect(matchesArea({ cityName: 'Radom', voivodeship: 'Mazowieckie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Radom', cityId: 642253, voivodeship: 'Mazowieckie' })).toBe(false);
+            expect(matchesArea({ cityName: 'Radom', cityId: 972750, voivodeship: 'Śląskie' })).toBe(false);
+            expect(matchesArea({ cityName: 'Radomice', voivodeship: 'Mazowieckie' })).toBe(false);
+        });
+
+        it('restricts fallback street and backend-local matches to Radom', () => {
+            const alert = { source: 'radpec_radom', message: 'Awaria sieci', location: 'Radom; ul. Olsztyńska 33' };
+            const inside = { cityName: 'Radom', cityId: 972750, voivodeship: 'Mazowieckie', streetName1: 'Olsztyńska' };
+            const outside = { cityName: 'Warszawa', cityId: 918123, voivodeship: 'Mazowieckie', streetName1: 'Olsztyńska' };
+            expect(matchesStreetName(alert, inside)).toBe(true);
+            expect(matchesStreetName(alert, outside)).toBe(false);
+            expect(matchesAddress({ ...alert, isLocal: true, addressIndex: 0 }, [inside], 0)).toBe(true);
+            expect(matchesAddress({ ...alert, isLocal: true, addressIndex: 0 }, [outside], 0)).toBe(false);
+        });
+
+        it('matches each saved address against its own street and respects the house filter', () => {
+            const alert = {
+                source: 'radpec_radom', message: 'Awaria sieci', isLocal: true, addressIndex: 0,
+                location: 'Radom; Olsztyńska 33,; Olsztyńska 37, kl.1,; Struga 108.; 25 Czerwca 30/30A, 41/43'
+            };
+            const address = (street, house) => ({ cityName: 'Radom', cityId: 972750,
+                voivodeship: 'Mazowieckie', streetName1: street, houseNo: house });
+            const addresses = [address('Olsztyńska', '33'), address('Struga', '108'),
+                address('Olsztyńska', '108'), address('25 Czerwca', '30A'), address('25 Czerwca', '30B'),
+                address('Olsztyńska', '1')];
+            expect(matchesAddress(alert, addresses, 1, { filterByHouseNo: true })).toBe(true);
+            expect(matchesAddress(alert, addresses, 2, { filterByHouseNo: true })).toBe(false);
+            expect(matchesAddress(alert, addresses, 2, { filterByHouseNo: false })).toBe(true);
+            expect(matchesAddress(alert, addresses, 3, { filterByHouseNo: true })).toBe(true);
+            expect(matchesAddress(alert, addresses, 4, { filterByHouseNo: true })).toBe(false);
+            expect(matchesAddress(alert, addresses, 5, { filterByHouseNo: true })).toBe(false);
         });
     });
 

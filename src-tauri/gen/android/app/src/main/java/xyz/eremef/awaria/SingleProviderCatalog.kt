@@ -17,7 +17,7 @@ enum class WidgetUtility(val labelRes: Int, val iconRes: Int, val largeLayout: I
 data class SingleProviderEntry(
     val sourceId: String,
     val utility: WidgetUtility,
-    val legacyComponentClass: String,
+    val legacyComponentClass: String?,
     val aliases: List<String> = emptyList(),
     val location: String = "",
     private val displayNamePl: String,
@@ -52,9 +52,7 @@ object SingleProviderCatalog {
             SingleProviderEntry(
                 sourceId = provider.id,
                 utility = provider.utility.toWidgetUtility(),
-                legacyComponentClass = requireNotNull(provider.legacyComponentClass) {
-                    "Single-widget provider ${provider.id} has no legacy component binding"
-                },
+                legacyComponentClass = provider.legacyComponentClass,
                 aliases = provider.searchAliases,
                 location = provider.location.orEmpty(),
                 displayNamePl = provider.displayNamePl,
@@ -88,7 +86,7 @@ object SingleProviderCatalog {
     }
 
     fun manifestParityIssues(context: Context): List<String> {
-        val expected = entries.map { it.legacyComponentClass }.toSet()
+        val expected = entries.mapNotNull { it.legacyComponentClass }.toSet()
         val actual = legacyManifestComponents(context)
         return buildList {
             (expected - actual).sorted().forEach { add("Catalog component is not registered as a legacy widget: $it") }

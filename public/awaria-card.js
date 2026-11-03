@@ -147,6 +147,13 @@
         "color": "#f44336"
     },
     {
+        "id": "radpec_radom",
+        "aliases": [],
+        "name": "RADPEC Radom",
+        "icon": "🔥",
+        "color": "#f44336"
+    },
+    {
         "id": "sec",
         "aliases": [],
         "name": "SEC",
@@ -289,7 +296,7 @@
     {
         "id": "pewik_gdynia",
         "aliases": [],
-        "name": "PEWIK Gdynia",
+        "name": "PEWiK Gdynia",
         "icon": "💧",
         "color": "#2196f3"
     },

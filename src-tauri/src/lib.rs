@@ -23,6 +23,7 @@ mod mpwik_warsaw;
 mod pge;
 mod pge_torun_heat;
 mod therma_bielsko;
+mod radpec_radom;
 mod pec_gliwice;
 pub mod network_state;
 mod state_db;
@@ -630,6 +631,7 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(epec_elblag::EpecElblagProvider),
         Box::new(pec_gliwice::PecGliwiceProvider),
         Box::new(wm_radom::WmRadomProvider),
+        Box::new(radpec_radom::RadpecRadomProvider),
     ]
 }
 
@@ -698,6 +700,7 @@ mod provider_catalog_parity_tests {
             "pec_gliwice",
             "mec_koszalin",
             "therma_bielsko",
+            "radpec_radom",
         ];
         const ICS_HEATING_IDS: &[&str] = &[
             "fortum",
@@ -713,6 +716,7 @@ mod provider_catalog_parity_tests {
             "mec_koszalin",
             "therma_bielsko",
             "pec_gliwice",
+            "radpec_radom",
             "enea_cieplo",
             "energa_cieplo_kaliskie",
             "eco_sa",
@@ -968,6 +972,17 @@ fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Setti
 
     if s.filter_by_house_no {
         for alert in alerts.iter_mut() {
+            if alert.source == api_logic::AlertSource::RadpecRadom && alert.is_local == Some(true) {
+                let location = alert.location.as_deref().unwrap_or_default();
+                let matched = s.addresses.iter().enumerate().find(|(_, address)| {
+                    address.is_active
+                        && api_logic::is_address_applicable_for_provider(&alert.source, address)
+                        && radpec_radom::location_matches_address(location, address, true)
+                });
+                alert.address_index = matched.map(|(index, _)| index);
+                alert.is_local = Some(matched.is_some());
+                continue;
+            }
             if alert.source == api_logic::AlertSource::LpwikLegnica
                 && alert.is_local == Some(true)
             {

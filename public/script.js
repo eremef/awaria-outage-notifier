@@ -150,6 +150,7 @@ if (typeof document !== 'undefined') {
     const NEW_PROVIDER_REGIONS = {
         chspwik: 'chspwik_area',
         mec_koszalin: 'mec_koszalin_area',
+        radpec_radom: 'radpec_radom',
         therma_bielsko: 'therma_bielsko',
         mwik_koszalin: 'koszalin',
         sosnowieckie_wodociagi: 'sosnowiec',
@@ -191,6 +192,15 @@ if (typeof document !== 'undefined') {
                 return cityId === 949448 || city === 'sianow' || commune === 'sianow';
             }
             return ['koszalin', 'sianow'].includes(city) || ['koszalin', 'sianow'].includes(commune);
+        },
+        radpec_radom: (addr) => {
+            if (!addr) return false;
+            const city = normalizeRegionName(addr.cityName);
+            const cityId = addr.cityId == null ? null : Number(addr.cityId);
+            const voivodeship = normalizeRegionName(addr.voivodeship);
+            if (voivodeship && !voivodeship.startsWith('mazowieckie')) return false;
+            if (cityId != null && Number.isFinite(cityId)) return cityId === 972750;
+            return city === 'radom';
         },
         therma_bielsko: (addr) => {
             if (!addr) return false;
@@ -2859,12 +2869,52 @@ if (typeof document !== 'undefined') {
         });
     }
 
-    function matchesAddress(alert, addresses, addrIdx) {
+    function matchesRadpecAddress(alert, addr, filterByHouseNo) {
+        if (!REGION_MATCHERS.radpec_radom(addr) || !alert.location) return false;
+        const normalize = value => (value || '').toLowerCase().replace(/ł/g, 'l')
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+        const stripPrefix = value => value.replace(/^(?:(?:ulica|ul|plac|pl|aleja|al|osiedle|os|rondo|skwer)\s+|(?:ul|pl|al|os)\.\s*)/i, '');
+        const name1 = addr.streetName1 || '';
+        const name2 = addr.streetName2 || '';
+        const names = [name2 && name1 ? `${name2} ${name1}` : '', name1, addr.streetName || '']
+            .map(value => normalize(stripPrefix(value))).filter(Boolean);
+        const fallback = normalize(stripPrefix(name1 || addr.streetName || '')).split(' ').at(-1);
+        if (fallback && fallback.length > 2 && !/^\d+$/.test(fallback)) names.push(fallback);
+        const requested = normalize(addr.houseNo).replace(/\s/g, '');
+        return alert.location.split(';').slice(1).some(line => {
+            const value = normalize(stripPrefix(line.trim()));
+            const street = names.find(name => value.startsWith(name) &&
+                (!value[name.length] || !/[a-z0-9]/i.test(value[name.length])));
+            if (!street) return false;
+            if (!filterByHouseNo || !requested) return true;
+            const spec = value.slice(street.length).split(/kl\.|hydrofornia/)[0];
+            const numbers = (spec.match(/\d+\s*[a-z]?/g) || []).map(number => number.replace(/\s/g, ''));
+            if (!numbers.length || numbers.includes(requested)) return true;
+            const digits = requested.match(/^\d+/)?.[0];
+            if (digits && numbers.includes(digits) &&
+                !numbers.some(value => value.startsWith(digits) && /^[a-z]$/.test(value.slice(digits.length)))) return true;
+            if (/[a-z]/.test(requested) || !digits) return !digits;
+            const odd = /nieparzyste|nieparz/.test(spec);
+            const even = !odd && /parzyste|parz/.test(spec);
+            const number = Number(digits);
+            if ((odd && number % 2 === 0) || (even && number % 2 !== 0)) return false;
+            return [...spec.matchAll(/(\d+)\s*(?:-|do)\s*(\d+)/g)]
+                .some(([, a, b]) => number >= Math.min(+a, +b) && number <= Math.max(+a, +b));
+        });
+    }
+
+    function matchesAddress(alert, addresses, addrIdx, settings = currentSettings) {
         const addr = addresses[addrIdx];
         if (!addr || addr.isActive === false) return false;
 
         const providerRegion = NEW_PROVIDER_REGIONS[alert.source];
         if (providerRegion && !REGION_MATCHERS[providerRegion](addr)) return false;
+
+        // RADPEC notices can cover several saved addresses, while addressIndex holds only the first.
+        if (alert.source === 'radpec_radom' && alert.location) {
+            if (alert.isLocal === false) return false;
+            return matchesRadpecAddress(alert, addr, !!settings?.filterByHouseNo);
+        }
 
         if (alert.source === 'epec_elblag' && !REGION_MATCHERS.elblag(addr)) return false;
         if (alert.source === 'pec_gliwice' && !REGION_MATCHERS.pec_gliwice_area(addr)) return false;
@@ -3354,7 +3404,7 @@ if (typeof document !== 'undefined') {
             if (selectedAddrIdx >= 0) {
                 const addr = addresses[selectedAddrIdx];
                 if (!addr) return;
-                if (matchesAddress(item, addresses, selectedAddrIdx)) {
+                if (matchesAddress(item, addresses, selectedAddrIdx, settings)) {
                     localLists[item.source].push(item);
                 } else {
                     if (sourceDef && sourceDef.region) {
@@ -3370,7 +3420,7 @@ if (typeof document !== 'undefined') {
                     }
                 }
             } else {
-                const isLocal = addresses.some((addr, idx) => addr.isActive !== false && matchesAddress(item, addresses, idx));
+                const isLocal = addresses.some((addr, idx) => addr.isActive !== false && matchesAddress(item, addresses, idx, settings));
                 if (isLocal) {
                     localLists[item.source].push(item);
                 } else {
@@ -3613,6 +3663,8 @@ if (typeof document !== 'undefined') {
             }
             if (!locationHtml && item.location) {
                 locationHtml = `<div class="outage-location">${escapeHtml(item.location)}</div>`;
+            } else if (sourceId === 'radpec_radom' && item.location) {
+                locationHtml += `<div class="outage-location">${escapeHtml(item.location)}</div>`;
             }
             const dateRange = [formatDate(item.startDate), formatDate(item.endDate)]
                 .filter(Boolean)

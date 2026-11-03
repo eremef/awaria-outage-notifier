@@ -25,7 +25,7 @@ class WidgetUpdateWorker(
         SingleProviderCatalog.manifestParityIssues(context).forEach { issue ->
             Log.e(TAG, issue)
         }
-        val legacyComponents = SingleProviderCatalog.entries.map { it.legacyComponentClass }
+        val legacyComponents = SingleProviderCatalog.entries.mapNotNull { it.legacyComponentClass }
             .toSet() + SingleProviderCatalog.legacyManifestComponents(context)
         legacyComponents.sorted().forEach { className ->
             try {

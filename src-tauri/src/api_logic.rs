@@ -127,6 +127,8 @@ pub enum AlertSource {
     MecKoszalin,
     #[serde(rename = "therma_bielsko")]
     ThermaBielsko,
+    #[serde(rename = "radpec_radom")]
+    RadpecRadom,
 }
 
 pub enum ServiceLocation {
@@ -255,6 +257,7 @@ impl AlertSource {
             AlertSource::PwikRybnik => ServiceLocation::Cities(vec![is_pwik_rybnik_area]),
             AlertSource::MecKoszalin => ServiceLocation::Cities(vec![is_mec_koszalin_area]),
             AlertSource::ThermaBielsko => ServiceLocation::Cities(vec![is_therma_bielsko]),
+            AlertSource::RadpecRadom => ServiceLocation::Cities(vec![is_radpec_radom]),
         }
     }
 
@@ -625,6 +628,7 @@ impl std::fmt::Display for AlertSource {
             AlertSource::PwikRybnik => "pwik_rybnik",
             AlertSource::MecKoszalin => "mec_koszalin",
             AlertSource::ThermaBielsko => "therma_bielsko",
+            AlertSource::RadpecRadom => "radpec_radom",
         };
         write!(f, "{}", s)
     }
@@ -1236,6 +1240,15 @@ fn is_zwik_zielona_gora_area(addr: &AddressEntry) -> bool {
         || commune == "zielona gora"
         || commune == "gmina zielona gora"
 }
+fn is_radpec_radom(addr: &AddressEntry) -> bool {
+    if let Some(id) = addr.city_id {
+        return id == 972750;
+    }
+    let city = crate::utils::clean_text(addr.city_name.trim());
+    let voivodeship = crate::utils::clean_text(addr.voivodeship.trim());
+    city == "radom" && (voivodeship.is_empty() || voivodeship == "mazowieckie")
+}
+
 fn is_wm_radom_area(addr: &AddressEntry) -> bool {
     if addr.city_id == Some(972750) || addr.city_id == Some(642253) {
         return true;

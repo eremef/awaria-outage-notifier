@@ -84,6 +84,7 @@
               "properties": {
                 "shortName": { "$ref": "#/$defs/localeNames" },
                 "legacyWidget": {
+                  "oneOf": [{ "type": "null" }, {
                   "type": "object",
                   "additionalProperties": false,
                   "required": ["resource", "name"],
@@ -91,6 +92,7 @@
                     "resource": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
                     "name": { "$ref": "#/$defs/localeNames" }
                   }
+                  }]
                 }
               }
             }
@@ -120,8 +122,8 @@
               "additionalProperties": false,
               "required": ["legacyComponentClass", "legacyLabelResource"],
               "properties": {
-                "legacyComponentClass": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9]*$" },
-                "legacyLabelResource": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }
+                "legacyComponentClass": { "type": ["string", "null"], "pattern": "^[A-Za-z][A-Za-z0-9]*$" },
+                "legacyLabelResource": { "type": ["string", "null"], "pattern": "^[a-z][a-z0-9_]*$" }
               }
             }
           }
