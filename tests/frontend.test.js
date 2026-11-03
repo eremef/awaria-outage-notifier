@@ -348,7 +348,7 @@ describe('Frontend Logic', () => {
                 'eco_sa', 'enea_cieplo', 'energa_cieplo_kaliskie', 'epec_elblag', 'fortum', 'gpec',
                 'kpec_bydgoszcz', 'lpec', 'mec_koszalin', 'mpec_kielce', 'mpec_rzeszow', 'opec_gdynia',
                 'pec_gliwice', 'pge_torun_heat', 'radpec_radom', 'sec', 'tauron_heat', 'therma_bielsko', 'veolia_lodz',
-                'veolia_poznan', 'veolia_warszawa', 'aqua_bielsko', 'aquanet', 'bytomskie_wodociagi',
+                'veolia_poznan', 'veolia_warszawa', 'wpec_legnica', 'aqua_bielsko', 'aquanet', 'bytomskie_wodociagi',
                 'chspwik', 'dabrowskie_wodociagi', 'gdanskie_wodociagi', 'katowickie_wodociagi',
                 'lpwik_legnica', 'mpwik_lublin', 'mpwik_rzeszow', 'mpwik_warszawa', 'mpwik_wroclaw',
                 'mwik_bydgoszcz', 'mwik_koszalin', 'pewik_gdynia', 'puk_rokietnica', 'pwik_czestochowa',
@@ -488,9 +488,9 @@ describe('Frontend Logic', () => {
             });
             expect(waterIds).toEqual([...waterIds].sort());
             expect(providerTranslation('bytomskie_wodociagi', 'name', 'en')).toBe('Bytomskie Wodociągi');
-            expect(providerTranslation('bytomskie_wodociagi', 'short', 'en')).toBe('BW Bytom');
+            expect(providerTranslation('bytomskie_wodociagi', 'short', 'en')).toBe('Bytomskie Wodociągi');
             expect(providerTranslation('bytomskie_wodociagi', 'name', 'pl')).toBe('Bytomskie Wodociągi');
-            expect(providerTranslation('bytomskie_wodociagi', 'short', 'pl')).toBe('BW Bytom');
+            expect(providerTranslation('bytomskie_wodociagi', 'short', 'pl')).toBe('Bytomskie Wodociągi');
         });
 
         it('registers Dąbrowskie Wodociągi alphabetically with localized water styling', () => {
@@ -507,9 +507,9 @@ describe('Frontend Logic', () => {
             });
             expect(waterIds).toEqual([...waterIds].sort());
             expect(providerTranslation('dabrowskie_wodociagi', 'name', 'en')).toBe('Dąbrowskie Wodociągi');
-            expect(providerTranslation('dabrowskie_wodociagi', 'short', 'en')).toBe('DW Dąbrowa');
+            expect(providerTranslation('dabrowskie_wodociagi', 'short', 'en')).toBe('Dąbrowskie Wodociągi');
             expect(providerTranslation('dabrowskie_wodociagi', 'name', 'pl')).toBe('Dąbrowskie Wodociągi');
-            expect(providerTranslation('dabrowskie_wodociagi', 'short', 'pl')).toBe('DW Dąbrowa');
+            expect(providerTranslation('dabrowskie_wodociagi', 'short', 'pl')).toBe('Dąbrowskie Wodociągi');
 
             const Card = window.customElements.get('awaria-card');
             const card = new Card();
@@ -518,11 +518,11 @@ describe('Frontend Logic', () => {
             });
         });
 
-        it('registers PEWIK Gdynia alphabetically as a water provider', () => {
+        it('registers PEWiK Gdynia alphabetically as a water provider', () => {
             const sources = getSources();
             const provider = sources.find(source => source.id === 'pewik_gdynia');
             expect(provider).toMatchObject({
-                label: 'PEWIK Gdynia',
+                label: 'PEWiK Gdynia',
                 category: 'water',
                 region: 'pewik_gdynia_area',
                 i18nLabel: 'source_pewik_gdynia_name',
@@ -534,7 +534,7 @@ describe('Frontend Logic', () => {
             const Card = window.customElements.get('awaria-card');
             const card = new Card();
             expect(card.getProviderMeta('pewik_gdynia')).toEqual({
-                name: 'PEWIK Gdynia',
+                name: 'PEWiK Gdynia',
                 icon: '💧',
                 color: '#2196f3'
             });

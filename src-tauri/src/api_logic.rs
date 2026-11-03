@@ -2761,7 +2761,7 @@ mod tests {
             &address("Łężyce", "Gmina Wejherowo", "Leśna")
         ));
         assert_eq!(AlertSource::PewikGdynia.to_string(), "pewik_gdynia");
-        assert_eq!(AlertSource::PewikGdynia.display_name(), "PEWIK Gdynia");
+        assert_eq!(AlertSource::PewikGdynia.display_name(), "PEWiK Gdynia");
     }
 
     #[test]

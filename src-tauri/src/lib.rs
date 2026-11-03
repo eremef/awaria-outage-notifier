@@ -703,6 +703,7 @@ mod provider_catalog_parity_tests {
             "mec_koszalin",
             "therma_bielsko",
             "radpec_radom",
+            "wpec_legnica",
         ];
         const ICS_HEATING_IDS: &[&str] = &[
             "fortum",
@@ -719,6 +720,7 @@ mod provider_catalog_parity_tests {
             "therma_bielsko",
             "pec_gliwice",
             "radpec_radom",
+            "wpec_legnica",
             "enea_cieplo",
             "energa_cieplo_kaliskie",
             "eco_sa",
