@@ -59,7 +59,20 @@ fn schedule(text: &str) -> Option<(String, Option<String>)> {
             ),
         ))
     } else {
-        Some((date.format("%Y-%m-%d").to_string(), None))
+        static START_TIME: OnceLock<Regex> = OnceLock::new();
+        let start_time_re = START_TIME
+            .get_or_init(|| Regex::new(r"(?i)\bod\s+godz(?:iny|\.)?\s*(\d{1,2}):(\d{2})").unwrap());
+        if let Some(t) = start_time_re.captures(text) {
+            let start = NaiveTime::from_hms_opt(t[1].parse().ok()?, t[2].parse().ok()?, 0)?;
+            Some((
+                date.and_time(start)
+                    .format("%Y-%m-%dT%H:%M:%S")
+                    .to_string(),
+                None,
+            ))
+        } else {
+            Some((date.format("%Y-%m-%d").to_string(), None))
+        }
     }
 }
 
@@ -190,7 +203,8 @@ fn parse_html(html: &str, settings: &Settings) -> Result<Vec<UnifiedAlert>, Stri
             .collect();
         let clean_body = normalize(&body);
         let citywide = clean_body.contains("calego miasta")
-            || clean_body.contains("wszystkich odbiorcow miasta");
+            || clean_body.contains("wszystkich odbiorcow miasta")
+            || clean_body.contains("wszystkich odbiorcow z terenu miasta");
         if addresses.is_empty() && !citywide {
             return Err("WPEC affected addresses not recognized".into());
         }
@@ -255,5 +269,66 @@ impl AlertProvider for WpecLegnicaProvider {
             Ok(alerts) => (crate::api_logic::deduplicate_alerts(alerts), Vec::new()),
             Err(error) => (Vec::new(), vec![format!("WPEC Legnica: {error}")]),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_citywide_and_address_specific_notices_together() {
+        let html = r#"
+            <main id="content">
+              <div class="content-area">
+                <div class="pimcore_area_txt">
+                  <div class="brick__txt">
+                    <h3>Awaria sieci ciepłowniczej w Głogowie</h3>
+                    <p>W dniu 04.11.2026r. od godziny 01:00 do czasu usunięcia awarii wstrzymana została dostawa ciepła do wszystkich odbiorców z terenu miasta Głogowa.</p>
+                    <h3>Awaria sieci ciepłowniczej w Lubinie</h3>
+                    <p>W dniu 04.11.2026r. od godziny 07:00 do godziny 15:00 wstrzymana zostanie dostawa ciepła do n/w obiektów przy ul.:</p>
+                    <p>-Jastrzębia 2</p>
+                    <p>-Legnicka 5</p>
+                    <p>-Legnicka 17</p>
+                    <p>-Legnicka 27</p>
+                    <p>-Legnicka 37</p>
+                    <p>-Legnicka 47</p>
+                    <p>-Legnicka 53</p>
+                    <p>-Legnicka 63</p>
+                    <p>-Leśna 5</p>
+                  </div>
+                </div>
+              </div>
+            </main>
+        "#;
+        let mut settings = Settings::default();
+        settings.filter_by_house_no = true;
+        settings.addresses.push(AddressEntry {
+            city_name: "Lubin".to_string(),
+            street_name: "Legnicka".to_string(),
+            house_no: "17".to_string(),
+            is_active: true,
+            ..AddressEntry::default()
+        });
+
+        let alerts = parse_html(html, &settings).unwrap();
+
+        assert_eq!(alerts.len(), 2);
+        assert_eq!(
+            alerts[0].startDate.as_deref(),
+            Some("2026-11-04T01:00:00")
+        );
+        assert_eq!(alerts[0].endDate, None);
+        assert_eq!(alerts[0].location.as_deref(), Some("Miejscowość: Głogów"));
+        assert_eq!(
+            alerts[1].startDate.as_deref(),
+            Some("2026-11-04T07:00:00")
+        );
+        assert_eq!(
+            alerts[1].endDate.as_deref(),
+            Some("2026-11-04T15:00:00")
+        );
+        assert_eq!(alerts[1].address_index, Some(0));
+        assert_eq!(alerts[1].is_local, Some(true));
     }
 }
