@@ -1820,10 +1820,10 @@ mod tests {
             .await;
         assert!(
             errors.iter().all(|error| error.contains("planned notice")),
-            "PEWIK Gdynia emergency publication failed: {errors:?}"
+            "PEWiK Gdynia emergency publication failed: {errors:?}"
         );
         println!(
-            "PEWIK Gdynia live publications parsed {} alerts; additional endpoint errors: {errors:?}",
+            "PEWiK Gdynia live publications parsed {} alerts; additional endpoint errors: {errors:?}",
             alerts.len()
         );
     }

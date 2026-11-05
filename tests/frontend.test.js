@@ -968,7 +968,7 @@ describe('Frontend Logic', () => {
         });
     });
 
-    describe('PEWIK Gdynia service area', () => {
+    describe('PEWiK Gdynia service area', () => {
         const matchesArea = getRegionMatchers().pewik_gdynia_area;
 
         it('matches the listed Pomorskie localities', () => {
@@ -980,7 +980,7 @@ describe('Frontend Logic', () => {
             expect(matchesArea({ cityName: 'Gdynia', district: 'Oksywie', voivodeship: 'Pomorskie' })).toBe(true);
         });
 
-        it('rejects other suppliers and localities outside PEWIK water coverage', () => {
+        it('rejects other suppliers and localities outside PEWiK water coverage', () => {
             expect(matchesArea({ cityName: 'Gdynia', streetName1: 'Sarnia', voivodeship: 'Pomorskie' })).toBe(false);
             expect(matchesArea({ cityName: 'Gdynia', district: 'Port Gdynia', voivodeship: 'Pomorskie' })).toBe(false);
             expect(matchesArea({ cityName: 'Łężyce', commune: 'Gmina Wejherowo', voivodeship: 'Pomorskie' })).toBe(false);

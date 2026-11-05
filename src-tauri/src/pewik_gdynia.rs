@@ -1,6 +1,6 @@
 use crate::api_logic::{self, AddressEntry, AlertProvider, AlertSource, Settings, UnifiedAlert};
 use async_trait::async_trait;
-use chrono::{Duration, NaiveDate, NaiveDateTime, NaiveTime, Utc};
+use chrono::{Datelike, Duration, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use chrono_tz::Europe::Warsaw;
 use regex::Regex;
 use reqwest::Client;
@@ -135,7 +135,12 @@ fn normalize_whitespace(value: &str) -> String {
 
 fn date_regex() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"\b(\d{1,2})\.(\d{1,2})\.(\d{4})\b").unwrap())
+    RE.get_or_init(|| Regex::new(r"\b(\d{1,2})[.-](\d{1,2})[.-](\d{4})\b").unwrap())
+}
+
+fn current_year_date_regex() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"(?i)\b(\d{1,2})[.-](\d{1,2})\.?\s+br\.?").unwrap())
 }
 
 fn time_regex() -> &'static Regex {
@@ -145,7 +150,7 @@ fn time_regex() -> &'static Regex {
 
 fn street_marker_regex() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"(?i)\b(?:ulic\p{L}*|ul\.)\s*:?\s*").unwrap())
+    RE.get_or_init(|| Regex::new(r"(?i)\b(?:ulic\p{L}*|ul\.?)\s*:?\s*").unwrap())
 }
 
 fn house_suffix_regex() -> &'static Regex {
@@ -174,12 +179,31 @@ fn time_from_captures(captures: &regex::Captures<'_>) -> Option<NaiveTime> {
     )
 }
 
-fn parse_schedule(text: &str) -> (Option<String>, Option<String>, Option<NaiveDateTime>) {
-    let dates: Vec<NaiveDate> = date_regex()
+fn parse_schedule(
+    text: &str,
+    current_date: NaiveDate,
+) -> (Option<String>, Option<String>, Option<NaiveDateTime>) {
+    let mut dated_matches: Vec<(usize, NaiveDate)> = date_regex()
         .captures_iter(text)
-        .filter_map(|captures| date_from_captures(&captures))
+        .filter_map(|captures| Some((captures.get(0)?.start(), date_from_captures(&captures)?)))
         .collect();
-    let without_dates = date_regex().replace_all(text, " ");
+    dated_matches.extend(
+        current_year_date_regex()
+            .captures_iter(text)
+            .filter_map(|captures| {
+                let day = captures.get(1)?.as_str().parse().ok()?;
+                let month = captures.get(2)?.as_str().parse().ok()?;
+                Some((
+                    captures.get(0)?.start(),
+                    NaiveDate::from_ymd_opt(current_date.year(), month, day)?,
+                ))
+            }),
+    );
+    dated_matches.sort_by_key(|(position, _)| *position);
+    let dates: Vec<NaiveDate> = dated_matches.into_iter().map(|(_, date)| date).collect();
+
+    let without_full_dates = date_regex().replace_all(text, " ");
+    let without_dates = current_year_date_regex().replace_all(&without_full_dates, " ");
     let times: Vec<NaiveTime> = time_regex()
         .captures_iter(&without_dates)
         .filter_map(|captures| time_from_captures(&captures))
@@ -222,10 +246,10 @@ fn parse_schedule(text: &str) -> (Option<String>, Option<String>, Option<NaiveDa
 fn extract_blocks(html: &str) -> Result<Vec<String>, String> {
     let document = Html::parse_document(html);
     let container_selector = Selector::parse(".message_body")
-        .map_err(|error| format!("PEWIK Gdynia selector error: {error}"))?;
+        .map_err(|error| format!("PEWiK Gdynia selector error: {error}"))?;
     let Some(container) = document.select(&container_selector).next() else {
         let body_selector = Selector::parse("body")
-            .map_err(|error| format!("PEWIK Gdynia body selector error: {error}"))?;
+            .map_err(|error| format!("PEWiK Gdynia body selector error: {error}"))?;
         let body_text = document
             .select(&body_selector)
             .next()
@@ -234,11 +258,11 @@ fn extract_blocks(html: &str) -> Result<Vec<String>, String> {
         if body_text.is_empty() {
             return Ok(Vec::new());
         }
-        return Err("PEWIK Gdynia response has no .message_body notice container".to_string());
+        return Err("PEWiK Gdynia response has no .message_body notice container".to_string());
     };
 
     let paragraph_selector = Selector::parse("p")
-        .map_err(|error| format!("PEWIK Gdynia paragraph selector error: {error}"))?;
+        .map_err(|error| format!("PEWiK Gdynia paragraph selector error: {error}"))?;
     let mut blocks = Vec::new();
     for paragraph in container.select(&paragraph_selector) {
         // Avoid duplicating the message if the upstream page nests paragraph tags.
@@ -301,11 +325,6 @@ fn locality_from_token(token: &str, next: Option<&str>) -> Option<Locality> {
 }
 
 fn mentioned_localities(text: &str) -> Vec<Locality> {
-    let normalized = normalize_name(text);
-    let words: Vec<&str> = normalized
-        .split(|character: char| !character.is_alphanumeric())
-        .filter(|word| !word.is_empty())
-        .collect();
     let contexts = [
         "w",
         "na",
@@ -316,17 +335,47 @@ fn mentioned_localities(text: &str) -> Vec<Locality> {
         "gminy",
         "gmina",
         "terenie",
+        "mieszkancow",
+        "mieszkancom",
+        "odbiorcow",
     ];
     let mut localities = Vec::new();
-    for (index, word) in words.iter().enumerate() {
-        if index == 0 || !contexts.contains(&words[index - 1]) {
-            continue;
-        }
-        let next = words.get(index + 1).copied();
-        if let Some(locality) = locality_from_token(word, next)
+    for block in text.lines() {
+        let trimmed = block.trim();
+        let heading_text = date_regex()
+            .find(trimmed)
+            .or_else(|| current_year_date_regex().find(trimmed))
+            .filter(|date| trimmed[..date.start()].trim().is_empty())
+            .map(|date| &trimmed[date.end()..])
+            .unwrap_or(trimmed);
+        let heading_text = normalize_name(heading_text);
+        let heading_text =
+            heading_text.trim_start_matches(|character: char| !character.is_alphanumeric());
+        let mut heading_words = heading_text
+            .split(|character: char| !character.is_alphanumeric())
+            .filter(|word| !word.is_empty());
+        if let Some(word) = heading_words.next()
+            && let Some(locality) = locality_from_token(word, heading_words.next())
             && !localities.contains(&locality)
         {
             localities.push(locality);
+        }
+
+        let normalized = normalize_name(block);
+        let words: Vec<&str> = normalized
+            .split(|character: char| !character.is_alphanumeric())
+            .filter(|word| !word.is_empty())
+            .collect();
+        for (index, word) in words.iter().enumerate() {
+            if index == 0 || !contexts.contains(&words[index - 1]) {
+                continue;
+            }
+            let next = words.get(index + 1).copied();
+            if let Some(locality) = locality_from_token(word, next)
+                && !localities.contains(&locality)
+            {
+                localities.push(locality);
+            }
         }
     }
     localities
@@ -354,7 +403,67 @@ fn trim_street_tail(value: &str) -> &str {
                 .map(|(byte, _)| &value[..byte])
         })
         .unwrap_or(value);
-    value.trim().trim_end_matches(['.', ':', '!', '?']).trim()
+    let value = value.trim().trim_end_matches(['.', ':', '!', '?']).trim();
+    if normalized.ends_with(" od") {
+        let prefix_len = normalized.chars().count().saturating_sub(3);
+        return value
+            .char_indices()
+            .nth(prefix_len)
+            .map(|(byte, _)| value[..byte].trim())
+            .unwrap_or(value);
+    }
+    value
+}
+
+fn parity_house_number_specs(value: &str) -> Vec<String> {
+    let normalized = normalize_name(value);
+    let Some((_, restrictions)) = normalized.split_once("do konca") else {
+        return Vec::new();
+    };
+
+    static EVEN_END_RE: OnceLock<Regex> = OnceLock::new();
+    static ODD_NUMBER_RE: OnceLock<Regex> = OnceLock::new();
+    let even_end_re =
+        EVEN_END_RE.get_or_init(|| Regex::new(r"\bparzyste\b.*?\bdo\s+(\d+)\b").unwrap());
+    let odd_number_re =
+        ODD_NUMBER_RE.get_or_init(|| Regex::new(r"\bnieparzyste\b.*?\b(\d+)\b").unwrap());
+
+    let mut specs = Vec::new();
+    if let Some(captures) = even_end_re.captures(restrictions)
+        && let Some(end) = captures.get(1)
+    {
+        specs.push(format!("2-{} parzyste", end.as_str()));
+    }
+    if let Some(captures) = odd_number_re.captures(restrictions)
+        && let Some(number) = captures.get(1)
+    {
+        specs.push(format!("{} nieparzyste", number.as_str()));
+    }
+    specs
+}
+
+fn house_number_parity(value: &str) -> Option<bool> {
+    let normalized = normalize_name(value);
+    if normalized.contains("nieparzyste") || normalized.contains("nieparz") {
+        Some(true)
+    } else if normalized.contains("parzyste") || normalized.contains("parz") {
+        Some(false)
+    } else {
+        None
+    }
+}
+
+fn can_merge_house_number_specs(existing: Option<&str>, incoming: Option<&str>) -> bool {
+    match (existing, incoming) {
+        (None, _) | (_, None) => true,
+        (Some(existing), Some(incoming)) => {
+            match (house_number_parity(existing), house_number_parity(incoming)) {
+                (Some(existing), Some(incoming)) => existing == incoming,
+                (None, None) => true,
+                _ => false,
+            }
+        }
+    }
 }
 
 fn house_suffix(value: &str) -> (String, Option<String>) {
@@ -426,7 +535,7 @@ fn push_street_part(streets: &mut Vec<StreetNotice>, part: &str) {
 }
 
 fn extract_streets(blocks: &[String]) -> Vec<StreetNotice> {
-    let mut streets = Vec::new();
+    let mut streets: Vec<StreetNotice> = Vec::new();
     for block in blocks {
         let markers: Vec<_> = street_marker_regex().find_iter(block).collect();
         for (index, marker) in markers.iter().enumerate() {
@@ -435,6 +544,19 @@ fn extract_streets(blocks: &[String]) -> Vec<StreetNotice> {
                 .map(|next| next.start())
                 .unwrap_or(block.len());
             let raw = trim_street_tail(&block[marker.end()..end]);
+            let is_cross_street_reference =
+                normalize_name(&block[..marker.start()]).ends_with(" od");
+            if is_cross_street_reference {
+                if let Some(affected_street) = streets.last().cloned() {
+                    streets.extend(parity_house_number_specs(&raw).into_iter().map(
+                        |house_numbers| StreetNotice {
+                            name: affected_street.name.clone(),
+                            house_numbers: Some(house_numbers),
+                        },
+                    ));
+                }
+                continue;
+            }
             for comma_part in raw.split([',', ';']) {
                 for part in comma_part
                     .split(" oraz ")
@@ -446,12 +568,37 @@ fn extract_streets(blocks: &[String]) -> Vec<StreetNotice> {
         }
     }
 
-    let mut deduplicated = Vec::new();
+    let mut deduplicated: Vec<StreetNotice> = Vec::new();
     for street in streets {
-        if !deduplicated.iter().any(|existing: &StreetNotice| {
+        if let Some(existing_index) = deduplicated.iter().position(|existing| {
             street_names_match(&existing.name, &street.name)
-                && existing.house_numbers == street.house_numbers
+                && can_merge_house_number_specs(
+                    existing.house_numbers.as_deref(),
+                    street.house_numbers.as_deref(),
+                )
         }) {
+            if let Some(numbers) = street.house_numbers {
+                let existing_numbers = deduplicated[existing_index]
+                    .house_numbers
+                    .get_or_insert_with(String::new);
+                for number in numbers
+                    .split(',')
+                    .map(str::trim)
+                    .filter(|part| !part.is_empty())
+                {
+                    if !existing_numbers
+                        .split(',')
+                        .map(str::trim)
+                        .any(|existing_number| existing_number == number)
+                    {
+                        if !existing_numbers.is_empty() {
+                            existing_numbers.push_str(", ");
+                        }
+                        existing_numbers.push_str(number);
+                    }
+                }
+            }
+        } else {
             deduplicated.push(street);
         }
     }
@@ -539,12 +686,13 @@ pub(crate) fn address_house_matches_notice(address: &AddressEntry, location: &st
             .iter()
             .filter(|candidate| !candidate.trim().is_empty())
             .any(|candidate| street_names_match(candidate, &notice_street))
-        {
-            return crate::utils::match_house_number(
+            && crate::utils::match_house_number(
                 &address.house_no,
                 numbers.as_deref().unwrap_or_default(),
                 None,
-            );
+            )
+        {
+            return true;
         }
     }
     false
@@ -595,12 +743,12 @@ fn parse_notice_html(
     let localities = mentioned_localities(&full_text);
     if localities.is_empty() {
         return Err(format!(
-            "PEWIK Gdynia {} notice has no supported locality",
+            "PEWiK Gdynia {} notice has no supported locality",
             kind.description()
         ));
     }
     let streets = extract_streets(&blocks);
-    let (start_date, end_date, parsed_end) = parse_schedule(&full_text);
+    let (start_date, end_date, parsed_end) = parse_schedule(&full_text, now_local.date());
     if parsed_end.is_some_and(|end| end <= now_local) {
         return Ok(None);
     }
@@ -703,7 +851,7 @@ impl AlertProvider for PewikGdyniaProvider {
                 Ok(None) => {}
                 Err(error) => {
                     let message = format!(
-                        "PEWIK Gdynia {} notice fetch error: {error}",
+                        "PEWiK Gdynia {} notice fetch error: {error}",
                         kind.description()
                     );
                     log::warn!("{message}");
@@ -728,6 +876,22 @@ mod tests {
             <p>Przewidywany czas przywrócenia dostawy wody godz. 19.00</p>
             <p>Przepraszamy za utrudnienia.</p>
           </p>
+        </div>
+    "#;
+
+    const LIVE_HYPHENATED_EMERGENCY_FIXTURE: &str = r#"
+        <div class="message_body">
+          <p>Dzień dobry,</p>
+          <p>05-11-2026, Informujemy o wystąpieniu awarii wodociągowej w Gdyni ul Wierzbowa 26</p>
+          <p>W związku z tym mogą wystąpić braki wody na ulicy: Wierzbowej.</p>
+          <p>Przewidywany czas przywrócenia dostawy wody godz. 21:00</p>
+          <p>Przepraszamy za utrudnienia</p>
+        </div>
+    "#;
+
+    const LIVE_PLANNED_CURRENT_YEAR_FIXTURE: &str = r#"
+        <div class="message_body">
+          <p>Gdynia ul. Starochwaszczynska od ul. Sudeckiej do końca nr parzyste do 66 i nieparzyste nr 49 Informujemy, że w związku z pracami remontowo-eksploatacyjnymi na sieci wodociągowej, w dniu 10.11 br. w godz. 8:00-14:00 nastąpi wstrzymanie dostawy zimnej wody. Przepraszamy za utrudnienia.</p>
         </div>
     "#;
 
@@ -778,6 +942,96 @@ mod tests {
                 .unwrap()
                 .contains("Przepraszamy za utrudnienia")
         );
+    }
+
+    #[test]
+    fn parses_current_hyphenated_emergency_dates_and_bare_ul_marker() {
+        let mut address = address("Gdynia", "Wierzbowa", "Gdynia");
+        address.house_no = "26".to_string();
+        let settings = Settings {
+            addresses: vec![address],
+            ..Default::default()
+        };
+
+        let alert = parse_notice_html(
+            LIVE_HYPHENATED_EMERGENCY_FIXTURE,
+            NoticeKind::Emergency,
+            &settings,
+            now("2026-11-05T16:00:00"),
+        )
+        .unwrap()
+        .unwrap();
+
+        assert_eq!(alert.startDate.as_deref(), Some("2026-11-05"));
+        assert_eq!(alert.endDate.as_deref(), Some("2026-11-05T21:00:00"));
+        assert_eq!(alert.address_index, Some(0));
+        assert_eq!(
+            alert.location.as_deref(),
+            Some("Miejscowość: Gdynia; Wierzbowa 26")
+        );
+    }
+
+    #[test]
+    fn recognizes_a_supported_locality_as_a_notice_heading() {
+        assert_eq!(
+            mentioned_localities("Dzień dobry,\nGdynia\nPlanowane wyłączenie dostawy wody"),
+            vec![Locality::Gdynia]
+        );
+        assert_eq!(
+            mentioned_localities("05-11-2026, Rumia\nPlanowane wyłączenie dostawy wody"),
+            vec![Locality::Rumia]
+        );
+    }
+
+    #[test]
+    fn parses_planned_current_year_date_cross_street_and_parity_ranges() {
+        let mut address = address("Gdynia", "Starochwaszczynska", "Gdynia");
+        address.house_no = "64".to_string();
+        let settings = Settings {
+            addresses: vec![address.clone()],
+            ..Default::default()
+        };
+
+        let alert = parse_notice_html(
+            LIVE_PLANNED_CURRENT_YEAR_FIXTURE,
+            NoticeKind::Planned,
+            &settings,
+            now("2026-11-05T16:00:00"),
+        )
+        .unwrap()
+        .unwrap();
+
+        assert_eq!(alert.startDate.as_deref(), Some("2026-11-10T08:00:00"));
+        assert_eq!(alert.endDate.as_deref(), Some("2026-11-10T14:00:00"));
+        assert_eq!(alert.address_index, Some(0));
+        assert_eq!(
+            alert.location.as_deref(),
+            Some(
+                "Miejscowość: Gdynia; Starochwaszczynska 2-66 parzyste; Starochwaszczynska 49 nieparzyste"
+            )
+        );
+        assert!(address_house_matches_notice(
+            &address,
+            alert.location.as_deref().unwrap()
+        ));
+
+        address.house_no = "49".to_string();
+        assert!(address_house_matches_notice(
+            &address,
+            alert.location.as_deref().unwrap()
+        ));
+        address.house_no = "68".to_string();
+        assert!(!address_house_matches_notice(
+            &address,
+            alert.location.as_deref().unwrap()
+        ));
+
+        for date in ["10.11 br", "10-11 br."] {
+            let schedule = format!("{date} w godz. 8:00-14:00");
+            let (start, end, _) = parse_schedule(&schedule, now("2026-11-05T16:00:00").date());
+            assert_eq!(start.as_deref(), Some("2026-11-10T08:00:00"));
+            assert_eq!(end.as_deref(), Some("2026-11-10T14:00:00"));
+        }
     }
 
     #[test]
@@ -840,7 +1094,10 @@ mod tests {
         .unwrap();
         assert!(alert.is_none());
 
-        let (start, end, _) = parse_schedule("Awaria w Gdyni 21.10.2026 bez podanej godziny");
+        let (start, end, _) = parse_schedule(
+            "Awaria w Gdyni 21.10.2026 bez podanej godziny",
+            now("2026-10-21T15:00:00").date(),
+        );
         assert_eq!(start.as_deref(), Some("2026-10-21"));
         assert_eq!(end, None);
     }
