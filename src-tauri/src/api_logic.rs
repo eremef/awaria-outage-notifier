@@ -105,6 +105,8 @@ pub enum AlertSource {
     WpwikWalbrzych,
     #[serde(rename = "epec_elblag")]
     EpecElblag,
+    #[serde(rename = "epwik_elblag")]
+    EpwikElblag,
     #[serde(rename = "pec_gliwice")]
     PecGliwice,
     #[serde(rename = "pwik_gliwice")]
@@ -244,6 +246,7 @@ impl AlertSource {
             AlertSource::AquaBielsko => ServiceLocation::Cities(vec![is_aqua_bielsko_area]),
             AlertSource::WpwikWalbrzych => ServiceLocation::Cities(vec![is_wpwik_walbrzych_area]),
             AlertSource::EpecElblag => ServiceLocation::Cities(vec![is_elblag]),
+            AlertSource::EpwikElblag => ServiceLocation::Cities(vec![is_epwik_elblag_area]),
             AlertSource::PecGliwice => ServiceLocation::Cities(vec![is_gliwice]),
             AlertSource::PwikGliwice => ServiceLocation::Cities(vec![is_pwik_gliwice_area]),
             AlertSource::DabrowskieWodociagi => {
@@ -620,6 +623,7 @@ impl std::fmt::Display for AlertSource {
             AlertSource::AquaBielsko => "aqua_bielsko",
             AlertSource::WpwikWalbrzych => "wpwik_walbrzych",
             AlertSource::EpecElblag => "epec_elblag",
+            AlertSource::EpwikElblag => "epwik_elblag",
             AlertSource::PecGliwice => "pec_gliwice",
             AlertSource::PwikGliwice => "pwik_gliwice",
             AlertSource::DabrowskieWodociagi => "dabrowskie_wodociagi",
@@ -1191,6 +1195,39 @@ fn is_elblag(addr: &AddressEntry) -> bool {
     }
 
     crate::utils::clean_text(&addr.city_name).trim() == "elblag"
+}
+
+fn is_epwik_elblag_area(addr: &AddressEntry) -> bool {
+    const ELBLAG_CITY_ID: u64 = 932_703;
+    // SIMC localities in rural Gmina Elbląg (TERC 2804012), from the bundled
+    // SIMC data dated 2026-03-24.
+    const ELBLAG_RURAL_LOCALITY_IDS: [u64; 41] = [
+        149_647, 149_506, 149_311, 149_363, 149_564, 149_239, 149_245, 149_340, 149_417,
+        149_446, 149_469, 149_535, 149_400, 149_481, 149_370, 149_386, 149_423, 149_430,
+        149_593, 149_274, 149_392, 149_624, 149_512, 149_529, 149_452, 149_328, 149_357,
+        149_630, 149_601, 149_618, 149_297, 149_305, 149_251, 149_558, 149_280, 149_222,
+        149_268, 149_570, 149_334, 149_541, 149_498,
+    ];
+    // SIMC localities in Gmina Milejewo (TERC 2804052), from the same source.
+    const MILEJEWO_LOCALITY_IDS: [u64; 14] = [
+        1_044_991, 152_626, 152_603, 152_566, 152_595, 152_632, 152_550, 152_520, 152_589,
+        152_610, 152_649, 152_537, 152_543, 152_572,
+    ];
+
+    let voivodeship = crate::utils::clean_text(&addr.voivodeship);
+    if !voivodeship.is_empty() && !voivodeship.starts_with("warminsko-mazurskie") {
+        return false;
+    }
+
+    if let Some(city_id) = addr.city_id {
+        return city_id == ELBLAG_CITY_ID
+            || ELBLAG_RURAL_LOCALITY_IDS.contains(&city_id)
+            || MILEJEWO_LOCALITY_IDS.contains(&city_id);
+    }
+
+    let city = normalize_service_municipality(&addr.city_name);
+    let commune = normalize_service_municipality(&addr.commune);
+    city == "elblag" || commune == "elblag" || city == "milejewo" || commune == "milejewo"
 }
 
 fn is_zwik_zielona_gora_area(addr: &AddressEntry) -> bool {

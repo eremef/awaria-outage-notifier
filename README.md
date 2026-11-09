@@ -54,6 +54,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **Bytomskie Wodociągi**: Water outages and planned interruptions in Bytom only.
   - **ChŚPWiK**: Water-supply interruptions in Chorzów and Świętochłowice.
   - **Dąbrowskie Wodociągi**: Water interruptions, pressure changes, and water-quality notices in Dąbrowa Górnicza only.
+  - **EPWiK Elbląg**: Water outage and planned-interruption notices for Elbląg, Gmina Elbląg, and Gmina Milejewo; each notice is matched to its named locality.
   - **MWiK Bydgoszcz**: Planned water shutoffs and network failures in Bydgoszcz.
   - **MPWiK Warszawa**: Water failures and repairs in Warsaw.
   - **WMK**: Water maintenance and failures in Kraków.
@@ -225,7 +226,7 @@ For each address you want to monitor, add an entry with:
 
 #### Enabled Sources
 
-Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `epec_elblag`, `mec_koszalin`, `therma_bielsko`, `radpec_radom`, `wpec_legnica`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`, `bytomskie_wodociagi`, `chspwik`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `rpwik_tychy`, `wpwik_walbrzych`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
+Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `epec_elblag`, `epwik_elblag`, `mec_koszalin`, `therma_bielsko`, `radpec_radom`, `wpec_legnica`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`, `bytomskie_wodociagi`, `chspwik`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `rpwik_tychy`, `wpwik_walbrzych`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
 
 ### Usage
 

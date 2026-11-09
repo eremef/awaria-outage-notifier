@@ -30,7 +30,7 @@ Dla każdego adresu, który chcesz monitorować, dodaj wpis zawierający:
 
 ### Aktywne źródła (Enabled Sources)
 
-Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `pge_torun_heat`, `mpec_kielce`, `mec_koszalin`, `therma_bielsko`, `opec_gdynia`, `eco_sa`, `epec_elblag`, `pec_gliwice`, `pewik_gdynia`, `wik_opole`, `wodociagi_kieleckie`, `torunskie_wodociagi`, `wodociagi_bialostockie`, `mwik_bydgoszcz`, `mpwik_warszawa`, `pwik_gliwice`, `pwik_gorzow`, `pwik_olsztyn`, `lpwik_legnica`, `bytomskie_wodociagi`, `chspwik`, `dabrowskie_wodociagi`, `zwik_zielona_gora`, `aqua_bielsko`, `energa_cieplo_kaliskie`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `rpwik_tychy`, `wpwik_walbrzych`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
+Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `pge_torun_heat`, `mpec_kielce`, `mec_koszalin`, `therma_bielsko`, `opec_gdynia`, `eco_sa`, `epec_elblag`, `epwik_elblag`, `pec_gliwice`, `pewik_gdynia`, `wik_opole`, `wodociagi_kieleckie`, `torunskie_wodociagi`, `wodociagi_bialostockie`, `mwik_bydgoszcz`, `mpwik_warszawa`, `pwik_gliwice`, `pwik_gorzow`, `pwik_olsztyn`, `lpwik_legnica`, `bytomskie_wodociagi`, `chspwik`, `dabrowskie_wodociagi`, `zwik_zielona_gora`, `aqua_bielsko`, `energa_cieplo_kaliskie`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `rpwik_tychy`, `wpwik_walbrzych`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
 
 Toruńskie Wodociągi obejmują Toruń i pięć sąsiednich gmin. Wodociągi Białostockie obejmują Białystok oraz gminę Wasilków.
 PWiK Olsztyn obejmuje Olsztyn i miejscowości wymienione w komunikatach o awariach.
@@ -38,6 +38,7 @@ WiK Opole obejmuje obszary zaopatrzenia w wodę w Opolu oraz gminach Komprachcic
 ZWiK Zielona Góra obsługuje połączoną gminę Zielona Góra wraz z należącymi do niej miejscowościami.
 PWiK Gorzów obejmuje komunikaty o przerwach w dostawie wody w Gorzowie Wielkopolskim oraz gminach Kłodawa, Bogdaniec, Lubiszyn, Deszczno i Santok. Komunikaty ze statusem `Naprawiona` opisują zakończone awarie i nie są aktywnymi alertami.
 Dąbrowskie Wodociągi obejmują przerwy w dostawie wody oraz komunikaty o zakłóceniach usług na terenie Dąbrowy Górniczej.
+EPWiK Elbląg publikuje komunikaty o awariach i planowanych przerwach w dostawie wody w Elblągu, gminie Elbląg i gminie Milejewo. Każdy komunikat jest dopasowywany do wskazanej miejscowości.
 LPWiK Legnica publikuje komunikaty o awariach wodociągowych dotyczące wyłącznie Legnicy.
 AQUA S.A. obejmuje wodociągi w Bielsku-Białej, Bestwinie, Buczkowicach, Chybiu, Czechowicach-Dziedzicach, Jasienicy, Jaworzu, Kętach, Kozach, Porąbce, Szczyrku, Wilamowicach i Wilkowicach; nie należy traktować jej jako źródła dla całego Śląska.
 Bytomskie Wodociągi obejmuje wyłącznie Bytom.

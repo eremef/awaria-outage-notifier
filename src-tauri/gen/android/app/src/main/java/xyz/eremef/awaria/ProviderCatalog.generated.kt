@@ -1125,6 +1125,23 @@ object GeneratedProviderCatalog {
             aggregateOrder = 21,
             addonAllowed = true,
             webviewOnly = false
+        ),
+        GeneratedProviderMetadata(
+            id = "epwik_elblag",
+            utility = "water",
+            displayNamePl = "EPWiK",
+            displayNameEn = "EPWiK",
+            shortNamePl = "EPWiK Elbląg",
+            shortNameEn = "EPWiK Elbląg",
+            androidOrder = 65,
+            singleWidget = true,
+            legacyComponentClass = null,
+            searchAliases = listOf("EPWiK", "EPWiK Elbląg", "Elbląg", "Milejewo"),
+            location = "Elbląg, Gmina Elbląg, Milejewo",
+            aggregateUtility = "water",
+            aggregateOrder = 37,
+            addonAllowed = true,
+            webviewOnly = false
         )
     )
 

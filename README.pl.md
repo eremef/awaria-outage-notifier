@@ -54,6 +54,7 @@ Nowoczesna aplikacja desktopowa i mobilna zapewniające powiadomienia w czasie r
   - **Bytomskie Wodociągi**: Awarie i planowane przerwy w dostawie wody wyłącznie w Bytomiu.
   - **ChŚPWiK**: Przerwy w dostawie wody w Chorzowie i Świętochłowicach.
   - **Dąbrowskie Wodociągi**: Awarie, planowane przerwy, spadki ciśnienia i komunikaty o jakości wody w Dąbrowie Górniczej.
+  - **EPWiK Elbląg**: Awarie i planowane przerwy w dostawie wody w Elblągu, gminie Elbląg i gminie Milejewo; każdy komunikat jest dopasowywany do wskazanej miejscowości.
   - **MWiK Bydgoszcz**: Planowane wyłączenia wody i awarie sieci wodociągowej w Bydgoszczy.
   - **MPWiK Warszawa**: Awarie i naprawy wodociągowe w Warszawie.
   - **WMK**: Awarie i konserwacje wodociągowe w Krakowie.
@@ -225,7 +226,7 @@ Dla każdego adresu, który chcesz monitorować, dodaj wpis zawierający:
 
 #### Aktywne źródła (Enabled Sources)
 
-Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `epec_elblag`, `mec_koszalin`, `therma_bielsko`, `radpec_radom`, `wpec_legnica`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`, `bytomskie_wodociagi`, `chspwik`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `rpwik_tychy`, `wpwik_walbrzych`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
+Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `epec_elblag`, `epwik_elblag`, `mec_koszalin`, `therma_bielsko`, `radpec_radom`, `wpec_legnica`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`, `bytomskie_wodociagi`, `chspwik`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `rpwik_tychy`, `wpwik_walbrzych`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
 
 ### Użytkowanie
 

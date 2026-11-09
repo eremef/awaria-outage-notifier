@@ -149,6 +149,7 @@ if (typeof document !== 'undefined') {
 
     const NEW_PROVIDER_REGIONS = {
         chspwik: 'chspwik_area',
+        epwik_elblag: 'epwik_elblag_area',
         mec_koszalin: 'mec_koszalin_area',
         radpec_radom: 'radpec_radom',
         wpec_legnica: 'wpec_legnica_area',
@@ -442,6 +443,21 @@ if (typeof document !== 'undefined') {
             const cityId = rawCityId ? Number(rawCityId) : null;
             if (cityId != null && Number.isFinite(cityId) && cityId !== 932703) return false;
             return cityId === 932703 || city === 'elblag';
+        },
+        epwik_elblag_area: (addr) => {
+            if (!addr) return false;
+            const city = normalizeRegionName(addr.cityName);
+            const commune = normalizeRegionMunicipality(addr.commune);
+            const rawCityId = addr.cityId == null ? '' : String(addr.cityId).trim();
+            const cityId = rawCityId ? Number(rawCityId) : null;
+            const voivodeship = normalizeRegionName(addr.voivodeship);
+            if (voivodeship && !voivodeship.startsWith('warminsko mazurskie')) return false;
+            if (cityId != null && Number.isFinite(cityId)) {
+                return cityId === 932703 || cityId === 152572 ||
+                    ['elblag', 'milejewo'].includes(commune);
+            }
+            return ['elblag', 'milejewo'].includes(city) ||
+                ['elblag', 'milejewo'].includes(commune);
         },
         bytom: (addr) => {
             if (!addr) return false;

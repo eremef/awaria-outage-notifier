@@ -30,7 +30,7 @@ For each address you want to monitor, add an entry with:
 
 ### Enabled Sources
 
-Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `pge_torun_heat`, `mpec_kielce`, `mec_koszalin`, `therma_bielsko`, `radpec_radom`, `wpec_legnica`, `opec_gdynia`, `eco_sa`, `epec_elblag`, `pec_gliwice`, `pewik_gdynia`, `wik_opole`, `wodociagi_kieleckie`, `torunskie_wodociagi`, `wodociagi_bialostockie`, `mwik_bydgoszcz`, `mpwik_warszawa`, `pwik_gliwice`, `pwik_gorzow`, `pwik_olsztyn`, `lpwik_legnica`, `bytomskie_wodociagi`, `chspwik`, `dabrowskie_wodociagi`, `zwik_zielona_gora`, `aqua_bielsko`, `enea_cieplo`, `energa_cieplo_kaliskie`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `rpwik_tychy`, `wpwik_walbrzych`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
+Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `pge_torun_heat`, `mpec_kielce`, `mec_koszalin`, `therma_bielsko`, `radpec_radom`, `wpec_legnica`, `opec_gdynia`, `eco_sa`, `epec_elblag`, `epwik_elblag`, `pec_gliwice`, `pewik_gdynia`, `wik_opole`, `wodociagi_kieleckie`, `torunskie_wodociagi`, `wodociagi_bialostockie`, `mwik_bydgoszcz`, `mpwik_warszawa`, `pwik_gliwice`, `pwik_gorzow`, `pwik_olsztyn`, `lpwik_legnica`, `bytomskie_wodociagi`, `chspwik`, `dabrowskie_wodociagi`, `zwik_zielona_gora`, `aqua_bielsko`, `enea_cieplo`, `energa_cieplo_kaliskie`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `rpwik_tychy`, `wpwik_walbrzych`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
 
 Toruńskie Wodociągi covers Toruń and five neighboring municipalities. Wodociągi Białostockie covers Białystok and the Wasilków municipality.
 PWiK Olsztyn covers Olsztyn and the localities included in the company's outage notices.
@@ -38,6 +38,7 @@ WiK Opole covers water-service areas in Opole, Komprachcice, Prószków, and Tur
 ZWiK Zielona Góra covers the combined Zielona Góra municipality, including its constituent localities.
 PWiK Gorzów covers water outage notices for Gorzów Wielkopolski and the municipalities of Kłodawa, Bogdaniec, Lubiszyn, Deszczno, and Santok. Notices marked `Naprawiona` describe resolved outages and are not active alerts.
 Dąbrowskie Wodociągi covers water interruptions and service-disruption notices in Dąbrowa Górnicza.
+EPWiK Elbląg covers water outages and planned interruptions in Elbląg, Gmina Elbląg, and Gmina Milejewo. Each notice is matched to its named locality.
 LPWiK Legnica publishes water-outage notices for Legnica only.
 AQUA S.A. covers water-supply notices in Bielsko-Biała, Bestwina, Buczkowice, Chybie, Czechowice-Dziedzice, Jasienica, Jaworze, Kęty, Kozy, Porąbka, Szczyrk, Wilamowice, and Wilkowice; it is not a general Silesia-wide source.
 Bytomskie Wodociągi covers Bytom only.

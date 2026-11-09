@@ -238,6 +238,13 @@
         "color": "#2196f3"
     },
     {
+        "id": "epwik_elblag",
+        "aliases": [],
+        "name": "EPWiK Elbląg",
+        "icon": "💧",
+        "color": "#2196f3"
+    },
+    {
         "id": "gdanskie_wodociagi",
         "aliases": [],
         "name": "GDANSKIE WODOCIAGI",

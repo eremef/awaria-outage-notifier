@@ -78,6 +78,7 @@ pub mod pwik_rybnik;
 pub mod mpec_rzeszow;
 pub mod mpec_kielce;
 pub mod epec_elblag;
+pub mod epwik_elblag;
 pub mod wm_radom;
 
 use crate::network_state::NetworkState;
@@ -634,6 +635,7 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(wm_radom::WmRadomProvider),
         Box::new(radpec_radom::RadpecRadomProvider),
         Box::new(wpec_legnica::WpecLegnicaProvider),
+        Box::new(epwik_elblag::EpwikElblagProvider),
     ]
 }
 
@@ -1237,6 +1239,30 @@ fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Setti
                 continue;
             }
 
+            if alert.source == api_logic::AlertSource::EpwikElblag
+                && alert.is_local == Some(true)
+            {
+                let location = alert.location.as_deref().unwrap_or_default();
+                let matched_address = s.addresses.iter().enumerate().find(|(_, address)| {
+                    address.is_active
+                        && api_logic::is_address_applicable_for_provider(
+                            &alert.source,
+                            address,
+                        )
+                        && epwik_elblag::location_matches_address(location, address)
+                        && (!s.filter_by_house_no
+                            || epwik_elblag::house_number_matches_notice(location, address))
+                });
+                if let Some((index, _)) = matched_address {
+                    alert.address_index = Some(index);
+                    alert.is_local = Some(true);
+                } else {
+                    alert.address_index = None;
+                    alert.is_local = Some(false);
+                }
+                continue;
+            }
+
             if alert.source == api_logic::AlertSource::PewikGdynia
                 && alert.is_local == Some(true)
             {
@@ -1472,6 +1498,60 @@ fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Setti
 
         true
     });
+}
+
+#[cfg(test)]
+mod epwik_elblag_filter_tests {
+    use super::*;
+
+    fn address(house_no: &str) -> api_logic::AddressEntry {
+        api_logic::AddressEntry {
+            name: "Dom".to_string(),
+            city_name: "Elbląg".to_string(),
+            voivodeship: "Warmińsko-Mazurskie".to_string(),
+            commune: "Gmina Miasto Elbląg".to_string(),
+            street_name: "Legionów".to_string(),
+            street_name_1: "Legionów".to_string(),
+            house_no: house_no.to_string(),
+            city_id: Some(932_703),
+            is_active: true,
+            ..api_logic::AddressEntry::default()
+        }
+    }
+
+    fn alert() -> UnifiedAlert {
+        UnifiedAlert {
+            source: api_logic::AlertSource::EpwikElblag,
+            message: Some("Awaria sieci wodociągowej".to_string()),
+            location: Some("miasto Elbląg; Legionów 40".to_string()),
+            is_local: Some(true),
+            address_index: Some(0),
+            ..UnifiedAlert::default()
+        }
+    }
+
+    #[test]
+    fn house_number_setting_controls_local_epwik_matching() {
+        let mut filtered = vec![alert()];
+        let settings = Settings {
+            addresses: vec![address("41")],
+            filter_by_house_no: true,
+            ..Settings::default()
+        };
+        apply_alert_filtering(&mut filtered, &Some(settings));
+        assert_eq!(filtered[0].is_local, Some(false));
+        assert_eq!(filtered[0].address_index, None);
+
+        let mut street_only = vec![alert()];
+        let settings = Settings {
+            addresses: vec![address("41")],
+            filter_by_house_no: false,
+            ..Settings::default()
+        };
+        apply_alert_filtering(&mut street_only, &Some(settings));
+        assert_eq!(street_only[0].is_local, Some(true));
+        assert_eq!(street_only[0].address_index, Some(0));
+    }
 }
 
 async fn fetch_all_alerts_internal(

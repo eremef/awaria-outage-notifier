@@ -349,7 +349,7 @@ describe('Frontend Logic', () => {
                 'kpec_bydgoszcz', 'lpec', 'mec_koszalin', 'mpec_kielce', 'mpec_rzeszow', 'opec_gdynia',
                 'pec_gliwice', 'pge_torun_heat', 'radpec_radom', 'sec', 'tauron_heat', 'therma_bielsko', 'veolia_lodz',
                 'veolia_poznan', 'veolia_warszawa', 'wpec_legnica', 'aqua_bielsko', 'aquanet', 'bytomskie_wodociagi',
-                'chspwik', 'dabrowskie_wodociagi', 'gdanskie_wodociagi', 'katowickie_wodociagi',
+                'chspwik', 'dabrowskie_wodociagi', 'epwik_elblag', 'gdanskie_wodociagi', 'katowickie_wodociagi',
                 'lpwik_legnica', 'mpwik_lublin', 'mpwik_rzeszow', 'mpwik_warszawa', 'mpwik_wroclaw',
                 'mwik_bydgoszcz', 'mwik_koszalin', 'pewik_gdynia', 'puk_rokietnica', 'pwik_czestochowa',
                 'pwik_gliwice', 'pwik_gorzow', 'pwik_kalisz', 'pwik_olsztyn', 'pwik_ruda_slaska',
@@ -518,6 +518,31 @@ describe('Frontend Logic', () => {
             });
         });
 
+        it('registers EPWiK Elbląg alphabetically with localized water styling', () => {
+            const sources = getSources();
+            const provider = sources.find(source => source.id === 'epwik_elblag');
+            const waterIds = sources.filter(source => source.category === 'water').map(source => source.id);
+
+            expect(provider).toMatchObject({
+                label: 'EPWiK Elbląg',
+                category: 'water',
+                region: 'epwik_elblag_area',
+                i18nLabel: 'source_epwik_elblag_name',
+                i18nShort: 'source_epwik_elblag_short'
+            });
+            expect(waterIds).toEqual([...waterIds].sort());
+            expect(providerTranslation('epwik_elblag', 'name', 'en')).toBe('EPWiK Elbląg');
+            expect(providerTranslation('epwik_elblag', 'short', 'en')).toBe('EPWiK Elbląg');
+            expect(providerTranslation('epwik_elblag', 'name', 'pl')).toBe('EPWiK Elbląg');
+            expect(providerTranslation('epwik_elblag', 'short', 'pl')).toBe('EPWiK Elbląg');
+
+            const Card = window.customElements.get('awaria-card');
+            const card = new Card();
+            expect(card.getProviderMeta('epwik_elblag')).toEqual({
+                name: 'EPWiK Elbląg', icon: '💧', color: '#2196f3'
+            });
+        });
+
         it('registers PEWiK Gdynia alphabetically as a water provider', () => {
             const sources = getSources();
             const provider = sources.find(source => source.id === 'pewik_gdynia');
@@ -649,6 +674,44 @@ describe('Frontend Logic', () => {
 
     describe('new water provider service areas', () => {
         const regions = getRegionMatchers();
+
+        it('limits EPWiK to Elbląg city and its two listed rural municipalities', () => {
+            const matchesArea = regions.epwik_elblag_area;
+
+            expect(matchesArea({
+                cityName: 'Elbląg', cityId: 932703, commune: 'Elbląg', voivodeship: 'Warmińsko-Mazurskie'
+            })).toBe(true);
+            expect(matchesArea({
+                cityName: 'Gronowo Górne', cityId: 149328, commune: 'Elbląg', voivodeship: 'Warmińsko-Mazurskie'
+            })).toBe(true);
+            expect(matchesArea({
+                cityName: 'Milejewo', cityId: 152572, commune: 'Milejewo', voivodeship: 'Warmińsko-Mazurskie'
+            })).toBe(true);
+            expect(matchesArea({
+                cityName: 'Pasłęk', cityId: 932927, commune: 'Pasłęk', voivodeship: 'Warmińsko-Mazurskie'
+            })).toBe(false);
+            expect(matchesArea({
+                cityName: 'Elbląg', cityId: 932703, commune: 'Elbląg', voivodeship: 'Pomorskie'
+            })).toBe(false);
+        });
+
+        it('matches either named street in an EPWiK multi-street notice only inside its area', () => {
+            const alert = {
+                source: 'epwik_elblag',
+                message: 'Awaria sieci wodociągowej: miasto Elbląg, ulice Legionów 40, Fromborska 31.',
+                location: 'Elbląg; Legionów 40; Fromborska 31'
+            };
+            const legionow = {
+                cityName: 'Elbląg', cityId: 932703, voivodeship: 'Warmińsko-Mazurskie',
+                streetName1: 'Legionów', houseNo: '40'
+            };
+            const fromborska = { ...legionow, streetName1: 'Fromborska', houseNo: '31' };
+            const outside = { ...legionow, cityName: 'Pasłęk', cityId: 932927, streetName1: 'Legionów' };
+
+            expect(matchesStreetName(alert, legionow)).toBe(true);
+            expect(matchesStreetName(alert, fromborska)).toBe(true);
+            expect(matchesStreetName(alert, outside)).toBe(false);
+        });
 
         it('limits Koszalin and Sosnowiec to their supported cities and voivodeships', () => {
             expect(regions.koszalin({ cityName: 'Koszalin', cityId: 949448, voivodeship: 'Zachodniopomorskie' })).toBe(true);

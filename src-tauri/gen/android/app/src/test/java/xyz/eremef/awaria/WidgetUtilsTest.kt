@@ -87,6 +87,28 @@ class WidgetUtilsTest {
         assertEquals(R.drawable.ic_water, provider.iconResId)
     }
 
+    @Test
+    fun testEpwikElblagUsesGenericPickerAndWaterAggregateCatalog() {
+        val metadata = GeneratedProviderCatalog.find("epwik_elblag")
+        val provider = SingleProviderCatalog.find("epwik_elblag")
+
+        assertTrue(metadata != null)
+        assertEquals("EPWiK", metadata!!.displayNamePl)
+        assertEquals("EPWiK", metadata.displayNameEn)
+        assertEquals("EPWiK Elbląg", metadata.shortNamePl)
+        assertEquals("EPWiK Elbląg", metadata.shortNameEn)
+        assertTrue(provider != null)
+        assertEquals("epwik_elblag", provider!!.sourceId)
+        assertEquals(WidgetUtility.WATER, provider.utility)
+        assertEquals(null, provider.legacyComponentClass)
+        assertEquals("Elbląg, Gmina Elbląg, Milejewo", provider.location)
+        assertTrue(provider.aliases.containsAll(listOf("EPWiK", "EPWiK Elbląg", "Elbląg", "Milejewo")))
+        assertTrue(GeneratedProviderCatalog.aggregate("water").any { it.id == "epwik_elblag" })
+
+        val search = SingleProviderCatalog.search("Milejewo", WidgetUtility.WATER, emptySet())
+        assertEquals(listOf("epwik_elblag"), search.other.map { it.sourceId })
+    }
+
     private fun createSettings(
         cityName: String = "",
         commune: String = "",
