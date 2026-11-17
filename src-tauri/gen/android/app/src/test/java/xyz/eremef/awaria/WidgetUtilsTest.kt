@@ -109,6 +109,29 @@ class WidgetUtilsTest {
         assertEquals(listOf("epwik_elblag"), search.other.map { it.sourceId })
     }
 
+    @Test
+    fun testPecTychyUsesGenericHeatPickerAndAggregateCatalog() {
+        val metadata = GeneratedProviderCatalog.find("pec_tychy")
+        val provider = SingleProviderCatalog.find("pec_tychy")
+
+        assertTrue(metadata != null)
+        assertEquals("heating", metadata!!.utility)
+        assertEquals("PEC Tychy", metadata.displayNamePl)
+        assertEquals("PEC Tychy", metadata.displayNameEn)
+        assertEquals(null, metadata.legacyComponentClass)
+
+        assertTrue(provider != null)
+        assertEquals("pec_tychy", provider!!.sourceId)
+        assertEquals(WidgetUtility.HEAT, provider.utility)
+        assertEquals(null, provider.legacyComponentClass)
+        assertEquals("Tychy, Łaziska Górne", provider.location)
+        assertTrue(provider.aliases.containsAll(listOf("PEC", "Tychy", "Łaziska Górne", "Łaziska")))
+        assertTrue(GeneratedProviderCatalog.aggregate("heating").any { it.id == "pec_tychy" })
+
+        val search = SingleProviderCatalog.search("Łaziska Górne", WidgetUtility.HEAT, emptySet())
+        assertEquals(listOf("pec_tychy"), search.other.map { it.sourceId })
+    }
+
     private fun createSettings(
         cityName: String = "",
         commune: String = "",

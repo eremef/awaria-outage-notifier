@@ -26,6 +26,7 @@ mod therma_bielsko;
 mod radpec_radom;
 mod wpec_legnica;
 mod pec_gliwice;
+mod pec_tychy;
 pub mod network_state;
 mod state_db;
 mod stoen;
@@ -632,6 +633,7 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(mpec_kielce::MpecKielceProvider),
         Box::new(epec_elblag::EpecElblagProvider),
         Box::new(pec_gliwice::PecGliwiceProvider),
+        Box::new(pec_tychy::PecTychyProvider),
         Box::new(wm_radom::WmRadomProvider),
         Box::new(radpec_radom::RadpecRadomProvider),
         Box::new(wpec_legnica::WpecLegnicaProvider),
@@ -702,6 +704,7 @@ mod provider_catalog_parity_tests {
             "pge_torun_heat",
             "epec_elblag",
             "pec_gliwice",
+            "pec_tychy",
             "mec_koszalin",
             "therma_bielsko",
             "radpec_radom",
@@ -721,6 +724,7 @@ mod provider_catalog_parity_tests {
             "mec_koszalin",
             "therma_bielsko",
             "pec_gliwice",
+            "pec_tychy",
             "radpec_radom",
             "wpec_legnica",
             "enea_cieplo",
@@ -1108,10 +1112,16 @@ fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Setti
 
             if matches!(
                 alert.source,
-                api_logic::AlertSource::PecGliwice | api_logic::AlertSource::PwikGliwice
+                api_logic::AlertSource::PecGliwice
+                    | api_logic::AlertSource::PecTychy
+                    | api_logic::AlertSource::PwikGliwice
             ) && alert.is_local == Some(true)
             {
-                let notice = alert.message.as_deref().unwrap_or_default();
+                let notice = if alert.source == api_logic::AlertSource::PecTychy {
+                    alert.location.as_deref().unwrap_or_default()
+                } else {
+                    alert.message.as_deref().unwrap_or_default()
+                };
                 let matched_address = s.addresses.iter().enumerate().find(|(_, address)| {
                     if !address.is_active
                         || !api_logic::is_address_applicable_for_provider(&alert.source, address)
@@ -1124,6 +1134,11 @@ fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Setti
                             pec_gliwice::location_matches_address(notice, address)
                                 && (!s.filter_by_house_no
                                     || pec_gliwice::house_number_matches_notice(notice, address))
+                        }
+                        api_logic::AlertSource::PecTychy => {
+                            pec_tychy::location_matches_address(notice, address)
+                                && (!s.filter_by_house_no
+                                    || pec_tychy::house_number_matches_notice(notice, address))
                         }
                         api_logic::AlertSource::PwikGliwice => {
                             pwik_gliwice::location_matches_address(notice, address)
@@ -2944,9 +2959,10 @@ mod gliwice_provider_house_number_filter_tests {
     use super::*;
 
     fn settings(source: api_logic::AlertSource, filter_by_house_no: bool, house_no: &str) -> Option<Settings> {
-        let (city_name, commune, city_id) = match source {
-            api_logic::AlertSource::PecGliwice => ("Gliwice", "Gliwice", 940_000),
-            api_logic::AlertSource::PwikGliwice => ("Gliwice", "Gliwice", 940_000),
+        let (city_name, commune, city_id, street_name) = match source {
+            api_logic::AlertSource::PecGliwice => ("Gliwice", "Gliwice", 940_000, "Testowa"),
+            api_logic::AlertSource::PecTychy => ("Tychy", "Tychy", 944_534, "Harcerska"),
+            api_logic::AlertSource::PwikGliwice => ("Gliwice", "Gliwice", 940_000, "Testowa"),
             _ => unreachable!(),
         };
         Some(Settings {
@@ -2955,8 +2971,8 @@ mod gliwice_provider_house_number_filter_tests {
                 city_name: city_name.to_string(),
                 voivodeship: "Śląskie".to_string(),
                 commune: commune.to_string(),
-                street_name: "Testowa".to_string(),
-                street_name_1: "Testowa".to_string(),
+                street_name: street_name.to_string(),
+                street_name_1: street_name.to_string(),
                 house_no: house_no.to_string(),
                 city_id: Some(city_id),
                 is_active: true,
@@ -2972,6 +2988,17 @@ mod gliwice_provider_house_number_filter_tests {
             source: api_logic::AlertSource::PecGliwice,
             message: Some("Awaryjna przerwa w dostawie ciepła w Gliwicach przy ul. Testowej 12-16.".into()),
             location: Some("Gliwice; ul. Testowa 12-16".into()),
+            address_index: Some(0),
+            is_local: Some(true),
+            ..Default::default()
+        }
+    }
+
+    fn pec_tychy_alert() -> UnifiedAlert {
+        UnifiedAlert {
+            source: api_logic::AlertSource::PecTychy,
+            message: Some("Awaria ciepła: przerwa przy ul. Harcerskiej 31-41".into()),
+            location: Some("Tychy; Harcerskiej (31-41); Hetmańskiej (2-14)".into()),
             address_index: Some(0),
             is_local: Some(true),
             ..Default::default()
@@ -3005,6 +3032,34 @@ mod gliwice_provider_house_number_filter_tests {
 
         let mut excluded = vec![pec_alert()];
         apply_alert_filtering(&mut excluded, &settings(api_logic::AlertSource::PecGliwice, true, "25"));
+        assert_eq!(excluded[0].is_local, Some(false));
+    }
+
+    #[test]
+    fn pec_tychy_provider_is_registered_and_house_filter_respects_setting() {
+        assert!(get_providers()
+            .iter()
+            .any(|provider| provider.source() == api_logic::AlertSource::PecTychy));
+
+        let mut disabled = vec![pec_tychy_alert()];
+        apply_alert_filtering(
+            &mut disabled,
+            &settings(api_logic::AlertSource::PecTychy, false, "42"),
+        );
+        assert_eq!(disabled[0].is_local, Some(true));
+
+        let mut included = vec![pec_tychy_alert()];
+        apply_alert_filtering(
+            &mut included,
+            &settings(api_logic::AlertSource::PecTychy, true, "35"),
+        );
+        assert_eq!(included[0].is_local, Some(true));
+
+        let mut excluded = vec![pec_tychy_alert()];
+        apply_alert_filtering(
+            &mut excluded,
+            &settings(api_logic::AlertSource::PecTychy, true, "42"),
+        );
         assert_eq!(excluded[0].is_local, Some(false));
     }
 

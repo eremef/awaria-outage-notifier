@@ -48,6 +48,7 @@ Nowoczesna aplikacja desktopowa i mobilna zapewniające powiadomienia w czasie r
   - **MPEC Rzeszów**: Przerwy w dostawie ciepła i ciepłej wody użytkowej w Rzeszowie.
   - **OPEC Gdynia**: Uliczne komunikaty o przerwach w dostawie ciepła i ciepłej wody w obsługiwanych rejonach Gdyni, Rumi, Redy, Kosakowa i Wejherowa.
   - **PEC Gliwice**: Komunikaty o przerwach w dostawie ciepła w Gliwicach.
+  - **PEC Tychy**: Komunikaty o przerwach w dostawie ciepła w Tychach i Łaziskach Górnych, dopasowywane do lokalizacji i ulic wymienionych w komunikacie.
   - **PGE Toruń**: Planowane przerwy w dostawie ciepłej wody w Toruniu.
 - **💧 Woda**
   - **MPWiK Wrocław**: Awarie wodociągowe i prace konserwacyjne we Wrocławiu.

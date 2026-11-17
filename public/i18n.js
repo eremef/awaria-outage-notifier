@@ -61,6 +61,7 @@ const translations = {
         "lbl_concerns": "Concerns",
         "msg_no_outages_local": "No local alerts found.",
         "lbl_planned_outage": "Planned Outage",
+        "date_not_provided": "Outage date not provided",
 
         "msg_no_alerts": "No active alerts.",
         "all_clear_title": "Everything looks good!",
@@ -188,6 +189,7 @@ const translations = {
         "lbl_concerns": "Dotyczy",
         "msg_no_outages_local": "Brak alertów dla twojej lokalizacji.",
         "lbl_planned_outage": "Planowane wyłączenie",
+        "date_not_provided": "Nie podano daty wyłączenia",
 
         "msg_no_alerts": "Brak aktywnych alertów.",
         "all_clear_title": "Wszystko gra!",

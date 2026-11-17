@@ -347,7 +347,7 @@ describe('Frontend Logic', () => {
                 'enea', 'energa', 'pge', 'stoen', 'tauron', 'psg',
                 'eco_sa', 'enea_cieplo', 'energa_cieplo_kaliskie', 'epec_elblag', 'fortum', 'gpec',
                 'kpec_bydgoszcz', 'lpec', 'mec_koszalin', 'mpec_kielce', 'mpec_rzeszow', 'opec_gdynia',
-                'pec_gliwice', 'pge_torun_heat', 'radpec_radom', 'sec', 'tauron_heat', 'therma_bielsko', 'veolia_lodz',
+                'pec_gliwice', 'pec_tychy', 'pge_torun_heat', 'radpec_radom', 'sec', 'tauron_heat', 'therma_bielsko', 'veolia_lodz',
                 'veolia_poznan', 'veolia_warszawa', 'wpec_legnica', 'aqua_bielsko', 'aquanet', 'bytomskie_wodociagi',
                 'chspwik', 'dabrowskie_wodociagi', 'epwik_elblag', 'gdanskie_wodociagi', 'katowickie_wodociagi',
                 'lpwik_legnica', 'mpwik_lublin', 'mpwik_rzeszow', 'mpwik_warszawa', 'mpwik_wroclaw',
@@ -669,6 +669,30 @@ describe('Frontend Logic', () => {
             expect(card.getProviderMeta('sosnowieckie_wodociagi')).toMatchObject({ name: 'Sosnowieckie Wodociągi', icon: '💧' });
             expect(card.getProviderMeta('tarnowskie_wodociagi')).toMatchObject({ name: 'Tarnowskie Wodociągi', icon: '💧' });
             expect(card.getProviderMeta('zabrzanskie_wodociagi')).toMatchObject({ name: 'ZPWiK Zabrze', icon: '💧' });
+        });
+
+        it('registers PEC Tychy as a localized heat provider with generic heat styling', () => {
+            const sources = getSources();
+            const provider = sources.find(source => source.id === 'pec_tychy');
+            const heatingIds = sources.filter(source => source.category === 'heating').map(source => source.id);
+
+            expect(provider).toMatchObject({
+                label: 'PEC Tychy', category: 'heating', region: 'pec_tychy_area',
+                i18nLabel: 'source_pec_tychy_name', i18nShort: 'source_pec_tychy_short'
+            });
+            expect(heatingIds).toEqual([...heatingIds].sort());
+            for (const language of ['en', 'pl']) {
+                expect(providerTranslation('pec_tychy', 'name', language)).toBe('PEC Tychy');
+                expect(providerTranslation('pec_tychy', 'short', language)).toBe('PEC Tychy');
+            }
+
+            expect(providerTranslationKey('date_not_provided', 'en')).toBe('Outage date not provided');
+            expect(providerTranslationKey('date_not_provided', 'pl')).toBe('Nie podano daty wyłączenia');
+
+            const card = new (window.customElements.get('awaria-card'))();
+            expect(card.getProviderMeta('pec_tychy')).toEqual({
+                name: 'PEC Tychy', icon: '🔥', color: '#f44336'
+            });
         });
     });
 
@@ -1069,6 +1093,44 @@ describe('Frontend Logic', () => {
         });
     });
 
+    describe('PEC Tychy service area and locality matching', () => {
+        const matchesArea = getRegionMatchers().pec_tychy_area;
+
+        it('accepts Tychy and Łaziska Górne and sublocalities in their communes only', () => {
+            expect(matchesArea({ cityName: 'Tychy', commune: 'Tychy', cityId: 944534, voivodeship: 'Śląskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Łaziska Górne', commune: 'Łaziska Górne', cityId: 941139, voivodeship: 'Śląskie' })).toBe(true);
+            expect(matchesArea({ cityName: 'Łaziska Dolne', commune: 'Łaziska Górne', cityId: 941168, voivodeship: 'Śląskie' })).toBe(true);
+
+            expect(matchesArea({ cityName: 'Mikołów', commune: 'Mikołów', cityId: 943428, voivodeship: 'Śląskie' })).toBe(false);
+            expect(matchesArea({ cityName: 'Tychy', cityId: 944534, voivodeship: 'Małopolskie' })).toBe(false);
+            expect(matchesArea({ cityName: 'Tychy', cityId: 941139, voivodeship: 'Śląskie' })).toBe(false);
+        });
+
+        it('requires an explicit unique locality and matching street in frontend fallback matching', () => {
+            const alert = {
+                source: 'pec_tychy',
+                location: 'Miejscowość: Tychy; ul. Żaków; ul. Nowa; ul. Żorska',
+                message: 'Awaria sieci ciepłowniczej'
+            };
+            const tychy = {
+                cityName: 'Tychy', cityId: 944534, commune: 'Tychy', voivodeship: 'Śląskie', streetName1: 'Żaków'
+            };
+            const laziska = {
+                cityName: 'Łaziska Górne', cityId: 941139, commune: 'Łaziska Górne', voivodeship: 'Śląskie', streetName1: 'Żaków'
+            };
+            const outside = {
+                cityName: 'Mikołów', commune: 'Mikołów', voivodeship: 'Śląskie', streetName1: 'Żaków'
+            };
+
+            expect(matchesStreetName(alert, tychy)).toBe(true);
+            expect(matchesStreetName(alert, laziska)).toBe(false);
+            expect(matchesStreetName(alert, outside)).toBe(false);
+            expect(matchesStreetName({ ...alert, location: 'ul. Żaków; ul. Nowa' }, tychy)).toBe(false);
+            expect(matchesStreetName({ ...alert, location: 'Tychy; Łaziska Górne; ul. Żaków' }, tychy)).toBe(false);
+            expect(matchesAddress({ ...alert, isLocal: false, addressIndex: null }, [tychy], 0)).toBe(false);
+        });
+    });
+
     describe('Toruńskie Wodociągi service area', () => {
         const matchesArea = getRegionMatchers().torunskie_wodociagi_area;
 
@@ -1108,6 +1170,32 @@ describe('Frontend Logic', () => {
                 icon: '🔥',
                 color: '#f44336'
             });
+        });
+
+        it('shows localized wording for Home Assistant alerts without a supplied date', () => {
+            const AwariaCard = customElements.get('awaria-card');
+            for (const [language, expected] of [
+                ['en', 'Outage date not provided'],
+                ['pl', 'Nie podano daty wyłączenia']
+            ]) {
+                const card = new AwariaCard();
+                card.hass = {
+                    language,
+                    states: {
+                        'sensor.awaria_pec_tychy': {
+                            attributes: {
+                                alerts: [{
+                                    source: 'pec_tychy', isLocal: true, hash: `undated-${language}`,
+                                    startDate: null, endDate: null, location: 'Tychy; Żaków',
+                                    message: 'Awaria sieci ciepłowniczej'
+                                }]
+                            }
+                        }
+                    }
+                };
+
+                expect(card.shadowRoot.querySelector('.alert-dates').textContent).toContain(expected);
+            }
         });
 
         it('uses the shared water styling for MWiK Bydgoszcz', () => {
@@ -1417,6 +1505,23 @@ describe('Frontend Logic', () => {
             expect(container.innerHTML).toContain('Probusa 1');
             // Legnicka 1 is in "Other alerts" (now rendered synchronously alongside local alerts)
             expect(container.innerHTML).toContain('Legnicka 1');
+        });
+
+        it('shows a localized fallback when an alert has no supplied date', () => {
+            document.body.innerHTML = '<div id="outages-container"></div>';
+            const container = document.getElementById('outages-container');
+            const settings = {
+                addresses: [{ name: 'Home', isActive: true, streetName1: 'Żaków', cityName: 'Tychy' }],
+                enabledSources: ['pec_tychy']
+            };
+            const alerts = [{
+                source: 'pec_tychy', message: 'Awaria sieci ciepłowniczej', location: 'Tychy; Żaków',
+                isLocal: true, addressIndex: 0, startDate: null, endDate: null, hash: 'undated-pec-tychy'
+            }];
+
+            renderAlerts(alerts, container, settings, 0);
+
+            expect(container.querySelector('.outage-time').textContent.trim()).toBe('Nie podano daty wyłączenia');
         });
     });
 

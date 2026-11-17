@@ -109,6 +109,8 @@ pub enum AlertSource {
     EpwikElblag,
     #[serde(rename = "pec_gliwice")]
     PecGliwice,
+    #[serde(rename = "pec_tychy")]
+    PecTychy,
     #[serde(rename = "pwik_gliwice")]
     PwikGliwice,
     #[serde(rename = "dabrowskie_wodociagi")]
@@ -248,6 +250,7 @@ impl AlertSource {
             AlertSource::EpecElblag => ServiceLocation::Cities(vec![is_elblag]),
             AlertSource::EpwikElblag => ServiceLocation::Cities(vec![is_epwik_elblag_area]),
             AlertSource::PecGliwice => ServiceLocation::Cities(vec![is_gliwice]),
+            AlertSource::PecTychy => ServiceLocation::Cities(vec![is_pec_tychy_area]),
             AlertSource::PwikGliwice => ServiceLocation::Cities(vec![is_pwik_gliwice_area]),
             AlertSource::DabrowskieWodociagi => {
                 ServiceLocation::Cities(vec![is_dabrowskie_wodociagi_area])
@@ -625,6 +628,7 @@ impl std::fmt::Display for AlertSource {
             AlertSource::EpecElblag => "epec_elblag",
             AlertSource::EpwikElblag => "epwik_elblag",
             AlertSource::PecGliwice => "pec_gliwice",
+            AlertSource::PecTychy => "pec_tychy",
             AlertSource::PwikGliwice => "pwik_gliwice",
             AlertSource::DabrowskieWodociagi => "dabrowskie_wodociagi",
             AlertSource::MwikKoszalin => "mwik_koszalin",
@@ -859,6 +863,50 @@ fn is_gliwice(addr: &AddressEntry) -> bool {
     crate::utils::clean_text(&addr.city_name)
         .trim()
         .starts_with("gliwice")
+}
+
+fn is_pec_tychy_area(addr: &AddressEntry) -> bool {
+    const TYCHY_SIMC: u64 = 944_534;
+    const LAZISKA_GORNE_SIMC: u64 = 941_139;
+
+    let voivodeship = crate::utils::clean_text(&addr.voivodeship);
+    if !voivodeship.trim().is_empty() && !voivodeship.starts_with("slaskie") {
+        return false;
+    }
+
+    let city = normalize_service_municipality(&addr.city_name);
+    let commune = normalize_service_municipality(&addr.commune);
+    let city_area = match city.as_str() {
+        "tychy" => Some(TYCHY_SIMC),
+        "laziska gorne" => Some(LAZISKA_GORNE_SIMC),
+        _ => None,
+    };
+    let commune_area = match commune.as_str() {
+        "tychy" => Some(TYCHY_SIMC),
+        "laziska gorne" => Some(LAZISKA_GORNE_SIMC),
+        _ => None,
+    };
+    if city_area.is_some() && commune_area.is_some() && city_area != commune_area {
+        return false;
+    }
+
+    if let Some(city_id) = addr.city_id {
+        if city_area.is_some_and(|expected_id| city_id != expected_id) {
+            return false;
+        }
+        if city_area.is_some_and(|expected_id| city_id == expected_id) {
+            return true;
+        }
+        let id_area = [TYCHY_SIMC, LAZISKA_GORNE_SIMC]
+            .into_iter()
+            .find(|expected_id| city_id == *expected_id);
+        if id_area.is_some_and(|expected_id| commune_area.is_some_and(|value| value != expected_id)) {
+            return false;
+        }
+        return commune_area.is_some() || id_area.is_some();
+    }
+
+    city_area.is_some() || commune_area.is_some()
 }
 
 fn is_pwik_gliwice_area(addr: &AddressEntry) -> bool {
@@ -1796,6 +1844,43 @@ mod tests {
             &AlertSource::PecGliwice,
             &aqua_test_address("Gliwice", "Gliwice", "Śląskie", Some(938_670)),
         ));
+    }
+
+    #[test]
+    fn pec_tychy_source_area_is_limited_to_its_two_heat_cities() {
+        assert_eq!(AlertSource::PecTychy.to_string(), "pec_tychy");
+        assert_eq!(AlertSource::PecTychy.display_name(), "PEC Tychy");
+        assert_eq!(
+            serde_json::to_string(&AlertSource::PecTychy).unwrap(),
+            "\"pec_tychy\""
+        );
+
+        for (city, commune, id) in [
+            ("Tychy", "Tychy", Some(944_534)),
+            ("Łaziska Górne", "Łaziska Górne", Some(941_139)),
+            ("Łaziska Dolne", "Łaziska Górne", Some(941_168)),
+            ("Tychy", "Tychy", None),
+            ("Łaziska Górne", "Gmina Łaziska Górne", None),
+        ] {
+            assert!(
+                is_address_applicable_for_provider(
+                    &AlertSource::PecTychy,
+                    &aqua_test_address(city, commune, "Śląskie", id),
+                ),
+                "{city}, {commune}"
+            );
+        }
+
+        for outside in [
+            aqua_test_address("Bieruń", "Bieruń", "Śląskie", None),
+            aqua_test_address("Tychy", "Tychy", "Małopolskie", None),
+            aqua_test_address("Tychy", "Tychy", "Śląskie", Some(938_670)),
+        ] {
+            assert!(!is_address_applicable_for_provider(
+                &AlertSource::PecTychy,
+                &outside
+            ));
+        }
     }
 
     #[test]
@@ -3256,6 +3341,7 @@ mod new_water_provider_area_tests {
     fn new_provider_ids_and_display_names_are_stable() {
         for (source, id, name) in [
             (AlertSource::RpwikTychy, "rpwik_tychy", "RPWiK Tychy"),
+            (AlertSource::PecTychy, "pec_tychy", "PEC Tychy"),
             (
                 AlertSource::WpwikWalbrzych,
                 "wpwik_walbrzych",

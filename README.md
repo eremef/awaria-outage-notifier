@@ -48,6 +48,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **MPEC Rzeszów**: Heating and domestic hot-water supply interruptions in Rzeszów.
   - **OPEC Gdynia**: Street-level heat and domestic-hot-water interruption notices for served areas in Gdynia, Rumia, Reda, Kosakowo, and Wejherowo.
   - **PEC Gliwice**: District-heating interruption notices for Gliwice.
+  - **PEC Tychy**: District-heating interruption notices in Tychy and Łaziska Górne, matched to the locality and streets named in each notice.
   - **PGE Toruń**: Planned domestic hot-water interruptions in Toruń.
 - **💧 Water**
   - **MPWiK Wrocław**: Water failures and maintenance work in Wrocław.

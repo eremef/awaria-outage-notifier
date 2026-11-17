@@ -140,6 +140,13 @@
         "color": "#f44336"
     },
     {
+        "id": "pec_tychy",
+        "aliases": [],
+        "name": "PEC Tychy",
+        "icon": "🔥",
+        "color": "#f44336"
+    },
+    {
         "id": "pge_torun_heat",
         "aliases": [],
         "name": "PGE Toruń",
@@ -540,7 +547,7 @@ class AwariaCard extends HTMLElement {
 
     // Render card
     if (!this._shadowRoot) {
-      this.attachShadow({ mode: 'open' });
+      this._shadowRoot = this.attachShadow({ mode: 'open' });
     }
 
     const css = `
@@ -638,6 +645,10 @@ class AwariaCard extends HTMLElement {
         const meta = this.getProviderMeta(alert.source);
         const startDate = alert.startDate || 'Brak danych';
         const endDate = alert.endDate || 'Brak danych';
+        const language = (this._hass.language || this._hass.locale?.language || '').toLowerCase();
+        const dateRange = alert.startDate || alert.endDate
+          ? `${startDate} - ${endDate}`
+          : language.startsWith('en') ? 'Outage date not provided' : 'Nie podano daty wyłączenia';
         const isAqua = alert.source === 'aqua_bielsko';
         const location = alert.location || 'Brak lokalizacji';
         const message = alert.message || 'Brak szczegółów';
@@ -661,7 +672,7 @@ class AwariaCard extends HTMLElement {
                 <span>${meta.name}</span>
               </span>
             </div>
-            <div class="alert-dates">📅 ${startDate} - ${endDate}</div>
+            <div class="alert-dates">📅 ${dateRange}</div>
             <div class="alert-location">📍 ${isAqua ? '' : 'Miejscowość: '}${location}</div>
             ${messageHtml}
           </div>

@@ -161,6 +161,7 @@ if (typeof document !== 'undefined') {
         pwik_ruda_slaska: 'ruda_slaska',
         pwik_rybnik: 'pwik_rybnik_area',
         rpwik_tychy: 'rpwik_tychy_area',
+        pec_tychy: 'pec_tychy_area',
         wpwik_walbrzych: 'wpwik_walbrzych_area'
     };
 
@@ -666,6 +667,25 @@ if (typeof document !== 'undefined') {
             if (voivodeship && !voivodeship.startsWith('slaskie') && !voivodeship.startsWith('silesian')) return false;
             if (addr.cityId != null) return Number(addr.cityId) === 940000;
             return normalize(addr.cityName) === 'gliwice';
+        },
+        pec_tychy_area: (addr) => {
+            if (!addr) return false;
+            const voivodeship = normalizeRegionName(addr.voivodeship);
+            if (voivodeship && !voivodeship.startsWith('slaskie') && !voivodeship.startsWith('silesian')) return false;
+
+            const serviceCities = { tychy: 944534, 'laziska gorne': 941139 };
+            const city = normalizeRegionMunicipality(addr.cityName);
+            const commune = normalizeRegionMunicipality(addr.commune);
+            const cityId = addr.cityId == null ? null : Number(addr.cityId);
+            const cityIdArea = Object.entries(serviceCities).find(([, id]) => id === cityId)?.[0] || null;
+            const cityArea = Object.hasOwn(serviceCities, city) ? city : null;
+            const communeArea = Object.hasOwn(serviceCities, commune) ? commune : null;
+
+            if (cityArea && cityId != null && serviceCities[cityArea] !== cityId) return false;
+            if (cityArea && communeArea && cityArea !== communeArea) return false;
+            if (cityArea && cityIdArea && cityArea !== cityIdArea) return false;
+            if (communeArea && cityIdArea && communeArea !== cityIdArea) return false;
+            return !!(cityArea || communeArea || cityIdArea);
         },
         pwik_gliwice_area: (addr) => {
             if (!addr) return false;
@@ -2934,6 +2954,10 @@ if (typeof document !== 'undefined') {
         const providerRegion = NEW_PROVIDER_REGIONS[alert.source];
         if (providerRegion && !REGION_MATCHERS[providerRegion](addr)) return false;
 
+        if (alert.source === 'pec_tychy' && alert.isLocal !== true) {
+            return matchesPecTychyStreet(alert, addr);
+        }
+
         // RADPEC notices can cover several saved addresses, while addressIndex holds only the first.
         if (alert.source === 'radpec_radom' && alert.location) {
             if (alert.isLocal === false) return false;
@@ -2969,6 +2993,8 @@ if (typeof document !== 'undefined') {
 
     function matchesStreetName(alert, addr) {
         if (!alert.message || !addr) return false;
+
+        if (alert.source === 'pec_tychy') return matchesPecTychyStreet(alert, addr);
 
         const providerRegion = NEW_PROVIDER_REGIONS[alert.source];
         if (providerRegion && !REGION_MATCHERS[providerRegion](addr)) return false;
@@ -3292,6 +3318,29 @@ if (typeof document !== 'undefined') {
         if (wordMatch(streetName1)) return true;
 
         return false;
+    }
+
+    function matchesPecTychyStreet(alert, addr) {
+        if (alert.isLocal === false) return false;
+        if (!REGION_MATCHERS.pec_tychy_area(addr)) return false;
+
+        const location = alert.location || '';
+        if (!location.trim()) return false;
+        const normalizedLocation = normalizeRegionName(location);
+        const tychyMentioned = /(?:^| )(?:tychy|tychach|tychu)(?: |$)/.test(normalizedLocation);
+        const laziskaMentioned = /(?:^| )lazisk(?:a|ach)? gorn(?:e|ych|ymi)(?: |$)/.test(normalizedLocation);
+        if (tychyMentioned === laziskaMentioned) return false;
+
+        const municipality = tychyMentioned ? 'tychy' : 'laziska gorne';
+        const addressMunicipalities = [addr.cityName, addr.commune]
+            .map(normalizeRegionMunicipality)
+            .filter(Boolean);
+        const municipalityId = municipality === 'tychy' ? 944534 : 941139;
+        if (!addressMunicipalities.includes(municipality) && Number(addr.cityId) !== municipalityId) return false;
+
+        // The backend can resolve locality from TERYT street data. In the frontend fallback,
+        // require an explicit single-city clue plus the named street to avoid cross-city matches.
+        return matchesStreetName({ source: 'unknown', message: location }, addr);
     }
 
 
@@ -3701,7 +3750,7 @@ if (typeof document !== 'undefined') {
             }
             const dateRange = [formatDate(item.startDate), formatDate(item.endDate)]
                 .filter(Boolean)
-                .join(' – ');
+                .join(' – ') || (typeof t !== 'undefined' ? t('date_not_provided') : 'Nie podano daty wyłączenia');
 
             return `
             <div class="card source-${item.source}" ${item.hash ? `data-hash="${item.hash}"` : ''}>

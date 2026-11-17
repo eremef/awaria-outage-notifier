@@ -140,6 +140,13 @@
         "color": "#f44336"
     },
     {
+        "id": "pec_tychy",
+        "aliases": [],
+        "name": "PEC Tychy",
+        "icon": "🔥",
+        "color": "#f44336"
+    },
+    {
         "id": "pge_torun_heat",
         "aliases": [],
         "name": "PGE Toruń",
