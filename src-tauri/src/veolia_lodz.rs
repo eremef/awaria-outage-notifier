@@ -79,8 +79,14 @@ pub async fn fetch_veolia_lodz_alerts_for_street(
         return Err(format!("Veolia Łódź API HTTP error: {}", res.status()));
     }
 
-    let items: Vec<VeoliaLodzItem> = res.json().await.map_err(|e| e.to_string())?;
-    Ok(items)
+    let bytes = res.bytes().await.map_err(|e| e.to_string())?;
+    if bytes.iter().all(|byte| byte.is_ascii_whitespace()) {
+        return Ok(Vec::new());
+    }
+
+    let items: Option<Vec<VeoliaLodzItem>> = serde_json::from_slice(&bytes)
+        .map_err(|e| format!("Veolia Łódź API JSON error: {}", e))?;
+    Ok(items.unwrap_or_default())
 }
 
 impl VeoliaLodzItem {

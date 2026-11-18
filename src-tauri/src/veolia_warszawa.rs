@@ -1,22 +1,151 @@
-use reqwest::Client;
-use crate::api_logic::{AlertSource, UnifiedAlert, AlertProvider, Settings, AddressEntry};
+use crate::api_logic::{AddressEntry, AlertProvider, AlertSource, Settings, UnifiedAlert};
 use crate::utils::retry;
-use regex::Regex;
 use async_trait::async_trait;
-use serde::Deserialize;
+use regex::Regex;
+use reqwest::Client;
+use serde::{Deserialize, Deserializer};
 use std::sync::Arc;
 
 #[derive(Debug, Clone, Deserialize)]
 #[allow(dead_code)]
 pub struct VeoliaItem {
-    pub id: u64,
+    #[serde(default)]
+    pub id: Option<serde_json::Value>,
+    #[serde(default, deserialize_with = "deserialize_text")]
     pub title: String,
+    #[serde(default, deserialize_with = "deserialize_text")]
     pub content: String,
-    pub permalink: String,
+    #[serde(default)]
+    pub permalink: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_streets")]
+    pub street: Vec<String>,
+    #[serde(default, deserialize_with = "deserialize_optional_text")]
+    pub house_number: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_optional_text")]
+    pub start_date: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_optional_text")]
+    pub end_date: Option<String>,
+    #[serde(default)]
+    pub addresses: Option<Vec<VeoliaAddress>>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct VeoliaAddress {
+    #[serde(default, deserialize_with = "deserialize_text")]
     pub street: String,
-    pub house_number: String,
-    pub start_date: String,
-    pub end_date: String,
+    #[serde(default, deserialize_with = "deserialize_optional_text")]
+    pub house_number: Option<String>,
+}
+
+fn deserialize_streets<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value = Option::<serde_json::Value>::deserialize(deserializer)?;
+    let values = match value {
+        Some(serde_json::Value::String(street)) => vec![street],
+        Some(serde_json::Value::Array(streets)) => streets
+            .into_iter()
+            .filter_map(|street| match street {
+                serde_json::Value::String(street) => Some(street),
+                serde_json::Value::Number(street) => Some(street.to_string()),
+                _ => None,
+            })
+            .collect(),
+        Some(serde_json::Value::Number(street)) => vec![street.to_string()],
+        _ => Vec::new(),
+    };
+
+    Ok(values
+        .into_iter()
+        .map(|street| {
+            street
+                .replace("<br />", " ")
+                .replace("<br/>", " ")
+                .replace("<br>", " ")
+                .trim()
+                .to_string()
+        })
+        .filter(|street| !street.is_empty())
+        .collect())
+}
+
+fn deserialize_optional_text<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value = Option::<serde_json::Value>::deserialize(deserializer)?;
+    Ok(match value {
+        Some(serde_json::Value::String(value)) => Some(value),
+        Some(serde_json::Value::Number(value)) => Some(value.to_string()),
+        _ => None,
+    })
+}
+
+fn deserialize_text<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    Ok(deserialize_optional_text(deserializer)?.unwrap_or_default())
+}
+
+impl VeoliaItem {
+    fn inline_detail(&self) -> VeoliaDetail {
+        let description = match (self.title.trim(), self.content.trim()) {
+            ("", content) => content.to_string(),
+            (title, "") => title.to_string(),
+            (title, content) if title == content => content.to_string(),
+            (title, content) => format!("{}: {}", title, content),
+        };
+
+        let mut affected_addresses: Vec<String> = self
+            .addresses
+            .as_deref()
+            .unwrap_or_default()
+            .iter()
+            .map(|address| {
+                let house_number = address.house_number.as_deref().unwrap_or("").trim();
+                if house_number.is_empty() {
+                    address.street.trim().to_uppercase()
+                } else {
+                    format!("{} {}", address.street.trim(), house_number).to_uppercase()
+                }
+            })
+            .filter(|address| !address.trim().is_empty())
+            .collect();
+
+        if affected_addresses.is_empty() {
+            affected_addresses.extend(self.street.iter().map(|street| {
+                let house_number = self.house_number.as_deref().unwrap_or("").trim();
+                if house_number.is_empty() {
+                    street.to_uppercase()
+                } else {
+                    format!("{} {}", street, house_number).to_uppercase()
+                }
+            }));
+        }
+
+        VeoliaDetail {
+            description,
+            affected_addresses,
+        }
+    }
+
+    fn dedup_key(&self) -> String {
+        if let Some(id) = &self.id {
+            return format!("id:{}", id);
+        }
+
+        format!(
+            "row:{}|{}|{}|{}|{}|{}",
+            self.street.join(","),
+            self.house_number.as_deref().unwrap_or_default(),
+            self.start_date.as_deref().unwrap_or_default(),
+            self.end_date.as_deref().unwrap_or_default(),
+            self.title,
+            self.content
+        )
+    }
 }
 
 pub struct VeoliaDetail {
@@ -107,11 +236,12 @@ pub async fn fetch_veolia_alerts_for_street(
     street: &str,
 ) -> Result<Vec<VeoliaItem>, String> {
     let url = format!(
-        "https://www.energiadlawarszawy.pl/wp-admin/admin-ajax.php?action=my_ajax_filter_search_waw&street={}",
+        "https://energiadlawarszawy.pl/wp-admin/admin-ajax.php?action=my_ajax_filter_search_waw&street={}",
         urlencoding::encode(street)
     );
     let res = client
         .get(&url)
+        .header("X-Requested-With", "XMLHttpRequest")
         .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
         .send()
         .await
@@ -139,16 +269,18 @@ pub async fn fetch_veolia_alerts_for_street(
 
 impl VeoliaItem {
     pub fn to_unified(&self, detail: &Option<VeoliaDetail>) -> UnifiedAlert {
-        let start_date = parse_veolia_date(&self.start_date);
-        let end_date = parse_veolia_date(&self.end_date);
+        let start_date = self.start_date.as_deref().and_then(parse_veolia_date);
+        let end_date = self.end_date.as_deref().and_then(parse_veolia_date);
 
-        let detail_desc = detail.as_ref().map(|d| d.description.clone()).unwrap_or_else(|| self.content.clone());
-        let addresses_str = detail.as_ref().map(|d| d.affected_addresses.join(", ")).unwrap_or_default();
+        let inline_detail = self.inline_detail();
+        let detail = detail.as_ref().unwrap_or(&inline_detail);
+        let detail_desc = detail.description.clone();
+        let addresses_str = detail.affected_addresses.join(", ");
 
         let mut parts = Vec::new();
         parts.push("Przerwa w dostawie ciepła".to_string());
         if !self.street.is_empty() {
-            parts.push(format!("ul. {}", self.street));
+            parts.push(format!("ul. {}", self.street.join(", ")));
         }
         if !detail_desc.is_empty() {
             parts.push(detail_desc.to_string());
@@ -248,12 +380,30 @@ impl CompiledVeoliaRegex {
         Self { candidates, api_query }
     }
 
-    pub fn is_match(&self, street: &str, details: &Option<VeoliaDetail>) -> bool {
+    pub fn is_match(&self, item: &VeoliaItem, details: &Option<VeoliaDetail>) -> bool {
         if self.candidates.is_empty() {
             return false;
         }
 
-        let mut full_text = street.to_lowercase();
+        let mut full_text = item.street.join(" ").to_lowercase();
+        if let Some(house_number) = &item.house_number {
+            full_text.push(' ');
+            full_text.push_str(&house_number.to_lowercase());
+        }
+        full_text.push(' ');
+        full_text.push_str(&item.title.to_lowercase());
+        full_text.push(' ');
+        full_text.push_str(&item.content.to_lowercase());
+        if let Some(addresses) = &item.addresses {
+            for address in addresses {
+                full_text.push(' ');
+                full_text.push_str(&address.street.to_lowercase());
+                if let Some(house_number) = &address.house_number {
+                    full_text.push(' ');
+                    full_text.push_str(&house_number.to_lowercase());
+                }
+            }
+        }
         if let Some(d) = details {
             full_text.push(' ');
             full_text.push_str(&d.description.to_lowercase());
@@ -301,24 +451,50 @@ impl AlertProvider for VeoliaWarszawaProvider {
         let mut alerts = Vec::new();
 
         for (idx, compiled) in &active_addresses {
-            match retry(|| fetch_veolia_alerts_for_street(client_http1, &compiled.api_query), 3).await {
+            match retry(
+                || fetch_veolia_alerts_for_street(client_http1, &compiled.api_query),
+                3,
+            )
+            .await
+            {
                 Ok(items) => {
                     for item in items {
-                        if !seen_ids.insert(item.id) {
+                        let dedup_key = item.dedup_key();
+                        if seen_ids.contains(&dedup_key) {
                             continue;
                         }
 
-                        let details = match retry(|| fetch_veolia_details(client_http1, &item.permalink), 3).await {
-                            Ok(det) => Some(det),
-                            Err(e) => {
-                                log::error!("Failed to fetch details for Veolia item {}: {}", item.id, e);
-                                None
+                        let details = if item.addresses.is_some() || item.permalink.is_none() {
+                            Some(item.inline_detail())
+                        } else {
+                            match retry(
+                                || {
+                                    fetch_veolia_details(
+                                        client_http1,
+                                        item.permalink.as_deref().unwrap_or_default(),
+                                    )
+                                },
+                                3,
+                            )
+                            .await
+                            {
+                                Ok(det) => Some(det),
+                                Err(e) => {
+                                    log::error!(
+                                        "Failed to fetch details for Veolia item {:?}: {}",
+                                        item.id,
+                                        e
+                                    );
+                                    None
+                                }
                             }
                         };
 
-                        if !compiled.is_match(&item.street, &details) {
+                        if !compiled.is_match(&item, &details) {
                             continue;
                         }
+
+                        seen_ids.insert(dedup_key);
 
                         let mut alert = item.to_unified(&details);
                         alert.address_index = Some(*idx);
