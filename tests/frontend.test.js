@@ -207,6 +207,42 @@ describe('Frontend Logic', () => {
             expect(matchesStreetName(alert, lublin)).toBe(false);
         });
 
+        it('matches MPEC Olsztyn notices only in Olsztyn, within PWiK Olsztyn coverage', () => {
+            const matchesHeatArea = getRegionMatchers().mpec_olsztyn_area;
+            const olsztyn = {
+                cityName: 'Olsztyn', cityId: 964465, voivodeship: 'Warmińsko-Mazurskie', streetName1: 'Herdera'
+            };
+            const nikielkowo = {
+                cityName: 'Nikielkowo', cityId: 470036, voivodeship: 'Warmińsko-Mazurskie', streetName1: 'Herdera'
+            };
+            const alert = {
+                message: 'Przerwa w dostawie ciepła',
+                location: 'Olsztyn; ul. Herdera: 2, 3, 4',
+                source: 'mpec_olsztyn'
+            };
+            const formalStreetAddress = {
+                cityName: 'Olsztyn', cityId: 964465, voivodeship: 'Warmińsko-Mazurskie',
+                streetName: 'Biskupa Tomasza Wilczyńskiego',
+                streetName1: 'Wilczyńskiego', streetName2: 'Biskupa Tomasza', houseNo: '1'
+            };
+            const abbreviatedStreetAlert = {
+                message: 'Przerwa w dostawie ciepła',
+                location: 'Olsztyn; Wilczyńskiego (7, 11, 13, 15, 17)',
+                source: 'mpec_olsztyn'
+            };
+
+            expect(matchesHeatArea(olsztyn)).toBe(true);
+            expect(matchesHeatArea({ cityName: 'Olsztyn', voivodeship: 'Warmińsko-Mazurskie' })).toBe(true);
+            expect(matchesHeatArea({ cityName: 'Olsztyn', voivodeship: 'Mazowieckie' })).toBe(false);
+            expect(matchesHeatArea(nikielkowo)).toBe(false);
+            expect(getRegionMatchers().pwik_olsztyn_area(nikielkowo)).toBe(true);
+            expect(matchesStreetName(alert, olsztyn)).toBe(true);
+            expect(matchesStreetName(abbreviatedStreetAlert, formalStreetAddress)).toBe(true);
+            expect(matchesStreetName(alert, nikielkowo)).toBe(false);
+            expect(matchesAddress(alert, [olsztyn], 0)).toBe(true);
+            expect(matchesAddress(alert, [nikielkowo], 0)).toBe(false);
+        });
+
         it('matches PGE Toruń streets only for Toruń addresses', () => {
             const torun = { cityName: 'Toruń', cityId: 929448, streetName1: 'Dąbrowskiego' };
             const bydgoszcz = { cityName: 'Bydgoszcz', cityId: 928363, streetName1: 'Dąbrowskiego' };
@@ -340,13 +376,42 @@ describe('Frontend Logic', () => {
         });
     });
 
+    describe('MPEC Olsztyn source integration', () => {
+        it('registers the Olsztyn-only heat provider in sorted order with localized labels', () => {
+            const sources = getSources();
+            const heatingIds = sources.filter(source => source.category === 'heating').map(source => source.id);
+            const provider = sources.find(source => source.id === 'mpec_olsztyn');
+
+            expect(provider).toMatchObject({
+                label: 'MPEC Olsztyn',
+                category: 'heating',
+                region: 'mpec_olsztyn_area',
+                i18nLabel: 'source_mpec_olsztyn_name',
+                i18nShort: 'source_mpec_olsztyn_short'
+            });
+            expect(heatingIds).toEqual([...heatingIds].sort());
+            expect(providerTranslation('mpec_olsztyn', 'name', 'pl')).toBe('MPEC Olsztyn');
+            expect(providerTranslation('mpec_olsztyn', 'name', 'en')).toBe('MPEC Olsztyn');
+        });
+
+        it('uses generic heating styling in the Home Assistant card', () => {
+            const Card = window.customElements.get('awaria-card');
+            const card = new Card();
+            expect(card.getProviderMeta('mpec_olsztyn')).toEqual({
+                name: 'MPEC Olsztyn',
+                icon: '🔥',
+                color: '#f44336'
+            });
+        });
+    });
+
     describe('getSources', () => {
         it('preserves the original provider order and notification defaults', () => {
             const sources = getSources();
             expect(sources.map(source => source.id)).toEqual([
                 'enea', 'energa', 'pge', 'stoen', 'tauron', 'psg',
                 'eco_sa', 'enea_cieplo', 'energa_cieplo_kaliskie', 'epec_elblag', 'fortum', 'gpec',
-                'kpec_bydgoszcz', 'lpec', 'mec_koszalin', 'mpec_kielce', 'mpec_rzeszow', 'opec_gdynia',
+                'kpec_bydgoszcz', 'lpec', 'mec_koszalin', 'mpec_kielce', 'mpec_olsztyn', 'mpec_rzeszow', 'opec_gdynia',
                 'pec_gliwice', 'pec_tychy', 'pge_torun_heat', 'radpec_radom', 'sec', 'tauron_heat', 'therma_bielsko', 'veolia_lodz',
                 'veolia_poznan', 'veolia_warszawa', 'wpec_legnica', 'aqua_bielsko', 'aquanet', 'bytomskie_wodociagi',
                 'chspwik', 'dabrowskie_wodociagi', 'epwik_elblag', 'gdanskie_wodociagi', 'katowickie_wodociagi',

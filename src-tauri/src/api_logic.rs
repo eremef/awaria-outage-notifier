@@ -89,6 +89,8 @@ pub enum AlertSource {
     MpecRzeszow,
     #[serde(rename = "mpec_kielce")]
     MpecKielce,
+    #[serde(rename = "mpec_olsztyn")]
+    MpecOlsztyn,
     #[serde(rename = "lpwik_legnica")]
     LpwikLegnica,
     #[serde(rename = "bytomskie_wodociagi")]
@@ -240,6 +242,7 @@ impl AlertSource {
             AlertSource::MpwikRzeszow => ServiceLocation::Cities(vec![is_mpwik_rzeszow_area]),
             AlertSource::MpecRzeszow => ServiceLocation::Cities(vec![is_rzeszow]),
             AlertSource::MpecKielce => ServiceLocation::Cities(vec![is_kielce]),
+            AlertSource::MpecOlsztyn => ServiceLocation::Cities(vec![is_mpec_olsztyn]),
             AlertSource::LpwikLegnica => ServiceLocation::Cities(vec![is_lpwik_legnica]),
             AlertSource::BytomskieWodociagi => ServiceLocation::Cities(vec![is_bytom]),
             AlertSource::Chspwik => ServiceLocation::Cities(vec![is_chspwik_area]),
@@ -618,6 +621,7 @@ impl std::fmt::Display for AlertSource {
             AlertSource::MwikBydgoszcz => "mwik_bydgoszcz",
             AlertSource::MpecRzeszow => "mpec_rzeszow",
             AlertSource::MpecKielce => "mpec_kielce",
+            AlertSource::MpecOlsztyn => "mpec_olsztyn",
             AlertSource::LpwikLegnica => "lpwik_legnica",
             AlertSource::BytomskieWodociagi => "bytomskie_wodociagi",
             AlertSource::Chspwik => "chspwik",
@@ -1436,6 +1440,22 @@ fn is_pwik_olsztyn_area(addr: &AddressEntry) -> bool {
             || commune == *locality
             || (city.is_empty() && commune.starts_with(locality))
     })
+}
+
+fn is_mpec_olsztyn(addr: &AddressEntry) -> bool {
+    const OLSZTYN_CITY_ID: u64 = 964_465;
+    if let Some(city_id) = addr.city_id {
+        return city_id == OLSZTYN_CITY_ID;
+    }
+
+    let city = crate::utils::clean_text(&addr.city_name);
+    let commune = normalize_service_commune(&addr.commune);
+    let voivodeship = crate::utils::clean_text(&addr.voivodeship);
+    if !voivodeship.is_empty() && !voivodeship.starts_with("warminsko") {
+        return false;
+    }
+
+    city == "olsztyn" || (city.is_empty() && commune == "olsztyn")
 }
 
 fn is_mpwik_rzeszow_area(addr: &AddressEntry) -> bool {

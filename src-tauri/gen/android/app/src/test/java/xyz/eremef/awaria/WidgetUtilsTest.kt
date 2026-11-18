@@ -132,6 +132,30 @@ class WidgetUtilsTest {
         assertEquals(listOf("pec_tychy"), search.other.map { it.sourceId })
     }
 
+    @Test
+    fun testMpecOlsztynUsesGenericHeatPickerAndAggregateCatalog() {
+        val metadata = GeneratedProviderCatalog.find("mpec_olsztyn")
+        val provider = SingleProviderCatalog.find("mpec_olsztyn")
+
+        assertTrue(metadata != null)
+        assertEquals("heating", metadata!!.utility)
+        assertEquals("MPEC Olsztyn", metadata.displayNamePl)
+        assertEquals("MPEC Olsztyn", metadata.displayNameEn)
+        assertEquals(null, metadata.legacyComponentClass)
+
+        assertTrue(provider != null)
+        assertEquals("mpec_olsztyn", provider!!.sourceId)
+        assertEquals(WidgetUtility.HEAT, provider.utility)
+        assertEquals(null, provider.legacyComponentClass)
+        assertEquals("Olsztyn", provider.location)
+        assertTrue(provider.aliases.containsAll(listOf("MPEC", "Olsztyn")))
+        assertTrue(GeneratedProviderCatalog.aggregate("heating").any { it.id == "mpec_olsztyn" })
+        assertFalse(SingleProviderCatalog.entries.any { it.legacyComponentClass == "MpecOlsztynWidgetProvider" })
+
+        val search = SingleProviderCatalog.search("Olsztyn", WidgetUtility.HEAT, emptySet())
+        assertTrue(search.other.any { it.sourceId == "mpec_olsztyn" })
+    }
+
     private fun createSettings(
         cityName: String = "",
         commune: String = "",

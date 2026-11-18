@@ -16,6 +16,7 @@ mod enea_cieplo;
 mod eco_sa;
 mod energa_cieplo_kaliskie;
 mod mec_koszalin;
+mod mpec_olsztyn;
 mod energa;
 mod fortum;
 mod mpwik;
@@ -581,6 +582,7 @@ pub fn get_providers() -> Vec<Box<dyn AlertProvider>> {
         Box::new(eco_sa::EcoSaProvider),
         Box::new(energa_cieplo_kaliskie::EnergaCieploKaliskieProvider),
         Box::new(mec_koszalin::MecKoszalinProvider),
+        Box::new(mpec_olsztyn::MpecOlsztynProvider),
         Box::new(pge::PgeProvider),
         Box::new(pge_torun_heat::PgeTorunHeatProvider),
         Box::new(therma_bielsko::ThermaBielskoProvider),
@@ -701,6 +703,7 @@ mod provider_catalog_parity_tests {
             "lpec",
             "mpec_rzeszow",
             "mpec_kielce",
+            "mpec_olsztyn",
             "pge_torun_heat",
             "epec_elblag",
             "pec_gliwice",
@@ -732,6 +735,7 @@ mod provider_catalog_parity_tests {
             "eco_sa",
             "mpec_rzeszow",
             "mpec_kielce",
+            "mpec_olsztyn",
         ];
 
         for entry in provider_catalog::PROVIDERS {
@@ -1374,6 +1378,32 @@ fn apply_alert_filtering(alerts: &mut Vec<UnifiedAlert>, settings: &Option<Setti
                                 None
                             },
                         )
+                });
+                if let Some((index, _)) = matched_address {
+                    alert.address_index = Some(index);
+                    alert.is_local = Some(true);
+                } else {
+                    alert.address_index = None;
+                    alert.is_local = Some(false);
+                    if let Some((locality, _)) = location.split_once(';') {
+                        alert.location = Some(locality.to_string());
+                    }
+                }
+                continue;
+            }
+
+            if alert.source == api_logic::AlertSource::MpecOlsztyn
+                && alert.is_local == Some(true)
+            {
+                let location = alert.location.as_deref().unwrap_or_default();
+                let matched_address = s.addresses.iter().enumerate().find(|(_, address)| {
+                    address.is_active
+                        && api_logic::is_address_applicable_for_provider(
+                            &alert.source,
+                            address,
+                        )
+                        && mpec_olsztyn::location_matches_address(location, address)
+                        && mpec_olsztyn::house_number_matches_notice(location, address)
                 });
                 if let Some((index, _)) = matched_address {
                     alert.address_index = Some(index);
@@ -2959,17 +2989,26 @@ mod gliwice_provider_house_number_filter_tests {
     use super::*;
 
     fn settings(source: api_logic::AlertSource, filter_by_house_no: bool, house_no: &str) -> Option<Settings> {
-        let (city_name, commune, city_id, street_name) = match source {
-            api_logic::AlertSource::PecGliwice => ("Gliwice", "Gliwice", 940_000, "Testowa"),
-            api_logic::AlertSource::PecTychy => ("Tychy", "Tychy", 944_534, "Harcerska"),
-            api_logic::AlertSource::PwikGliwice => ("Gliwice", "Gliwice", 940_000, "Testowa"),
+        let (city_name, commune, city_id, street_name, voivodeship) = match source {
+            api_logic::AlertSource::PecGliwice => {
+                ("Gliwice", "Gliwice", 940_000, "Testowa", "Śląskie")
+            }
+            api_logic::AlertSource::PecTychy => {
+                ("Tychy", "Tychy", 944_534, "Harcerska", "Śląskie")
+            }
+            api_logic::AlertSource::PwikGliwice => {
+                ("Gliwice", "Gliwice", 940_000, "Testowa", "Śląskie")
+            }
+            api_logic::AlertSource::MpecOlsztyn => {
+                ("Olsztyn", "Olsztyn", 964_465, "Żurawskiego", "Warmińsko-Mazurskie")
+            }
             _ => unreachable!(),
         };
         Some(Settings {
             addresses: vec![AddressEntry {
                 name: "Dom".to_string(),
                 city_name: city_name.to_string(),
-                voivodeship: "Śląskie".to_string(),
+                voivodeship: voivodeship.to_string(),
                 commune: commune.to_string(),
                 street_name: street_name.to_string(),
                 street_name_1: street_name.to_string(),
@@ -3061,6 +3100,84 @@ mod gliwice_provider_house_number_filter_tests {
             &settings(api_logic::AlertSource::PecTychy, true, "42"),
         );
         assert_eq!(excluded[0].is_local, Some(false));
+    }
+
+    #[test]
+    fn mpec_olsztyn_provider_is_registered_and_house_filter_ignores_repair_location() {
+        assert!(get_providers()
+            .iter()
+            .any(|provider| provider.source() == api_logic::AlertSource::MpecOlsztyn));
+
+        let alert = || UnifiedAlert {
+            source: api_logic::AlertSource::MpecOlsztyn,
+            message: Some(
+                "Przerwa w dostawie ciepła. Naprawa sieci przy ul. Żurawskiego 4A.".into(),
+            ),
+            location: Some("Olsztyn; Żurawskiego (2, 4, 4a, 6, 8, 10, 12, 14, 16); Stramkowskiej (1, 3, 5)".into()),
+            address_index: Some(0),
+            is_local: Some(true),
+            ..Default::default()
+        };
+
+        let mut disabled = vec![alert()];
+        apply_alert_filtering(
+            &mut disabled,
+            &settings(api_logic::AlertSource::MpecOlsztyn, false, "4B"),
+        );
+        assert_eq!(disabled[0].is_local, Some(true));
+
+        let mut included = vec![alert()];
+        apply_alert_filtering(
+            &mut included,
+            &settings(api_logic::AlertSource::MpecOlsztyn, true, "4"),
+        );
+        assert_eq!(included[0].is_local, Some(true));
+
+        let mut excluded = vec![alert()];
+        apply_alert_filtering(
+            &mut excluded,
+            &settings(api_logic::AlertSource::MpecOlsztyn, true, "4B"),
+        );
+        assert_eq!(excluded[0].is_local, Some(false));
+    }
+
+    #[test]
+    fn mpec_olsztyn_short_street_name_matches_formal_name_but_house_filter_remains_authoritative() {
+        let settings = |filter_by_house_no| {
+            Some(Settings {
+                addresses: vec![AddressEntry {
+                    name: "Dom".to_string(),
+                    city_name: "Olsztyn".to_string(),
+                    voivodeship: "Warmińsko-Mazurskie".to_string(),
+                    commune: "Olsztyn".to_string(),
+                    street_name: "Biskupa Tomasza Wilczyńskiego".to_string(),
+                    street_name_1: "Wilczyńskiego".to_string(),
+                    street_name_2: Some("Biskupa Tomasza".to_string()),
+                    house_no: "1".to_string(),
+                    city_id: Some(964_465),
+                    is_active: true,
+                    ..Default::default()
+                }],
+                filter_by_house_no,
+                ..Settings::default()
+            })
+        };
+        let alert = || UnifiedAlert {
+            source: api_logic::AlertSource::MpecOlsztyn,
+            message: Some("Przerwa w dostawie ciepła".into()),
+            location: Some("Olsztyn; Wilczyńskiego (7, 11, 13, 15, 17, 17A, 19)".into()),
+            address_index: Some(0),
+            is_local: Some(true),
+            ..Default::default()
+        };
+
+        let mut street_only = vec![alert()];
+        apply_alert_filtering(&mut street_only, &settings(false));
+        assert_eq!(street_only[0].is_local, Some(true));
+
+        let mut filtered_by_house = vec![alert()];
+        apply_alert_filtering(&mut filtered_by_house, &settings(true));
+        assert_eq!(filtered_by_house[0].is_local, Some(false));
     }
 
     #[test]

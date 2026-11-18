@@ -151,6 +151,7 @@ if (typeof document !== 'undefined') {
         chspwik: 'chspwik_area',
         epwik_elblag: 'epwik_elblag_area',
         mec_koszalin: 'mec_koszalin_area',
+        mpec_olsztyn: 'mpec_olsztyn_area',
         radpec_radom: 'radpec_radom',
         wpec_legnica: 'wpec_legnica_area',
         therma_bielsko: 'therma_bielsko',
@@ -762,6 +763,16 @@ if (typeof document !== 'undefined') {
             const localities = ['olsztyn', 'nikielkowo', 'jonkowo', 'ostrzeszewo', 'zalbki', 'myki', 'wadag', 'gietrzwald', 'bartag'];
             const locality = localities.find(name => city === name || commune === name);
             return !!locality && (locality !== 'olsztyn' || voivodeship.startsWith('warminsko'));
+        },
+        mpec_olsztyn_area: (addr) => {
+            if (!addr) return false;
+            const cityId = addr.cityId == null ? null : Number(addr.cityId);
+            if (cityId != null) return Number.isFinite(cityId) && cityId === 964465;
+
+            const city = normalizeRegionName(addr.cityName);
+            const voivodeship = normalizeRegionName(addr.voivodeship);
+            if (voivodeship && !voivodeship.startsWith('warminsko')) return false;
+            return city === 'olsztyn';
         },
         wodociagi_kieleckie_area: (addr) => {
             if (!addr) return false;

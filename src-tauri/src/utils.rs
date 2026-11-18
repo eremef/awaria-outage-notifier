@@ -410,6 +410,21 @@ mod tests {
     }
 
     #[test]
+    fn configured_street_candidates_follow_teryt_name_2_then_name_1() {
+        // TERYT Olsztyn row: nazwa_2 = "Biskupa Tomasza", nazwa_1 = "Wilczyńskiego".
+        let candidates = configured_street_name_candidates(
+            "ul. Biskupa Tomasza Wilczyńskiego",
+            "Wilczyńskiego",
+            Some("Biskupa Tomasza"),
+        );
+
+        assert_eq!(
+            candidates,
+            ["Biskupa Tomasza Wilczyńskiego", "Wilczyńskiego"]
+        );
+    }
+
+    #[test]
     fn test_match_house_number() {
         let match_hn = |u, s| match_house_number(u, s, None);
 

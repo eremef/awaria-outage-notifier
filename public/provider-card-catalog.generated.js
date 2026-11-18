@@ -119,6 +119,13 @@
         "color": "#f44336"
     },
     {
+        "id": "mpec_olsztyn",
+        "aliases": [],
+        "name": "MPEC Olsztyn",
+        "icon": "🔥",
+        "color": "#f44336"
+    },
+    {
         "id": "mpec_rzeszow",
         "aliases": [],
         "name": "MPEC_RZESZOW",

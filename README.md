@@ -45,6 +45,7 @@ A modern desktop (Tauri) and Android application providing real-time alerts for 
   - **LPEC Lublin**: Heat outages in Lublin.
   - **MEC Koszalin**: Planned heat interruptions in Koszalin.
   - **MPEC Kielce**: District-heating and hot-water interruptions in Kielce.
+  - **MPEC Olsztyn**: District-heating and hot-water interruptions in Olsztyn, matched to streets and buildings named in each notice.
   - **MPEC Rzeszów**: Heating and domestic hot-water supply interruptions in Rzeszów.
   - **OPEC Gdynia**: Street-level heat and domestic-hot-water interruption notices for served areas in Gdynia, Rumia, Reda, Kosakowo, and Wejherowo.
   - **PEC Gliwice**: District-heating interruption notices for Gliwice.
@@ -227,7 +228,7 @@ For each address you want to monitor, add an entry with:
 
 #### Enabled Sources
 
-Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `epec_elblag`, `epwik_elblag`, `mec_koszalin`, `therma_bielsko`, `radpec_radom`, `wpec_legnica`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`, `bytomskie_wodociagi`, `chspwik`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `rpwik_tychy`, `wpwik_walbrzych`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
+Select the utility providers you want to monitor (e.g., `tauron`, `pge`, `epec_elblag`, `epwik_elblag`, `mec_koszalin`, `mpec_olsztyn`, `therma_bielsko`, `radpec_radom`, `wpec_legnica`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`, `bytomskie_wodociagi`, `chspwik`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `rpwik_tychy`, `wpwik_walbrzych`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
 
 ### Usage
 

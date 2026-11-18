@@ -1159,6 +1159,23 @@ object GeneratedProviderCatalog {
             aggregateOrder = 37,
             addonAllowed = true,
             webviewOnly = false
+        ),
+        GeneratedProviderMetadata(
+            id = "mpec_olsztyn",
+            utility = "heating",
+            displayNamePl = "MPEC Olsztyn",
+            displayNameEn = "MPEC Olsztyn",
+            shortNamePl = "MPEC Olsztyn",
+            shortNameEn = "MPEC Olsztyn",
+            androidOrder = 67,
+            singleWidget = true,
+            legacyComponentClass = null,
+            searchAliases = listOf("MPEC", "Olsztyn"),
+            location = "Olsztyn",
+            aggregateUtility = "heating",
+            aggregateOrder = 23,
+            addonAllowed = true,
+            webviewOnly = false
         )
     )
 

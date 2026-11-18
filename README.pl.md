@@ -45,6 +45,7 @@ Nowoczesna aplikacja desktopowa i mobilna zapewniające powiadomienia w czasie r
   - **LPEC Lublin**: Przerwy w dostawie ciepła w Lublinie.
   - **MEC Koszalin**: Planowane przerwy w dostawie ciepła w Koszalinie.
   - **MPEC Kielce**: Przerwy w dostawie ciepła i ciepłej wody w Kielcach.
+  - **MPEC Olsztyn**: Przerwy w dostawie ciepła i ciepłej wody w Olsztynie, dopasowywane do ulic i budynków wskazanych w komunikatach.
   - **MPEC Rzeszów**: Przerwy w dostawie ciepła i ciepłej wody użytkowej w Rzeszowie.
   - **OPEC Gdynia**: Uliczne komunikaty o przerwach w dostawie ciepła i ciepłej wody w obsługiwanych rejonach Gdyni, Rumi, Redy, Kosakowa i Wejherowa.
   - **PEC Gliwice**: Komunikaty o przerwach w dostawie ciepła w Gliwicach.
@@ -227,7 +228,7 @@ Dla każdego adresu, który chcesz monitorować, dodaj wpis zawierający:
 
 #### Aktywne źródła (Enabled Sources)
 
-Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `epec_elblag`, `epwik_elblag`, `mec_koszalin`, `therma_bielsko`, `radpec_radom`, `wpec_legnica`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`, `bytomskie_wodociagi`, `chspwik`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `rpwik_tychy`, `wpwik_walbrzych`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
+Wybierz dostawców mediów, których chcesz monitorować (np. `tauron`, `pge`, `epec_elblag`, `epwik_elblag`, `mec_koszalin`, `mpec_olsztyn`, `therma_bielsko`, `radpec_radom`, `wpec_legnica`, `mpwik_warszawa`, `pewik_gdynia`, `torunskie_wodociagi`, `bytomskie_wodociagi`, `chspwik`, `mwik_koszalin`, `pwik_ruda_slaska`, `pwik_rybnik`, `rpwik_tychy`, `wpwik_walbrzych`, `sosnowieckie_wodociagi`, `tarnowskie_wodociagi`, `zabrzanskie_wodociagi`).
 
 ### Użytkowanie
 

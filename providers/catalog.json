@@ -154,7 +154,7 @@
       "utility": "power",
       "order": {
         "frontend": 2,
-        "rust": 10,
+        "rust": 11,
         "androidSingle": 4,
         "addon": 16
       },
@@ -226,7 +226,7 @@
       "utility": "power",
       "order": {
         "frontend": 3,
-        "rust": 13,
+        "rust": 14,
         "androidSingle": 1,
         "addon": 18
       },
@@ -373,7 +373,7 @@
       "utility": "gas",
       "order": {
         "frontend": 5,
-        "rust": 14,
+        "rust": 15,
         "androidSingle": 63,
         "addon": null
       },
@@ -667,7 +667,7 @@
       "utility": "heating",
       "order": {
         "frontend": 9,
-        "rust": 60,
+        "rust": 61,
         "androidSingle": 23,
         "addon": 13
       },
@@ -814,7 +814,7 @@
       "utility": "heating",
       "order": {
         "frontend": 11,
-        "rust": 32,
+        "rust": 33,
         "androidSingle": 14,
         "addon": null
       },
@@ -889,7 +889,7 @@
       "utility": "heating",
       "order": {
         "frontend": 12,
-        "rust": 34,
+        "rust": 35,
         "androidSingle": 15,
         "addon": null
       },
@@ -964,7 +964,7 @@
       "utility": "heating",
       "order": {
         "frontend": 13,
-        "rust": 37,
+        "rust": 38,
         "androidSingle": 25,
         "addon": null
       },
@@ -1114,7 +1114,7 @@
       "utility": "heating",
       "order": {
         "frontend": 15,
-        "rust": 59,
+        "rust": 60,
         "androidSingle": 16,
         "addon": 52
       },
@@ -1185,11 +1185,80 @@
       }
     },
     {
-      "id": "mpec_rzeszow",
+      "id": "mpec_olsztyn",
       "utility": "heating",
       "order": {
         "frontend": 16,
-        "rust": 58,
+        "rust": 10,
+        "androidSingle": 67,
+        "addon": 59
+      },
+      "defaultNotify": true,
+      "labels": {
+        "frontend": {
+          "name": {
+            "pl": "MPEC Olsztyn",
+            "en": "MPEC Olsztyn"
+          },
+          "shortName": {
+            "pl": "MPEC Olsztyn",
+            "en": "MPEC Olsztyn"
+          }
+        },
+        "rust": {
+          "name": {
+            "pl": "MPEC Olsztyn"
+          }
+        },
+        "android": {
+          "shortName": {
+            "pl": "MPEC Olsztyn",
+            "en": "MPEC Olsztyn"
+          },
+          "legacyWidget": null
+        }
+      },
+      "aliases": [],
+      "bindings": {
+        "rust": {
+          "enumVariant": "MpecOlsztyn",
+          "constructor": "mpec_olsztyn::MpecOlsztynProvider"
+        },
+        "android": {
+          "legacyComponentClass": null,
+          "legacyLabelResource": null
+        }
+      },
+      "capabilities": {
+        "webviewOnly": false,
+        "addonAllowed": true
+      },
+      "icsUtility": "heating",
+      "android": {
+        "singleWidget": true,
+        "searchAliases": [
+          "MPEC",
+          "Olsztyn"
+        ],
+        "location": "Olsztyn",
+        "aggregateUtility": "heating",
+        "aggregateOrder": 23
+      },
+      "card": {
+        "name": "MPEC Olsztyn",
+        "icon": "🔥",
+        "color": "#f44336"
+      },
+      "frontend": {
+        "regionMatcher": "mpec_olsztyn_area"
+      }
+    },
+    {
+      "id": "mpec_rzeszow",
+      "utility": "heating",
+      "order": {
+        "frontend": 17,
+        "rust": 59,
         "androidSingle": 18,
         "addon": 53
       },
@@ -1263,8 +1332,8 @@
       "id": "opec_gdynia",
       "utility": "heating",
       "order": {
-        "frontend": 17,
-        "rust": 33,
+        "frontend": 18,
+        "rust": 34,
         "androidSingle": 19,
         "addon": 54
       },
@@ -1338,8 +1407,8 @@
       "id": "pec_gliwice",
       "utility": "heating",
       "order": {
-        "frontend": 18,
-        "rust": 61,
+        "frontend": 19,
+        "rust": 62,
         "androidSingle": 20,
         "addon": 14
       },
@@ -1413,8 +1482,8 @@
       "id": "pec_tychy",
       "utility": "heating",
       "order": {
-        "frontend": 19,
-        "rust": 62,
+        "frontend": 20,
+        "rust": 63,
         "androidSingle": 21,
         "addon": 15
       },
@@ -1484,8 +1553,8 @@
       "id": "pge_torun_heat",
       "utility": "heating",
       "order": {
-        "frontend": 20,
-        "rust": 11,
+        "frontend": 21,
+        "rust": 12,
         "androidSingle": 22,
         "addon": 17
       },
@@ -1559,8 +1628,8 @@
       "id": "radpec_radom",
       "utility": "heating",
       "order": {
-        "frontend": 21,
-        "rust": 64,
+        "frontend": 22,
+        "rust": 65,
         "androidSingle": 64,
         "addon": 56
       },
@@ -1628,8 +1697,8 @@
       "id": "sec",
       "utility": "heating",
       "order": {
-        "frontend": 22,
-        "rust": 36,
+        "frontend": 23,
+        "rust": 37,
         "androidSingle": 24,
         "addon": null
       },
@@ -1703,8 +1772,8 @@
       "id": "tauron_heat",
       "utility": "heating",
       "order": {
-        "frontend": 23,
-        "rust": 16,
+        "frontend": 24,
+        "rust": 17,
         "androidSingle": 9,
         "addon": 22
       },
@@ -1775,8 +1844,8 @@
       "id": "therma_bielsko",
       "utility": "heating",
       "order": {
-        "frontend": 24,
-        "rust": 12,
+        "frontend": 25,
+        "rust": 13,
         "androidSingle": 10,
         "addon": 23
       },
@@ -1850,8 +1919,8 @@
       "id": "veolia_lodz",
       "utility": "heating",
       "order": {
-        "frontend": 25,
-        "rust": 21,
+        "frontend": 26,
+        "rust": 22,
         "androidSingle": 13,
         "addon": 31
       },
@@ -1925,8 +1994,8 @@
       "id": "veolia_poznan",
       "utility": "heating",
       "order": {
-        "frontend": 26,
-        "rust": 20,
+        "frontend": 27,
+        "rust": 21,
         "androidSingle": 12,
         "addon": 30
       },
@@ -2000,8 +2069,8 @@
       "id": "veolia_warszawa",
       "utility": "heating",
       "order": {
-        "frontend": 27,
-        "rust": 19,
+        "frontend": 28,
+        "rust": 20,
         "androidSingle": 11,
         "addon": 29
       },
@@ -2075,8 +2144,8 @@
       "id": "wpec_legnica",
       "utility": "heating",
       "order": {
-        "frontend": 28,
-        "rust": 65,
+        "frontend": 29,
+        "rust": 66,
         "androidSingle": 65,
         "addon": 57
       },
@@ -2150,8 +2219,8 @@
       "id": "aqua_bielsko",
       "utility": "water",
       "order": {
-        "frontend": 29,
-        "rust": 46,
+        "frontend": 30,
+        "rust": 47,
         "androidSingle": 31,
         "addon": 19
       },
@@ -2225,8 +2294,8 @@
       "id": "aquanet",
       "utility": "water",
       "order": {
-        "frontend": 30,
-        "rust": 17,
+        "frontend": 31,
+        "rust": 18,
         "androidSingle": 30,
         "addon": 24
       },
@@ -2300,8 +2369,8 @@
       "id": "bytomskie_wodociagi",
       "utility": "water",
       "order": {
-        "frontend": 31,
-        "rust": 43,
+        "frontend": 32,
+        "rust": 44,
         "androidSingle": 53,
         "addon": 25
       },
@@ -2375,8 +2444,8 @@
       "id": "chspwik",
       "utility": "water",
       "order": {
-        "frontend": 32,
-        "rust": 44,
+        "frontend": 33,
+        "rust": 45,
         "androidSingle": 54,
         "addon": 26
       },
@@ -2453,8 +2522,8 @@
       "id": "dabrowskie_wodociagi",
       "utility": "water",
       "order": {
-        "frontend": 33,
-        "rust": 45,
+        "frontend": 34,
+        "rust": 46,
         "androidSingle": 55,
         "addon": 27
       },
@@ -2528,8 +2597,8 @@
       "id": "epwik_elblag",
       "utility": "water",
       "order": {
-        "frontend": 34,
-        "rust": 66,
+        "frontend": 35,
+        "rust": 67,
         "androidSingle": 66,
         "addon": 58
       },
@@ -2599,8 +2668,8 @@
       "id": "gdanskie_wodociagi",
       "utility": "water",
       "order": {
-        "frontend": 35,
-        "rust": 31,
+        "frontend": 36,
+        "rust": 32,
         "androidSingle": 56,
         "addon": 51
       },
@@ -2674,8 +2743,8 @@
       "id": "katowickie_wodociagi",
       "utility": "water",
       "order": {
-        "frontend": 36,
-        "rust": 18,
+        "frontend": 37,
+        "rust": 19,
         "androidSingle": 32,
         "addon": 28
       },
@@ -2749,8 +2818,8 @@
       "id": "lpwik_legnica",
       "utility": "water",
       "order": {
-        "frontend": 37,
-        "rust": 42,
+        "frontend": 38,
+        "rust": 43,
         "androidSingle": 62,
         "addon": 55
       },
@@ -2824,8 +2893,8 @@
       "id": "mpwik_lublin",
       "utility": "water",
       "order": {
-        "frontend": 38,
-        "rust": 38,
+        "frontend": 39,
+        "rust": 39,
         "androidSingle": 58,
         "addon": null
       },
@@ -2899,8 +2968,8 @@
       "id": "mpwik_rzeszow",
       "utility": "water",
       "order": {
-        "frontend": 39,
-        "rust": 39,
+        "frontend": 40,
+        "rust": 40,
         "androidSingle": 59,
         "addon": 3
       },
@@ -2974,7 +3043,7 @@
       "id": "mpwik_warszawa",
       "utility": "water",
       "order": {
-        "frontend": 40,
+        "frontend": 41,
         "rust": 2,
         "androidSingle": 27,
         "addon": 2
@@ -3049,7 +3118,7 @@
       "id": "mpwik_wroclaw",
       "utility": "water",
       "order": {
-        "frontend": 41,
+        "frontend": 42,
         "rust": 1,
         "androidSingle": 26,
         "addon": 1
@@ -3124,8 +3193,8 @@
       "id": "mwik_bydgoszcz",
       "utility": "water",
       "order": {
-        "frontend": 42,
-        "rust": 51,
+        "frontend": 43,
+        "rust": 52,
         "androidSingle": 60,
         "addon": 4
       },
@@ -3199,8 +3268,8 @@
       "id": "mwik_koszalin",
       "utility": "water",
       "order": {
-        "frontend": 43,
-        "rust": 52,
+        "frontend": 44,
+        "rust": 53,
         "androidSingle": 46,
         "addon": 5
       },
@@ -3274,8 +3343,8 @@
       "id": "pewik_gdynia",
       "utility": "water",
       "order": {
-        "frontend": 44,
-        "rust": 25,
+        "frontend": 45,
+        "rust": 26,
         "androidSingle": 61,
         "addon": 50
       },
@@ -3349,8 +3418,8 @@
       "id": "puk_rokietnica",
       "utility": "water",
       "order": {
-        "frontend": 45,
-        "rust": 35,
+        "frontend": 46,
+        "rust": 36,
         "androidSingle": 57,
         "addon": null
       },
@@ -3424,8 +3493,8 @@
       "id": "pwik_czestochowa",
       "utility": "water",
       "order": {
-        "frontend": 46,
-        "rust": 30,
+        "frontend": 47,
+        "rust": 31,
         "androidSingle": 40,
         "addon": 38
       },
@@ -3499,8 +3568,8 @@
       "id": "pwik_gliwice",
       "utility": "water",
       "order": {
-        "frontend": 47,
-        "rust": 48,
+        "frontend": 48,
+        "rust": 49,
         "androidSingle": 44,
         "addon": 39
       },
@@ -3574,8 +3643,8 @@
       "id": "pwik_gorzow",
       "utility": "water",
       "order": {
-        "frontend": 48,
-        "rust": 47,
+        "frontend": 49,
+        "rust": 48,
         "androidSingle": 42,
         "addon": 40
       },
@@ -3649,8 +3718,8 @@
       "id": "pwik_kalisz",
       "utility": "water",
       "order": {
-        "frontend": 49,
-        "rust": 29,
+        "frontend": 50,
+        "rust": 30,
         "androidSingle": 35,
         "addon": null
       },
@@ -3724,8 +3793,8 @@
       "id": "pwik_olsztyn",
       "utility": "water",
       "order": {
-        "frontend": 50,
-        "rust": 40,
+        "frontend": 51,
+        "rust": 41,
         "androidSingle": 41,
         "addon": 41
       },
@@ -3799,8 +3868,8 @@
       "id": "pwik_ruda_slaska",
       "utility": "water",
       "order": {
-        "frontend": 51,
-        "rust": 56,
+        "frontend": 52,
+        "rust": 57,
         "androidSingle": 50,
         "addon": 42
       },
@@ -3874,8 +3943,8 @@
       "id": "pwik_rybnik",
       "utility": "water",
       "order": {
-        "frontend": 52,
-        "rust": 57,
+        "frontend": 53,
+        "rust": 58,
         "androidSingle": 51,
         "addon": 43
       },
@@ -3949,8 +4018,8 @@
       "id": "rpwik_tychy",
       "utility": "water",
       "order": {
-        "frontend": 53,
-        "rust": 49,
+        "frontend": 54,
+        "rust": 50,
         "androidSingle": 43,
         "addon": 44
       },
@@ -4024,8 +4093,8 @@
       "id": "sosnowieckie_wodociagi",
       "utility": "water",
       "order": {
-        "frontend": 54,
-        "rust": 53,
+        "frontend": 55,
+        "rust": 54,
         "androidSingle": 47,
         "addon": 46
       },
@@ -4099,8 +4168,8 @@
       "id": "tarnowskie_wodociagi",
       "utility": "water",
       "order": {
-        "frontend": 55,
-        "rust": 54,
+        "frontend": 56,
+        "rust": 55,
         "androidSingle": 48,
         "addon": 47
       },
@@ -4174,8 +4243,8 @@
       "id": "torunskie_wodociagi",
       "utility": "water",
       "order": {
-        "frontend": 56,
-        "rust": 27,
+        "frontend": 57,
+        "rust": 28,
         "androidSingle": 39,
         "addon": 37
       },
@@ -4249,8 +4318,8 @@
       "id": "wik_opole",
       "utility": "water",
       "order": {
-        "frontend": 57,
-        "rust": 41,
+        "frontend": 58,
+        "rust": 42,
         "androidSingle": 52,
         "addon": 49
       },
@@ -4324,8 +4393,8 @@
       "id": "wm_radom",
       "utility": "water",
       "order": {
-        "frontend": 58,
-        "rust": 63,
+        "frontend": 59,
+        "rust": 64,
         "androidSingle": 29,
         "addon": 21
       },
@@ -4399,8 +4468,8 @@
       "id": "wmk",
       "utility": "water",
       "order": {
-        "frontend": 59,
-        "rust": 15,
+        "frontend": 60,
+        "rust": 16,
         "androidSingle": 28,
         "addon": 20
       },
@@ -4474,8 +4543,8 @@
       "id": "wodociagi_bialostockie",
       "utility": "water",
       "order": {
-        "frontend": 60,
-        "rust": 28,
+        "frontend": 61,
+        "rust": 29,
         "androidSingle": 37,
         "addon": 36
       },
@@ -4549,8 +4618,8 @@
       "id": "wodociagi_kieleckie",
       "utility": "water",
       "order": {
-        "frontend": 61,
-        "rust": 26,
+        "frontend": 62,
+        "rust": 27,
         "androidSingle": 38,
         "addon": 35
       },
@@ -4624,8 +4693,8 @@
       "id": "wodociagi_plockie",
       "utility": "water",
       "order": {
-        "frontend": 62,
-        "rust": 24,
+        "frontend": 63,
+        "rust": 25,
         "androidSingle": 36,
         "addon": 34
       },
@@ -4699,8 +4768,8 @@
       "id": "wpwik_walbrzych",
       "utility": "water",
       "order": {
-        "frontend": 63,
-        "rust": 50,
+        "frontend": 64,
+        "rust": 51,
         "androidSingle": 45,
         "addon": 45
       },
@@ -4774,8 +4843,8 @@
       "id": "zabrzanskie_wodociagi",
       "utility": "water",
       "order": {
-        "frontend": 64,
-        "rust": 55,
+        "frontend": 65,
+        "rust": 56,
         "androidSingle": 49,
         "addon": 48
       },
@@ -4849,8 +4918,8 @@
       "id": "zwik_lodz",
       "utility": "water",
       "order": {
-        "frontend": 65,
-        "rust": 22,
+        "frontend": 66,
+        "rust": 23,
         "androidSingle": 33,
         "addon": 32
       },
@@ -4924,8 +4993,8 @@
       "id": "zwik_zielona_gora",
       "utility": "water",
       "order": {
-        "frontend": 66,
-        "rust": 23,
+        "frontend": 67,
+        "rust": 24,
         "androidSingle": 34,
         "addon": 33
       },
